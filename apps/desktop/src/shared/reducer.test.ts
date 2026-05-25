@@ -19,7 +19,7 @@ describe("applyEvent", () => {
     s = applyEvent(s, { type: "status", status: "idle" });
     expect(s.status).toBe("idle");
     expect(s.answer).toBe(""); // cleared after commit
-    expect(s.thread.at(-1)).toEqual({ role: "agent", text: "the answer" });
+    expect(s.thread[s.thread.length - 1]).toEqual({ role: "agent", text: "the answer" });
   });
 
   it("does not append an empty agent turn when there is no answer", () => {
@@ -35,8 +35,8 @@ describe("applyEvent", () => {
   });
 
   it("records cost from usage but ignores null", () => {
-    expect(applyEvent(base(), { type: "usage", cost: 0.12 }).cost).toBe(0.12);
-    expect(applyEvent(base(), { type: "usage" }).cost).toBeNull();
+    expect(applyEvent(base(), { type: "usage", used: 100, size: 1000, cost: 0.12 }).cost).toBe(0.12);
+    expect(applyEvent(base(), { type: "usage", used: 0, size: 0, cost: null }).cost).toBeNull();
   });
 
   it("enters auth state on auth_required", () => {
@@ -53,7 +53,7 @@ describe("applyEvent", () => {
 
   it("clears the auth prompt on a successful auth_result", () => {
     let s = applyEvent(base(), { type: "auth_required", harness: "codex", methods: [], hasLogin: true, note: "" });
-    s = applyEvent(s, { type: "auth_result", ok: true });
+    s = applyEvent(s, { type: "auth_result", harness: "codex", ok: true });
     expect(s.auth).toBeNull();
   });
 
