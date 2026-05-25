@@ -1,0 +1,105 @@
+{
+  "_comment": "ACP agent launch configs. Commands/versions come from the ACP registry (registry-main/<id>/agent.json). skill_dir is where THAT agent looks for project skills relative to the session cwd (workspace/) — this is the per-harness 'mounting glue' that differs even though the SKILL.md itself is identical.",
+
+  "claude": {
+    "name": "Claude Agent (claude-acp)",
+    "command": "npx",
+    "args": ["-y", "@agentclientprotocol/claude-agent-acp@0.37.0"],
+    "skill_dir": ".claude/skills",
+    "auth": "Run `claude login` first (Pro/Max), or set ANTHROPIC_API_KEY. The agent handles its own auth (ACP 'Agent Auth')."
+  },
+
+  "codex": {
+    "name": "Codex CLI (codex-acp)",
+    "command": "npx",
+    "args": ["-y", "@zed-industries/codex-acp@0.14.0"],
+    "skill_dir": ".agents/skills",
+    "auth": "Run `codex login` first (ChatGPT/Codex subscription), or set OPENAI_API_KEY."
+  },
+
+  "gemini": {
+    "name": "Gemini CLI (gemini)",
+    "command": "npx",
+    "args": ["-y", "@google/gemini-cli@0.43.0", "--acp"],
+    "skill_dir": ".agents/skills",
+    "auth": "Google login via the gemini CLI (free tier) or GEMINI_API_KEY. The agent handles its own auth."
+  },
+
+  "hermes": {
+    "name": "Hermes Agent (hermes-acp)",
+    "command": "uvx",
+    "args": ["--from", "hermes-agent[acp]==0.14.0", "hermes-acp"],
+    "skill_dir": ".agents/skills",
+    "auth": "Needs `uv` installed + NOUS_API_KEY (or Hermes' pluggable local/other provider).",
+    "note": "Package is hermes-agent[acp] but the ACP entrypoint is hermes-acp -> needs `uvx --from <pkg> <cmd>`. The ACP registry can't express package!=executable (see registry issue #296), which is why Hermes isn't listed there. Our agents.json can, because front.py launches any command + args."
+  },
+
+  "grok": {
+    "name": "Grok Build (grok agent stdio)",
+    "command": "grok",
+    "args": ["agent", "stdio"],
+    "skill_dir": ".agents/skills",
+    "auth": "Install via `curl -fsSL https://x.ai/cli/install.sh | bash`, then SuperGrok Heavy (~$300/mo) or GROK_CODE_XAI_API_KEY.",
+    "note": "ACP-capable (`grok agent stdio`) but NOT in the registry (paid beta). Reserve entry — won't launch until grok is installed + authed. Hors-registry, like hermes."
+  },
+
+  "qwen": {
+    "name": "Qwen Code (qwen-code)",
+    "command": "npx",
+    "args": ["-y", "@qwen-code/qwen-code@0.16.0", "--acp", "--experimental-skills"],
+    "skill_dir": ".agents/skills",
+    "auth": "Qwen/DashScope (qwen login or DASHSCOPE_API_KEY). Gemini-CLI fork; native --experimental-skills.",
+    "note": "Qwen brain — pairs with your local Ollama qwen3.5."
+  },
+
+  "opencode": {
+    "name": "OpenCode (model-agnostic)",
+    "command": "./var/bin/opencode",
+    "args": ["acp"],
+    "skill_dir": ".agents/skills",
+    "auth": "Model-agnostic (75+ providers incl. local). For a zero-key local brain, configure an Ollama provider (http://localhost:11434/v1)."
+  },
+
+  "copilot": {
+    "name": "GitHub Copilot CLI",
+    "command": "npx",
+    "args": ["-y", "@github/copilot@1.0.51", "--acp"],
+    "skill_dir": ".agents/skills",
+    "auth": "GitHub Copilot subscription (gh auth login with Copilot enabled) or GH_TOKEN."
+  },
+
+  "deepagents": {
+    "name": "DeepAgents (LangChain, model-agnostic)",
+    "command": "npx",
+    "args": ["-y", "deepagents-acp@0.1.7"],
+    "skill_dir": ".agents/skills",
+    "auth": "Model-agnostic via LangChain (any provider key, or local).",
+    "note": "This is LangChain's DeepAgents, NOT the Pydantic-AI agent. The Pydantic ACP agent (pydantic-deep) is not in the registry — it would be wired hors-registry (uvx/python)."
+  },
+
+  "openclaw": {
+    "name": "OpenClaw Gateway (openclaw acp)",
+    "command": "openclaw",
+    "args": ["acp"],
+    "skill_dir": ".agents/skills",
+    "auth": "Needs openclaw installed + a running OpenClaw Gateway + token (--token-file ~/.openclaw/gateway.token, or OPENCLAW_GATEWAY_TOKEN / OPENCLAW_GATEWAY_PASSWORD).",
+    "note": "ACP-capable but a BRIDGE: `openclaw acp` speaks ACP over stdio and forwards prompts to the Gateway over WebSocket — NOT self-contained. Driving it nests OpenClaw's whole runtime (channels, memory, its own sub-agents/harnesses) as ONE agent behind your client. Reserve — Gateway not running here. Hors-registry."
+  },
+
+  "cursor": {
+    "name": "Cursor Agent (cursor-agent)",
+    "command": "./var/bin/dist-package/cursor-agent",
+    "args": ["acp"],
+    "skill_dir": ".agents/skills",
+    "auth": "Cursor subscription — `cursor-agent login` or CURSOR_API_KEY (proprietary)."
+  },
+
+  "mistral-vibe": {
+    "name": "Mistral Vibe (vibe-acp)",
+    "command": "./var/bin/vibe-acp",
+    "args": [],
+    "skill_dir": ".agents/skills",
+    "auth": "Set MISTRAL_API_KEY (cloud). Download the vibe-acp binary into var/bin/ first — see README.",
+    "note": "No npx distribution; ships as a platform binary. Skill discovery for Vibe is the least certain of the three — treat 'does it pick up the consultant skill?' as a finding."
+  }
+}

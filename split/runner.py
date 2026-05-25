@@ -1,0 +1,198 @@
+#!/usr/bin/env python3
+"""One live ACP session, driven over stdin/stdout — the Tauri sidecar.
+
+The Tauri shell spawns ONE of these per session:
+
+    .venv/bin/python -m split.runner --harness claude --expert consultant
+
+It speaks ACP to a single agent (via the official SDK) and translates the
+agent's session/update stream into `VEVT <json>` lines on stdout, exactly the
+line protocol the Rust side already parses (see desktop/src-tauri/src/lib.rs).
+Turns and auth control arrive as JSON lines on stdin:
+
+    {"text": "..."}              # a prompt (multi-turn on the same ACP session)
+    {"auth": {"methodId": "..."}} # answer an auth_required
+    {"type": "stop"}             # graceful stop (EOF on stdin also stops)
+
+This is the process-per-session refactor of server.py's `Sess`: same ACP logic,
+but `_emit` prints VEVT instead of sending over a shared WebSocket, and logs go
+to stderr so stdout stays a clean event stream.
+"""
+from __future__ import annotations
+
+import argparse
+import asyncio
+import json
+import os
+import sys
+from typing import Any
+
+import acp
+
+from . import core  # registries / persona+skill projection / mcp / command + WORKSPACE (loads .env)
+from .acp_client import ConsoleClient, client_capabilities
+from .auth import LOGIN_CMD, is_auth_error
+
+
+class Runner:
+    """One live ACP session bound to this process's stdout."""
+
+    def __init__(self, sid: str, harness: str, expert: str) -> None:
+        self.sid, self.harness, self.expert = sid, harness, expert
+        self.cfg = core.load_harnesses()[harness]
+        # core.WORKSPACE is the user-chosen folder (SPLIT_WORKSPACE) or var/workspace.
+        # Each session keeps its own subdir so concurrent experts don't clobber
+        # each other's projected persona files (AGENTS.md/CLAUDE.md/…).
+        self.ws_dir = os.path.join(core.WORKSPACE, "sessions", sid)  # per-session home
+        self._cm = None
+        self.conn = None
+        self.acp_sid = None
+        self.auth_methods: list = []
+        self.pending: str | None = None  # prompt awaiting auth
+        self._out_lock = asyncio.Lock()
+
+    # --- emit: one VEVT line per structured event ----------------------------
+
+    def _emit(self, **msg: Any) -> None:
+        asyncio.create_task(self._send(msg))
+
+    async def _send(self, msg: dict) -> None:
+        async with self._out_lock:  # serialize writes so lines never interleave
+            sys.stdout.write("VEVT " + json.dumps(msg) + "\n")
+            sys.stdout.flush()
+
+    @staticmethod
+    def on_log(line: str) -> None:
+        # logs go to stderr; Rust classifies stderr lines as `.log`
+        print(line, file=sys.stderr, flush=True)
+
+    # ACP Client.session_update -> VEVT (mirrors server.py:Sess.on_update)
+    def on_update(self, update) -> None:
+        n = type(update).__name__
+        if n == "AgentMessageChunk" and getattr(update.content, "type", None) == "text":
+            self._emit(type="say", text=update.content.text)
+        elif n == "AgentThoughtChunk" and getattr(update.content, "type", None) == "text":
+            self._emit(type="thought", text=update.content.text)
+        elif n in ("ToolCallStart", "ToolCallProgress"):
+            self._emit(type="step", title=update.title or update.kind, status=str(update.status))
+        elif n == "AgentPlanUpdate":
+            self._emit(type="plan", entries=[
+                {"content": e.content, "status": str(e.status)} for e in (update.entries or [])
+            ])
+        elif n == "UsageUpdate":
+            cost = getattr(update.cost, "amount", None) if update.cost else None
+            self._emit(type="usage", used=update.used, size=update.size, cost=cost)
+
+    # --- lifecycle -----------------------------------------------------------
+
+    async def open(self) -> None:
+        core.install_persona(self.expert, self.ws_dir)
+        core.install_skills(self.expert, self.cfg["skill_dir"], self.ws_dir)
+        command = core.resolve_command(self.cfg["command"])
+        client = ConsoleClient(on_update=self.on_update, on_log=self.on_log)
+        self._cm = acp.spawn_agent_process(
+            client, command, *self.cfg["args"], cwd=self.ws_dir, env=dict(os.environ)
+        )
+        self.conn, _ = await self._cm.__aenter__()
+        init = await self.conn.initialize(
+            protocol_version=acp.PROTOCOL_VERSION,
+            client_capabilities=client_capabilities(),
+            client_info=acp.schema.Implementation(name="split-acp", version="0.1.0"),
+        )
+        self.auth_methods = init.auth_methods or []
+        mcp = core.load_mcp()
+        try:
+            sess = await self.conn.new_session(cwd=self.ws_dir, mcp_servers=mcp)
+        except Exception as exc:
+            if mcp:  # some agents (e.g. Vibe) reject MCP over ACP — degrade
+                self.on_log(f"agent rejected MCP servers ({exc}); retrying without")
+                sess = await self.conn.new_session(cwd=self.ws_dir, mcp_servers=[])
+            else:
+                raise
+        self.acp_sid = sess.session_id
+
+    async def run(self, text: str) -> None:
+        self._emit(type="status", status="running")
+        try:
+            if self.conn is None:
+                await self.open()
+            resp = await self.conn.prompt(prompt=[acp.text_block(text)], session_id=self.acp_sid)
+            # status:idle == turn finished (the React reducer commits the answer here)
+            self._emit(type="status", status="idle", stop=str(getattr(resp, "stop_reason", "")))
+        except Exception as exc:
+            if is_auth_error(exc) or self.auth_methods:
+                self.pending = text
+                self._emit(type="auth_required", harness=self.harness,
+                           methods=self._auth_methods_json(),
+                           hasLogin=self.harness in LOGIN_CMD,
+                           note=self.cfg.get("auth", ""))
+            else:
+                self._emit(type="status", status="error", error=str(exc)[:400])
+
+    def _auth_methods_json(self) -> list:
+        out = []
+        for m in self.auth_methods:
+            out.append({"id": getattr(m, "id", None) or getattr(m, "method_id", ""),
+                        "name": getattr(m, "name", ""), "description": getattr(m, "description", "")})
+        return out
+
+    async def authenticate(self, method_id: str) -> None:
+        try:
+            if self.conn is None:
+                await self.open()
+            await self.conn.authenticate(method_id=method_id)
+            self._emit(type="auth_result", harness=self.harness, ok=True)
+            if self.pending:
+                text, self.pending = self.pending, None
+                await self.run(text)
+        except Exception as exc:
+            self._emit(type="auth_result", harness=self.harness, ok=False, error=str(exc)[:300])
+
+    async def close(self) -> None:
+        if self._cm is not None:
+            try:
+                await self._cm.__aexit__(None, None, None)
+            except Exception:
+                pass
+            self._cm = None
+
+
+async def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--harness", required=True)
+    ap.add_argument("--expert", default="consultant")
+    a = ap.parse_args()
+
+    sid = os.environ.get("SPLIT_SID") or a.harness
+    os.makedirs(core.WORKSPACE, exist_ok=True)
+    runner = Runner(sid, a.harness, a.expert)
+    runner._emit(type="ready", harness=a.harness, expert=a.expert)
+
+    loop = asyncio.get_event_loop()
+    try:
+        while True:
+            line = await loop.run_in_executor(None, sys.stdin.readline)
+            if not line:  # EOF — Rust dropped stdin
+                break
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                m = json.loads(line)
+            except Exception:
+                continue
+            if "text" in m:
+                await runner.run(m["text"])
+            elif "auth" in m:
+                await runner.authenticate(m["auth"]["methodId"])
+            elif m.get("type") == "stop":
+                break
+    finally:
+        await runner.close()
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass

@@ -1,0 +1,15 @@
+{
+  "_comment": "Expert registry: persona = experts/<name>.md (projected into the workspace AGENTS.md/CLAUDE.md/… at session start). skills = the portable SKILLs to mount for this expert (skills/<name>/SKILL.md → the harness's skill dir); a name not yet vendored under skills/ is silently skipped. kind is informational (operator/advisor/researcher/analyst/builder/finder/creator). Order here is the @-picker order; first = default.",
+
+  "consultant": { "label": "Consultant",       "kind": "researcher", "skills": ["web-search", "slide-deck"],            "blurb": "Web research into ready slides" },
+  "scientist":  { "label": "Scientist",        "kind": "researcher", "skills": ["web-search", "deep-research", "literature-review", "paper-writing", "peer-review"], "blurb": "Deep research, papers & peer review" },
+  "lawyer":     { "label": "Lawyer",           "kind": "advisor",    "skills": [],                                       "blurb": "Legal guidance, risk & clauses" },
+  "analyst":    { "label": "Data Analyst",     "kind": "analyst",    "skills": [],                                       "blurb": "CSV analysis, charts & dashboards" },
+  "engineer":   { "label": "Software Engineer","kind": "builder",    "skills": [],                                       "blurb": "Builds single-file HTML apps" },
+  "finder":     { "label": "File Finder",      "kind": "finder",     "skills": [],                                       "blurb": "Finds files on your Mac" },
+  "vision":     { "label": "Vision",           "kind": "operator",   "skills": [],                                       "blurb": "Drives your apps in the background" },
+  "musician":   { "label": "Musician",         "kind": "creator",    "skills": ["music-gen"],                            "blurb": "Generates original music & tracks" },
+  "podcaster":  { "label": "Podcaster",        "kind": "creator",    "skills": ["voice-gen", "music-gen"],               "blurb": "Scripts & edits full podcasts" },
+  "director":   { "label": "Director",         "kind": "creator",    "skills": ["video-gen", "music-gen", "voice-gen"],  "blurb": "Makes short videos with Kling" },
+  "wedding":    { "label": "Wedding Planner",  "kind": "advisor",    "skills": [],                                       "blurb": "Plans your wedding A to Z" }
+}

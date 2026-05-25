@@ -1,0 +1,328 @@
+# Split — many experts, in parallel, on any agent
+
+Split is a desktop assistant that runs **a roster of experts**, each in its own
+session. You pick an expert (a Consultant, a Lawyer, a Data Analyst, a computer
+**Operator**, …), give it a task in plain language, and it streams back what it
+does — research and citations, a slide deck, an interactive chart, a built app,
+a driven macOS window. Several can run at once, side by side.
+
+The bet underneath: **the "brain" is swappable plumbing.** An expert is a
+*persona + skills + tools*, and that bundle should run unchanged on Claude,
+Codex, Gemini, Mistral, or a local model. Split talks to all of them through one
+wire — the **Agent Client Protocol (ACP)** — so the same Consultant can run on
+your Claude Pro plan today and a local Ollama brain tomorrow, no rewrite.
+
+> **Lineage.** This started as `acp-client` — a throwaway bench to prove *"can
+> one Python client drive several agents over ACP, and does a portable
+> `SKILL.md` actually activate inside them?"* It does. The bench grew the answer:
+> a real expert roster, a multi-session UI, and an auth flow. The proof-of-concept
+> code (the zero-dep `split/acp_client_raw.py`, the `split.terminal` CLI) is still here.
+
+---
+
+## The model: EXPERT = persona + skills + tools, run on a HARNESS
+
+One idea, kept deliberately separate from the runtime:
+
+```
+EXPERT  =  persona (who it is)  +  skills (what it can do)  +  tools (what it can reach)
+            experts/<name>.md       skills/<skill>/SKILL.md      tools.json (MCP)
+                         │
+                         └── all of it runs on a  HARNESS  (the brain/runtime)
+                                                  harnesses.json — claude | codex | gemini | …
+```
+
+- The **persona** is projected into the agent's own instruction file
+  (`AGENTS.md` — the cross-vendor standard — plus `CLAUDE.md` / `GEMINI.md` /
+  `QWEN.md` shims). This is the agent's identity, *not* a skill.
+- The **skills** an expert declares (`experts.json`) are copied into the agent's
+  skill location — `.claude/skills/` for Claude, `.agents/skills/` for everyone
+  else. The `SKILL.md` is identical; only the *mount path* differs (the one
+  per-harness bit that isn't invariant).
+- The **tools** are MCP servers from `tools.json`, handed to the agent via ACP's
+  `session/new` (not its native config). ACP is what unifies them — Claude reads
+  `.mcp.json`, Codex reads `~/.codex/config.toml`; we don't care, we pass them
+  over the wire.
+
+Config (`experts.json` / `harnesses.json` / `skills/` / `tools.json`) is kept
+**separate from the generated `workspace/`** — the same split OpenClaw uses
+(`~/.openclaw` config vs. the agent's working home).
+
+---
+
+## Experts (11 so far)
+
+Pick one with `@` (terminal: `@consultant`; desktop/web: the picker). The
+**kind** is informational — it tells the UI how to render (chat panel vs. a step
+feed vs. an app preview).
+
+| Expert | Kind | What it does | Leans on |
+|---|---|---|---|
+| **Consultant** | researcher | Web research → a sharp, **cited** briefing, then slides on request | `slide-deck` skill + web search |
+| **Scientist** | researcher | Deep research, literature review, paper writing, peer review, replication | Feynman skill library¹ + shell / fs / web |
+| **Lawyer** | advisor | Legal guidance — draft clauses, explain risk, compare options | none (answers in the bar) |
+| **Data Analyst** | analyst | CSV/JSON/Excel/Parquet → interactive HTML report, models, or a Streamlit app | shell + fs (pandas, Plotly, scikit-learn) |
+| **Software Engineer** | builder | Builds a self-contained **single-file HTML app**, edits the same file on follow-ups | shell + fs |
+| **File Finder** | finder | Locates files on your Mac by name/content/type/date — **read-only** | `mdfind` / `find` / `grep` |
+| **Vision** | operator | Drives real macOS apps **in the background** (cursor never moves) | cua tools (MCP) |
+| **Musician** | creator | Turns a description into a finished, shareable track | `music-gen` skill¹ + ffmpeg |
+| **Podcaster** | creator | Topic → scripted, voiced, **edited** podcast episode | `voice-gen` + `music-gen`¹ + ffmpeg |
+| **Director** | creator | Idea → short video (shot list, score, narration, cut) | `video-gen` + `music-gen` + `voice-gen`¹ + ffmpeg |
+| **Wedding Planner** | advisor | Plans a French wedding A→Z (budget → venue → vendors) | none (answers in the bar) |
+
+Personas live in [`config/experts/`](config/experts/); the registry + render-kinds
+are in [`config/experts.json`](config/experts.json).
+
+---
+
+## Skills
+
+We follow the open **[Agent Skills](https://agentskills.io) standard**
+(Anthropic-originated, now cross-vendor): a skill is a **folder** — a required
+`SKILL.md` (`name` + `description` frontmatter + instructions) plus optional
+`scripts/`, `references/`, `assets/`. Agents load it by *progressive disclosure*
+(name/description at startup → full `SKILL.md` on a match → bundled scripts on
+demand). The same folder runs unchanged across Claude, Codex, Gemini, OpenCode,
+Cursor, Vibe… — i.e. almost every harness here. **This is the whole portability
+thesis, and it's a standard, not a bet.**
+
+**Skills are declared per-expert** in [`config/experts.json`](config/experts.json)
+(`"skills": ["slide-deck", …]`) and mounted at session start by `install_skills`,
+which copies the **whole skill folder** into that harness's skill dir
+(`.claude/skills/` for Claude, `.agents/skills/` otherwise — the only per-harness
+glue). A declared skill not yet vendored under `skills/<name>/` is silently
+skipped, so a persona may name a skill before it exists.
+
+Vendored in [`config/skills/`](config/skills/):
+
+- **`slide-deck`** — reveal.js HTML deck (CDN, no build) → `~/Desktop`. *(Consultant)*
+- **`deep-research`, `literature-review`, `paper-writing`, `peer-review`** — the
+  Feynman library, prompt-only (no scripts). *(Scientist)*
+- **`music-gen`, `voice-gen`, `video-gen`** — each bundles a **stdlib-only**
+  `scripts/*.py` that calls fal.ai / ElevenLabs over plain `urllib` (no deps to
+  install); needs `FAL_KEY` / `ELEVENLABS_API_KEY`. *(Musician / Podcaster / Director)*
+
+> ¹ **Now vendored.** The Feynman library and the gen-skills live in `skills/`
+> and mount automatically. The gen-skills need an API key (`FAL_KEY` /
+> `ELEVENLABS_API_KEY`); the Feynman skills are prompt-only and need nothing.
+
+---
+
+## Harnesses (the agents — 12 wired)
+
+Each harness is a runtime/brain. ACP calls each one an "agent"; we launch any
+`command + args`, so even agents the public ACP registry can't express still
+work. Logos for all 12 ship in [`apps/desktop/public/logos/`](apps/desktop/public/logos/).
+
+| Harness | What it is | Launch | Auth | Status |
+|---|---|---|---|---|
+| `claude` | Claude Agent (claude-acp) | `npx @agentclientprotocol/claude-agent-acp` | `claude login` (Pro/Max) or `ANTHROPIC_API_KEY` | ✅ ready |
+| `codex` | Codex CLI (codex-acp) | `npx @zed-industries/codex-acp` | `codex login` or `OPENAI_API_KEY` | ✅ ready |
+| `gemini` | Gemini CLI | `npx @google/gemini-cli --acp` | Google login (free tier) or `GEMINI_API_KEY` | ✅ ready |
+| `qwen` | Qwen Code (Gemini-CLI fork) | `npx @qwen-code/qwen-code --acp` | `qwen` login or `DASHSCOPE_API_KEY` | ✅ ready |
+| `copilot` | GitHub Copilot CLI | `npx @github/copilot --acp` | Copilot sub (`gh auth login`) or `GH_TOKEN` | ✅ ready |
+| `deepagents` | DeepAgents (LangChain, model-agnostic) | `npx deepagents-acp` | any provider key (or local) | ✅ ready |
+| `hermes` | Hermes Agent | `uvx --from 'hermes-agent[acp]' hermes-acp` | `uv` + `NOUS_API_KEY` (or local provider) | ✅ ready (hors-registry²) |
+| `opencode` | OpenCode (75+ providers) | `./bin/opencode acp` | model-agnostic; Ollama for zero-key local | ⚙️ binary in `bin/` |
+| `cursor` | Cursor Agent | `./bin/dist-package/cursor-agent acp` | `cursor-agent login` or `CURSOR_API_KEY` | ⚙️ binary in `bin/` |
+| `mistral-vibe` | Mistral Vibe | `./bin/vibe-acp` | `MISTRAL_API_KEY` (download binary, below) | ⚙️ needs binary |
+| `grok` | Grok Build | `grok agent stdio` | install xAI CLI + SuperGrok or `GROK_CODE_XAI_API_KEY` | 🅿️ reserve² |
+| `openclaw` | OpenClaw Gateway (a **bridge**) | `openclaw acp` | running Gateway + token | 🅿️ reserve² |
+
+Configs live in [`config/harnesses.json`](config/harnesses.json) (versions pinned from the ACP
+registry where one exists).
+
+> ² **Hors-registry / reserve.** *Hermes* isn't in the registry because its
+> package (`hermes-agent[acp]`) differs from its executable (`hermes-acp`), which
+> the registry can't express ([issue #296](https://github.com/agentclientprotocol/registry/issues/296))
+> — we handle it fine. *Grok* and *OpenClaw* are reserve entries: they won't
+> launch until installed/authed (Grok is paid beta; OpenClaw needs a running
+> Gateway and nests its *whole* runtime — channels, memory, sub-agents — as one
+> agent behind us).
+
+---
+
+## What the app actually does (two fronts, one engine)
+
+Both fronts reuse the same engine in [`split/core.py`](split/core.py)
+(`install_persona` / `install_skills` / `load_mcp` / `resolve_command` + the
+registries) and the same ACP client. A session = spawn the harness → project the
+expert's persona + skills into a **per-session workspace** → mount MCP tools via
+`session/new` → stream the agent's `session/update` events back.
+
+1. **Terminal** — [`split/terminal.py`](split/terminal.py), run as
+   `python -m split.terminal`. Switch agents live with `@mentions`
+   (`@claude research EVs`), watch text, tool calls, plans, and usage stream in
+   color. The fastest way to test a persona/skill on a new harness.
+2. **Desktop** — [`apps/desktop/`](apps/desktop/), a **Tauri 2 + React 19**
+   single-window app: a floating, always-on-top **bar**. It spawns one
+   [`split/runner.py`](split/runner.py) **per session** (`python -m split.runner`,
+   process-per-session) and parses its `VEVT <json>` stdout line protocol; Rust
+   tracks the live sessions so several stream in parallel without crossing wires.
+   **Drop a file on the bar** to attach it to the next turn (📎 chip in the
+   thread, full content folded into what the agent receives). An onboarding step
+   picks the harness; the auth flow surfaces inline.
+
+> A third **web front** (a zero-install browser UI over a WebSocket) used to live
+> here; it was retired into `var/_retired/` in favour of the desktop app.
+
+**Auth = the agent's job (ACP "Agent Auth").** When a harness needs sign-in, the
+front gets `auth_required` and can either run ACP `authenticate` (OAuth) or pop a
+Terminal with that harness's login command (`claude login`, `codex login`, …).
+Detection + the per-harness commands live in [`split/auth.py`](split/auth.py); the
+desktop drives the actual Terminal/OAuth flow from Rust.
+
+---
+
+## The wire, in events
+
+The agent's `session/update` stream is normalized to a handful of event types
+the UI renders the same way (terminal colors / `VEVT` lines):
+
+`say` (assistant text) · `thought` · `step` (tool call start/progress) ·
+`plan` · `usage` (tokens + cost) · `status` (running/idle/error) ·
+`auth_required` / `auth_result`.
+
+The desktop's Rust↔Python contract is one `VEVT <json>` line per event on the
+runner's stdout; everything else on stderr becomes a `.log`. `status: idle`
+means a **turn** finished (the session stays open for the next turn).
+
+---
+
+## Setup
+
+```bash
+cd split            # the repo root
+python3.11 -m venv .venv
+.venv/bin/pip install -r requirements.txt   # agent-client-protocol, python-dotenv
+```
+
+**Prerequisites**
+
+- **Python 3.10+** (we use 3.11; the `split/acp_client_raw.py` fallback runs on 3.9).
+- **Node** (for `npx`) — launches the Claude/Codex/Gemini/Qwen/Copilot/DeepAgents adapters.
+- **`uv`** — only for the Hermes harness (`uvx`).
+- **Auth** for whichever harness you test (table above). Provider keys go in
+  `.env` at the repo root (loaded by `split.core`); CLI-login agents use their own login.
+
+**Mistral Vibe binary** (no npx distribution):
+
+```bash
+mkdir -p var/bin && cd var/bin
+# macOS arm64 example:
+curl -L -o vibe-acp.zip https://github.com/mistralai/mistral-vibe/releases/download/v2.10.1/vibe-acp-darwin-aarch64-2.10.1.zip
+unzip vibe-acp.zip && chmod +x vibe-acp && cd ../..
+```
+
+---
+
+## Run
+
+```bash
+# 1) Terminal front (split-cli)
+.venv/bin/python -m split.terminal          # pick an agent with @
+.venv/bin/python -m split.terminal claude   # or start on one
+
+# 2) Desktop app (split-app, Tauri)
+cd apps/desktop && npm install && npm run tauri dev
+```
+
+Try the full loop on either front:
+
+```
+Research the EV market in 2026 and give me a short briefing   # persona: search + cite
+Now turn that into a slide deck                                 # skill: slide-deck → ~/Desktop/*.html
+@claude use the add tool from the everything MCP to add 17 and 25   # tools (MCP): mcp__everything__get-sum → 42
+```
+
+`/quit` exits the terminal front.
+
+---
+
+## Repo layout
+
+Four concerns, kept apart: the **engine + fronts** (`split/`), the **config**
+(`config/`, portable & version-controlled), the **UIs** (`apps/`), and
+**generated/vendored** state (`var/`, gitignored).
+
+```
+split/                # the Python backend (a package, run via `python -m split.<x>`)
+  core.py             #   the ENGINE: layout, registries, persona+skill projection, mcp, command
+  terminal.py         #   FRONT — the CLI  (python -m split.terminal)        ← "split-cli"
+  runner.py           #   the per-session ACP sidecar the desktop spawns     (python -m split.runner)
+  acp_client.py       #   the ACP Client protocol on the official SDK (agent-client-protocol)
+  acp_client_raw.py   #   zero-dep fallback: the same client hand-rolled over stdlib (3.9)
+  auth.py             #   Agent-Auth detection + the per-harness login commands
+
+config/               # the EXPERT SYSTEM (portable, the OpenClaw "config" half)
+  harnesses.json      #   the 12 HARNESSES (brains/runtimes)
+  experts.json        #   the 11 EXPERTS (render kind + declared skills)
+  tools.json          #   the TOOLS (MCP servers, mcpServers shape)
+  experts/*.md        #   each expert's persona prompt
+  skills/<name>/      #   portable SKILLs, Agent Skills standard (SKILL.md + optional scripts/)
+
+apps/
+  desktop/            # FRONT — the Tauri 2 + React 19 bar  (npm run tauri dev) ← "split-app"
+
+var/                  # generated / vendored — gitignored, safe to delete
+  workspace/          #   each session's PERSISTENT home (persona+skill projected in;
+                      #     the agent's own files/memory kept across runs)
+  bin/                #   downloaded harness binaries (opencode, vibe-acp, cursor-agent)
+  _retired/           #   parked code (the old web front: server.py + web/)
+
+pyproject.toml · requirements.txt · .gitignore · .env (your keys) · .venv/
+```
+
+---
+
+## Platforms — **macOS only, today**
+
+The ACP/Python core is portable, but the app as a whole is currently pinned to
+macOS. Honest blockers if you try Windows/Linux:
+
+- **Hardcoded paths** — the Tauri shell (`apps/desktop/src-tauri/src/lib.rs`) codes
+  in absolute `/Users/...` paths (`PYTHON`, `ACP_DIR`) and assumes `.venv/bin/python`
+  (Windows is `.venv\Scripts\python.exe`).
+- **Auth fallback** — `lib.rs` opens the login terminal via `osascript` +
+  **Terminal.app** (macOS-only AppleScript).
+- **Session teardown** — Rust kills the process tree with `pkill`/`kill`
+  (Windows needs `taskkill`).
+- **`PATH`** — built with a `:` separator and `/opt/homebrew` entries (Unix).
+- **Binaries** — `var/bin/opencode`, `var/bin/vibe-acp`, the `*.node` addons are
+  **darwin-arm64**; you'd need per-platform builds.
+- **Window chrome** — `macOSPrivateApi`, vibrancy, `transparent` + borderless
+  render differently (or not at all) off macOS.
+
+The Python package itself uses no `fcntl`/`pty`/`os.fork`/`termios`, so
+`split/` ports cleanly; cross-platform support is an enclosing-shell job
+(relative paths, per-OS auth, `taskkill`, per-platform binaries, CI) — roughly a
+few weeks.
+
+---
+
+## Notes / honest caveats
+
+- **Skills:** per-expert (`config/experts.json`), all 8 vendored in
+  `config/skills/` (whole folders, per the Agent Skills standard). The gen-skills
+  need `FAL_KEY` / `ELEVENLABS_API_KEY`; everything else runs key-free.
+- **`terminal/*` is not implemented** (we advertise `terminal: false`). Agents
+  that run tools in-process (Claude, Codex) are fine; one needing the client to
+  host a terminal will degrade — itself a finding.
+- **Permissions are auto-approved** (bench posture); `fs/read_text_file` /
+  `fs/write_text_file` are served from the real filesystem.
+- **Vibe + MCP:** Vibe advertises `mcpCapabilities.http/sse = false` and keeps
+  MCP in its own `~/.vibe/config.toml`; if it rejects servers over ACP the
+  backend retries without them and warns.
+- **`var/workspace/` persists** (it's the agent's home, like OpenClaw's); only the
+  persona/skill projections are overwritten. `rm -rf var/workspace/` for a clean slate.
+
+## License
+
+Split is licensed under the [Apache License 2.0](LICENSE) — see [`LICENSE`](LICENSE)
+and [`NOTICE`](NOTICE). Apache-2.0 is permissive and includes an explicit patent grant.
+
+Dependency licenses are compatible: the **Agent Client Protocol** SDK
+(`agent-client-protocol`, by Zed Industries) is **Apache-2.0**, and `python-dotenv`
+is **BSD-3-Clause**. Split is an ACP *client* — the agent CLIs it drives (Claude,
+Codex, Gemini, …) run as **separate external processes over the protocol** and are
+**not bundled or redistributed** with Split, so their licenses don't affect Split's.

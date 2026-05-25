@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# secrets
+.env
+
+# generated state · vendored harness binaries · retired code (all under var/)
+var/
+
+# desktop build artifacts
+apps/desktop/node_modules/
+apps/desktop/dist/
+apps/desktop/src-tauri/target/
+
+Claude.md

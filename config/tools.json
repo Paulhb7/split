@@ -1,0 +1,25 @@
+{
+  "_comment": "TOOLS = MCP servers, fed to every agent via the ACP session/new call (NOT a native config file — agents' own formats differ: .mcp.json (JSON) for Claude/Cursor vs ~/.codex/config.toml (TOML) for Codex). ACP is what unifies them. Shape is the de-facto `mcpServers` object (Claude Desktop/Code/Cursor). env values support ${VAR} expansion for API keys.",
+
+  "mcpServers": {
+    "everything": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything"],
+      "env": {}
+    },
+    "ddg-search": {
+      "_comment": "Keyless web search (DuckDuckGo). Exposes the `search` and `fetch_content` tools to every agent — the universal floor so even harnesses with no native web search can honor 'Search first'. Paired with the web-search SKILL (config/skills/web-search). Needs uvx on PATH.",
+      "command": "uvx",
+      "args": ["duckduckgo-mcp-server"],
+      "env": {}
+    }
+  },
+
+  "_example_real_tool": {
+    "search": {
+      "command": "npx",
+      "args": ["-y", "mcp-omnisearch"],
+      "env": { "TAVILY_API_KEY": "${TAVILY_API_KEY}" }
+    }
+  }
+}

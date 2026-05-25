@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "split-acp"
+version = "0.1.0"
+description = "Split — many experts in parallel over the Agent Client Protocol (ACP)"
+license = "Apache-2.0"
+authors = [{ name = "Paul Barbaste" }]
+requires-python = ">=3.10"
+dynamic = ["dependencies"]
+
+[tool.setuptools]
+packages = ["split"]
+
+# Single source of truth for deps stays requirements.txt.
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }

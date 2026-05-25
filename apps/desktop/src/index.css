@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: transparent;
+}
+
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  overflow: hidden;
+  cursor: default;
+}
+
+/* Markdown in the action stream (selectable text) */
+.stream-md {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: auto;
+}
+.stream-md p {
+  margin: 0 0 6px;
+}
+.stream-md h1,
+.stream-md h2,
+.stream-md h3 {
+  font-weight: 600;
+  margin: 8px 0 4px;
+  color: rgba(255, 255, 255, 0.92);
+}
+.stream-md h1 {
+  font-size: 15px;
+}
+.stream-md h2 {
+  font-size: 14px;
+}
+.stream-md h3 {
+  font-size: 13px;
+}
+.stream-md ul,
+.stream-md ol {
+  margin: 0 0 6px;
+  padding-left: 18px;
+}
+.stream-md li {
+  margin: 2px 0;
+}
+.stream-md code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 5px;
+  border-radius: 5px;
+}
+.stream-md pre {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 8px 10px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 0 0 6px;
+}
+.stream-md pre code {
+  background: none;
+  padding: 0;
+}
+.stream-md strong {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+}
+.stream-md a {
+  color: #e0566b;
+}
+.stream-md table {
+  border-collapse: collapse;
+  margin: 0 0 6px;
+}
+.stream-md th,
+.stream-md td {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 2px 8px;
+}
