@@ -17,3 +17,7 @@ packages = ["split"]
 # Single source of truth for deps stays requirements.txt.
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
+
+[tool.pytest.ini_options]
+pythonpath = ["."]      # so `from split import core` resolves from the repo root
+testpaths = ["tests"]

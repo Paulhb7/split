@@ -25,11 +25,13 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: Install deps
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
       - name: Compile
         run: python -m py_compile split/*.py
       - name: Import smoke (loads config registries)
         run: python -c "from split import core; print(len(core.load_harnesses()), 'harnesses,', len(core.load_experts()), 'experts')"
+      - name: Unit tests (pytest)
+        run: pytest -q
 
   desktop:
     name: Desktop (Tauri + React)
@@ -48,6 +50,8 @@ jobs:
         run: npm ci
       - name: Build frontend (tsc + vite)
         run: npm run build
+      - name: Unit tests (vitest)
+        run: npm test
       - name: Cargo cache
         uses: Swatinem/rust-cache@v2
         with:
