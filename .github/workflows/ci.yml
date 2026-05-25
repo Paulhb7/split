@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**/*.md"]
+  pull_request:
+    paths-ignore: ["**/*.md"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python engine (split/)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Compile
+        run: python -m py_compile split/*.py
+      - name: Import smoke (loads config registries)
+        run: python -c "from split import core; print(len(core.load_harnesses()), 'harnesses,', len(core.load_experts()), 'experts')"
+
+  desktop:
+    name: Desktop (Tauri + React)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: apps/desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - name: Install frontend deps
+        run: npm ci
+      - name: Build frontend (tsc + vite)
+        run: npm run build
+      - name: Cargo cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+      - name: cargo check (Tauri crate)
+        working-directory: apps/desktop/src-tauri
+        run: cargo check
