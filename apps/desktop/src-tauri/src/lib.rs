@@ -1,16 +1,56 @@
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
+use std::path::{Path, PathBuf};
 use std::process::{ChildStdin, Command, Stdio};
 use std::sync::{LazyLock, Mutex};
 
 use serde_json::json;
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, WebviewWindow};
 
-// The ACP backend: one Python session per session, run as `python -m split.runner`
-// from ACP_DIR (so the `split` package resolves). These must point at this repo
-// root + its venv; if either moves, the app silently fails to launch.
-const PYTHON: &str = "/Users/aristocat/Desktop/split/.venv/bin/python";
-const ACP_DIR: &str = "/Users/aristocat/Desktop/split";
+// The ACP backend: one `split.runner` process per session, run as
+// `python -m split.runner` from the repo root (so the `split` package resolves).
+// The repo root and the Python interpreter are resolved at RUNTIME — nothing
+// machine-specific is baked in, so the app runs from wherever it's checked out.
+// Resolution order, most explicit first:
+//   1. env override  — SPLIT_REPO_ROOT / SPLIT_PYTHON
+//   2. walk up from the executable to the dir holding our repo markers
+//      (config/harnesses.json + split/core.py) — covers `tauri dev`, where the
+//      binary lives under apps/desktop/src-tauri/target/<profile>/
+//   3. compile-time fallback — this crate sits at apps/desktop/src-tauri, so the
+//      repo root is three levels up from CARGO_MANIFEST_DIR
+static REPO_ROOT: LazyLock<PathBuf> = LazyLock::new(resolve_repo_root);
+
+fn resolve_repo_root() -> PathBuf {
+    if let Ok(dir) = std::env::var("SPLIT_REPO_ROOT") {
+        if !dir.is_empty() {
+            return PathBuf::from(dir);
+        }
+    }
+    let is_root =
+        |p: &Path| p.join("config/harnesses.json").is_file() && p.join("split/core.py").is_file();
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(root) = exe.ancestors().find(|&p| is_root(p)) {
+            return root.to_path_buf();
+        }
+    }
+    let crate_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..");
+    crate_root.canonicalize().unwrap_or(crate_root)
+}
+
+// The Python interpreter: explicit override, else the repo's venv, else `python3`.
+fn python_bin() -> PathBuf {
+    if let Ok(p) = std::env::var("SPLIT_PYTHON") {
+        if !p.is_empty() {
+            return PathBuf::from(p);
+        }
+    }
+    let venv = REPO_ROOT.join(".venv/bin/python");
+    if venv.is_file() {
+        venv
+    } else {
+        PathBuf::from("python3")
+    }
+}
 
 // --- multi-session ----------------------------------------------------------
 // Each session is a long-lived `split.runner` speaking ACP to one agent.
@@ -86,11 +126,11 @@ fn hide_window(window: WebviewWindow) {
 }
 
 // Reveal the workspace folder (or one session's subfolder) in Finder. `workspace`
-// empty → the default root (ACP_DIR/var/workspace).
+// empty → the default root (<repo>/var/workspace).
 #[tauri::command]
 fn open_workspace(workspace: String, session_id: Option<String>) {
     let root = if workspace.is_empty() {
-        std::path::Path::new(ACP_DIR).join("var").join("workspace")
+        REPO_ROOT.join("var").join("workspace")
     } else {
         std::path::PathBuf::from(workspace)
     };
@@ -110,8 +150,9 @@ fn open_workspace(workspace: String, session_id: Option<String>) {
 fn start_session(app: AppHandle, id: String, harness: String, expert: String, workspace: String) {
     let harness = if harness.is_empty() { "claude".to_string() } else { harness };
     let expert = if expert.is_empty() { "consultant".to_string() } else { expert };
-    eprintln!("[start_session] {id} ({harness}/{expert}) ws={workspace:?}");
-    let mut child = match Command::new(PYTHON)
+    let python = python_bin();
+    eprintln!("[start_session] {id} ({harness}/{expert}) ws={workspace:?} py={python:?}");
+    let mut child = match Command::new(&python)
         .arg("-u")
         .arg("-m")
         .arg("split.runner")
@@ -119,7 +160,7 @@ fn start_session(app: AppHandle, id: String, harness: String, expert: String, wo
         .arg(&harness)
         .arg("--expert")
         .arg(&expert)
-        .current_dir(ACP_DIR)
+        .current_dir(&*REPO_ROOT)
         .env("SPLIT_SID", &id)
         .env("SPLIT_WORKSPACE", &workspace) // empty → runner uses the default root
         .env("PATH", child_path())
@@ -230,7 +271,7 @@ fn list_experts() -> Result<String, String> {
 }
 
 fn read_json_object(name: &str) -> Result<String, String> {
-    let path = std::path::Path::new(ACP_DIR).join("config").join(name);
+    let path = REPO_ROOT.join("config").join(name);
     let raw = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
     let val: serde_json::Value = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
     if let serde_json::Value::Object(map) = val {
@@ -273,7 +314,7 @@ fn terminal_login(harness: String) -> Result<String, String> {
 
 // --- API keys ----------------------------------------------------------------
 // Provider keys the ACP harnesses may need. The bar/dashboard collects them and
-// we persist to acp-client/.env, which split.core loads via python-dotenv on
+// we persist to the repo-root .env, which split.core loads via python-dotenv on
 // every spawn. Allowlisted so the UI can't write arbitrary env vars.
 const KNOWN_KEYS: &[&str] = &[
     "ANTHROPIC_API_KEY",
@@ -286,8 +327,8 @@ const KNOWN_KEYS: &[&str] = &[
     "GROK_CODE_XAI_API_KEY",
 ];
 
-fn env_path() -> std::path::PathBuf {
-    std::path::Path::new(ACP_DIR).join(".env")
+fn env_path() -> PathBuf {
+    REPO_ROOT.join(".env")
 }
 
 #[tauri::command]
@@ -323,7 +364,7 @@ fn api_keys_status() -> Result<String, String> {
         let set = existing.lines().any(|l| {
             let l = l.trim_start();
             l.starts_with(&format!("{key}="))
-                && l.splitn(2, '=').nth(1).map(|v| !v.trim().is_empty()).unwrap_or(false)
+                && l.split_once('=').map(|x| x.1).map(|v| !v.trim().is_empty()).unwrap_or(false)
         });
         status.insert((*key).to_string(), serde_json::Value::Bool(set));
     }

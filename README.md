@@ -191,6 +191,21 @@ means a **turn** finished (the session stays open for the next turn).
 
 ## Setup
 
+**Quickstart — the Makefile (macOS / Linux):**
+
+```bash
+make doctor     # check the toolchain (python / node / uv / cargo)
+make install    # venv + Python deps + desktop npm deps, in one shot
+make app        # run the desktop app   (or `make cli` for the terminal front)
+```
+
+`make build` bundles the native `.app`; `make test` runs pytest + vitest; `make`
+(no target) lists everything. Windows isn't covered by the Makefile — the
+backend/CLI can run under WSL, but the desktop app is macOS-only today (see
+*Platforms — macOS only, today* below).
+
+Or do it manually:
+
 ```bash
 cd split            # the repo root
 python3.11 -m venv .venv
@@ -280,9 +295,11 @@ pyproject.toml · requirements.txt · .gitignore · .env (your keys) · .venv/
 The ACP/Python core is portable, but the app as a whole is currently pinned to
 macOS. Honest blockers if you try Windows/Linux:
 
-- **Hardcoded paths** — the Tauri shell (`apps/desktop/src-tauri/src/lib.rs`) codes
-  in absolute `/Users/...` paths (`PYTHON`, `ACP_DIR`) and assumes `.venv/bin/python`
-  (Windows is `.venv\Scripts\python.exe`).
+- **Python interpreter path** — the Tauri shell (`apps/desktop/src-tauri/src/lib.rs`)
+  resolves the repo root + interpreter at runtime (`SPLIT_REPO_ROOT`/`SPLIT_PYTHON`,
+  else exe-ancestor markers, else `CARGO_MANIFEST_DIR`), so it's no longer pinned to
+  one machine — but its venv fallback is `.venv/bin/python` (Windows is
+  `.venv\Scripts\python.exe`; set `SPLIT_PYTHON` to override).
 - **Auth fallback** — `lib.rs` opens the login terminal via `osascript` +
   **Terminal.app** (macOS-only AppleScript).
 - **Session teardown** — Rust kills the process tree with `pkill`/`kill`
