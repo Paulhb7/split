@@ -1,7 +1,7 @@
-# Split — dev bootstrap (macOS / Linux, POSIX make).
+# Split — dev bootstrap (macOS / Linux). Python via uv, desktop via npm.
 #
 #   make doctor     # check the toolchain
-#   make install    # venv + Python deps + desktop npm deps
+#   make install    # uv sync (Python) + npm install (desktop)
 #   make app        # run the desktop app   (make cli = terminal front)
 #
 # Windows isn't covered here: the backend/CLI can run under WSL, but the desktop
@@ -11,40 +11,28 @@
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
 
-PYTHON  := $(shell command -v python3.11 2>/dev/null || command -v python3)
-VENV    := .venv
-VENV_PY := $(VENV)/bin/python
 DESKTOP := apps/desktop
 H       ?= claude          # harness for `make cli` — override: make cli H=codex
 
-.PHONY: help doctor install backend desktop cli app build test clean
+.PHONY: help doctor install sync desktop cli app build test clean
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-doctor: ## Check the toolchain (python / node / uv / cargo) + next steps
+doctor: ## Check the toolchain (uv / node / cargo) + next steps
 	@echo "Split — toolchain check"
-	@printf "  %-7s " python; if [ -n "$(PYTHON)" ]; then echo "$(PYTHON) ($$($(PYTHON) -V 2>&1))"; else echo "MISSING — need Python 3.10+"; fi
+	@printf "  %-7s " uv;    command -v uv    >/dev/null && uv --version  || echo "MISSING — install: brew install uv (manages the Python backend)"
 	@printf "  %-7s " node;  command -v node  >/dev/null && node -v  || echo "MISSING — needed for npx harnesses + the app"
 	@printf "  %-7s " npm;   command -v npm   >/dev/null && npm -v   || echo "MISSING — needed for the desktop app"
-	@printf "  %-7s " uv;    command -v uv    >/dev/null && uv --version  || echo "missing (optional: hermes + web search)"
 	@printf "  %-7s " cargo; command -v cargo >/dev/null && cargo -V || echo "missing (optional: building the desktop app)"
 	@echo
 	@echo "Auth is per-harness, interactive: claude login · codex login · gemini · gh auth login …"
 	@echo "Provider API keys (optional): put them in .env at the repo root."
 
-# --- backend (Python venv) ---------------------------------------------------
-$(VENV_PY):
-	@test -n "$(PYTHON)" || { echo "No python3.11/python3 found — install Python 3.10+"; exit 1; }
-	$(PYTHON) -m venv $(VENV)
-
-$(VENV)/.deps: requirements.txt | $(VENV_PY)
-	$(VENV_PY) -m pip install --upgrade pip
-	$(VENV_PY) -m pip install -r requirements.txt
-	@touch $@
-
-backend: $(VENV)/.deps ## Set up the Python backend (venv + deps)
+# --- backend (Python via uv) -------------------------------------------------
+sync: ## Sync the Python env from uv.lock (creates .venv)
+	uv sync
 
 # --- desktop (npm) -----------------------------------------------------------
 $(DESKTOP)/node_modules: $(DESKTOP)/package.json
@@ -54,25 +42,24 @@ $(DESKTOP)/node_modules: $(DESKTOP)/package.json
 desktop: $(DESKTOP)/node_modules ## Install the desktop app's npm deps
 
 # --- one-shot setup ----------------------------------------------------------
-install: backend desktop ## Full setup: backend venv + desktop npm deps
+install: sync desktop ## Full setup: uv sync (Python) + desktop npm deps
 	@echo "✓ Setup done — run 'make cli' (terminal) or 'make app' (desktop)."
 
 # --- run ---------------------------------------------------------------------
-cli: backend ## Run the terminal front (override harness: make cli H=codex)
-	$(VENV_PY) -m split.terminal $(H)
+cli: sync ## Run the terminal front (override harness: make cli H=codex)
+	uv run python -m split.terminal $(H)
 
-app: backend $(DESKTOP)/node_modules ## Run the desktop app (Tauri dev)
+app: sync $(DESKTOP)/node_modules ## Run the desktop app (Tauri dev)
 	cd $(DESKTOP) && npm run tauri dev
 
 build: $(DESKTOP)/node_modules ## Bundle the native .app (Tauri build)
 	cd $(DESKTOP) && npm run tauri build
 
 # --- tests / cleanup ---------------------------------------------------------
-test: $(VENV)/.deps $(DESKTOP)/node_modules ## Run Python (pytest) + frontend (vitest) tests
-	$(VENV_PY) -m pip install -r requirements-dev.txt
-	$(VENV_PY) -m pytest -q
+test: sync $(DESKTOP)/node_modules ## Run Python (pytest) + frontend (vitest) tests
+	uv run pytest -q
 	cd $(DESKTOP) && npm test
 
 clean: ## Remove the venv + Python caches (keeps node_modules and var/workspace)
-	rm -rf $(VENV) .pytest_cache
+	rm -rf .venv .pytest_cache
 	find . -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null || true

@@ -194,8 +194,8 @@ means a **turn** finished (the session stays open for the next turn).
 **Quickstart — the Makefile (macOS / Linux):**
 
 ```bash
-make doctor     # check the toolchain (python / node / uv / cargo)
-make install    # venv + Python deps + desktop npm deps, in one shot
+make doctor     # check the toolchain (uv / node / cargo)
+make install    # uv sync (Python) + desktop npm deps, in one shot
 make app        # run the desktop app   (or `make cli` for the terminal front)
 ```
 
@@ -208,15 +208,15 @@ Or do it manually:
 
 ```bash
 cd split            # the repo root
-python3.11 -m venv .venv
-.venv/bin/pip install -r requirements.txt   # agent-client-protocol, python-dotenv
+uv sync             # creates .venv from pyproject.toml + uv.lock (deps + dev tools)
 ```
 
 **Prerequisites**
 
-- **Python 3.10+** (we use 3.11; the `split/acp_client_raw.py` fallback runs on 3.9).
+- **[uv](https://docs.astral.sh/uv/)** — the Python toolchain (manages the venv +
+  deps from `uv.lock`). `brew install uv`. (Targets Python 3.10+; the
+  `split/acp_client_raw.py` fallback runs on 3.9.)
 - **Node** (for `npx`) — launches the Claude/Codex/Gemini/Qwen/Copilot/DeepAgents adapters.
-- **`uv`** — only for the Hermes harness (`uvx`).
 - **Auth** for whichever harness you test (table above). Provider keys go in
   `.env` at the repo root (loaded by `split.core`); CLI-login agents use their own login.
 
@@ -235,8 +235,8 @@ unzip vibe-acp.zip && chmod +x vibe-acp && cd ../..
 
 ```bash
 # 1) Terminal front (split-cli)
-.venv/bin/python -m split.terminal          # pick an agent with @
-.venv/bin/python -m split.terminal claude   # or start on one
+uv run python -m split.terminal             # pick an agent with @
+uv run python -m split.terminal claude      # or start on one
 
 # 2) Desktop app (split-app, Tauri)
 cd apps/desktop && npm install && npm run tauri dev
@@ -285,7 +285,7 @@ var/                  # generated / vendored — gitignored, safe to delete
   bin/                #   downloaded harness binaries (opencode, vibe-acp, cursor-agent)
   _retired/           #   parked code (the old web front: server.py + web/)
 
-pyproject.toml · requirements.txt · .gitignore · .env (your keys) · .venv/
+pyproject.toml · uv.lock · .gitignore · .env (your keys) · .venv/
 ```
 
 ---
