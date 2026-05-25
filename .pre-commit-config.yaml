@@ -1,0 +1,46 @@
+# Pre-commit guards — secrets, session/workspace state, accidental big blobs.
+#
+#   Setup:   brew install pre-commit        (or: pip install pre-commit)
+#            pre-commit install
+#   Run now: pre-commit run --all-files
+#   Bump:    pre-commit autoupdate
+#
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: detect-private-key # blocks committed private keys
+      - id: check-added-large-files # blocks accidental big blobs
+        args: ["--maxkb=1024"]
+      - id: check-merge-conflict
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets # scans staged diffs for API keys / tokens
+        args: ["--baseline", ".secrets.baseline"]
+
+  # Lint (no formatting): Python with ruff, JS/TS with eslint.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.14
+    hooks:
+      - id: ruff-check # `ruff check` on split/ + tests/
+
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint (JS/TS)
+        language: system
+        files: ^apps/desktop/src/.*\.(ts|tsx)$
+        pass_filenames: false
+        entry: bash -c 'cd apps/desktop && npx eslint src'
+
+  # Defense beyond .gitignore: hard-block secret/state paths even if force-added.
+  - repo: local
+    hooks:
+      - id: block-state-and-env
+        name: block .env and var/ (secrets, workspaces, binaries)
+        language: script
+        entry: scripts/precommit-block-state.sh
+        pass_filenames: false
+        always_run: true

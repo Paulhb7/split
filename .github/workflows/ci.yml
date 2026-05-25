@@ -26,6 +26,8 @@ jobs:
           cache: pip
       - name: Install deps
         run: pip install -r requirements-dev.txt
+      - name: Lint (ruff)
+        run: ruff check split tests
       - name: Compile
         run: python -m py_compile split/*.py
       - name: Import smoke (loads config registries)
@@ -48,6 +50,8 @@ jobs:
           cache-dependency-path: apps/desktop/package-lock.json
       - name: Install frontend deps
         run: npm ci
+      - name: Lint (eslint)
+        run: npm run lint
       - name: Build frontend (tsc + vite)
         run: npm run build
       - name: Unit tests (vitest)
@@ -56,6 +60,9 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/desktop/src-tauri
+      - name: Lint (clippy)
+        working-directory: apps/desktop/src-tauri
+        run: cargo clippy -- -D warnings
       - name: cargo check (Tauri crate)
         working-directory: apps/desktop/src-tauri
         run: cargo check

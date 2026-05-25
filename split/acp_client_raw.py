@@ -25,7 +25,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-from typing import Any, Awaitable, Callable
+from typing import Any, Callable
 
 # ACP wire version we speak. The agent echoes its own in the initialize result;
 # we proceed regardless and just record what it reports.
