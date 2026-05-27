@@ -1,15 +1,16 @@
 {
   "_comment": "Expert registry: persona = experts/<name>.md (projected into the workspace AGENTS.md/CLAUDE.md/… at session start). skills = the portable SKILLs to mount for this expert (skills/<name>/SKILL.md → the harness's skill dir); a name not yet vendored under skills/ is silently skipped. kind is informational (operator/advisor/researcher/analyst/builder/finder/creator). Order here is the @-picker order; first = default.",
 
-  "consultant": { "label": "Consultant",       "kind": "researcher", "skills": ["web-search", "slide-deck"],            "blurb": "Web research into ready slides" },
-  "scientist":  { "label": "Scientist",        "kind": "researcher", "skills": ["web-search", "deep-research", "literature-review", "paper-writing", "peer-review"], "blurb": "Deep research, papers & peer review" },
-  "lawyer":     { "label": "Lawyer",           "kind": "advisor",    "skills": [],                                       "blurb": "Legal guidance, risk & clauses" },
-  "analyst":    { "label": "Data Analyst",     "kind": "analyst",    "skills": [],                                       "blurb": "CSV analysis, charts & dashboards" },
-  "engineer":   { "label": "Software Engineer","kind": "builder",    "skills": [],                                       "blurb": "Builds single-file HTML apps" },
-  "finder":     { "label": "File Finder",      "kind": "finder",     "skills": [],                                       "blurb": "Finds files on your Mac" },
+  "chief_of_staff": { "label": "Chief of Staff", "kind": "operator",  "skills": [],                                       "blurb": "Orchestrates the team: delegates, drives to closure, synthesizes" },
+  "consultant": { "label": "Consultant",       "kind": "researcher", "skills": ["web-search", "frontend-slides", "docx", "image-search", "web-deploy"],       "blurb": "Web research into ready slides or Word memos" },
+  "scientist":  { "label": "Scientist",        "kind": "researcher", "skills": ["web-search", "paper-search", "docx", "frontend-slides", "web-deploy"], "blurb": "Bridges fields to find new ideas, maps the state of the art" },
+  "financier":  { "label": "Financier",        "kind": "analyst",    "skills": ["web-search", "market-data", "dashboard", "ui-ux-pro-max", "frontend-slides", "docx", "web-deploy"], "blurb": "Markets, FP&A, perso & reporting" },
+  "lawyer":     { "label": "Lawyer",           "kind": "advisor",    "skills": ["web-search", "docx", "legal-templates"], "blurb": "Legal guidance, risk reads & contract drafts" },
+  "data_analyst": { "label": "Data Analyst",   "kind": "analyst",    "skills": ["web-search", "dashboard", "ui-ux-pro-max", "frontend-slides", "docx", "web-deploy"], "blurb": "Explores CSV/Excel data, ships interactive dashboards" },
+  "engineer":   { "label": "Q",                "kind": "builder",    "skills": ["web-deploy", "image-search", "ui-ux-pro-max"], "blurb": "Builds micro-apps & landing pages, ships them to a public URL" },
+  "designer":   { "label": "Designer",         "kind": "creator",    "skills": ["web-search", "web-audit", "image-search", "ui-ux-pro-max", "frontend-slides", "graphics", "docx", "web-deploy"], "blurb": "Brand identities, UI mockups, static graphics & redesigns" },
   "vision":     { "label": "Vision",           "kind": "operator",   "skills": [],                                       "blurb": "Drives your apps in the background" },
   "musician":   { "label": "Musician",         "kind": "creator",    "skills": ["music-gen"],                            "blurb": "Generates original music & tracks" },
   "podcaster":  { "label": "Podcaster",        "kind": "creator",    "skills": ["voice-gen", "music-gen"],               "blurb": "Scripts & edits full podcasts" },
-  "director":   { "label": "Director",         "kind": "creator",    "skills": ["video-gen", "music-gen", "voice-gen"],  "blurb": "Makes short videos with Kling" },
-  "wedding":    { "label": "Wedding Planner",  "kind": "advisor",    "skills": [],                                       "blurb": "Plans your wedding A to Z" }
+  "director":   { "label": "Director",         "kind": "creator",    "skills": ["video-gen", "music-gen", "voice-gen"],  "blurb": "Makes short videos with Kling" }
 }

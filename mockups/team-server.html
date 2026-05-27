@@ -217,6 +217,13 @@
   .caret{ display:inline-block; width:8px; height:16px; vertical-align:-3px; margin-left:1px;
     background:var(--accent); animation:blink 1s steps(1) infinite; border-radius:1px; }
 
+  /* chief-of-staff synthesis — the answer handed back to the boss */
+  .msg.synth{ background:linear-gradient(180deg, rgba(198,242,78,.07), rgba(198,242,78,.02));
+    border:1px solid rgba(198,242,78,.28); border-radius:14px; margin-top:6px; }
+  .msg.synth .bd::before{ content:"✓ SYNTHÈSE POUR TOI"; display:inline-block;
+    font:700 9.5px/1 var(--mono); letter-spacing:.12em; color:var(--accent);
+    border:1px solid rgba(198,242,78,.3); border-radius:6px; padding:4px 7px; margin-bottom:8px; }
+
   code, .code{ font-family:var(--mono); font-size:12.5px; }
   .codeblock{ margin-top:8px; background:#06080c; border:1px solid var(--line);
     border-radius:10px; padding:11px 13px; font-family:var(--mono); font-size:12.5px;
@@ -544,9 +551,11 @@
 
 </div>
 
+<script src="transcript.js"></script>
 <script>
 /* ─────────────────────────  DATA  ───────────────────────── */
 const AGENTS = {
+  chief     :{ name:'Chief of Staff', role:'Orchestrator', color:'#eaf0f7', av:'CS' },
   consultant:{ name:'Consultant', role:'Strategy', color:'var(--consultant)', av:'Co' },
   scientist :{ name:'Scientist',  role:'Research', color:'var(--scientist)',  av:'Sc' },
   engineer  :{ name:'Engineer',   role:'Build',    color:'var(--engineer)',   av:'En' },
@@ -555,6 +564,7 @@ const AGENTS = {
 };
 // initial presence: state = working | online | idle ; activity text
 const presence = {
+  chief     :{ state:'online',  act:'prêt' },
   consultant:{ state:'working', act:'pilote le plan' },
   engineer  :{ state:'working', act:'écrit la rotation de token' },
   scientist :{ state:'idle',    act:'en veille' },
@@ -656,8 +666,8 @@ function renderMembers(){
 function setPresence(k, state, act){ presence[k]={state, act: act ?? presence[k].act}; renderMembers(); }
 
 /* SIMPLE VIEW — the current Split home: independent session cards, no cross-talk */
-const HARNESS = { consultant:'claude', engineer:'claude', scientist:'codex', analyst:'gemini', researcher:'qwen' };
-const PLANTXT = { consultant:'plan · 1/4', engineer:'plan · 2/4', scientist:'—', analyst:'—', researcher:'—' };
+const HARNESS = { chief:'codex', consultant:'codex', engineer:'codex', scientist:'codex', analyst:'gemini', researcher:'qwen' };
+const PLANTXT = { chief:'orchestre', consultant:'plan · 1/4', engineer:'plan · 2/4', scientist:'—', analyst:'—', researcher:'—' };
 function renderSimple(){
   const W = {working:55, online:22, idle:7};
   let html='';
@@ -824,9 +834,70 @@ async function scene(){
   scene();
 }
 
+/* ─────────  REAL TRANSCRIPT PLAYER  ─────────
+   If transcript.js defined window.TRANSCRIPT (a real run of team_demo.py),
+   replay it through the same animation instead of the scripted demo. */
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function linkify(text){
+  return esc(text).replace(/@(\w+)/g, (m, nm) => {
+    const k = Object.keys(AGENTS).find(x => AGENTS[x].name.toLowerCase() === nm.toLowerCase());
+    return k ? `<span class="mention" style="--c:${AGENTS[k].color}">@${AGENTS[k].name}</span>` : m;
+  });
+}
+
+async function playTranscript(T){
+  // header reflects the real channel + objective
+  document.querySelector('.main-head .ttl').innerHTML = `<span class="hash">#</span> ${T.channel||'channel'}`;
+  document.querySelector('.topic').innerHTML =
+    `<b>Objectif :</b> ${T.objective||''} · ${(T.team||[]).length} agents · auto-coordination ON`;
+  document.querySelector('.members .mh b').textContent = `Équipe — ${Object.keys(AGENTS).length}`;
+
+  const present = new Set(T.turns.map(t=>t.key));
+  for(const k of Object.keys(AGENTS))
+    presence[k] = present.has(k) ? {state:'online',act:'dispo'} : {state:'idle',act:'en veille'};
+  renderMembers();
+  stream.innerHTML=''; tok=0; pct=4; cost=0; bump(0);
+
+  for(let i=0;i<T.turns.length;i++){
+    const turn = T.turns[i];
+    const act = turn.key==='chief' ? 'orchestre l\'équipe' : `écrit dans #${T.channel||'channel'}`;
+    setPresence(turn.key, 'working', act);
+    await typingThen(turn.key, 850);
+    const node = await streamMsg(turn.key, linkify(turn.text), {working:true, speed:8});
+    if(turn.synthesis) node.classList.add('synth');
+    if(turn.used){  // drive the meter from REAL token counts
+      tok = turn.used; pct = Math.min(95, 6 + (i+1)/T.turns.length*88);
+      tokEl.textContent = tok>=1000 ? (tok/1000).toFixed(1)+'k' : tok;
+      costEl.textContent = '~$'+(tok*0.000003).toFixed(2);
+      barEl.style.width = pct+'%';
+    }
+    setPresence(turn.key, 'online', 'dispo');
+    (turn.mentions||[]).forEach(k=>{  // @mention = routing → teammate lights up
+      if(AGENTS[k]) setPresence(k, 'working', `sollicité par ${AGENTS[turn.key].name}`);
+    });
+    await sleep(550);
+  }
+
+  // settle presence; the synthesis (if any) is the closure — only flag a forced stop
+  for(const k of Object.keys(AGENTS)) if(presence[k].state==='working') setPresence(k,'online','dispo');
+  if(T.stopped !== 'done'){
+    const speaker = T.turns.length ? T.turns[T.turns.length-1].key : 'chief';
+    post(speaker, `<p>⏸ Cap de ${T.turns_count||T.turns.length} tours atteint (garde-fou coût) — les agents ne s'arrêtent pas seuls.</p>`);
+  }
+  await sleep(7000);
+  stream.style.transition='opacity .6s'; stream.style.opacity='0';
+  await sleep(650); stream.style.opacity='1';
+  playTranscript(T);
+}
+
 renderMembers();
 wireToggle();
-scene();
+if (window.TRANSCRIPT && (window.TRANSCRIPT.turns||[]).length){
+  document.querySelector('.vt[data-view="teams"]').click();  // land on Teams to watch the real run
+  playTranscript(window.TRANSCRIPT);
+} else {
+  scene();  // no transcript yet → scripted demo
+}
 </script>
 </body>
 </html>

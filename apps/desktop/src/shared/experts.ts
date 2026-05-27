@@ -21,10 +21,10 @@ export type ExpertMap = Record<string, Expert>;
 // Fallback roster if `list_experts` fails (matches experts.json order/defaults).
 export const DEFAULT_EXPERTS: ExpertMap = {
   consultant: { label: "Consultant", kind: "researcher", blurb: "Web research into ready slides" },
-  scientist: { label: "Scientist", kind: "researcher", blurb: "Deep research, papers & peer review" },
+  scientist: { label: "Scientist", kind: "researcher", blurb: "Bridges fields to find new ideas, maps the state of the art" },
   lawyer: { label: "Lawyer", kind: "advisor", blurb: "Legal guidance, risk & clauses" },
   analyst: { label: "Data Analyst", kind: "analyst", blurb: "CSV analysis, charts & dashboards" },
-  engineer: { label: "Software Engineer", kind: "builder", blurb: "Builds single-file HTML apps" },
+  engineer: { label: "Q", kind: "builder", blurb: "Builds micro-apps & landing pages, ships them to a public URL" },
   finder: { label: "File Finder", kind: "finder", blurb: "Finds files on your Mac" },
   vision: { label: "Vision", kind: "operator", blurb: "Drives your apps in the background" },
 };

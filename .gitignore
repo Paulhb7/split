@@ -18,3 +18,5 @@ apps/desktop/dist/
 apps/desktop/src-tauri/target/
 
 Claude.md
+
+split_acp.egg-info

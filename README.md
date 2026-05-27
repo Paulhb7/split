@@ -59,7 +59,7 @@ feed vs. an app preview).
 | Expert | Kind | What it does | Leans on |
 |---|---|---|---|
 | **Consultant** | researcher | Web research → a sharp, **cited** briefing, then slides on request | `slide-deck` skill + web search |
-| **Scientist** | researcher | Deep research, literature review, paper writing, peer review, replication | Feynman skill library¹ + shell / fs / web |
+| **Scientist** | researcher | Deep research, literature review, paper writing, peer review, replication | web search + shell / fs |
 | **Lawyer** | advisor | Legal guidance — draft clauses, explain risk, compare options | none (answers in the bar) |
 | **Data Analyst** | analyst | CSV/JSON/Excel/Parquet → interactive HTML report, models, or a Streamlit app | shell + fs (pandas, Plotly, scikit-learn) |
 | **Software Engineer** | builder | Builds a self-contained **single-file HTML app**, edits the same file on follow-ups | shell + fs |
@@ -68,7 +68,6 @@ feed vs. an app preview).
 | **Musician** | creator | Turns a description into a finished, shareable track | `music-gen` skill¹ + ffmpeg |
 | **Podcaster** | creator | Topic → scripted, voiced, **edited** podcast episode | `voice-gen` + `music-gen`¹ + ffmpeg |
 | **Director** | creator | Idea → short video (shot list, score, narration, cut) | `video-gen` + `music-gen` + `voice-gen`¹ + ffmpeg |
-| **Wedding Planner** | advisor | Plans a French wedding A→Z (budget → venue → vendors) | none (answers in the bar) |
 
 Personas live in [`config/experts/`](config/experts/); the registry + render-kinds
 are in [`config/experts.json`](config/experts.json).
@@ -96,15 +95,12 @@ skipped, so a persona may name a skill before it exists.
 Vendored in [`config/skills/`](config/skills/):
 
 - **`slide-deck`** — reveal.js HTML deck (CDN, no build) → `~/Desktop`. *(Consultant)*
-- **`deep-research`, `literature-review`, `paper-writing`, `peer-review`** — the
-  Feynman library, prompt-only (no scripts). *(Scientist)*
 - **`music-gen`, `voice-gen`, `video-gen`** — each bundles a **stdlib-only**
   `scripts/*.py` that calls fal.ai / ElevenLabs over plain `urllib` (no deps to
   install); needs `FAL_KEY` / `ELEVENLABS_API_KEY`. *(Musician / Podcaster / Director)*
 
-> ¹ **Now vendored.** The Feynman library and the gen-skills live in `skills/`
-> and mount automatically. The gen-skills need an API key (`FAL_KEY` /
-> `ELEVENLABS_API_KEY`); the Feynman skills are prompt-only and need nothing.
+> ¹ **Now vendored.** The gen-skills live in `skills/` and mount automatically.
+> They need an API key (`FAL_KEY` / `ELEVENLABS_API_KEY`).
 
 ---
 

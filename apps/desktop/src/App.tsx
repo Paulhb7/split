@@ -8,11 +8,13 @@ import remarkGfm from "remark-gfm";
 import { HARNESSES, H, logoUrl, brandOf, type Harness } from "./shared/harnesses";
 import { useExperts, composeTurn, type Attachment } from "./shared/util";
 import { useSessions } from "./shared/useSessions";
-import { useWindowChrome, type Preset, type RzDir } from "./shared/useWindowChrome";
+import { useWindowChrome, useAdaptiveHeight } from "./shared/useWindowChrome";
 import type { Session } from "./shared/models";
 import { Logo, Tile, League, vars } from "./shared/ui";
 import Onboarding from "./onboarding/Onboarding";
 import Stage from "./stage/Stage";
+import Teams from "./teams/Teams";
+import { useTeam } from "./teams/useTeam";
 import "./app.css";
 
 const LS_DONE = "split.onboarded";
@@ -20,6 +22,7 @@ const LS_VIEW = "split.sessionView"; // "list" | "stage"
 const LS_DEF = "split.defaultHarness"; // legacy single-pick (migrated to LS_ENABLED)
 const LS_ENABLED = "split.enabledHarnesses"; // the agents the user activated
 const LS_ACTIVE = "split.activeHarness"; // the armed engine for the next session
+const LS_MODE = "split.mode"; // "simple" (one expert/session) | "teams" (Chief-of-Staff)
 
 // The user's activated agents — only these show in the roster/menus. Falls back
 // to the legacy single default, then to claude.
@@ -49,7 +52,9 @@ function loadActive(): string {
 export default function App() {
   const experts = useExperts();
   const { sessions, start, send, sendAuth, stop, remove, cancelQueued } = useSessions(experts);
-  const { width, pinned, applyPreset, startResize, startMove, togglePin, hide } = useWindowChrome();
+  const teamApi = useMemo(() => ({ start, send, stop }), [start, send, stop]);
+  const { team, runTeam, stopTeam } = useTeam(teamApi, experts);
+  const { pinned, startMove, togglePin, hide } = useWindowChrome();
 
   const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem(LS_DONE));
   const [enabled, setEnabled] = useState<string[]>(loadEnabled);
@@ -65,22 +70,48 @@ export default function App() {
   };
 
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [mode, setModeState] = useState<"simple" | "teams">(() => (localStorage.getItem(LS_MODE) === "teams" ? "teams" : "simple"));
+  const setMode = (m: "simple" | "teams") => {
+    setModeState(m);
+    localStorage.setItem(LS_MODE, m);
+    if (m === "teams") setFocusedId(null);
+  };
   const [value, setValue] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragging, setDragging] = useState(false);
-  const [preset, setPreset] = useState<Preset>("M");
   const [toasts, setToasts] = useState<{ id: string; text: string }[]>([]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
   const prevStatus = useRef<Record<string, string>>({});
 
   const focused = sessions.find((s) => s.id === focusedId) ?? null;
   const authSession = sessions.find((s) => s.auth) ?? null;
   const anyRunning = sessions.some((s) => s.status === "running");
   const accent = focused ? brandOf(focused.harness) : brandOf(active);
-  const compact = width < 520;
   const enabledHarnesses = HARNESSES.filter((h) => enabled.includes(h.id));
+
+  // Adaptive bar: collapse to COMPACT when nothing is going on, fit the
+  // window to the natural body content otherwise. The body wrapper below
+  // carries `measureRef`. Re-fit when the @-menu / agent overlay opens or
+  // when logs/thread length shifts in the focused conv.
+  const expanded =
+    !!focused || sessions.length > 0 || mode === "teams" || overlay || !!authSession || !onboarded;
+  useAdaptiveHeight({
+    measureRef,
+    expanded,
+    extraDeps: [
+      menu,
+      overlay,
+      focused?.thread.length ?? 0,
+      focused?.answer.length ?? 0,
+      focused?.logs.length ?? 0,
+      view,
+      mode,
+      onboarded,
+    ],
+  });
 
   // arm an engine for the next session (persisted)
   const setActive = (id: string) => {
@@ -139,10 +170,6 @@ export default function App() {
     for (const id of Object.keys(prev)) if (!sessions.some((s) => s.id === id)) delete prev[id];
   }, [sessions, focusedId]);
 
-  function setSize(p: Preset) {
-    setPreset(p);
-    applyPreset(p);
-  }
   // toggle an agent in/out of the activated set (manage overlay)
   function toggleEnabled(id: string) {
     setEnabled((prev) => {
@@ -237,15 +264,7 @@ export default function App() {
   ));
 
   return (
-    <div className={"app" + (compact ? " compact" : "")} style={vars({ "--brand": accent })}>
-      {/* resize handles */}
-      {([
-        ["rz rz-n", "North"], ["rz rz-s", "South"], ["rz rz-e", "East"], ["rz rz-w", "West"],
-        ["rz rz-ne", "NorthEast"], ["rz rz-nw", "NorthWest"], ["rz rz-se", "SouthEast"], ["rz rz-sw", "SouthWest"],
-      ] as [string, RzDir][]).map(([cls, dir]) => (
-        <div key={cls} className={cls} onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); startResize(dir); }} />
-      ))}
-
+    <div className="app" style={vars({ "--brand": accent })}>
       {dragging && <div className="drop">⬇ Drop a file to attach</div>}
 
       {/* chrome */}
@@ -253,16 +272,19 @@ export default function App() {
         <span className={"wm" + (anyRunning ? " live" : "")}>split<span className="dot" /></span>
         <span className="chrome-meta">{focused ? `on ${H[focused.harness]?.label || focused.harness}` : sessions.length ? `${sessions.length} session${sessions.length === 1 ? "" : "s"}` : "ready"}</span>
         <span className="spacer" />
-        <div className="seg">
-          {(["S", "M", "L"] as Preset[]).map((p) => (
-            <button key={p} className={preset === p ? "on" : ""} onClick={() => setSize(p)} title={`Resize · ${p}`}>{p}</button>
-          ))}
-        </div>
+        {onboarded && !focused && (
+          <div className="seg" style={{ marginRight: 2 }}>
+            {(["simple", "teams"] as const).map((m) => (
+              <button key={m} className={mode === m ? "on" : ""} onClick={() => setMode(m)} title={m === "simple" ? "Simple — one expert per session" : "Teams — a Chief of Staff orchestrates the experts"}>{m}</button>
+            ))}
+          </div>
+        )}
         <button className={"iconbtn" + (pinned ? " on" : "")} onClick={togglePin} title={pinned ? "Unpin (allow behind)" : "Pin on top"}>{pinned ? "◆" : "◇"}</button>
         <button className="iconbtn" onClick={hide} title="Hide (⌘J)">—</button>
       </div>
 
       <div className="body">
+        <div ref={measureRef} className="measure">
         {!onboarded ? (
           /* ============ ONBOARDING (3 animated pages) ============ */
           <Onboarding onEnter={enterSplit} />
@@ -307,8 +329,8 @@ export default function App() {
                   <div className="text"><ReactMarkdown remarkPlugins={[remarkGfm]}>{focused.answer}</ReactMarkdown></div>
                 </div>
               )}
-              {focused.status === "running" && !focused.answer && (
-                <div className="thinking"><span className="dot running" /> {focused.expertLabel} is thinking…</div>
+              {focused.status === "running" && (
+                <div className="thinking"><span className="dot running" /> <span className="thinking-line">{focused.summary || `${focused.expertLabel} is thinking…`}</span></div>
               )}
               {focused.auth && (
                 <div className="thinking">
@@ -319,6 +341,18 @@ export default function App() {
               )}
               {focused.queued && <div className="thinking">⏳ queued · {focused.queued.display || "(file)"} <button className="xbtn" onClick={() => cancelQueued(focused.id)}>✕</button></div>}
             </div>
+
+            {focused.logs.length > 0 && (
+              <details className="logs" open={focused.status === "running"}>
+                <summary>
+                  <span className="logs-label">logs</span>
+                  <span className="logs-count">{focused.logs.length} line{focused.logs.length === 1 ? "" : "s"}</span>
+                </summary>
+                <pre className="logs-pre" ref={(el) => { if (el && focused.status === "running") el.scrollTop = el.scrollHeight; }}>
+                  {focused.logs.slice(-200).join("\n")}
+                </pre>
+              </details>
+            )}
 
             {focused.status !== "ended" && (
               <div className="composer" style={{ marginTop: 16, marginBottom: 0 }}>
@@ -333,17 +367,9 @@ export default function App() {
               </div>
             )}
           </div>
-        ) : compact && sessions.length === 0 ? (
-          /* ============ COMPACT QUICK-LAUNCH ============ */
-          <div className="home" style={{ paddingTop: 22 }}>
-            <Composer
-              experts={experts} expertSlug={expertSlug} expertLabel={expertLabel} active={active}
-              engines={enabledHarnesses} onAddAgent={() => setOverlay(true)}
-              menu={menu} setMenu={setMenu} setExpertSlug={setExpertSlug} setActive={setActive}
-              value={value} setValue={setValue} onKey={onKey} onRun={launch} chips={chips} inputRef={inputRef}
-              expertEntries={expertEntries}
-            />
-          </div>
+        ) : mode === "teams" ? (
+          /* ============ TEAMS (Chief-of-Staff orchestration) ============ */
+          <Teams team={team} sessions={sessions} workspace={workspace} wsName={wsName} onPickWorkspace={pickWorkspace} onOpenWorkspace={() => openWorkspaceFolder()} onBrief={(g) => runTeam(g, active)} onOpen={setFocusedId} onStopTeam={stopTeam} />
         ) : (
           /* ============ HOME ============ */
           <div className="home">
@@ -409,6 +435,7 @@ export default function App() {
             )}
           </div>
         )}
+        </div>
       </div>
 
       {overlay && (

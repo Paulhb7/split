@@ -69,15 +69,31 @@ def install_persona(expert: str = "consultant", ws_dir: str | None = None) -> li
     """Project the EXPERT's persona into a workspace's cross-agent instruction
     files (AGENTS.md = the cross-vendor standard; CLAUDE/GEMINI/QWEN = per-vendor
     shims). ws_dir defaults to WORKSPACE; the desktop runner passes a PER-SESSION
-    dir so concurrent experts don't overwrite each other."""
+    dir so concurrent experts don't overwrite each other.
+
+    If `experts/_discipline.md` exists, its contents are prepended to every
+    projected file — a shared compliance preamble that helps weaker
+    instruction-followers (Mistral Vibe, some Qwen builds, etc.) stay on the
+    persona's rails. Filename starts with `_` so the experts.json loader
+    ignores it as a slug."""
     ws_dir = ws_dir or WORKSPACE
     os.makedirs(ws_dir, exist_ok=True)
     src = os.path.join(EXPERTS_DIR, f"{expert}.md")
     if not os.path.exists(src):
         src = os.path.join(EXPERTS_DIR, "consultant.md")
+    discipline_path = os.path.join(EXPERTS_DIR, "_discipline.md")
+    preamble = ""
+    if os.path.exists(discipline_path):
+        with open(discipline_path, encoding="utf-8") as f:
+            preamble = f.read()
+    with open(src, encoding="utf-8") as f:
+        persona = f.read()
+    body = (preamble + persona) if preamble else persona
     written = []
     for fname in ("AGENTS.md", "CLAUDE.md", "GEMINI.md", "QWEN.md"):
-        shutil.copyfile(src, os.path.join(ws_dir, fname))
+        out = os.path.join(ws_dir, fname)
+        with open(out, "w", encoding="utf-8") as f:
+            f.write(body)
         written.append(fname)
     return written
 

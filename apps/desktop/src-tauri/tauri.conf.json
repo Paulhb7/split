@@ -15,14 +15,12 @@
       {
         "label": "main",
         "title": "Split",
-        "width": 760,
-        "height": 560,
-        "minWidth": 380,
-        "minHeight": 132,
+        "width": 680,
+        "height": 96,
         "transparent": true,
         "decorations": false,
         "alwaysOnTop": true,
-        "resizable": true,
+        "resizable": false,
         "visible": true
       }
     ],

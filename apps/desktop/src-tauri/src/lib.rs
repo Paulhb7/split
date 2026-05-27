@@ -5,7 +5,7 @@ use std::process::{ChildStdin, Command, Stdio};
 use std::sync::{LazyLock, Mutex};
 
 use serde_json::json;
-use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, WebviewWindow};
+use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewWindow};
 
 // The ACP backend: one `split.runner` process per session, run as
 // `python -m split.runner` from the repo root (so the `split` package resolves).
@@ -123,6 +123,18 @@ fn child_path() -> String {
 #[tauri::command]
 fn hide_window(window: WebviewWindow) {
     let _ = window.hide();
+}
+
+// Resize the borderless window to a content-fitted height. The React side
+// computes the desired height via a ResizeObserver on the natural content
+// (compact = just the composer row, expanded = thread/stage/teams + composer),
+// dedupes via `lastHeightRef`, and calls this. Width is fixed to BAR_WIDTH so
+// the UI never changes horizontal dimensions during a session.
+const BAR_WIDTH: f64 = 680.0;
+#[tauri::command]
+fn set_bar_height(window: WebviewWindow, height: f64) {
+    let h = height.max(48.0).min(1400.0); // sane clamp; React already clamps too
+    let _ = window.set_size(LogicalSize::new(BAR_WIDTH, h));
 }
 
 // Reveal the workspace folder (or one session's subfolder) in Finder. `workspace`
@@ -472,6 +484,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             hide_window,
+            set_bar_height,
             open_workspace,
             start_session,
             send_turn,
