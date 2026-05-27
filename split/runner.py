@@ -8,11 +8,14 @@ The Tauri shell spawns ONE of these per session:
 It speaks ACP to a single agent (via the official SDK) and translates the
 agent's session/update stream into `VEVT <json>` lines on stdout, exactly the
 line protocol the Rust side already parses (see desktop/src-tauri/src/lib.rs).
-Turns and auth control arrive as JSON lines on stdin:
+Turns, auth, and permission decisions arrive as JSON lines on stdin:
 
-    {"text": "..."}              # a prompt (multi-turn on the same ACP session)
-    {"auth": {"methodId": "..."}} # answer an auth_required
-    {"type": "stop"}             # graceful stop (EOF on stdin also stops)
+    {"text": "..."}                                # a prompt (multi-turn)
+    {"auth": {"methodId": "..."}}                  # answer an auth_required
+    {"permission": {"id": "...",                   # answer a permission_request
+                    "optionId": "..." | null,      #   (null = deny)
+                    "scope": "once|session|always-allow|always-deny"}}
+    {"type": "stop"}                               # graceful stop (EOF stops too)
 
 This is the process-per-session refactor of server.py's `Sess`: same ACP logic,
 but `_emit` prints VEVT instead of sending over a shared WebSocket, and logs go
@@ -25,13 +28,19 @@ import asyncio
 import json
 import os
 import sys
+import uuid
 from typing import Any
 
 import acp
 
-from . import core  # registries / persona+skill projection / mcp / command + WORKSPACE (loads .env)
+from . import core, permissions as P
 from .acp_client import ConsoleClient, client_capabilities
 from .auth import LOGIN_CMD, is_auth_error
+
+# Where persisted allow/deny rules live (one file for the whole user).
+PERMS_PATH = os.path.join(core.VAR_DIR, "permissions.json")
+# prompt = UI asks, auto-allow = open bench, auto-deny = strict CI. Set by Rust spawn.
+PERMISSION_MODE = (os.environ.get("SPLIT_PERMISSION_MODE") or "auto-allow").strip()
 
 
 class Runner:
@@ -50,6 +59,62 @@ class Runner:
         self.auth_methods: list = []
         self.pending: str | None = None  # prompt awaiting auth
         self._out_lock = asyncio.Lock()
+        # --- permissions: session-scoped allowlist + pending UI prompts --------
+        self._session_allow: set[str] = set()
+        # request_id -> (asyncio.Future for option_id|None, tool_id used to scope persistence)
+        self._pending_perms: dict[str, tuple[asyncio.Future, str]] = {}
+
+    # --- permission engine integration ---------------------------------------
+
+    def _get_rules(self) -> dict:
+        """Re-read every call so persistence (add_rule from the stdin handler)
+        is picked up without restart."""
+        return P.load(PERMS_PATH)
+
+    async def _on_prompt(self, tool_id: str, options: list, tool_call: dict) -> str | None:
+        """Called by ConsoleClient when the engine says "ask". Emits a VEVT to
+        the UI and awaits the user's choice."""
+        req_id = uuid.uuid4().hex[:12]
+        fut: asyncio.Future = asyncio.get_event_loop().create_future()
+        self._pending_perms[req_id] = (fut, tool_id)
+        self._emit(
+            type="permission_request",
+            id=req_id,
+            toolId=tool_id,
+            expert=self.expert,
+            toolCall=tool_call,
+            options=[
+                {"id": opt.option_id,
+                 "name": getattr(opt, "name", ""),
+                 "kind": str(getattr(opt, "kind", ""))}
+                for opt in options
+            ],
+        )
+        try:
+            return await fut  # the stdin handler resolves this
+        finally:
+            self._pending_perms.pop(req_id, None)
+
+    async def handle_permission(self, msg: dict) -> None:
+        """Resolve a pending prompt with the user's decision. `scope` controls
+        persistence: once = nothing extra; session = in-memory allow; always-allow
+        / always-deny = write a rule scoped to the current expert."""
+        req_id = msg.get("id")
+        option_id = msg.get("optionId")  # None => deny
+        scope = msg.get("scope", "once")
+        entry = self._pending_perms.get(req_id) if req_id else None
+        if not entry:
+            self.on_log(f"[permission] unknown request id {req_id!r}")
+            return
+        fut, tool_id = entry
+        if scope == "session" and option_id is not None:
+            self._session_allow.add(tool_id)
+        elif scope == "always-allow" and option_id is not None:
+            P.add_rule(PERMS_PATH, "allow", f"{self.expert}:{tool_id}")
+        elif scope == "always-deny":
+            P.add_rule(PERMS_PATH, "deny", f"{self.expert}:{tool_id}")
+        if not fut.done():
+            fut.set_result(option_id)
 
     # --- emit: one VEVT line per structured event ----------------------------
 
@@ -89,7 +154,14 @@ class Runner:
         core.install_persona(self.expert, self.ws_dir)
         core.install_skills(self.expert, self.cfg["skill_dir"], self.ws_dir)
         command = core.resolve_command(self.cfg["command"])
-        client = ConsoleClient(on_update=self.on_update, on_log=self.on_log)
+        client = ConsoleClient(
+            on_update=self.on_update, on_log=self.on_log,
+            permission_mode=PERMISSION_MODE,
+            rules_provider=self._get_rules,
+            expert=self.expert,
+            session_allow=self._session_allow,
+            on_prompt=self._on_prompt,
+        )
         self._cm = acp.spawn_agent_process(
             client, command, *self.cfg["args"], cwd=self.ws_dir, env=dict(os.environ)
         )
@@ -185,6 +257,8 @@ async def main() -> None:
                 await runner.run(m["text"])
             elif "auth" in m:
                 await runner.authenticate(m["auth"]["methodId"])
+            elif "permission" in m:
+                await runner.handle_permission(m["permission"])
             elif m.get("type") == "stop":
                 break
     finally:

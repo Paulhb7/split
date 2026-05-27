@@ -1,11 +1,11 @@
-import type { AuthMethod, PlanEntry } from "./events";
+import type { AuthMethod, PermissionOption, PlanEntry } from "./events";
 
 // "running" = a turn is in flight; "idle" = ready for the next turn;
 // "auth" = blocked on sign-in; "error" = last turn failed; "ended" = process gone.
 export type SessionStatus = "running" | "idle" | "auth" | "error" | "ended";
 
 export interface ThreadTurn {
-  role: "user" | "agent";
+  role: "user" | "agent" | "thought";
   text: string;
   files?: string[]; // attachment names, for the 📎 chip
 }
@@ -16,6 +16,16 @@ export interface AuthAsk {
   methods: AuthMethod[];
   hasLogin: boolean;
   note: string;
+}
+
+// A pending permission_request — the agent wants to run a tool and the engine
+// said "ask". Resolved by sending send_permission(id, requestId, optionId, scope).
+export interface PermissionAsk {
+  id: string;                      // request_id from the runner
+  toolId: string;                  // "Bash(npm test)" / "mcp__cua_driver__click" / …
+  expert: string;
+  options: PermissionOption[];     // what the agent offered
+  toolCall: Record<string, unknown>;
 }
 
 // A turn typed while the session was busy; sent when it goes idle.
@@ -33,11 +43,14 @@ export interface Session {
   status: SessionStatus;
   thread: ThreadTurn[]; // committed conversation
   answer: string; // currently-streaming agent answer (uncommitted)
+  thoughts: string; // currently-streaming COT thoughts (uncommitted) — committed before `answer` at idle
+
   summary: string; // live one-line status (thinking / writing / → tool / done)
   plan: PlanEntry[];
   cost: number | null;
   logs: string[];
   auth: AuthAsk | null;
+  pendingPermission: PermissionAsk | null;
   queued: QueuedTurn | null;
 }
 
@@ -74,11 +87,13 @@ export function newSession(
       ? [{ role: "user", text: firstUserText, files: files.length ? files : undefined }]
       : [],
     answer: "",
+    thoughts: "",
     summary: "briefing…",
     plan: [],
     cost: null,
     logs: [],
     auth: null,
+    pendingPermission: null,
     queued: null,
   };
 }

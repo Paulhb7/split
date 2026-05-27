@@ -22,6 +22,21 @@ describe("applyEvent", () => {
     expect(s.thread[s.thread.length - 1]).toEqual({ role: "agent", text: "the answer" });
   });
 
+  it("accumulates streamed thoughts and commits them before the answer on idle", () => {
+    let s = base();
+    s = applyEvent(s, { type: "thought", text: "let me " });
+    s = applyEvent(s, { type: "thought", text: "think…" });
+    s = applyEvent(s, { type: "say", text: "the answer" });
+    expect(s.thoughts).toBe("let me think…");
+    expect(s.answer).toBe("the answer");
+    s = applyEvent(s, { type: "status", status: "idle" });
+    expect(s.thoughts).toBe("");
+    expect(s.answer).toBe("");
+    const last2 = s.thread.slice(-2);
+    expect(last2[0]).toEqual({ role: "thought", text: "let me think…" });
+    expect(last2[1]).toEqual({ role: "agent", text: "the answer" });
+  });
+
   it("does not append an empty agent turn when there is no answer", () => {
     const before = base();
     const s = applyEvent(before, { type: "status", status: "idle" });

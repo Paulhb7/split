@@ -133,7 +133,7 @@ fn hide_window(window: WebviewWindow) {
 const BAR_WIDTH: f64 = 680.0;
 #[tauri::command]
 fn set_bar_height(window: WebviewWindow, height: f64) {
-    let h = height.max(48.0).min(1400.0); // sane clamp; React already clamps too
+    let h = height.clamp(48.0, 1400.0); // sane clamp; React already clamps too
     let _ = window.set_size(LogicalSize::new(BAR_WIDTH, h));
 }
 
@@ -175,6 +175,7 @@ fn start_session(app: AppHandle, id: String, harness: String, expert: String, wo
         .current_dir(&*REPO_ROOT)
         .env("SPLIT_SID", &id)
         .env("SPLIT_WORKSPACE", &workspace) // empty → runner uses the default root
+        .env("SPLIT_PERMISSION_MODE", "prompt") // route every tool ask to the UI
         .env("PATH", child_path())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -244,6 +245,26 @@ fn send_auth(id: String, method_id: String) -> Result<(), String> {
     let mut map = SESSIONS.lock().unwrap();
     let s = map.get_mut(&id).ok_or("no such session")?;
     let line = format!("{}\n", json!({ "auth": { "methodId": method_id } }));
+    s.stdin.write_all(line.as_bytes()).map_err(|e| e.to_string())?;
+    s.stdin.flush().map_err(|e| e.to_string())
+}
+
+// Answer a `permission_request` for a session — the chosen ACP option (None =
+// deny) plus the persistence scope (once / session / always-allow / always-deny).
+// The runner resolves the pending Future and optionally writes a rule.
+#[tauri::command]
+fn send_permission(
+    id: String,
+    request_id: String,
+    option_id: Option<String>,
+    scope: String,
+) -> Result<(), String> {
+    let mut map = SESSIONS.lock().unwrap();
+    let s = map.get_mut(&id).ok_or("no such session")?;
+    let line = format!(
+        "{}\n",
+        json!({ "permission": { "id": request_id, "optionId": option_id, "scope": scope } })
+    );
     s.stdin.write_all(line.as_bytes()).map_err(|e| e.to_string())?;
     s.stdin.flush().map_err(|e| e.to_string())
 }
@@ -489,6 +510,7 @@ pub fn run() {
             start_session,
             send_turn,
             send_auth,
+            send_permission,
             stop_session,
             list_sessions,
             list_harnesses,

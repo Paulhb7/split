@@ -21,7 +21,12 @@ export function applyEvent(s: Session, ev: VEvt): Session {
       };
 
     case "thought":
-      return s.status === "running" ? { ...s, summary: "thinking…" } : s;
+      return {
+        ...s,
+        status: "running",
+        thoughts: s.thoughts + ev.text,
+        summary: "thinking…",
+      };
 
     case "step":
       return { ...s, status: "running", summary: `→ ${ev.title || "tool"} · ${ev.status || ""}` };
@@ -35,14 +40,18 @@ export function applyEvent(s: Session, ev: VEvt): Session {
     case "status":
       if (ev.status === "running") return { ...s, status: "running", summary: "thinking…" };
       if (ev.status === "idle") {
-        const committed = s.answer
-          ? [...s.thread, { role: "agent" as const, text: s.answer }]
+        const withThoughts = s.thoughts
+          ? [...s.thread, { role: "thought" as const, text: s.thoughts }]
           : s.thread;
+        const committed = s.answer
+          ? [...withThoughts, { role: "agent" as const, text: s.answer }]
+          : withThoughts;
         return {
           ...s,
           status: "idle",
           thread: committed,
           answer: "",
+          thoughts: "",
           summary: "done · " + (head(s.answer) || "ready"),
         };
       }
@@ -70,6 +79,22 @@ export function applyEvent(s: Session, ev: VEvt): Session {
       return ev.ok
         ? { ...s, auth: null, summary: "signed in…" }
         : { ...s, status: "error", auth: null, summary: "sign-in failed · " + (ev.error || "") };
+
+    case "permission_request":
+      // The runner is blocked awaiting a decision — surface it on the session
+      // so the focused-session UI shows the PermissionPrompt. Latest ask wins
+      // if two arrive in flight (rare with one agent per session).
+      return {
+        ...s,
+        pendingPermission: {
+          id: ev.id,
+          toolId: ev.toolId,
+          expert: ev.expert,
+          options: ev.options,
+          toolCall: ev.toolCall,
+        },
+        summary: "needs approval · " + ev.toolId,
+      };
 
     default:
       return s;

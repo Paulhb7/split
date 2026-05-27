@@ -27,10 +27,19 @@ Read this before exposing Split to anything you don't fully trust.
 These are deliberate trade-offs for the single-operator model — documented, not
 hidden. Each is the first thing to revisit if the trust model ever widens.
 
-1. **Tool calls are auto-approved.** `ConsoleClient.request_permission`
-   ([`split/acp_client.py`](split/acp_client.py)) allows *every* tool call with no
-   prompt and no log. The agent can read/write files and run commands without
-   asking.
+1. **Tool calls are approved by the UI (desktop) or auto-allowed (CLI/headless).**
+   The runner ([`split/runner.py`](split/runner.py)) consults the permission
+   engine ([`split/permissions.py`](split/permissions.py)) — `deny > ask > allow`,
+   pattern-based rules like `Bash(npm *)` / `mcp__cua_*` / `engineer:Bash(*)`,
+   with **universal guard-rails always active** (`Bash(rm -rf *)`, `Bash(sudo *)`,
+   `Write(~/.ssh/**)`, `Write(~/.aws/**)`, `Write(/etc/**)`, …). The mode is
+   `SPLIT_PERMISSION_MODE`: the desktop app sets it to `prompt` (4 options:
+   *Allow once / Allow session / Always (this expert) / Deny*); `split.terminal`
+   and CI default to `auto-allow`. **Caveat:** each ACP harness decides whether
+   it actually calls `request_permission` for a given tool — most do (Claude,
+   Codex, Gemini, Copilot, Cursor); a few may auto-execute (Mistral Vibe, some
+   LangChain setups). Tool calls always show up in the live event stream, even
+   when the harness bypasses approval — so they're at least visible.
 2. **Unattended host access.** The `analyst` / `engineer` / `scientist` experts
    get `Read`/`Write`/`Bash` on the host; `vision` drives apps via cua. Nothing
    is sandboxed.

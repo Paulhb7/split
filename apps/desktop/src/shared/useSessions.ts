@@ -138,6 +138,21 @@ export function useSessions(experts: ExpertMap) {
     invoke("send_auth", { id, methodId });
   }, []);
 
+  // Answer a pending permission_request. `optionId = null` denies. `scope`:
+  //   "once"          — this call only
+  //   "session"       — runner adds tool_id to the in-memory session allowlist
+  //   "always-allow"  — runner persists "<expert>:<tool_id>" to var/permissions.json (allow)
+  //   "always-deny"   — same, deny
+  // We optimistically clear pendingPermission here — the runner has no echo event.
+  const sendPermission = useCallback(
+    (id: string, requestId: string, optionId: string | null,
+     scope: "once" | "session" | "always-allow" | "always-deny") => {
+      invoke("send_permission", { id, requestId, optionId, scope });
+      update(id, (s) => ({ ...s, pendingPermission: null }));
+    },
+    [update]
+  );
+
   const stop = useCallback((id: string) => {
     invoke("stop_session", { id });
   }, []);
@@ -151,5 +166,5 @@ export function useSessions(experts: ExpertMap) {
     [update]
   );
 
-  return { sessions, start, send, sendAuth, stop, remove, cancelQueued };
+  return { sessions, start, send, sendAuth, sendPermission, stop, remove, cancelQueued };
 }

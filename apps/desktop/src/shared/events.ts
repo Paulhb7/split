@@ -12,6 +12,13 @@ export interface PlanEntry {
   status: string;
 }
 
+// One ACP-side option the agent offered us for a permission request.
+export interface PermissionOption {
+  id: string;     // option_id we send back via send_permission
+  name: string;   // human label (may be empty)
+  kind: string;   // raw kind hint: "allow_once" / "allow_always" / "reject_*" / ...
+}
+
 export type VEvt =
   | { type: "ready"; harness: string; expert: string }
   | { type: "say"; text: string }
@@ -21,7 +28,9 @@ export type VEvt =
   | { type: "usage"; used: number; size: number; cost: number | null }
   | { type: "status"; status: "running" | "idle" | "error" | "ended"; stop?: string; error?: string }
   | { type: "auth_required"; harness: string; methods: AuthMethod[]; hasLogin: boolean; note: string }
-  | { type: "auth_result"; harness: string; ok: boolean; error?: string };
+  | { type: "auth_result"; harness: string; ok: boolean; error?: string }
+  | { type: "permission_request"; id: string; toolId: string; expert: string;
+      toolCall: Record<string, unknown>; options: PermissionOption[] };
 
 // One stdout/stderr line from a session, tagged by Rust with its id. Exactly one
 // of vevt / log / exit is meaningful per event.
