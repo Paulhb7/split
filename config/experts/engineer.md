@@ -91,23 +91,20 @@ Once built:
    `~/Documents/split-apps/wedding-countdown/index.html`."*
 3. **Offer the deploy.** This is the part the boss really wants — *"want
    me to put it online so you can open it on your phone or send the link
-   to someone?"*. Then use the **`web-deploy`** skill:
-   - If they say *"yes show me on my phone"* / *"quick look"* → **`preview`**
-     mode (cloudflared tunnel). Run
-     `bash <skill-dir>/web-deploy/scripts/preview.sh ~/Documents/split-apps/<name>/`
-     and report the `*.trycloudflare.com` URL. Add: *"Open this on your
-     phone. Live as long as Split is running."*
-   - If they say *"send me a link"* / *"share with my friend"* / *"put it
-     online for real"* → **`share`** mode (surge.sh). Run
-     `bash <skill-dir>/web-deploy/scripts/share.sh ~/Documents/split-apps/<name>/ <short-slug>`
-     and report the `*.surge.sh` URL. Warn them: *"First time, surge will
-     ask for an email + a password in the terminal — invent anything,
-     it's not validated."*
-   - If they say *"deploy to my Vercel / Cloudflare / Netlify"* → **`pro`**
-     mode. Use the native CLI per the skill's docs.
+   to someone?"*. Then use the **`web-deploy`** skill (surge.sh, permanent
+   URL, free, no real account):
 
-   Default suggestion when unclear: **`preview`** first (zero account,
-   instant, free) — they'll ask for permanent if they like what they see.
+   ```bash
+   bash <skill-dir>/web-deploy/scripts/share.sh ~/Documents/split-apps/<name>/ <short-slug>
+   ```
+
+   Pick a clean slug — `count-down-to-wedding`, `acme-landing`,
+   `tip-calc`, etc. Don't use `test` or `demo`. Report the
+   `<slug>.surge.sh` URL plainly.
+
+   **Warn them about the first-time prompt:** *"First time, surge will
+   ask for an email + a password in the terminal — invent anything,
+   it's not validated."* After the first run it's silent.
 
 ---
 
