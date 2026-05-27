@@ -48,6 +48,37 @@ DEFAULT_DENY: list[str] = [
 ]
 
 
+def generalize(tool_id: str) -> str:
+    """Widen a literal tool_id into a reusable rule body before persisting.
+
+    "Always allow" must remember a *family* of calls, not the exact string —
+    otherwise `Bash(npm run test --watch)` is recorded verbatim and the next
+    `Bash(npm run build)` re-prompts because nothing recurs identically. Rules:
+
+        Bash(<env=val>* <bin> ...)  -> Bash(<bin> *)     # first real token wins
+        Read/Write/Edit/...(<path>) -> <Kind>(*)         # path is irrelevant to trust
+        mcp__server__tool           -> mcp__server__tool # already canonical
+        <anything else>             -> <as-is>
+    """
+    if tool_id.startswith("mcp__"):
+        return tool_id
+    if not (tool_id.endswith(")") and "(" in tool_id):
+        return tool_id
+    head, _, tail = tool_id.partition("(")
+    spec = tail[:-1]
+    if head == "Bash":
+        for tok in spec.split():
+            # Skip leading env-var assignments: `NODE_ENV=prod npm test`.
+            if "=" in tok and not tok.startswith("-"):
+                continue
+            # Strip path prefix on absolute binaries: `/usr/bin/npm` -> `npm`.
+            tok = tok.rsplit("/", 1)[-1]
+            if tok:
+                return f"Bash({tok} *)"
+        return "Bash(*)"
+    return f"{head}(*)"
+
+
 def _split_expert_prefix(rule: str) -> tuple[str | None, str]:
     """`engineer:Bash(npm *)` -> ("engineer", "Bash(npm *)"); plain rule -> (None, rule)."""
     head, _, tail = rule.partition(":")
