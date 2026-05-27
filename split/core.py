@@ -67,9 +67,18 @@ def load_experts() -> dict:
 # --- projecting an expert into a workspace -----------------------------------
 def install_persona(expert: str = "consultant", ws_dir: str | None = None) -> list[str]:
     """Project the EXPERT's persona into a workspace's cross-agent instruction
-    files (AGENTS.md = the cross-vendor standard; CLAUDE/GEMINI/QWEN = per-vendor
-    shims). ws_dir defaults to WORKSPACE; the desktop runner passes a PER-SESSION
-    dir so concurrent experts don't overwrite each other.
+    files. Two layers:
+
+    1. **Universal shims at the workspace root** — `AGENTS.md` is the
+       cross-vendor standard; `CLAUDE.md` / `GEMINI.md` / `QWEN.md` / `VIBE.md`
+       are per-vendor shims. Most agents scan one of these and Just Work.
+    2. **Per-harness scoped copies** — some agents only read their own config
+       subdir (Mistral Vibe scans `.vibe/`; Codex/Claude have their own). For
+       those we also write the persona into the matching subdir so the agent
+       finds it even if it ignores root-level files.
+
+    ws_dir defaults to WORKSPACE; the desktop runner passes a PER-SESSION dir
+    so concurrent experts don't overwrite each other.
 
     If `experts/_discipline.md` exists, its contents are prepended to every
     projected file — a shared compliance preamble that helps weaker
@@ -90,11 +99,23 @@ def install_persona(expert: str = "consultant", ws_dir: str | None = None) -> li
         persona = f.read()
     body = (preamble + persona) if preamble else persona
     written = []
-    for fname in ("AGENTS.md", "CLAUDE.md", "GEMINI.md", "QWEN.md"):
+    # 1. Universal shims at the workspace root.
+    for fname in ("AGENTS.md", "CLAUDE.md", "GEMINI.md", "QWEN.md", "VIBE.md"):
         out = os.path.join(ws_dir, fname)
         with open(out, "w", encoding="utf-8") as f:
             f.write(body)
         written.append(fname)
+    # 2. Per-harness scoped copies — agents that only scan their own config dir.
+    #    Each tuple is (subdir, filename). The subdir is created if missing.
+    for subdir, fname in (
+        (".vibe", "AGENTS.md"),     # Mistral Vibe — scans its own .vibe/ dir
+    ):
+        sub = os.path.join(ws_dir, subdir)
+        os.makedirs(sub, exist_ok=True)
+        out = os.path.join(sub, fname)
+        with open(out, "w", encoding="utf-8") as f:
+            f.write(body)
+        written.append(f"{subdir}/{fname}")
     return written
 
 

@@ -11,7 +11,12 @@ export type ExpertKind =
   | "creator";
 
 export interface Expert {
+  /** Persona name shown in the UI (e.g. "Wolfgang", "Curie"). */
   label: string;
+  /** Human role / job title (e.g. "Consultant", "Data Analyst"). Shown next
+   * to the genius name in the @-picker so users learn who's who. Optional
+   * for backwards compatibility — falls back to the prettified slug. */
+  role?: string;
   kind: ExpertKind;
   blurb: string;
 }
@@ -20,11 +25,10 @@ export type ExpertMap = Record<string, Expert>;
 
 // Fallback roster if `list_experts` fails (matches experts.json order/defaults).
 export const DEFAULT_EXPERTS: ExpertMap = {
-  consultant: { label: "Consultant", kind: "researcher", blurb: "Web research into ready slides" },
-  scientist: { label: "Scientist", kind: "researcher", blurb: "Bridges fields to find new ideas, maps the state of the art" },
-  lawyer: { label: "Lawyer", kind: "advisor", blurb: "Legal guidance, risk & clauses" },
-  analyst: { label: "Data Analyst", kind: "analyst", blurb: "CSV analysis, charts & dashboards" },
-  engineer: { label: "Q", kind: "builder", blurb: "Builds micro-apps & landing pages, ships them to a public URL" },
-  finder: { label: "File Finder", kind: "finder", blurb: "Finds files on your Mac" },
-  vision: { label: "Vision", kind: "operator", blurb: "Drives your apps in the background" },
+  consultant: { label: "Wolfgang", role: "Consultant", kind: "researcher", blurb: "Web research into ready slides" },
+  scientist: { label: "Curie", role: "Scientist", kind: "researcher", blurb: "Bridges fields to find new ideas, maps the state of the art" },
+  lawyer: { label: "Cicero", role: "Lawyer", kind: "advisor", blurb: "Legal guidance, risk & clauses" },
+  data_analyst: { label: "Turing", role: "Data Analyst", kind: "analyst", blurb: "CSV analysis, charts & dashboards" },
+  engineer: { label: "Tesla", role: "Engineer", kind: "builder", blurb: "Builds micro-apps & landing pages, ships them to a public URL" },
+  vision: { label: "Babbage", role: "Vision", kind: "operator", blurb: "Drives your apps in the background" },
 };

@@ -98,8 +98,8 @@
     "name": "Mistral Vibe (vibe-acp)",
     "command": "./var/bin/vibe-acp",
     "args": [],
-    "skill_dir": ".agents/skills",
+    "skill_dir": ".vibe/skills",
     "auth": "Set MISTRAL_API_KEY (cloud). Download the vibe-acp binary into var/bin/ first — see README.",
-    "note": "No npx distribution; ships as a platform binary. Skill discovery for Vibe is the least certain of the three — treat 'does it pick up the consultant skill?' as a finding."
+    "note": "No npx distribution; ships as a platform binary. Vibe scans its own `.vibe/` config dir for skills + agent instructions, so `skill_dir = .vibe/skills` and `install_persona` also projects the persona into `<ws>/.vibe/AGENTS.md` (in addition to the universal `<ws>/AGENTS.md`). See split/core.py:install_persona."
   }
 }

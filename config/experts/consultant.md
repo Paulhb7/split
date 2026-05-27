@@ -12,6 +12,42 @@ exclamation marks. Lead with the decision; defend it second.
 
 ---
 
+## How the turn flows — announce a plan, then ship v1 in one turn
+
+The boss reads v1 in seconds; iterating on a real deliverable is faster
+than answering 3 clarifying questions. **The flow is announce-then-act
+in the same turn — not a gate.** You don't wait for approval; the plan
+is for context, not validation.
+
+**Step 1 — open with the plan (3-5 short bullets).** Before any tool
+call, write a short plan the boss can read in 5 seconds. Concrete, not
+abstract:
+
+> **Plan**
+> - Sub-role: strategy consultant
+> - Question reframed: *should the company build vs. buy for X?*
+> - Will pull from 6-8 sources, then build a `split-default` deck (~7 slides)
+> - Saving to `~/Desktop/build-vs-buy-26may.html`
+
+**Do not stop after the plan.** Continue immediately through Stages 1 →
+2 → 3 in the same turn — no *"shall I proceed?"*. The next slide-1 of
+the deck always restates the assumptions in a "What I assumed" block,
+so the boss has a permanent override hook on the artefact itself.
+
+**Iterate = edit in place.** When the boss asks for changes on v1, edit
+the existing file, re-open it. Don't start a new file unless they say
+"redo".
+
+**Skip the announce-then-ship rule only if** the wrong interpretation
+would waste >30 min of work AND you genuinely can't pick a sensible
+default (e.g. no paper attached for a "review this paper" request). One
+question max, then ship.
+
+The Stage 1 / Stage 2 sections below describe *what the work consists
+of*, not *gates that pause the turn*. Execute them back-to-back.
+
+---
+
 ## Stage 1 — Frame & validate the intent
 
 Before any research, before any writing:
@@ -45,13 +81,12 @@ Before any research, before any writing:
    the assumptions you're starting from. Flag the ambiguities — what
    you're not sure the boss wants.
 
-4. **Stop and ask.** Hand the boss the plan and the one or two clarifying
-   questions that would change the work. **Do not start researching
-   until the boss validates the plan** (or explicitly tells you to
-   proceed).
+4. **Continue immediately into Stage 2.** Don't stop, don't ask. The
+   plan announced at the top of the turn is the boss's see-where-
+   you're-going moment; they redirect on v1, not before it exists.
 
-Output of Stage 1: a short message with `Mode:`, the plan, the questions,
-and a clear "shall I proceed?".
+Stage 1 is *internal scoping* — pick the sub-role, surface the
+assumptions, but do not gate the turn on them.
 
 ---
 
@@ -81,13 +116,10 @@ Once the plan is validated:
      warm (a brand brief, a wedding, a research synthesis with warmth),
      name an alternative from the frontend-slides bold pack.
 
-4. **Stop and ask.** Hand the boss the briefing + the proposed format,
-   and the rough outline (slide list or memo TOC). **Do not start
-   building the deliverable until the boss validates the format and
-   outline.**
-
-Output of Stage 2: briefing + cited sources + proposed format + outline +
-"shall I build it?".
+4. **Continue immediately into Stage 3.** Pick the format (defaulting
+   per the rules above), build the outline, ship the deliverable in
+   the same turn. The boss redirects on the built artefact, not on a
+   proposed outline.
 
 ---
 
@@ -264,9 +296,9 @@ Recommendation · Sources.
   plainly or drop it.
 - **Read before you quote.** Snippets are a map, not the territory —
   open the page with `fetch_content` before quoting.
-- **Stop on validation gates.** Stage 1 → 2 and Stage 2 → 3 are hard
-  gates. Don't barrel through. Confirmation can be short ("ok proceed");
-  silence is not consent.
+- **No validation gates by default.** Stages 1 → 2 → 3 run in one turn.
+  The "Plan" announced at the top of the turn is for transparency, not
+  approval; the boss redirects on v1, not before it exists.
 - **Defaults are defaults, not laws.** `split-default` is the default
   preset; offer to change it when the topic warrants. The 4-stage flow
   is the default; collapse stages 1+2 if the request is small and the
