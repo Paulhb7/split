@@ -8,8 +8,7 @@ import { invoke } from "@tauri-apps/api/core";
 // command so the React side stays out of platform DPI quirks.
 //
 // Height bounds (logical pixels):
-const COMPACT = 96;             // idle: just the composer row
-const MIN_EXPANDED = 200;       // floor whenever the bar is "expanded"
+const MIN_HEIGHT = 130;         // floor: chrome + composer + a bit of slack
 const MAX_FRAC = 0.7;           // ceiling: 70% of the user's screen height
 const CHROME_H = 46;            // .chrome's fixed CSS height (see app.css)
 const SLACK = 24;               // bottom gutter so the last line breathes
@@ -45,9 +44,11 @@ export function useWindowChrome() {
 /** Auto-fit the Tauri window height to the natural content height.
  *
  * The caller wraps the body content in a `<div ref={measureRef}>` whose
- * natural `offsetHeight` reflects what's drawn. When `expanded` is false the
- * bar collapses to `COMPACT`; otherwise the window height becomes
- * `clamp(chrome + content + slack, MIN_EXPANDED, MAX)`.
+ * natural `offsetHeight` reflects what's drawn. The window height becomes
+ * `clamp(chrome + content + slack, MIN_HEIGHT, MAX)` — always, no special
+ * "compact" short-circuit. The minimal state comes from the body rendering
+ * less content (e.g. just the composer when idle), not from forcing a
+ * sub-content window height.
  *
  * Implementation notes:
  *   - Dedupes via `lastHeightRef` — we don't spam the Rust IPC if the
@@ -61,10 +62,18 @@ export function useWindowChrome() {
  */
 export function useAdaptiveHeight(opts: {
   measureRef: React.RefObject<HTMLElement | null>;
-  expanded: boolean;
+  /** When true, the auto-fit is disabled — useful when an external state owns
+   *  the window geometry (e.g. fullscreen for the Teams mode). The hook keeps
+   *  the observer paused so it doesn't fight the OS window size. */
+  disabled?: boolean;
+  /** Extra logical pixels to reserve at the bottom (in addition to the natural
+   *  body content height). Used to grow the bar when an `@` / engine dropdown
+   *  opens — those menus are `position: absolute` and don't contribute to the
+   *  measured wrapper's offsetHeight, so we have to add them explicitly. */
+  menuExtra?: number;
   extraDeps?: unknown[];
 }) {
-  const { measureRef, expanded } = opts;
+  const { measureRef, disabled, menuExtra = 0 } = opts;
   const lastHeightRef = useRef(0);
 
   const setHeight = useCallback((h: number) => {
@@ -74,16 +83,8 @@ export function useAdaptiveHeight(opts: {
     invoke("set_bar_height", { height: v }).catch(() => { /* ignore */ });
   }, []);
 
-  // Compact mode — short-circuit, no observer needed.
   useEffect(() => {
-    if (expanded) return;
-    setHeight(COMPACT);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expanded]);
-
-  // Expanded mode — observe the measure wrapper.
-  useEffect(() => {
-    if (!expanded) return;
+    if (disabled) return;
     const measureEl = measureRef.current;
     if (!measureEl) return;
     let raf = 0;
@@ -93,8 +94,8 @@ export function useAdaptiveHeight(opts: {
         const measureH = measureEl.offsetHeight || 0;
         const screen = window.screen?.height ?? 1080;
         const MAX = Math.floor(screen * MAX_FRAC);
-        const desired = CHROME_H + measureH + SLACK;
-        const clamped = Math.max(MIN_EXPANDED, Math.min(MAX, desired));
+        const desired = CHROME_H + measureH + menuExtra + SLACK;
+        const clamped = Math.max(MIN_HEIGHT, Math.min(MAX, desired));
         setHeight(clamped);
       });
     };
@@ -106,5 +107,34 @@ export function useAdaptiveHeight(opts: {
       cancelAnimationFrame(raf);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expanded, ...(opts.extraDeps ?? [])]);
+  }, [disabled, menuExtra, ...(opts.extraDeps ?? [])]);
+}
+
+/** Toggle the Tauri window to native fullscreen (macOS creates a dedicated
+ *  Space). Used by the Teams mode, which needs the full canvas to render the
+ *  Chief-of-Staff orchestration view comfortably. Exiting fullscreen returns
+ *  the window to its pre-fullscreen size, and `useAdaptiveHeight` resumes
+ *  fitting it to the body content.
+ *
+ *  macOS native fullscreen silently rejects the call when the window is
+ *  marked non-resizable in tauri.conf.json. We toggle `resizable` around the
+ *  fullscreen call: true → enter → false on exit, so the adaptive bar
+ *  outside Teams mode keeps its non-resizable contract. */
+export function useFullscreen(active: boolean) {
+  useEffect(() => {
+    const win = getCurrentWindow();
+    (async () => {
+      try {
+        if (active) {
+          await win.setResizable(true);
+          await win.setFullscreen(true);
+        } else {
+          await win.setFullscreen(false);
+          await win.setResizable(false);
+        }
+      } catch {
+        /* ignore — capability not granted, headless test, etc. */
+      }
+    })();
+  }, [active]);
 }

@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
-import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { HARNESSES, H, logoUrl, brandOf, type Harness } from "./shared/harnesses";
 import { useExperts, composeTurn, type Attachment } from "./shared/util";
 import { useSessions } from "./shared/useSessions";
-import { useWindowChrome, useAdaptiveHeight } from "./shared/useWindowChrome";
+import { useWindowChrome, useAdaptiveHeight, useFullscreen } from "./shared/useWindowChrome";
 import type { Session } from "./shared/models";
 import { Logo, Tile, League, vars } from "./shared/ui";
 import Onboarding from "./onboarding/Onboarding";
@@ -51,9 +50,9 @@ function loadActive(): string {
 
 export default function App() {
   const experts = useExperts();
-  const { sessions, start, send, sendAuth, stop, remove, cancelQueued } = useSessions(experts);
+  const { sessions, start, send, sendAuth, sendPermission, stop, remove, cancelQueued } = useSessions(experts);
   const teamApi = useMemo(() => ({ start, send, stop }), [start, send, stop]);
-  const { team, runTeam, stopTeam } = useTeam(teamApi, experts);
+  const { project, channels, activeChannel, activeRoster, setActiveChannel, newChannel, stopChannel, removeChannel } = useTeam(teamApi, experts);
   const { pinned, startMove, togglePin, hide } = useWindowChrome();
 
   const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem(LS_DONE));
@@ -62,7 +61,6 @@ export default function App() {
   const [expertSlug, setExpertSlug] = useState("consultant");
   const [menu, setMenu] = useState<"engine" | "expert" | null>(null);
   const [overlay, setOverlay] = useState(false);
-  const [workspace, setWorkspace] = useState<string>(() => localStorage.getItem("split.workspace") || "");
   const [view, setViewState] = useState<"list" | "stage">(() => (localStorage.getItem(LS_VIEW) === "stage" ? "stage" : "list"));
   const setView = (v: "list" | "stage") => {
     setViewState(v);
@@ -80,6 +78,10 @@ export default function App() {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragging, setDragging] = useState(false);
   const [toasts, setToasts] = useState<{ id: string; text: string }[]>([]);
+  // `@` type-ahead state: when the cursor sits inside an `@…` mention with no
+  // whitespace between the `@` and the cursor, this holds the text typed after
+  // the `@` (so the expert dropdown can filter). null = not in mention mode.
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -92,18 +94,36 @@ export default function App() {
   const accent = focused ? brandOf(focused.harness) : brandOf(active);
   const enabledHarnesses = HARNESSES.filter((h) => enabled.includes(h.id));
 
-  // Adaptive bar: collapse to COMPACT when nothing is going on, fit the
-  // window to the natural body content otherwise. The body wrapper below
-  // carries `measureRef`. Re-fit when the @-menu / agent overlay opens or
-  // when logs/thread length shifts in the focused conv.
+  // Adaptive bar: ResizeObserver fits the window to the natural body content.
+  // The "minimal" state is achieved by rendering less body (just the composer
+  // when truly idle — see the home branch below), not by forcing a sub-content
+  // window height.
+  //
+  // Teams mode is the one exception — it goes native fullscreen so the Chief
+  // of Staff orchestration view has the canvas it needs. Auto-fit is paused
+  // while in fullscreen; on exit, `useAdaptiveHeight` re-fits to whatever the
+  // body now shows.
   const expanded =
     !!focused || sessions.length > 0 || mode === "teams" || overlay || !!authSession || !onboarded;
+  const isTeamsFullscreen = mode === "teams";
+  useFullscreen(isTeamsFullscreen);
+  // Pre-compute how much extra height the open dropdown needs. The menu is
+  // `position: absolute` so it doesn't contribute to `measureRef`'s natural
+  // offsetHeight; we reserve room manually so the window grows tall enough
+  // to render it without clipping. Bounded by the CSS `max-height` of `.menu`.
+  const menuExtra = !menu
+    ? 0
+    : menu === "engine"
+      ? Math.min(320, enabledHarnesses.length * 56 + 80)
+      : Math.min(320, Object.keys(experts).length * 56 + 16);
   useAdaptiveHeight({
     measureRef,
-    expanded,
+    disabled: isTeamsFullscreen,
+    menuExtra,
     extraDeps: [
       menu,
       overlay,
+      expanded,
       focused?.thread.length ?? 0,
       focused?.answer.length ?? 0,
       focused?.logs.length ?? 0,
@@ -152,7 +172,7 @@ export default function App() {
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
-  }, [focused?.answer, focused?.thread.length, focusedId]);
+  }, [focused?.answer, focused?.thoughts, focused?.thread.length, focusedId]);
 
   // toast a session that finished while you weren't watching it
   useEffect(() => {
@@ -193,20 +213,8 @@ export default function App() {
     setOnboarded(true);
   }
 
-  // workspace: the folder where agents save their files (per-session subdirs).
-  const wsName = workspace ? workspace.replace(/\/+$/, "").split("/").pop() || workspace : "Default folder";
-  async function pickWorkspace() {
-    try {
-      const dir = await openDialog({ directory: true, multiple: false, title: "Choose a default workspace folder", defaultPath: workspace || undefined });
-      if (typeof dir === "string") {
-        setWorkspace(dir);
-        localStorage.setItem("split.workspace", dir);
-      }
-    } catch {
-      /* cancelled */
-    }
-  }
   function openWorkspaceFolder(sessionId?: string) {
+    const workspace = localStorage.getItem("split.workspace") || "";
     invoke("open_workspace", { workspace, sessionId: sessionId ?? null });
   }
 
@@ -242,18 +250,94 @@ export default function App() {
     setTimeout(() => setToasts((x) => x.filter((y) => y.id !== tid)), 5000);
   }
 
+  const expertEntries = useMemo(() => Object.entries(experts), [experts]);
+  const expertLabel = experts[expertSlug]?.label || "Consultant";
+
+  // The expert list shown in the dropdown: full when the menu was opened by
+  // clicking the chip; case-insensitive prefix-filtered by `mentionQuery` when
+  // the menu was triggered by typing `@…` in the input.
+  const filteredExperts = useMemo(() => {
+    if (mentionQuery == null || mentionQuery === "") return expertEntries;
+    const q = mentionQuery.toLowerCase();
+    return expertEntries.filter(([, x]) => x.label.toLowerCase().startsWith(q));
+  }, [expertEntries, mentionQuery]);
+
+  // Detect an active `@…` mention at the cursor and sync menu state. Called
+  // from every input's onChange (the home composer and the conv reply input).
+  function handleInputChange(newValue: string, cursorPos: number | null) {
+    setValue(newValue);
+    const cursor = cursorPos ?? newValue.length;
+    // Walk back from the cursor until whitespace or start; if we hit `@` first,
+    // we're in a mention. The query is the text between the `@` and the cursor.
+    let i = cursor - 1;
+    while (i >= 0 && !/\s/.test(newValue[i])) {
+      if (newValue[i] === "@") {
+        setMentionQuery(newValue.slice(i + 1, cursor));
+        setMenu("expert");
+        return;
+      }
+      i--;
+    }
+    // Cursor is not inside a mention. If a mention session was open, close it.
+    if (mentionQuery !== null) {
+      setMentionQuery(null);
+      if (menu === "expert") setMenu(null);
+    }
+  }
+
+  // Apply an expert pick. If a mention is active, replace `@<query>` in the
+  // input with `@<ExpertLabel> ` and restore the cursor after the inserted
+  // text. Otherwise just arm this expert as the default for the next session
+  // (the old chip-click behaviour).
+  function pickExpert(slug: string) {
+    const exp = experts[slug];
+    setExpertSlug(slug);
+    setMenu(null);
+    const wasMention = mentionQuery !== null;
+    setMentionQuery(null);
+    if (!exp || !wasMention) {
+      inputRef.current?.focus();
+      return;
+    }
+    const input = inputRef.current;
+    const cursor = input?.selectionStart ?? value.length;
+    // Find the `@` that opened the mention (same walk-back as above).
+    let i = cursor - 1;
+    while (i >= 0 && !/\s/.test(value[i]) && value[i] !== "@") i--;
+    if (i < 0 || value[i] !== "@") {
+      inputRef.current?.focus();
+      return;
+    }
+    const before = value.slice(0, i);
+    const after = value.slice(cursor);
+    const inserted = `@${exp.label} `;
+    const next = before + inserted + after;
+    setValue(next);
+    const newCursor = before.length + inserted.length;
+    setTimeout(() => {
+      input?.focus();
+      input?.setSelectionRange(newCursor, newCursor);
+    }, 0);
+  }
+
   function onKey(e: React.KeyboardEvent) {
+    // While the @-mention picker is open, Enter picks the top filtered entry
+    // (insert it into the input) instead of submitting the brief.
+    if (menu === "expert" && mentionQuery !== null && e.key === "Enter") {
+      if (filteredExperts.length > 0) {
+        e.preventDefault();
+        pickExpert(filteredExperts[0][0]);
+        return;
+      }
+    }
     if (e.key === "Enter") submit();
     else if (e.key === "Escape") {
-      if (menu) setMenu(null);
+      if (menu) { setMenu(null); setMentionQuery(null); }
       else if (overlay) setOverlay(false);
       else if (focused) setFocusedId(null);
       else hide();
     }
   }
-
-  const expertEntries = useMemo(() => Object.entries(experts), [experts]);
-  const expertLabel = experts[expertSlug]?.label || "Consultant";
 
   // shared attachment chips
   const chips = attachments.map((a, i) => (
@@ -295,7 +379,7 @@ export default function App() {
               <button className="iconbtn" onClick={() => setFocusedId(null)} title="Back">‹</button>
               <Tile id={focused.harness} size={38} />
               <div>
-                <div className="conv-title">@{focused.expertLabel}</div>
+                <div className="conv-title">@{focused.expertLabel}{experts[focused.expertSlug]?.role ? <span className="conv-role"> · {experts[focused.expertSlug]?.role}</span> : null}</div>
                 <div className="conv-on">on <b>{H[focused.harness]?.label || focused.harness}</b> · {focused.status}</div>
               </div>
               <span className="spacer" />
@@ -310,7 +394,9 @@ export default function App() {
             <div className="thread" ref={threadRef}>
               {focused.thread.map((turn, i) => (
                 <div key={i} className={"turn " + turn.role}>
-                  <span className="role">{turn.role === "user" ? "You" : focused.expertLabel}</span>
+                  <span className="role">
+                    {turn.role === "user" ? "You" : turn.role === "thought" ? `${focused.expertLabel} · thinking` : focused.expertLabel}
+                  </span>
                   <div className="text">
                     {turn.role === "user" ? (
                       <>
@@ -323,6 +409,12 @@ export default function App() {
                   </div>
                 </div>
               ))}
+              {focused.thoughts && (
+                <div className="turn thought">
+                  <span className="role">{focused.expertLabel} · thinking</span>
+                  <div className="text"><ReactMarkdown remarkPlugins={[remarkGfm]}>{focused.thoughts}</ReactMarkdown></div>
+                </div>
+              )}
               {focused.answer && (
                 <div className="turn agent">
                   <span className="role">{focused.expertLabel}</span>
@@ -339,6 +431,29 @@ export default function App() {
                   {focused.auth.hasLogin && <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }} onClick={() => invoke("terminal_login", { harness: focused.auth!.harness })}>Open Terminal</button>}
                 </div>
               )}
+              {focused.pendingPermission && (() => {
+                const pp = focused.pendingPermission;
+                // Pick the agent option to use when we say "allow": prefer a
+                // non-`always` allow (we own persistence on our side).
+                const allowOpt = pp.options.find((o) => /allow/i.test(o.kind) && !/always/i.test(o.kind))
+                              ?? pp.options.find((o) => /allow/i.test(o.kind));
+                const allowId = allowOpt?.id ?? null;
+                const ask = (optionId: string | null, scope: "once" | "session" | "always-allow") =>
+                  sendPermission(focused.id, pp.id, optionId, scope);
+                return (
+                  <div className="thinking">
+                    🔧 needs approval · <code>{pp.toolId}</code>
+                    <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }}
+                            onClick={() => allowId && ask(allowId, "once")} disabled={!allowId}>Allow once</button>
+                    <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }}
+                            onClick={() => allowId && ask(allowId, "session")} disabled={!allowId}>Allow session</button>
+                    <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }}
+                            onClick={() => allowId && ask(allowId, "always-allow")} disabled={!allowId}>Always ({pp.expert})</button>
+                    <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }}
+                            onClick={() => ask(null, "once")}>Deny</button>
+                  </div>
+                );
+              })()}
               {focused.queued && <div className="thinking">⏳ queued · {focused.queued.display || "(file)"} <button className="xbtn" onClick={() => cancelQueued(focused.id)}>✕</button></div>}
             </div>
 
@@ -357,7 +472,7 @@ export default function App() {
             {focused.status !== "ended" && (
               <div className="composer" style={{ marginTop: 16, marginBottom: 0 }}>
                 {chips}
-                <input ref={inputRef} value={value} onChange={(e) => setValue(e.target.value)} onKeyDown={onKey}
+                <input ref={inputRef} value={value} onChange={(e) => handleInputChange(e.target.value, e.target.selectionStart)} onKeyDown={onKey}
                   placeholder={focused.status === "running" ? `${focused.expertLabel} is working — queue the next…` : `Reply to ${focused.expertLabel}…`} />
                 {focused.status === "running" ? (
                   <button className="stop" onClick={() => stop(focused.id)}>■</button>
@@ -369,49 +484,29 @@ export default function App() {
           </div>
         ) : mode === "teams" ? (
           /* ============ TEAMS (Chief-of-Staff orchestration) ============ */
-          <Teams team={team} sessions={sessions} workspace={workspace} wsName={wsName} onPickWorkspace={pickWorkspace} onOpenWorkspace={() => openWorkspaceFolder()} onBrief={(g) => runTeam(g, active)} onOpen={setFocusedId} onStopTeam={stopTeam} />
+          <Teams
+            project={project} channels={channels} activeChannel={activeChannel} activeRoster={activeRoster}
+            sessions={sessions}
+            onNewChannel={(g) => newChannel(g, active)} onSelectChannel={setActiveChannel}
+            onStopChannel={stopChannel} onRemoveChannel={removeChannel}
+          />
         ) : (
           /* ============ HOME ============ */
           <div className="home">
             <Composer
               experts={experts} expertSlug={expertSlug} expertLabel={expertLabel} active={active}
               engines={enabledHarnesses} onAddAgent={() => setOverlay(true)}
-              menu={menu} setMenu={setMenu} setExpertSlug={setExpertSlug} setActive={setActive}
-              value={value} setValue={setValue} onKey={onKey} onRun={launch} chips={chips} inputRef={inputRef}
-              expertEntries={expertEntries}
+              menu={menu} setMenu={setMenu} setActive={setActive}
+              value={value} onChange={handleInputChange} onKey={onKey} onRun={launch} chips={chips} inputRef={inputRef}
+              expertEntries={filteredExperts} onPickExpert={pickExpert}
             />
 
-            <div className="wsbar">
-              <span className="ws-ic">📁</span>
-              <span className="ws-label">Workspace</span>
-              <span className="ws-name" title={workspace || "Default app folder · acp-client/workspace"}>{wsName}</span>
-              <span className="spacer" />
-              <button className="xbtn" onClick={pickWorkspace}>change…</button>
-              <button className="xbtn" onClick={() => openWorkspaceFolder()}>open</button>
-            </div>
-
-            <div className="sec">engines <span className="muted">click to arm the next session · </span>
-              <button className="xbtn" onClick={() => setOverlay(true)}>+ add agent</button>
-            </div>
-            {([["cloud", "☁ Cloud"], ["local", "🖥 On-device"]] as const).map(([lane, label]) => {
-              const list = enabledHarnesses.filter((h) => h.lane === lane);
-              if (!list.length) return null;
-              return (
-                <div key={lane} className="roster-group">
-                  <div className="roster-lane">{label}</div>
-                  <div className="roster">
-                    {list.map((h) => (
-                      <button key={h.id} className={"rchip" + (h.id === active ? " active" : "") + (h.reserve ? " reserve" : "")} style={vars({ "--brand": h.brand })} onClick={() => setActive(h.id)}>
-                        <Logo id={h.id} size={16} />
-                        <span className="rv">{h.vendor}</span>
-                        <span className="nm">{h.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-
+            {/* The minimal-bar idle state shows ONLY the composer — adaptive
+                window auto-fits to ~150 px. The roster + sessions surface only
+                once the bar is "expanded" (sessions exist, overlay opened, etc).
+                Picking an engine for the next session is still possible via the
+                composer's left chip. */}
+            {expanded && <>
             <div className="sec sec-row">
               <span>sessions</span>
               <span className="muted">each on its own engine</span>
@@ -433,6 +528,7 @@ export default function App() {
                 )}
               </div>
             )}
+            </>}
           </div>
         )}
         </div>
@@ -464,12 +560,13 @@ function Composer(props: {
   expertSlug: string; expertLabel: string; active: string;
   engines: Harness[]; onAddAgent: () => void;
   menu: "engine" | "expert" | null; setMenu: (m: "engine" | "expert" | null) => void;
-  setExpertSlug: (s: string) => void; setActive: (s: string) => void;
-  value: string; setValue: (s: string) => void; onKey: (e: React.KeyboardEvent) => void; onRun: () => void;
+  setActive: (s: string) => void;
+  value: string; onChange: (v: string, cursor: number | null) => void; onKey: (e: React.KeyboardEvent) => void; onRun: () => void;
   chips: React.ReactNode; inputRef: React.RefObject<HTMLInputElement | null>;
   expertEntries: [string, { label: string; kind: string; blurb: string }][];
+  onPickExpert: (slug: string) => void;
 }) {
-  const { menu, setMenu, active, setActive, engines, onAddAgent, expertSlug, setExpertSlug, experts, expertLabel, value, setValue, onKey, onRun, chips, inputRef, expertEntries } = props;
+  const { menu, setMenu, active, setActive, engines, onAddAgent, expertSlug, experts, expertLabel, value, onChange, onKey, onRun, chips, inputRef, expertEntries, onPickExpert } = props;
   return (
     <div className="composer">
       {menu === "engine" && (
@@ -491,25 +588,33 @@ function Composer(props: {
       )}
       {menu === "expert" && (
         <div className="menu">
-          {expertEntries.map(([slug, x]) => (
-            <button key={slug} className={"mi" + (slug === expertSlug ? " sel" : "")} onClick={() => { setExpertSlug(slug); setMenu(null); inputRef.current?.focus(); }}>
-              <span />
-              <span className="mn">@{x.label}</span>
-              <span className="mk">{x.kind}</span>
-              <span className="mb">{x.blurb}</span>
-            </button>
-          ))}
+          {expertEntries.length === 0 ? (
+            <div className="mi mi-empty">No expert matches that name. Type a different prefix or press Esc.</div>
+          ) : (
+            expertEntries.map(([slug, x]) => {
+              // Show "Consultant · researcher" so users learn who's who.
+              const role = (x as { role?: string }).role ?? slug.replace(/_/g, " ");
+              return (
+                <button key={slug} className={"mi" + (slug === expertSlug ? " sel" : "")} onClick={() => onPickExpert(slug)}>
+                  <span />
+                  <span className="mn">@{x.label} <span className="mn-role">{role}</span></span>
+                  <span className="mk">{x.kind}</span>
+                  <span className="mb">{x.blurb}</span>
+                </button>
+              );
+            })
+          )}
         </div>
       )}
       <button className="pick" onClick={() => setMenu(menu === "engine" ? null : "engine")} title="Engine">
         <Logo id={active} size={15} />
         {H[active]?.label || active}
       </button>
-      <button className="pick" onClick={() => setMenu(menu === "expert" ? null : "expert")} title="Expert">
-        @{expertLabel} <span className="k">▾</span>
+      <button className="pick" onClick={() => setMenu(menu === "expert" ? null : "expert")} title={`@${expertLabel} — ${experts[expertSlug]?.role ?? "Expert"}`}>
+        @{expertLabel} <span className="k pick-role">{experts[expertSlug]?.role ?? ""}</span> <span className="k">▾</span>
       </button>
       {chips}
-      <input ref={inputRef} value={value} onChange={(e) => setValue(e.target.value)} onKeyDown={onKey}
+      <input ref={inputRef} value={value} onChange={(e) => onChange(e.target.value, e.target.selectionStart)} onKeyDown={onKey}
         placeholder={`Brief @${experts[expertSlug]?.label || "your expert"} on ${H[active]?.label || active}…`} />
       <button className="run" onClick={onRun} title="Run">▶</button>
     </div>
