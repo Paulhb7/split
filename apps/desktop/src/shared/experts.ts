@@ -30,5 +30,5 @@ export const DEFAULT_EXPERTS: ExpertMap = {
   lawyer: { label: "Cicero", role: "Lawyer", kind: "advisor", blurb: "Legal guidance, risk & clauses" },
   data_analyst: { label: "Turing", role: "Data Analyst", kind: "analyst", blurb: "CSV analysis, charts & dashboards" },
   engineer: { label: "Tesla", role: "Engineer", kind: "builder", blurb: "Builds micro-apps & landing pages, ships them to a public URL" },
-  vision: { label: "Babbage", role: "Vision", kind: "operator", blurb: "Drives your apps in the background" },
+  operator: { label: "Alfred", role: "Operator", kind: "operator", blurb: "Drives your apps with your logins — books, fills forms, runs admin" },
 };

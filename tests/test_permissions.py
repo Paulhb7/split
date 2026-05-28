@@ -33,24 +33,24 @@ def test_expert_prefix_only_matches_that_expert():
 
 def test_unprefixed_rule_applies_to_every_expert():
     rule = "WebSearch"
-    for e in ("consultant", "engineer", "vision"):
+    for e in ("consultant", "engineer", "operator"):
         assert P._matches(rule, e, "WebSearch") is True
 
 
 def test_mcp_server_rule_matches_every_tool_on_server():
-    assert P._matches("mcp__cua_driver", "vision", "mcp__cua_driver__click") is True
-    assert P._matches("mcp__cua_driver", "vision", "mcp__cua_driver__type_text") is True
-    assert P._matches("mcp__cua_driver", "vision", "mcp__other__click") is False
+    assert P._matches("mcp__cua_driver", "operator", "mcp__cua_driver__click") is True
+    assert P._matches("mcp__cua_driver", "operator", "mcp__cua_driver__type_text") is True
+    assert P._matches("mcp__cua_driver", "operator", "mcp__other__click") is False
 
 
 def test_mcp_exact_tool_rule():
-    assert P._matches("mcp__cua_driver__click", "vision", "mcp__cua_driver__click") is True
-    assert P._matches("mcp__cua_driver__click", "vision", "mcp__cua_driver__type") is False
+    assert P._matches("mcp__cua_driver__click", "operator", "mcp__cua_driver__click") is True
+    assert P._matches("mcp__cua_driver__click", "operator", "mcp__cua_driver__type") is False
 
 
 def test_mcp_glob_in_tool_name():
-    assert P._matches("mcp__cua_driver__*", "vision", "mcp__cua_driver__click") is True
-    assert P._matches("mcp__cua_driver__*", "vision", "mcp__other__click") is False
+    assert P._matches("mcp__cua_driver__*", "operator", "mcp__cua_driver__click") is True
+    assert P._matches("mcp__cua_driver__*", "operator", "mcp__other__click") is False
 
 
 # --- decide engine ----------------------------------------------------------
