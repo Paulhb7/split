@@ -12,12 +12,18 @@ __pycache__/
 # generated state · vendored harness binaries · retired code (all under var/)
 var/
 
+# parked / unused files moved out of the live tree (audit cleanup)
+archive/
+
 # desktop build artifacts
 apps/desktop/node_modules/
 apps/desktop/dist/
 apps/desktop/src-tauri/target/
 
 Claude.md
+
+# working notes (boss-only, not for the repo)
+next_steps.md
 
 split_acp.egg-info
 .ruff_cache/
