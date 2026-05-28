@@ -172,8 +172,14 @@ class Runner:
             session_allow=self._session_allow,
             on_prompt=self._on_prompt,
         )
+        # asyncio.StreamReader defaults to 64 KB per line — a single big
+        # session/update (e.g. a 10-slide HTML deck the agent emits in one
+        # frame) blows past that and crashes the receive loop with
+        # "Separator is found, but chunk is longer than limit". Bump the
+        # JSON-RPC line buffer to 16 MB; the agent's stdout is the ceiling.
         self._cm = acp.spawn_agent_process(
-            client, command, *self.cfg["args"], cwd=self.ws_dir, env=dict(os.environ)
+            client, command, *self.cfg["args"], cwd=self.ws_dir, env=dict(os.environ),
+            transport_kwargs={"limit": 16 * 1024 * 1024},
         )
         self.conn, _ = await self._cm.__aenter__()
         init = await self.conn.initialize(
@@ -274,6 +280,17 @@ async def main() -> None:
     runner._emit(type="ready", harness=a.harness, expert=a.expert)
 
     loop = asyncio.get_event_loop()
+    # Long-running ops (turns + auth) must NOT block the stdin reader, otherwise
+    # in-turn permission replies from the UI can never reach handle_permission
+    # and the ACP request_permission future deadlocks. We detach them as tasks;
+    # permission itself stays awaited because it's just resolving a future.
+    inflight: set[asyncio.Task] = set()
+
+    def _spawn(coro) -> None:
+        t = asyncio.create_task(coro)
+        inflight.add(t)
+        t.add_done_callback(inflight.discard)
+
     try:
         while True:
             line = await loop.run_in_executor(None, sys.stdin.readline)
@@ -287,14 +304,17 @@ async def main() -> None:
             except Exception:
                 continue
             if "text" in m:
-                await runner.run(m["text"])
+                _spawn(runner.run(m["text"]))
             elif "auth" in m:
-                await runner.authenticate(m["auth"]["methodId"])
+                _spawn(runner.authenticate(m["auth"]["methodId"]))
             elif "permission" in m:
                 await runner.handle_permission(m["permission"])
             elif m.get("type") == "stop":
                 break
     finally:
+        # Give in-flight turns a beat to wrap up cleanly, then tear down.
+        if inflight:
+            await asyncio.gather(*inflight, return_exceptions=True)
         await runner.close()
 
 

@@ -35,10 +35,10 @@ EXPERT  =  persona (who it is)  +  skills (what it can do)  +  tools (what it ca
 - The **persona** is projected into the agent's own instruction file
   (`AGENTS.md` — the cross-vendor standard — plus `CLAUDE.md` / `GEMINI.md` /
   `QWEN.md` shims). This is the agent's identity, *not* a skill.
-- The **skills** an expert declares (`experts.json`) are copied into the agent's
-  skill location — `.claude/skills/` for Claude, `.agents/skills/` for everyone
-  else. The `SKILL.md` is identical; only the *mount path* differs (the one
-  per-harness bit that isn't invariant).
+- The **skills** an expert declares (`experts.json`) are mounted into the agent's
+  skill location — `.claude/skills/` for Claude, `.agents/skills/` for most
+  harnesses, `.vibe/skills/` for Mistral Vibe. The `SKILL.md` is identical; only
+  the *mount path* differs (the one per-harness bit that isn't invariant).
 - The **tools** are MCP servers from `tools.json`, handed to the agent via ACP's
   `session/new` (not its native config). ACP is what unifies them — Claude reads
   `.mcp.json`, Codex reads `~/.codex/config.toml`; we don't care, we pass them
@@ -50,24 +50,26 @@ Config (`experts.json` / `harnesses.json` / `skills/` / `tools.json`) is kept
 
 ---
 
-## Experts (11 so far)
+## Experts (12 so far)
 
-Pick one with `@` (terminal: `@consultant`; desktop/web: the picker). The
+Pick one with `@` (terminal: `@consultant`; desktop: the picker). The
 **kind** is informational — it tells the UI how to render (chat panel vs. a step
 feed vs. an app preview).
 
 | Expert | Kind | What it does | Leans on |
 |---|---|---|---|
-| **Consultant** | researcher | Web research → a sharp, **cited** briefing, then slides on request | `slide-deck` skill + web search |
-| **Scientist** | researcher | Deep research, literature review, paper writing, peer review, replication | web search + shell / fs |
-| **Lawyer** | advisor | Legal guidance — draft clauses, explain risk, compare options | none (answers in the bar) |
-| **Data Analyst** | analyst | CSV/JSON/Excel/Parquet → interactive HTML report, models, or a Streamlit app | shell + fs (pandas, Plotly, scikit-learn) |
-| **Software Engineer** | builder | Builds a self-contained **single-file HTML app**, edits the same file on follow-ups | shell + fs |
-| **File Finder** | finder | Locates files on your Mac by name/content/type/date — **read-only** | `mdfind` / `find` / `grep` |
-| **Vision** | operator | Drives real macOS apps **in the background** (cursor never moves) | cua tools (MCP) |
-| **Musician** | creator | Turns a description into a finished, shareable track | `music-gen` skill¹ + ffmpeg |
-| **Podcaster** | creator | Topic → scripted, voiced, **edited** podcast episode | `voice-gen` + `music-gen`¹ + ffmpeg |
-| **Director** | creator | Idea → short video (shot list, score, narration, cut) | `video-gen` + `music-gen` + `voice-gen`¹ + ffmpeg |
+| **Toscanini** / Chief of Staff | operator | Conducts a team: delegates, tracks work, synthesizes | built-in team orchestration |
+| **Wolfgang** / Consultant | researcher | Web research → a sharp, **cited** briefing, then slides or Word memos | `web-search`, `frontend-slides`, `docx`, `image-search`, `web-deploy` |
+| **Curie** / Scientist | researcher | Literature review, paper search, replication planning, cross-field synthesis | `web-search`, `paper-search`, `docx`, `frontend-slides`, `web-deploy` |
+| **Buffett** / Financier | analyst | Markets, FP&A, personal finance, investor reporting | `market-data`, `dashboard`, `frontend-slides`, `docx`, `web-deploy` |
+| **Cicero** / Lawyer | advisor | Legal guidance, risk reads, contract drafts and clauses | `web-search`, `docx`, `legal-templates` |
+| **Turing** / Data Analyst | analyst | CSV/Excel exploration, models, dashboards, interactive reports | `dashboard`, `ui-ux-pro-max`, `frontend-slides`, `docx`, `web-deploy` |
+| **Tesla** / Engineer | builder | Builds micro-apps and landing pages, then ships them to a public URL | `web-deploy`, `image-search`, `ui-ux-pro-max` |
+| **DaVinci** / Designer | creator | Brand identities, UI mockups, static graphics, redesigns | `web-audit`, `image-search`, `graphics`, `ui-ux-pro-max`, `frontend-slides` |
+| **Babbage** / Vision | operator | Drives real macOS apps in the background | app-control tools when configured |
+| **Bach** / Musician | creator | Generates original tracks from a prompt | `music-gen` |
+| **Homer** / Podcaster | creator | Scripts, voices, scores, and edits podcast episodes | `voice-gen`, `music-gen` |
+| **Kubrick** / Director | creator | Produces short videos from an idea, shot list, score, and narration | `video-gen`, `music-gen`, `voice-gen` |
 
 Personas live in [`config/experts/`](config/experts/); the registry + render-kinds
 are in [`config/experts.json`](config/experts.json).
@@ -86,41 +88,43 @@ Cursor, Vibe… — i.e. almost every harness here. **This is the whole portabil
 thesis, and it's a standard, not a bet.**
 
 **Skills are declared per-expert** in [`config/experts.json`](config/experts.json)
-(`"skills": ["slide-deck", …]`) and mounted at session start by `install_skills`,
-which copies the **whole skill folder** into that harness's skill dir
-(`.claude/skills/` for Claude, `.agents/skills/` otherwise — the only per-harness
-glue). A declared skill not yet vendored under `skills/<name>/` is silently
-skipped, so a persona may name a skill before it exists.
+(`"skills": ["frontend-slides", …]`) and mounted at session start by
+`install_skills`, which symlinks the **whole skill folder** into that harness's
+skill dir (`.claude/skills/` for Claude, `.agents/skills/` for most harnesses,
+`.vibe/skills/` for Mistral Vibe — the only per-harness glue). A declared skill
+not yet vendored under `skills/<name>/` is silently skipped, so a persona may
+name a skill before it exists.
 
 Vendored in [`config/skills/`](config/skills/):
 
-- **`slide-deck`** — reveal.js HTML deck (CDN, no build) → `~/Desktop`. *(Consultant)*
-- **`music-gen`, `voice-gen`, `video-gen`** — each bundles a **stdlib-only**
-  `scripts/*.py` that calls fal.ai / ElevenLabs over plain `urllib` (no deps to
-  install); needs `FAL_KEY` / `ELEVENLABS_API_KEY`. *(Musician / Podcaster / Director)*
-
-> ¹ **Now vendored.** The gen-skills live in `skills/` and mount automatically.
-> They need an API key (`FAL_KEY` / `ELEVENLABS_API_KEY`).
+- **Research / retrieval:** `web-search`, `paper-search`, `image-search`.
+- **Documents / presentations:** `docx`, `frontend-slides`.
+- **Design / frontend / dashboards:** `ui-ux-pro-max`, `web-audit`, `graphics`,
+  `dashboard`, `web-deploy`.
+- **Finance / legal:** `market-data`, `legal-templates`.
+- **Generation:** `music-gen`, `voice-gen`, `video-gen`; these call fal.ai /
+  ElevenLabs and need `FAL_KEY` / `ELEVENLABS_API_KEY` where applicable.
 
 ---
 
-## Harnesses (the agents — 12 wired)
+## Harnesses (the agents — 10 wired)
 
 Each harness is a runtime/brain. ACP calls each one an "agent"; we launch any
 `command + args`, so even agents the public ACP registry can't express still
-work. Logos for all 12 ship in [`apps/desktop/public/logos/`](apps/desktop/public/logos/).
+work. Logos for all configured harnesses ship in
+[`apps/desktop/public/logos/`](apps/desktop/public/logos/).
 
 | Harness | What it is | Launch | Auth | Status |
 |---|---|---|---|---|
 | `claude` | Claude Agent (claude-acp) | `npx @agentclientprotocol/claude-agent-acp` | `claude login` (Pro/Max) or `ANTHROPIC_API_KEY` | ✅ ready |
 | `codex` | Codex CLI (codex-acp) | `npx @zed-industries/codex-acp` | `codex login` or `OPENAI_API_KEY` | ✅ ready |
 | `gemini` | Gemini CLI | `npx @google/gemini-cli --acp` | Google login (free tier) or `GEMINI_API_KEY` | ✅ ready |
-| `qwen` | Qwen Code (Gemini-CLI fork) | `npx @qwen-code/qwen-code --acp` | `qwen` login or `DASHSCOPE_API_KEY` | ✅ ready |
+| `qwen` | Qwen Code (Gemini-CLI fork) | `npx @qwen-code/qwen-code --acp --experimental-skills` | `DASHSCOPE_API_KEY` | ✅ ready |
 | `copilot` | GitHub Copilot CLI | `npx @github/copilot --acp` | Copilot sub (`gh auth login`) or `GH_TOKEN` | ✅ ready |
 | `deepagents` | DeepAgents (LangChain, model-agnostic) | `npx deepagents-acp` | any provider key (or local) | ✅ ready |
-| `opencode` | OpenCode (75+ providers) | `./bin/opencode acp` | model-agnostic; Ollama for zero-key local | ⚙️ binary in `bin/` |
-| `cursor` | Cursor Agent | `./bin/dist-package/cursor-agent acp` | `cursor-agent login` or `CURSOR_API_KEY` | ⚙️ binary in `bin/` |
-| `mistral-vibe` | Mistral Vibe | `./bin/vibe-acp` | `MISTRAL_API_KEY` (download binary, below) | ⚙️ needs binary |
+| `opencode` | OpenCode (75+ providers) | `./var/bin/opencode acp` | model-agnostic; Ollama for zero-key local | ⚙️ external binary |
+| `cursor` | Cursor Agent | `./var/bin/dist-package/cursor-agent acp` | `cursor-agent login` or `CURSOR_API_KEY` | ⚙️ external binary |
+| `mistral-vibe` | Mistral Vibe | `./var/bin/vibe-acp` | `MISTRAL_API_KEY` (download binary, below) | ⚙️ external binary |
 | `openclaw` | OpenClaw Gateway (a **bridge**) | `openclaw acp` | running Gateway + token | 🅿️ reserve² |
 
 Configs live in [`config/harnesses.json`](config/harnesses.json) (versions pinned from the ACP
@@ -157,10 +161,10 @@ expert's persona + skills into a **per-session workspace** → mount MCP tools v
 > here; it was retired into `var/_retired/` in favour of the desktop app.
 
 **Auth = the agent's job (ACP "Agent Auth").** When a harness needs sign-in, the
-front gets `auth_required` and can either run ACP `authenticate` (OAuth) or pop a
-Terminal with that harness's login command (`claude login`, `codex login`, …).
-Detection + the per-harness commands live in [`split/auth.py`](split/auth.py); the
-desktop drives the actual Terminal/OAuth flow from Rust.
+front gets `auth_required` and can either run ACP `authenticate` (OAuth), launch
+that harness's browser-based login command (`claude login`, `codex login`, …),
+or ask for the configured API key. Detection + the per-harness commands live in
+[`split/auth.py`](split/auth.py); the desktop drives the same flow from Rust.
 
 ---
 
@@ -236,7 +240,7 @@ Try the full loop on either front:
 
 ```
 Research the EV market in 2026 and give me a short briefing   # persona: search + cite
-Now turn that into a slide deck                                 # skill: slide-deck → ~/Desktop/*.html
+Now turn that into a slide deck                                 # skill: frontend-slides
 @claude use the add tool from the everything MCP to add 17 and 25   # tools (MCP): mcp__everything__get-sum → 42
 ```
 
@@ -260,8 +264,8 @@ split/                # the Python backend (a package, run via `python -m split.
   auth.py             #   Agent-Auth detection + the per-harness login commands
 
 config/               # the EXPERT SYSTEM (portable, the OpenClaw "config" half)
-  harnesses.json      #   the 12 HARNESSES (brains/runtimes)
-  experts.json        #   the 11 EXPERTS (render kind + declared skills)
+  harnesses.json      #   the 10 HARNESSES (brains/runtimes)
+  experts.json        #   the 12 EXPERTS (render kind + declared skills)
   tools.json          #   the TOOLS (MCP servers, mcpServers shape)
   experts/*.md        #   each expert's persona prompt
   skills/<name>/      #   portable SKILLs, Agent Skills standard (SKILL.md + optional scripts/)
@@ -293,8 +297,9 @@ macOS. Honest blockers if you try Windows/Linux:
   else exe-ancestor markers, else `CARGO_MANIFEST_DIR`), so it's no longer pinned to
   one machine — but its venv fallback is `.venv/bin/python` (Windows is
   `.venv\Scripts\python.exe`; set `SPLIT_PYTHON` to override).
-- **Auth fallback** — `lib.rs` opens the login terminal via `osascript` +
-  **Terminal.app** (macOS-only AppleScript).
+- **Auth launchers** — `lib.rs` starts browser-based login commands as detached
+  subprocesses. That avoids Terminal.app scripting, but the commands and auth
+  dotfiles are still tested only on macOS.
 - **Session teardown** — Rust kills the process tree with `pkill`/`kill`
   (Windows needs `taskkill`).
 - **`PATH`** — built with a `:` separator and `/opt/homebrew` entries (Unix).
@@ -312,14 +317,16 @@ few weeks.
 
 ## Notes / honest caveats
 
-- **Skills:** per-expert (`config/experts.json`), all 8 vendored in
+- **Skills:** per-expert (`config/experts.json`), currently 15 vendored in
   `config/skills/` (whole folders, per the Agent Skills standard). The gen-skills
-  need `FAL_KEY` / `ELEVENLABS_API_KEY`; everything else runs key-free.
+  need `FAL_KEY` / `ELEVENLABS_API_KEY`; the other skills are local or use the
+  harness's own search/tools.
 - **`terminal/*` is not implemented** (we advertise `terminal: false`). Agents
   that run tools in-process (Claude, Codex) are fine; one needing the client to
   host a terminal will degrade — itself a finding.
-- **Permissions are auto-approved** (bench posture); `fs/read_text_file` /
-  `fs/write_text_file` are served from the real filesystem.
+- **Permissions:** the desktop runs the runner with `SPLIT_PERMISSION_MODE=prompt`
+  and surfaces `permission_request` in the UI. The runner default is still
+  `auto-allow` for bench/CLI usage unless overridden.
 - **Vibe + MCP:** Vibe advertises `mcpCapabilities.http/sse = false` and keeps
   MCP in its own `~/.vibe/config.toml`; if it rejects servers over ACP the
   backend retries without them and warns.

@@ -57,6 +57,16 @@ plan — **don't**. That impulse is the one this rule exists to override.
   — Split's skills carry the discipline (the `split-default` preset,
   the Made-with-Split watermark, the citation rules, the file-path
   conventions). The engine-native version doesn't know those.
+
+- **Exception — web search.** This is the one place where engine-native
+  wins. If your harness has a built-in grounded search tool (Claude,
+  Gemini, Mistral Vibe, Grok, Codex — they all do), **use it**. It's
+  faster, fresher, and free. The Split `web-search` skill (DuckDuckGo
+  via MCP) is a **fallback** for harnesses without native search (Qwen,
+  OpenCode, local Ollama, etc.). When a persona lists `web-search` as
+  a skill, read that as *"do web search"* — pick native if you have it,
+  fall back to the skill if not. Either way, cite the URL, read before
+  you quote.
 - **Cite what you cite.** No fabricated authors, years, DOIs, or URLs.
   If you can't verify a fact, drop the claim or flag it as uncertain.
 - **Reply in the boss's language.** If they write in French, reply in
