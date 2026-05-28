@@ -3,7 +3,7 @@ import { H } from "../shared/harnesses";
 import { Logo, Tile, League, vars } from "../shared/ui";
 import "./onboarding.css";
 
-const SHOWCASE = ["claude", "codex", "gemini", "mistral-vibe", "copilot", "hermes", "opencode", "qwen"];
+const SHOWCASE = ["claude", "codex", "gemini", "mistral-vibe", "copilot", "opencode", "qwen"];
 const EXPERTS = ["Consultant", "Scientist", "Engineer", "Analyst", "Lawyer", "Finder"];
 const DEMO_PROMPT = "Research the EV market outlook for 2026";
 const DEMO_ANSWER =
@@ -115,7 +115,7 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[]) => vo
               <div className="ob2-path local">
                 <div className="ic">🖥</div>
                 <h4>On-device</h4>
-                <p>Open-weight brains via OpenCode / Hermes / Qwen, pointed at Ollama. Zero key, zero cloud, $0 per task — and fully private.</p>
+                <p>Open-weight brains via OpenCode / Qwen, pointed at Ollama. Zero key, zero cloud, $0 per task — and fully private.</p>
               </div>
             </div>
             <div className="ob2-pickhint">Pick the agents you'll use — the ones you have access to. Split shows only these; add more anytime. {picks.length > 0 && <b>{picks.length} selected</b>}</div>

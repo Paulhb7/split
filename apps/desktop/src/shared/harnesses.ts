@@ -22,9 +22,7 @@ export const HARNESSES: Harness[] = [
   { id: "copilot", label: "Copilot", vendor: "GitHub", brand: "#a371f7", lane: "cloud", tag: "Copilot sub", blurb: "Your GitHub Copilot subscription." },
   { id: "cursor", label: "Cursor", vendor: "Cursor", brand: "#cfd2d6", lane: "cloud", tag: "Cursor sub", blurb: "The Cursor agent, your Cursor plan." },
   { id: "deepagents", label: "DeepAgents", vendor: "LangChain", brand: "#1fae9b", lane: "cloud", tag: "Any provider", blurb: "Model-agnostic LangChain agent." },
-  { id: "grok", label: "Grok", vendor: "xAI", brand: "#e6e6e6", lane: "cloud", tag: "SuperGrok · beta", blurb: "xAI Grok Build. Paid beta — reserve.", reserve: true },
   { id: "opencode", label: "OpenCode", vendor: "open source", brand: "#ff7a59", lane: "local", tag: "100% local", blurb: "75+ providers. Point at Ollama → $0." },
-  { id: "hermes", label: "Hermes", vendor: "Nous Research", brand: "#c8a878", lane: "local", tag: "100% local", blurb: "Open weights on your machine. No key." },
   { id: "qwen", label: "Qwen", vendor: "Alibaba", brand: "#7c5cff", lane: "local", tag: "Local or key", blurb: "Qwen3.5 — local via Ollama, or cloud." },
 ];
 

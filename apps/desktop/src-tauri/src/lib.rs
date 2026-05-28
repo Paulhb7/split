@@ -316,33 +316,34 @@ fn read_json_object(name: &str) -> Result<String, String> {
     }
 }
 
-// Open Terminal.app running a harness's CLI login command (for CLI-login agents).
-fn login_cmd(harness: &str) -> Option<&'static str> {
+// Spawn a harness's login command directly (no Terminal). These CLIs all do
+// browser-based OAuth — running them as a detached subprocess is enough; the
+// CLI opens the user's default browser itself. Stdout/stderr are dropped (the
+// CLI's logs live in its own session); stdin is null so it can't block on TTY.
+fn login_cmd(harness: &str) -> Option<&'static [&'static str]> {
     Some(match harness {
-        "claude" => "claude login",
-        "codex" => "codex login",
-        "gemini" => "gemini",
-        "cursor" => "cursor-agent login",
-        "copilot" => "gh auth login",
-        "qwen" => "qwen",
-        "opencode" => "opencode auth login",
-        "hermes" => "uvx --from 'hermes-agent[acp]==0.14.0' hermes-acp --setup",
+        "claude" => &["claude", "login"],
+        "codex" => &["codex", "login"],
+        "gemini" => &["gemini"],
+        "cursor" => &["cursor-agent", "login"],
+        "copilot" => &["gh", "auth", "login", "-w"],
         _ => return None,
     })
 }
 
 #[tauri::command]
-fn terminal_login(harness: String) -> Result<String, String> {
-    let cmd = login_cmd(&harness).ok_or_else(|| format!("No terminal login for {harness}"))?;
-    let script = format!(
-        "tell application \"Terminal\" to activate\ntell application \"Terminal\" to do script \"{cmd}\""
-    );
-    Command::new("osascript")
-        .arg("-e")
-        .arg(&script)
-        .status()
+fn browser_login(harness: String) -> Result<String, String> {
+    let argv = login_cmd(&harness).ok_or_else(|| format!("No browser login for {harness}"))?;
+    let (program, args) = argv.split_first().expect("login_cmd entries are non-empty");
+    Command::new(program)
+        .args(args)
+        .env("PATH", child_path())
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
         .map_err(|e| e.to_string())?;
-    Ok(json!({ "ok": true, "cmd": cmd }).to_string())
+    Ok(json!({ "ok": true, "cmd": argv.join(" ") }).to_string())
 }
 
 // --- API keys ----------------------------------------------------------------
@@ -354,10 +355,8 @@ const KNOWN_KEYS: &[&str] = &[
     "OPENAI_API_KEY",
     "GEMINI_API_KEY",
     "MISTRAL_API_KEY",
-    "NOUS_API_KEY",
     "DASHSCOPE_API_KEY",
     "GH_TOKEN",
-    "GROK_CODE_XAI_API_KEY",
 ];
 
 fn env_path() -> PathBuf {
@@ -402,6 +401,213 @@ fn api_keys_status() -> Result<String, String> {
         status.insert((*key).to_string(), serde_json::Value::Bool(set));
     }
     serde_json::to_string(&status).map_err(|e| e.to_string())
+}
+
+// --- harness lifecycle (install + configure state) --------------------------
+// Each harness card in the UI shows an install/configure status pastille; the
+// `Install` button bootstraps the runtime (npx-cache warm, binary fetch, or a
+// docs link), the `Configure` button surfaces the auth path declared in
+// harnesses.json. Detection logic mirrors how the runner actually finds things
+// at launch — file exists, env var set, or command on PATH.
+
+fn expand_tilde(p: &str) -> PathBuf {
+    if let Some(rest) = p.strip_prefix("~/") {
+        if let Ok(home) = std::env::var("HOME") {
+            return PathBuf::from(home).join(rest);
+        }
+    }
+    PathBuf::from(p)
+}
+
+fn env_in_dotenv(key: &str) -> bool {
+    let env = std::fs::read_to_string(env_path()).unwrap_or_default();
+    env.lines().any(|l| {
+        let l = l.trim_start();
+        l.starts_with(&format!("{key}="))
+            && l.split_once('=').map(|x| !x.1.trim().is_empty()).unwrap_or(false)
+    })
+}
+
+fn env_set(key: &str) -> bool {
+    std::env::var(key).map(|v| !v.trim().is_empty()).unwrap_or(false) || env_in_dotenv(key)
+}
+
+fn command_on_path(cmd: &str) -> bool {
+    if cmd.starts_with("./") || cmd.starts_with("../") {
+        return REPO_ROOT.join(cmd).exists();
+    }
+    Command::new("/usr/bin/which")
+        .arg(cmd)
+        .env("PATH", child_path())
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+}
+
+// `install`: "npx" → always ready (npx -y warms on first launch);
+// "binary"/"external" → check that the launch command resolves.
+fn install_state_for(install_kind: Option<&str>, command: &str) -> &'static str {
+    match install_kind {
+        Some("npx") => "ready",
+        Some("external") | Some("binary") => {
+            if command_on_path(command) { "ready" } else { "missing" }
+        }
+        _ => "ready",
+    }
+}
+
+// `configure`: "oauth" → a creds dotfile OR a fallback env key signals ready;
+// "api-key" → the declared env key is in .env or process env; "external" → the
+// UI just shows a docs link (always reported as "external").
+fn configure_state_for(cfg: Option<&serde_json::Value>) -> &'static str {
+    let Some(cfg) = cfg else { return "ready" };
+    let kind = cfg.get("kind").and_then(|v| v.as_str()).unwrap_or("");
+    match kind {
+        "oauth" => {
+            let file_ok = cfg
+                .get("check_file")
+                .and_then(|v| v.as_str())
+                .map(|p| expand_tilde(p).exists())
+                .unwrap_or(false);
+            let env_ok = cfg.get("check_env").and_then(|v| v.as_str()).map(env_set).unwrap_or(false);
+            if file_ok || env_ok { "ready" } else { "missing" }
+        }
+        "api-key" => {
+            let ok = cfg.get("key").and_then(|v| v.as_str()).map(env_set).unwrap_or(false);
+            if ok { "ready" } else { "missing" }
+        }
+        "external" => "external",
+        _ => "ready",
+    }
+}
+
+fn read_harnesses_map() -> Result<serde_json::Map<String, serde_json::Value>, String> {
+    let path = REPO_ROOT.join("config").join("harnesses.json");
+    let raw = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let val: serde_json::Value = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
+    match val {
+        serde_json::Value::Object(m) => Ok(m.into_iter().filter(|(k, _)| !k.starts_with('_')).collect()),
+        _ => Err("harnesses.json is not an object".into()),
+    }
+}
+
+#[tauri::command]
+fn harness_states() -> Result<String, String> {
+    let map = read_harnesses_map()?;
+    let mut out = serde_json::Map::new();
+    for (id, val) in map {
+        let install_spec = val.get("install");
+        let cfg_spec = val.get("configure");
+        let install_kind = install_spec.and_then(|i| i.get("kind")).and_then(|v| v.as_str());
+        let cfg_kind = cfg_spec.and_then(|c| c.get("kind")).and_then(|v| v.as_str()).unwrap_or("");
+        let command = val.get("command").and_then(|v| v.as_str()).unwrap_or("");
+        let install_state = install_state_for(install_kind, command);
+        let configure_state = configure_state_for(cfg_spec);
+
+        let mut install_obj = serde_json::Map::new();
+        install_obj.insert("kind".into(), json!(install_kind.unwrap_or("")));
+        install_obj.insert("state".into(), json!(install_state));
+        if let Some(u) = install_spec.and_then(|i| i.get("docUrl")) {
+            install_obj.insert("docUrl".into(), u.clone());
+        }
+
+        let mut cfg_obj = serde_json::Map::new();
+        cfg_obj.insert("kind".into(), json!(cfg_kind));
+        cfg_obj.insert("state".into(), json!(configure_state));
+        if let Some(k) = cfg_spec.and_then(|c| c.get("key")) {
+            cfg_obj.insert("key".into(), k.clone());
+        }
+        if let Some(u) = cfg_spec.and_then(|c| c.get("docUrl")) {
+            cfg_obj.insert("docUrl".into(), u.clone());
+        }
+
+        out.insert(id, json!({ "install": install_obj, "configure": cfg_obj }));
+    }
+    serde_json::to_string(&out).map_err(|e| e.to_string())
+}
+
+fn emit_install(app: &AppHandle, id: &str, line: &str, done: bool, ok: bool) {
+    let _ = app.emit("install-event", json!({ "id": id, "line": line, "done": done, "ok": ok }));
+}
+
+// Install dispatch:
+// - "npx" → `npm cache add <pkg>@<ver>` warms the npm tarball cache, so the
+//   first real `npx -y <pkg>` launch doesn't pay the download.
+// - "external" → opens the declared docUrl in the user's browser.
+// - "binary" → reserved for v2 (curl|chmod download into var/bin/).
+#[tauri::command]
+fn install_harness(app: AppHandle, id: String) -> Result<String, String> {
+    let map = read_harnesses_map()?;
+    let row = map.get(&id).ok_or_else(|| format!("unknown harness: {id}"))?;
+    let install = row.get("install").ok_or_else(|| "no install spec".to_string())?;
+    let kind = install.get("kind").and_then(|v| v.as_str()).unwrap_or("");
+    match kind {
+        "npx" => {
+            let args = row.get("args").and_then(|v| v.as_array());
+            let pkg = args
+                .and_then(|a| a.iter().filter_map(|v| v.as_str()).find(|s| !s.starts_with('-')))
+                .ok_or_else(|| "no npm package in args".to_string())?
+                .to_string();
+            let app2 = app.clone();
+            let id2 = id.clone();
+            let pkg2 = pkg.clone();
+            std::thread::spawn(move || {
+                emit_install(&app2, &id2, &format!("npm cache add {pkg2}"), false, false);
+                let result = Command::new("npm")
+                    .arg("cache")
+                    .arg("add")
+                    .arg(&pkg2)
+                    .env("PATH", child_path())
+                    .output();
+                match result {
+                    Ok(o) if o.status.success() => emit_install(&app2, &id2, "cached", true, true),
+                    Ok(o) => {
+                        let err = String::from_utf8_lossy(&o.stderr).into_owned();
+                        emit_install(&app2, &id2, &format!("failed: {}", err.trim()), true, false);
+                    }
+                    Err(e) => emit_install(&app2, &id2, &format!("error: {e}"), true, false),
+                }
+            });
+            Ok(json!({ "ok": true, "kind": "npx", "pkg": pkg }).to_string())
+        }
+        "external" => {
+            let url = install
+                .get("docUrl")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| "external install missing docUrl".to_string())?;
+            Command::new("open").arg(url).status().map_err(|e| e.to_string())?;
+            emit_install(&app, &id, &format!("opened {url}"), true, true);
+            Ok(json!({ "ok": true, "kind": "external", "url": url }).to_string())
+        }
+        other => Err(format!("install kind not supported: {other}")),
+    }
+}
+
+// Configure dispatch: the UI handles `api-key` directly via save_api_key, and
+// `external` opens the docUrl. This command exists so an `oauth` configure can
+// be triggered without exposing the full login_cmd plumbing twice.
+#[tauri::command]
+fn configure_harness(app: AppHandle, id: String) -> Result<String, String> {
+    let map = read_harnesses_map()?;
+    let row = map.get(&id).ok_or_else(|| format!("unknown harness: {id}"))?;
+    let cfg = row.get("configure").ok_or_else(|| "no configure spec".to_string())?;
+    let kind = cfg.get("kind").and_then(|v| v.as_str()).unwrap_or("");
+    match kind {
+        "oauth" => browser_login(id.clone()).map(|_| {
+            let _ = app.emit("install-event", json!({ "id": id, "line": "browser login launched", "done": true, "ok": true }));
+            json!({ "ok": true, "kind": "oauth" }).to_string()
+        }),
+        "external" => {
+            let url = cfg
+                .get("docUrl")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| "external configure missing docUrl".to_string())?;
+            Command::new("open").arg(url).status().map_err(|e| e.to_string())?;
+            Ok(json!({ "ok": true, "kind": "external", "url": url }).to_string())
+        }
+        "api-key" => Ok(json!({ "ok": true, "kind": "api-key", "key": cfg.get("key") }).to_string()),
+        other => Err(format!("configure kind not supported: {other}")),
+    }
 }
 
 // --- file drops --------------------------------------------------------------
@@ -515,10 +721,13 @@ pub fn run() {
             list_sessions,
             list_harnesses,
             list_experts,
-            terminal_login,
+            browser_login,
             read_files_for_agent,
             save_api_key,
-            api_keys_status
+            api_keys_status,
+            harness_states,
+            install_harness,
+            configure_harness
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

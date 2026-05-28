@@ -28,9 +28,9 @@ from .acp_client import ConsoleClient, client_capabilities
 
 # @mention aliases -> harness key in harnesses.json
 ALIASES = {"vibe": "mistral-vibe", "mistral": "mistral-vibe",
-           "claude-code": "claude", "google": "gemini", "nous": "hermes",
+           "claude-code": "claude", "google": "gemini",
            "qwen-code": "qwen", "github-copilot": "copilot",
-           "github-copilot-cli": "copilot", "xai": "grok", "langchain": "deepagents",
+           "github-copilot-cli": "copilot", "langchain": "deepagents",
            "claw": "openclaw"}
 
 

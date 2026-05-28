@@ -118,23 +118,17 @@ work. Logos for all 12 ship in [`apps/desktop/public/logos/`](apps/desktop/publi
 | `qwen` | Qwen Code (Gemini-CLI fork) | `npx @qwen-code/qwen-code --acp` | `qwen` login or `DASHSCOPE_API_KEY` | ✅ ready |
 | `copilot` | GitHub Copilot CLI | `npx @github/copilot --acp` | Copilot sub (`gh auth login`) or `GH_TOKEN` | ✅ ready |
 | `deepagents` | DeepAgents (LangChain, model-agnostic) | `npx deepagents-acp` | any provider key (or local) | ✅ ready |
-| `hermes` | Hermes Agent | `uvx --from 'hermes-agent[acp]' hermes-acp` | `uv` + `NOUS_API_KEY` (or local provider) | ✅ ready (hors-registry²) |
 | `opencode` | OpenCode (75+ providers) | `./bin/opencode acp` | model-agnostic; Ollama for zero-key local | ⚙️ binary in `bin/` |
 | `cursor` | Cursor Agent | `./bin/dist-package/cursor-agent acp` | `cursor-agent login` or `CURSOR_API_KEY` | ⚙️ binary in `bin/` |
 | `mistral-vibe` | Mistral Vibe | `./bin/vibe-acp` | `MISTRAL_API_KEY` (download binary, below) | ⚙️ needs binary |
-| `grok` | Grok Build | `grok agent stdio` | install xAI CLI + SuperGrok or `GROK_CODE_XAI_API_KEY` | 🅿️ reserve² |
 | `openclaw` | OpenClaw Gateway (a **bridge**) | `openclaw acp` | running Gateway + token | 🅿️ reserve² |
 
 Configs live in [`config/harnesses.json`](config/harnesses.json) (versions pinned from the ACP
 registry where one exists).
 
-> ² **Hors-registry / reserve.** *Hermes* isn't in the registry because its
-> package (`hermes-agent[acp]`) differs from its executable (`hermes-acp`), which
-> the registry can't express ([issue #296](https://github.com/agentclientprotocol/registry/issues/296))
-> — we handle it fine. *Grok* and *OpenClaw* are reserve entries: they won't
-> launch until installed/authed (Grok is paid beta; OpenClaw needs a running
-> Gateway and nests its *whole* runtime — channels, memory, sub-agents — as one
-> agent behind us).
+> ² **Reserve.** *OpenClaw* is a reserve entry: it won't launch until a Gateway
+> is running and authed, and it nests its *whole* runtime — channels, memory,
+> sub-agents — as one agent behind us.
 
 ---
 

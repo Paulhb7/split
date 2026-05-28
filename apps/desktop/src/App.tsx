@@ -10,6 +10,7 @@ import { useSessions } from "./shared/useSessions";
 import { useWindowChrome, useAdaptiveHeight, useFullscreen } from "./shared/useWindowChrome";
 import type { Session } from "./shared/models";
 import { Logo, Tile, League, vars } from "./shared/ui";
+import { useHarnessStates } from "./shared/useHarnessStates";
 import Onboarding from "./onboarding/Onboarding";
 import Stage from "./stage/Stage";
 import Teams from "./teams/Teams";
@@ -22,6 +23,16 @@ const LS_DEF = "split.defaultHarness"; // legacy single-pick (migrated to LS_ENA
 const LS_ENABLED = "split.enabledHarnesses"; // the agents the user activated
 const LS_ACTIVE = "split.activeHarness"; // the armed engine for the next session
 const LS_MODE = "split.mode"; // "simple" (one expert/session) | "teams" (Chief-of-Staff)
+const LS_SKIN = "split.skin"; // "" (default dark) | "pastel" | "cyberpunk" | "tokyo"
+type Skin = "" | "pastel" | "cyberpunk" | "tokyo";
+const SKINS: { id: Skin; label: string; hint: string; sw: [string, string, string] }[] = [
+  { id: "", label: "Classic", hint: "Anthracite night, warm copper accent", sw: ["#0a0b0e", "#1c1f28", "#d97757"] },
+  { id: "pastel", label: "Wes Anderson", hint: "Cream salon, serif display, dusty rose", sw: ["#ecd9c0", "#fbf2e2", "#c95a7a"] },
+  { id: "cyberpunk", label: "Night City", hint: "Neon magenta + cyan on bluish black", sw: ["#07070d", "#13102a", "#ff3df2"] },
+  { id: "tokyo", label: "Tokyo Night", hint: "Deep indigo, calm violet & teal accents", sw: ["#0e0f1d", "#1a1b2e", "#bb9af7"] },
+];
+const isSkin = (v: string | null): v is Skin =>
+  v === "" || v === "pastel" || v === "cyberpunk" || v === "tokyo";
 
 // The user's activated agents — only these show in the roster/menus. Falls back
 // to the legacy single default, then to claude.
@@ -54,6 +65,7 @@ export default function App() {
   const teamApi = useMemo(() => ({ start, send, stop }), [start, send, stop]);
   const { project, channels, activeChannel, activeRoster, setActiveChannel, newChannel, stopChannel, removeChannel } = useTeam(teamApi, experts);
   const { pinned, startMove, togglePin, hide } = useWindowChrome();
+  const lifecycle = useHarnessStates();
 
   const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem(LS_DONE));
   const [enabled, setEnabled] = useState<string[]>(loadEnabled);
@@ -74,6 +86,16 @@ export default function App() {
     localStorage.setItem(LS_MODE, m);
     if (m === "teams") setFocusedId(null);
   };
+  const [skin, setSkinState] = useState<Skin>(() => {
+    const raw = localStorage.getItem(LS_SKIN);
+    return isSkin(raw) ? raw : "";
+  });
+  const pickSkin = (s: Skin) => {
+    setSkinState(s);
+    localStorage.setItem(LS_SKIN, s);
+    setSkinMenu(false);
+  };
+  const [skinMenu, setSkinMenu] = useState(false);
   const [value, setValue] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -348,7 +370,7 @@ export default function App() {
   ));
 
   return (
-    <div className="app" style={vars({ "--brand": accent })}>
+    <div className={"app" + (skin ? ` theme-${skin}` : "")} style={vars({ "--brand": accent })}>
       {dragging && <div className="drop">⬇ Drop a file to attach</div>}
 
       {/* chrome */}
@@ -363,12 +385,32 @@ export default function App() {
             ))}
           </div>
         )}
+        <div className="skin-wrap">
+          <button className={"iconbtn" + (skin ? " on" : "")} onClick={() => setSkinMenu((v) => !v)} title="Skin">✿</button>
+          {skinMenu && (
+            <>
+              <div className="skin-scrim" onClick={() => setSkinMenu(false)} />
+              <div className="skin-menu" role="menu">
+                {SKINS.map((s) => (
+                  <button key={s.id || "classic"} className={"skin-item" + (skin === s.id ? " on" : "")} onClick={() => pickSkin(s.id)} role="menuitem">
+                    <span className="skin-sw" style={{ background: `linear-gradient(135deg, ${s.sw[0]} 0%, ${s.sw[0]} 50%, ${s.sw[1]} 50%, ${s.sw[1]} 100%)`, boxShadow: `inset 0 0 0 1.5px ${s.sw[2]}` }} />
+                    <span className="skin-meta">
+                      <b>{s.label}</b>
+                      <small>{s.hint}</small>
+                    </span>
+                    {skin === s.id && <span className="skin-tick">●</span>}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
         <button className={"iconbtn" + (pinned ? " on" : "")} onClick={togglePin} title={pinned ? "Unpin (allow behind)" : "Pin on top"}>{pinned ? "◆" : "◇"}</button>
         <button className="iconbtn" onClick={hide} title="Hide (⌘J)">—</button>
       </div>
 
-      <div className="body">
-        <div ref={measureRef} className="measure">
+      <div className={"body" + (isTeamsFullscreen ? " fill" : "")}>
+        <div ref={measureRef} className={"measure" + (isTeamsFullscreen ? " fill" : "")}>
         {!onboarded ? (
           /* ============ ONBOARDING (3 animated pages) ============ */
           <Onboarding onEnter={enterSplit} />
@@ -428,7 +470,7 @@ export default function App() {
                 <div className="thinking">
                   needs sign-in:
                   {focused.auth.methods.map((m) => <button key={m.id} className="iconbtn" style={{ width: "auto", padding: "4px 10px" }} onClick={() => sendAuth(focused.id, m.id)}>{m.name || m.id}</button>)}
-                  {focused.auth.hasLogin && <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }} onClick={() => invoke("terminal_login", { harness: focused.auth!.harness })}>Open Terminal</button>}
+                  {focused.auth.hasLogin && <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }} onClick={() => invoke("browser_login", { harness: focused.auth!.harness })}>Sign in</button>}
                 </div>
               )}
               {focused.pendingPermission && (() => {
@@ -542,7 +584,7 @@ export default function App() {
               <button className="btn ghost" onClick={() => setOverlay(false)}>done</button>
             </div>
             <div className="ob2-pickhint">Toggle the agents you want — only these appear in your roster &amp; menus. Add or remove anytime.</div>
-            <League isSelected={(id) => enabled.includes(id)} onPick={toggleEnabled} />
+            <League isSelected={(id) => enabled.includes(id)} onPick={toggleEnabled} lifecycle={lifecycle} />
           </div>
         </div>
       )}
@@ -657,7 +699,7 @@ function AuthModal({ session, onPick }: { session: Session; onPick: (methodId: s
         <p>{a.note || `${h?.label || a.harness} needs to authenticate before this session can run.`}</p>
         <div className="am-acts">
           {a.methods.map((m) => <button key={m.id} className="btn" onClick={() => onPick(m.id)}>{m.name || `Sign in · ${m.id}`}</button>)}
-          {a.hasLogin && <button className="btn ghost" onClick={() => invoke("terminal_login", { harness: a.harness })}>Open Terminal to sign in</button>}
+          {a.hasLogin && <button className="btn ghost" onClick={() => invoke("browser_login", { harness: a.harness })}>Sign in in browser</button>}
           {!a.methods.length && !a.hasLogin && <p style={{ margin: 0 }}>{a.note || "See this engine's auth note in config."}</p>}
         </div>
       </div>
