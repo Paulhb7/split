@@ -20,3 +20,5 @@ apps/desktop/src-tauri/target/
 Claude.md
 
 split_acp.egg-info
+.ruff_cache/
+.pytest_cache/

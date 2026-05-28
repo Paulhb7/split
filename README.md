@@ -107,7 +107,7 @@ Vendored in [`config/skills/`](config/skills/):
 
 ---
 
-## Harnesses (the agents — 10 wired)
+## Harnesses (the agents — 10 configured)
 
 Each harness is a runtime/brain. ACP calls each one an "agent"; we launch any
 `command + args`, so even agents the public ACP registry can't express still
@@ -116,15 +116,15 @@ work. Logos for all configured harnesses ship in
 
 | Harness | What it is | Launch | Auth | Status |
 |---|---|---|---|---|
-| `claude` | Claude Agent (claude-acp) | `npx @agentclientprotocol/claude-agent-acp` | `claude login` (Pro/Max) or `ANTHROPIC_API_KEY` | ✅ ready |
-| `codex` | Codex CLI (codex-acp) | `npx @zed-industries/codex-acp` | `codex login` or `OPENAI_API_KEY` | ✅ ready |
-| `gemini` | Gemini CLI | `npx @google/gemini-cli --acp` | Google login (free tier) or `GEMINI_API_KEY` | ✅ ready |
-| `qwen` | Qwen Code (Gemini-CLI fork) | `npx @qwen-code/qwen-code --acp --experimental-skills` | `DASHSCOPE_API_KEY` | ✅ ready |
-| `copilot` | GitHub Copilot CLI | `npx @github/copilot --acp` | Copilot sub (`gh auth login`) or `GH_TOKEN` | ✅ ready |
-| `deepagents` | DeepAgents (LangChain, model-agnostic) | `npx deepagents-acp` | any provider key (or local) | ✅ ready |
-| `opencode` | OpenCode (75+ providers) | `./var/bin/opencode acp` | model-agnostic; Ollama for zero-key local | ⚙️ external binary |
+| `claude` | Claude Agent (claude-acp) | `npx @agentclientprotocol/claude-agent-acp` | `claude login` (Pro/Max) or `ANTHROPIC_API_KEY` | ✅ tested working |
+| `codex` | Codex CLI (codex-acp) | `npx @zed-industries/codex-acp` | `codex login` or `OPENAI_API_KEY` | ✅ tested working |
+| `gemini` | Gemini CLI | `npx @google/gemini-cli --acp` | Google login (free tier) or `GEMINI_API_KEY` | ✅ tested working |
+| `qwen` | Qwen Code (Gemini-CLI fork) | `npx @qwen-code/qwen-code --acp --experimental-skills` | `DASHSCOPE_API_KEY` | ⚠️ configured, not working yet |
+| `copilot` | GitHub Copilot CLI | `npx @github/copilot --acp` | Copilot sub (`gh auth login`) or `GH_TOKEN` | ✅ tested working |
+| `deepagents` | DeepAgents (LangChain, model-agnostic) | `npx deepagents-acp` | any provider key (or local) | ⚠️ configured, still to validate |
+| `opencode` | OpenCode (75+ providers) | `./var/bin/opencode acp` | model-agnostic; Ollama for zero-key local | ✅ tested working |
 | `cursor` | Cursor Agent | `./var/bin/dist-package/cursor-agent acp` | `cursor-agent login` or `CURSOR_API_KEY` | ⚙️ external binary |
-| `mistral-vibe` | Mistral Vibe | `./var/bin/vibe-acp` | `MISTRAL_API_KEY` (download binary, below) | ⚙️ external binary |
+| `mistral-vibe` | Mistral Vibe | `./var/bin/vibe-acp` | `MISTRAL_API_KEY` (download binary, below) | ✅ tested working |
 | `openclaw` | OpenClaw Gateway (a **bridge**) | `openclaw acp` | running Gateway + token | 🅿️ reserve² |
 
 Configs live in [`config/harnesses.json`](config/harnesses.json) (versions pinned from the ACP
@@ -133,6 +133,10 @@ registry where one exists).
 > ² **Reserve.** *OpenClaw* is a reserve entry: it won't launch until a Gateway
 > is running and authed, and it nests its *whole* runtime — channels, memory,
 > sub-agents — as one agent behind us.
+
+Not in the live registry yet: **Hermes** and **Kimi Code** need configuration,
+**Grok** still needs a test pass, and the LangChain **DeepAgents** path is
+present but not yet validated end to end.
 
 ---
 
@@ -317,6 +321,13 @@ few weeks.
 
 ## Notes / honest caveats
 
+- **Persona / roleplay injection:** experts are real prompt personas, not just
+  UI labels. `core.persona_text()` composes `_discipline.md` + memory +
+  `config/experts/<expert>.md`, writes that into `AGENTS.md`/vendor shims, and
+  the runner also prepends it to the first user turn so harnesses that ignore
+  workspace instruction files still see it. This is pragmatic, but it is not a
+  standardized ACP system prompt; the underlying model's own instruction stack
+  can still leak through.
 - **Skills:** per-expert (`config/experts.json`), currently 15 vendored in
   `config/skills/` (whole folders, per the Agent Skills standard). The gen-skills
   need `FAL_KEY` / `ELEVENLABS_API_KEY`; the other skills are local or use the
