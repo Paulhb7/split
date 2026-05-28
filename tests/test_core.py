@@ -82,3 +82,73 @@ def test_install_skills_mounts_exactly_the_vendored_declared_skills(tmp_path):
 
 def test_install_skills_unknown_expert_is_safe(tmp_path):
     assert core.install_skills("does-not-exist", ".agents/skills", str(tmp_path)) == []
+
+
+# --- memory_text -------------------------------------------------------------
+def test_memory_text_always_projects_the_contract_even_when_empty(tmp_path, monkeypatch):
+    """Day-1 chicken-and-egg fix: the agent must see the surface (paths +
+    when-to-write trigger) on the FIRST session, before any content exists.
+    The block is always projected; empty halves show a stub."""
+    monkeypatch.setattr(core, "MEMORY_DIR", str(tmp_path))
+    got = core.memory_text("consultant")
+    assert got  # not empty
+    assert "USER.md" in got
+    assert "MEMORY.md" in got
+    assert "nothing yet" in got  # stub copy that doubles as the write trigger
+
+
+def test_memory_text_includes_both_files_and_their_paths(tmp_path, monkeypatch):
+    monkeypatch.setattr(core, "MEMORY_DIR", str(tmp_path))
+    user_dir = tmp_path / "_user"
+    user_dir.mkdir()
+    (user_dir / "USER.md").write_text("- Boss is left-handed.", encoding="utf-8")
+    exp_dir = tmp_path / "lawyer"
+    exp_dir.mkdir()
+    (exp_dir / "MEMORY.md").write_text("- Boss's NDA template uses NY law.", encoding="utf-8")
+    got = core.memory_text("lawyer")
+    assert "- Boss is left-handed." in got
+    assert "- Boss's NDA template uses NY law." in got
+    # Absolute paths embedded so the agent writes back to the right place
+    # regardless of session cwd.
+    assert str(user_dir / "USER.md") in got
+    assert str(exp_dir / "MEMORY.md") in got
+
+
+def test_memory_text_partial_shows_stub_for_missing_half(tmp_path, monkeypatch):
+    """Only one of the two files exists → still project, with a stub for the other."""
+    monkeypatch.setattr(core, "MEMORY_DIR", str(tmp_path))
+    user_dir = tmp_path / "_user"
+    user_dir.mkdir()
+    (user_dir / "USER.md").write_text("- Boss prefers French.", encoding="utf-8")
+    got = core.memory_text("consultant")
+    assert "- Boss prefers French." in got
+    assert "nothing yet" in got  # stub for the missing expert MEMORY.md
+
+
+def test_persona_text_prepends_memory_when_present(tmp_path, monkeypatch):
+    monkeypatch.setattr(core, "MEMORY_DIR", str(tmp_path))
+    (tmp_path / "_user").mkdir()
+    (tmp_path / "_user" / "USER.md").write_text("- Memory marker XYZZY.", encoding="utf-8")
+    got = core.persona_text("consultant")
+    persona = open(os.path.join(core.EXPERTS_DIR, "consultant.md"), encoding="utf-8").read()
+    assert "XYZZY" in got
+    # Memory block appears BEFORE the persona body.
+    assert got.index("XYZZY") < got.index(persona[:80])
+
+
+def test_install_persona_pre_creates_memory_dirs(tmp_path, monkeypatch):
+    """First session for an expert creates the memory dirs so the agent's
+    first append doesn't fail on a missing parent."""
+    monkeypatch.setattr(core, "MEMORY_DIR", str(tmp_path / "memory"))
+    core.install_persona("scientist", str(tmp_path / "ws"))
+    assert (tmp_path / "memory" / "_user").is_dir()
+    assert (tmp_path / "memory" / "scientist").is_dir()
+
+
+def test_install_persona_unknown_expert_does_not_litter_memory_dir(tmp_path, monkeypatch):
+    """Fallback to consultant must also apply to the memory dir layout —
+    no var/memory/does-not-exist/ for personas that don't exist."""
+    monkeypatch.setattr(core, "MEMORY_DIR", str(tmp_path / "memory"))
+    core.install_persona("does-not-exist", str(tmp_path / "ws"))
+    assert not (tmp_path / "memory" / "does-not-exist").exists()
+    assert (tmp_path / "memory" / "consultant").is_dir()

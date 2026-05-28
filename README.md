@@ -277,7 +277,10 @@ apps/
 
 var/                  # generated / vendored — gitignored, safe to delete
   workspace/          #   each session's PERSISTENT home (persona+skill projected in;
-                      #     the agent's own files/memory kept across runs)
+                      #     the agent's own files kept across runs)
+  memory/             #   cross-session expert memory — survives `rm -rf workspace/`
+    _user/USER.md     #     about the boss; every expert reads this
+    <expert>/MEMORY.md#     this expert's own notes (Wolfgang's, Cicero's, …)
   bin/                #   downloaded harness binaries (opencode, vibe-acp, cursor-agent)
   _retired/           #   parked code (the old web front: server.py + web/)
 
@@ -328,6 +331,12 @@ few weeks.
   backend retries without them and warns.
 - **`var/workspace/` persists** (it's the agent's home, like OpenClaw's); only the
   persona/skill projections are overwritten. `rm -rf var/workspace/` for a clean slate.
+- **`var/memory/` is cross-session memory** — `_user/USER.md` (facts about the boss,
+  shared by every expert) and `<expert>/MEMORY.md` (each expert's own notes), read
+  at session start by `core.persona_text` and prepended to the projected persona.
+  Frozen-snapshot pattern: writes during a session hit disk immediately but only
+  appear in the next session's snapshot. No auto-extraction yet — the agent
+  writes when the boss says "remember X" or when it spots something durable.
 
 ## License
 

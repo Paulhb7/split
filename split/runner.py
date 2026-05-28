@@ -63,6 +63,14 @@ class Runner:
         self._session_allow: set[str] = set()
         # request_id -> (asyncio.Future for option_id|None, tool_id used to scope persistence)
         self._pending_perms: dict[str, tuple[asyncio.Future, str]] = {}
+        # --- persona injection (universal — works across every ACP harness) ----
+        # ACP has no standardised "system prompt" parameter; per-harness cwd
+        # conventions (AGENTS.md / .vibe/agents/*.toml / SOUL.md) all differ.
+        # We side-step that by prepending the persona to the FIRST user prompt
+        # of the session. The persona is then in the agent's conversation
+        # history and persists across turns for the rest of the session. The
+        # cwd projection (AGENTS.md + shims) stays as defence-in-depth.
+        self._persona_injected = False
 
     # --- permission engine integration ---------------------------------------
 
@@ -110,9 +118,11 @@ class Runner:
         if scope == "session" and option_id is not None:
             self._session_allow.add(tool_id)
         elif scope == "always-allow" and option_id is not None:
-            P.add_rule(PERMS_PATH, "allow", f"{self.expert}:{tool_id}")
+            # Persist the *family* (e.g. `Bash(npm *)`), not the exact command —
+            # otherwise the next variant re-prompts. See P.generalize().
+            P.add_rule(PERMS_PATH, "allow", f"{self.expert}:{P.generalize(tool_id)}")
         elif scope == "always-deny":
-            P.add_rule(PERMS_PATH, "deny", f"{self.expert}:{tool_id}")
+            P.add_rule(PERMS_PATH, "deny", f"{self.expert}:{P.generalize(tool_id)}")
         if not fut.done():
             fut.set_result(option_id)
 
@@ -188,7 +198,30 @@ class Runner:
         try:
             if self.conn is None:
                 await self.open()
-            resp = await self.conn.prompt(prompt=[acp.text_block(text)], session_id=self.acp_sid)
+            # First user turn of this session — prepend the persona so the
+            # agent has its character + discipline in the conversation history,
+            # even if the harness ignores cwd files (Vibe, OpenClaw).
+            # Subsequent turns send the user's text as-is (the persona stays
+            # in the agent's context window from this first exchange).
+            wire = text
+            inject_now = not self._persona_injected
+            if inject_now:
+                persona = core.persona_text(self.expert)
+                wire = (
+                    f"{persona}\n\n"
+                    "---\n\n"
+                    "**The boss's first request follows below. Reply as the persona "
+                    "described above, in their tone, using only the skills listed "
+                    "for them. Do not introduce yourself unless asked — just do the "
+                    "work.**\n\n"
+                    f"{text}"
+                )
+            resp = await self.conn.prompt(prompt=[acp.text_block(wire)], session_id=self.acp_sid)
+            # Mark the persona as injected only AFTER prompt() succeeded — if it
+            # raised (auth error, transport hiccup), we want the replay via
+            # self.pending to inject again.
+            if inject_now:
+                self._persona_injected = True
             # status:idle == turn finished (the React reducer commits the answer here)
             self._emit(type="status", status="idle", stop=str(getattr(resp, "stop_reason", "")))
         except Exception as exc:
