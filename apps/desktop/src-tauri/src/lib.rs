@@ -120,11 +120,6 @@ fn child_path() -> String {
     parts.join(":")
 }
 
-#[tauri::command]
-fn hide_window(window: WebviewWindow) {
-    let _ = window.hide();
-}
-
 // Resize the borderless window to a content-fitted height. The React side
 // computes the desired height via a ResizeObserver on the natural content
 // (compact = just the composer row, expanded = thread/stage/teams + composer),
@@ -164,8 +159,8 @@ fn start_session(app: AppHandle, id: String, harness: String, expert: String, wo
     let expert = if expert.is_empty() { "consultant".to_string() } else { expert };
     let python = python_bin();
     eprintln!("[start_session] {id} ({harness}/{expert}) ws={workspace:?} py={python:?}");
-    let mut child = match Command::new(&python)
-        .arg("-u")
+    let mut cmd = Command::new(&python);
+    cmd.arg("-u")
         .arg("-m")
         .arg("split.runner")
         .arg("--harness")
@@ -179,8 +174,18 @@ fn start_session(app: AppHandle, id: String, harness: String, expert: String, wo
         .env("PATH", child_path())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
+        .stderr(Stdio::piped());
+    // Inject provider keys from the OS keychain. Set BEFORE the child runs
+    // dotenv, so python-dotenv's default override=False can't clobber them —
+    // .env (if any) only fills holes the keychain doesn't cover.
+    for key in KNOWN_KEYS {
+        if let Some(val) = secret_get(key) {
+            if !val.is_empty() {
+                cmd.env(key, val);
+            }
+        }
+    }
+    let mut child = match cmd.spawn()
     {
         Ok(c) => c,
         Err(e) => {
@@ -291,12 +296,6 @@ fn list_sessions() -> String {
     json!(arr).to_string()
 }
 
-// The harness registry (harnesses.json), filtering `_`-prefixed comment keys.
-#[tauri::command]
-fn list_harnesses() -> Result<String, String> {
-    read_json_object("harnesses.json")
-}
-
 // The expert registry (experts.json), filtering `_`-prefixed comment keys.
 #[tauri::command]
 fn list_experts() -> Result<String, String> {
@@ -347,9 +346,14 @@ fn browser_login(harness: String) -> Result<String, String> {
 }
 
 // --- API keys ----------------------------------------------------------------
-// Provider keys the ACP harnesses may need. The bar/dashboard collects them and
-// we persist to the repo-root .env, which split.core loads via python-dotenv on
-// every spawn. Allowlisted so the UI can't write arbitrary env vars.
+// Provider keys the ACP harnesses may need. The bar collects them and we persist
+// to the OS secret store (macOS Keychain / Windows Credential Manager / Linux
+// Secret Service via the `keyring` crate), so keys never touch disk in plaintext.
+// At session spawn we read them back and inject them into the runner's env,
+// where python-dotenv's load_dotenv() can't override them (override=False).
+// A legacy .env at the repo root still works as a fallback (read by split.core)
+// for users who provisioned keys before the Keychain switch.
+// Allowlisted so the UI can't store arbitrary secrets in the OS keychain.
 const KNOWN_KEYS: &[&str] = &[
     "ANTHROPIC_API_KEY",
     "OPENAI_API_KEY",
@@ -359,8 +363,28 @@ const KNOWN_KEYS: &[&str] = &[
     "GH_TOKEN",
 ];
 
+// Service identifier under which all Split-owned secrets are stored. Keychain
+// records appear under (service="split", account=KEY_NAME).
+const KEYCHAIN_SERVICE: &str = "split";
+
 fn env_path() -> PathBuf {
     REPO_ROOT.join(".env")
+}
+
+fn secret_entry(name: &str) -> Result<keyring::Entry, String> {
+    keyring::Entry::new(KEYCHAIN_SERVICE, name).map_err(|e| e.to_string())
+}
+
+fn secret_set(name: &str, value: &str) -> Result<(), String> {
+    secret_entry(name)?.set_password(value).map_err(|e| e.to_string())
+}
+
+fn secret_get(name: &str) -> Option<String> {
+    secret_entry(name).ok()?.get_password().ok()
+}
+
+fn secret_present(name: &str) -> bool {
+    secret_get(name).map(|v| !v.trim().is_empty()).unwrap_or(false)
 }
 
 #[tauri::command]
@@ -368,39 +392,7 @@ fn save_api_key(name: String, value: String) -> Result<(), String> {
     if !KNOWN_KEYS.contains(&name.as_str()) {
         return Err(format!("unknown key: {name}"));
     }
-    let path = env_path();
-    let existing = std::fs::read_to_string(&path).unwrap_or_default();
-    let mut lines: Vec<String> = Vec::new();
-    let mut replaced = false;
-    for line in existing.lines() {
-        if line.trim_start().starts_with(&format!("{name}=")) {
-            lines.push(format!("{name}={value}"));
-            replaced = true;
-        } else {
-            lines.push(line.to_string());
-        }
-    }
-    if !replaced {
-        lines.push(format!("{name}={value}"));
-    }
-    let mut out = lines.join("\n");
-    out.push('\n');
-    std::fs::write(&path, out).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn api_keys_status() -> Result<String, String> {
-    let existing = std::fs::read_to_string(env_path()).unwrap_or_default();
-    let mut status = serde_json::Map::new();
-    for key in KNOWN_KEYS {
-        let set = existing.lines().any(|l| {
-            let l = l.trim_start();
-            l.starts_with(&format!("{key}="))
-                && l.split_once('=').map(|x| x.1).map(|v| !v.trim().is_empty()).unwrap_or(false)
-        });
-        status.insert((*key).to_string(), serde_json::Value::Bool(set));
-    }
-    serde_json::to_string(&status).map_err(|e| e.to_string())
+    secret_set(&name, &value)
 }
 
 // --- harness lifecycle (install + configure state) --------------------------
@@ -429,7 +421,9 @@ fn env_in_dotenv(key: &str) -> bool {
 }
 
 fn env_set(key: &str) -> bool {
-    std::env::var(key).map(|v| !v.trim().is_empty()).unwrap_or(false) || env_in_dotenv(key)
+    std::env::var(key).map(|v| !v.trim().is_empty()).unwrap_or(false)
+        || secret_present(key)
+        || env_in_dotenv(key)
 }
 
 fn command_on_path(cmd: &str) -> bool {
@@ -663,8 +657,6 @@ fn center_on_screen(window: &WebviewWindow) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             // The single adaptive window: vibrancy + centered on first launch.
             if let Some(win) = app.get_webview_window("main") {
@@ -710,7 +702,6 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            hide_window,
             set_bar_height,
             open_workspace,
             start_session,
@@ -719,12 +710,10 @@ pub fn run() {
             send_permission,
             stop_session,
             list_sessions,
-            list_harnesses,
             list_experts,
             browser_login,
             read_files_for_agent,
             save_api_key,
-            api_keys_status,
             harness_states,
             install_harness,
             configure_harness
