@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+from datetime import date
 
 import acp
 
@@ -34,7 +35,9 @@ EXPERTS_DIR = os.path.join(CONFIG_DIR, "experts")                  # persona pro
 SKILLS_DIR = os.path.join(CONFIG_DIR, "skills")                    # portable SKILLs (skills/<name>/)
 
 # Generated: the agent's PERSISTENT home. The desktop shell sets SPLIT_WORKSPACE
-# per session; otherwise default to var/workspace.
+# per session; otherwise default to var/workspace. Each expert gets its OWN
+# subdir under here (`<WORKSPACE>/<expert>/`) — created and projected once,
+# reused across every session of that expert (regardless of harness).
 WORKSPACE = os.environ.get("SPLIT_WORKSPACE") or os.path.join(VAR_DIR, "workspace")
 
 # Cross-session memory. Plain Markdown, two scopes:
@@ -125,8 +128,8 @@ def persona_text(expert: str = "consultant") -> str:
     body. Falls back to `consultant.md` if the requested expert isn't on disk yet.
 
     This is the single source of truth for "what the agent should be told about
-    its character". Both `install_persona` (cwd file projection) and the
-    runner's first-turn prompt injection consume this — same content, two
+    its character". Both `ensure_expert_workspace` (cwd file projection) and
+    the runner's first-turn prompt injection consume this — same content, two
     delivery channels."""
     src = os.path.join(EXPERTS_DIR, f"{expert}.md")
     if not os.path.exists(src):
@@ -140,48 +143,74 @@ def persona_text(expert: str = "consultant") -> str:
     memory = memory_text(expert)
     with open(src, encoding="utf-8") as f:
         persona = f.read()
-    return preamble + memory + persona
+    today = date.today().isoformat()
+    date_header = (
+        f"**Today is {today}.** Current year: {today[:4]}. "
+        f"For \"this year\" / \"latest\" / \"recent\" / \"now\" queries, "
+        f"resolve to {today[:4]} — never default to your training cutoff. "
+        f"When formulating web searches, prefer freshness keywords "
+        f"(\"latest\", \"this week\", \"past 30 days\") over hard-coded years.\n\n"
+    )
+    return date_header + preamble + memory + persona
 
 
-def install_persona(expert: str = "consultant", ws_dir: str | None = None) -> list[str]:
-    """Project the EXPERT's persona into a workspace's cross-agent instruction
-    files. Two layers:
+def _all_skill_dirs() -> list[str]:
+    """The distinct `skill_dir` values across the harness registry — the set
+    of `.claude/skills` / `.agents/skills` / `.vibe/skills` we need to project
+    inside an expert's workspace so that ANY harness running the expert finds
+    its catalogue at the path it scans."""
+    seen, out = set(), []
+    for h in load_harnesses().values():
+        d = h.get("skill_dir")
+        if d and d not in seen:
+            seen.add(d)
+            out.append(d)
+    return out
 
-    1. **Universal shims at the workspace root** — `AGENTS.md` is the
-       cross-vendor standard; `CLAUDE.md` / `GEMINI.md` / `QWEN.md` / `VIBE.md`
-       are per-vendor shims. Most agents scan one of these and Just Work.
-    2. **Per-harness scoped copies** — some agents only read their own config
-       subdir (Mistral Vibe scans `.vibe/`; Codex/Claude have their own). For
-       those we also write the persona into the matching subdir so the agent
-       finds it even if it ignores root-level files.
 
-    ws_dir defaults to WORKSPACE; the desktop runner passes a PER-SESSION dir
-    so concurrent experts don't overwrite each other.
+def _resolve_expert(expert: str) -> str:
+    """Fall back to consultant when the requested persona isn't vendored."""
+    if not os.path.exists(os.path.join(EXPERTS_DIR, f"{expert}.md")):
+        return "consultant"
+    return expert
 
-    The persona body comes from `persona_text(expert)` so cwd projection and
-    runner injection stay byte-identical."""
-    ws_dir = ws_dir or WORKSPACE
-    os.makedirs(ws_dir, exist_ok=True)
-    # Pre-create the memory dirs so the agent's first append never fails on a
-    # missing parent. Use the effective slug (falls back to consultant when the
-    # requested persona isn't vendored) so we don't litter var/memory/ with
-    # dirs for non-existent experts.
-    effective = expert if os.path.exists(os.path.join(EXPERTS_DIR, f"{expert}.md")) else "consultant"
-    for sub in ("_user", effective):
+
+def _persona_sources_mtime(expert: str) -> float:
+    """Newest mtime across every file that contributes to the persona body —
+    persona, shared preamble, both memory files. Drives the persona-refresh
+    check in `ensure_expert_workspace`."""
+    paths = [
+        os.path.join(EXPERTS_DIR, f"{expert}.md"),
+        os.path.join(EXPERTS_DIR, "_discipline.md"),
+        os.path.join(MEMORY_DIR, "_user", "USER.md"),
+        os.path.join(MEMORY_DIR, expert, "MEMORY.md"),
+    ]
+    return max((os.path.getmtime(p) for p in paths if os.path.exists(p)), default=0.0)
+
+
+def _refresh_persona(expert: str, ws_dir: str) -> None:
+    """Project the persona into `<ws_dir>` if any source file is newer than
+    the existing `AGENTS.md` (or if it's missing). Layout:
+
+      AGENTS.md             — canonical persona body
+      CLAUDE.md / GEMINI.md / QWEN.md / VIBE.md  — symlinks to AGENTS.md
+      .vibe/AGENTS.md       — symlink to ../AGENTS.md (Vibe scans its own dir)
+
+    Memory dirs (`var/memory/_user/`, `var/memory/<expert>/`) are pre-created
+    so the agent's first "remember this" write never fails on a missing parent."""
+    canonical = os.path.join(ws_dir, "AGENTS.md")
+    src_newest = _persona_sources_mtime(expert)
+    # Existing AGENTS.md still up-to-date? Skip entirely.
+    if (os.path.isfile(canonical) and not os.path.islink(canonical)
+            and os.path.getmtime(canonical) >= src_newest):
+        return
+    for sub in ("_user", expert):
         os.makedirs(os.path.join(MEMORY_DIR, sub), exist_ok=True)
     body = persona_text(expert)
-    written = []
-    # 1. Write ONE canonical file per session — `AGENTS.md` is the cross-vendor
-    #    standard. The other shims (CLAUDE.md, GEMINI.md, QWEN.md, VIBE.md) point
-    #    to the same content; symlinking them avoids writing the same ~10 KB
-    #    body four extra times. All shims live in the same dir so the symlink
-    #    targets are bare filenames (relative, move-safe).
-    canonical = os.path.join(ws_dir, "AGENTS.md")
     if os.path.islink(canonical) or os.path.isfile(canonical):
         os.unlink(canonical)
     with open(canonical, "w", encoding="utf-8") as f:
         f.write(body)
-    written.append("AGENTS.md")
     for fname in ("CLAUDE.md", "GEMINI.md", "QWEN.md", "VIBE.md"):
         out = os.path.join(ws_dir, fname)
         if os.path.islink(out) or os.path.isfile(out):
@@ -189,80 +218,113 @@ def install_persona(expert: str = "consultant", ws_dir: str | None = None) -> li
         try:
             os.symlink("AGENTS.md", out)
         except (OSError, NotImplementedError):
-            # Symlinks not supported on this FS — write a real copy as fallback.
             with open(out, "w", encoding="utf-8") as f:
                 f.write(body)
-        written.append(fname)
-    # 2. Per-harness scoped copies — agents that only scan their own config dir.
-    #    Each tuple is (subdir, filename). The subdir is created if missing,
-    #    and the shim symlinks back UP to the canonical AGENTS.md at the root.
-    for subdir, fname in (
-        (".vibe", "AGENTS.md"),     # Mistral Vibe — scans its own .vibe/ dir
-    ):
-        sub = os.path.join(ws_dir, subdir)
-        os.makedirs(sub, exist_ok=True)
-        out = os.path.join(sub, fname)
-        if os.path.islink(out) or os.path.isfile(out):
-            os.unlink(out)
-        try:
-            # Relative target: one level up, then AGENTS.md (move-safe).
-            os.symlink(os.path.join("..", "AGENTS.md"), out)
-        except (OSError, NotImplementedError):
-            with open(out, "w", encoding="utf-8") as f:
-                f.write(body)
-        written.append(f"{subdir}/{fname}")
-    return written
+    vibe = os.path.join(ws_dir, ".vibe")
+    os.makedirs(vibe, exist_ok=True)
+    vibe_shim = os.path.join(vibe, "AGENTS.md")
+    if os.path.islink(vibe_shim) or os.path.isfile(vibe_shim):
+        os.unlink(vibe_shim)
+    try:
+        os.symlink(os.path.join("..", "AGENTS.md"), vibe_shim)
+    except (OSError, NotImplementedError):
+        with open(vibe_shim, "w", encoding="utf-8") as f:
+            f.write(body)
 
 
-def install_skills(expert: str, skill_dir: str, ws_dir: str | None = None) -> list[str]:
-    """Project the EXPERT's declared skills (experts.json `"skills": [...]`) into
-    the agent's skill location.
+def _refresh_skills(expert: str, ws_dir: str) -> list[str]:
+    """Reconcile each harness skill_dir with `experts.json[expert].skills`.
 
-    Per the Agent Skills standard (agentskills.io) a skill is a FOLDER —
-    `SKILL.md` plus optional `scripts/`, `references/`, `assets/`. Skills are
-    **read-only**: agents read SKILL.md and run scripts but write their outputs
-    elsewhere (`~/Desktop`, `~/Documents`, `/tmp`). So we **symlink** the source
-    folder into the session workspace instead of `shutil.copytree`-ing it.
+    For every distinct skill_dir (`.claude/skills`, `.agents/skills`,
+    `.vibe/skills`): the directory ends up containing **exactly** one symlink
+    per allowed skill, each pointing direct at `config/skills/<name>`. No
+    intermediate mount — the FS reflects the persona's allowed list, full stop.
 
-    Win: vendored packs (`ui-ux-pro-max` ~1.7 MB, `frontend-slides/bold-template-pack`
-    ~1.9 MB) live in **one place on disk** instead of being duplicated for every
-    session. Updates to a skill propagate instantly to running sessions; cleanup
-    of `var/workspace/sessions/<sid>/` is cheap.
+    Idempotent: an existing symlink with the right target is left alone; a
+    stale or wrong one is replaced; an obsolete one (skill removed from the
+    expert's list) is unlinked. Returns the canonical list of skills allowed
+    for this expert that also exist on disk under `config/skills/`."""
+    experts = load_experts()
+    requested = experts.get(expert, {}).get("skills") or []
+    # Drop entries whose source folder doesn't actually exist (or lacks a
+    # SKILL.md) — keeps the FS honest if experts.json drifts.
+    valid = [
+        name for name in requested
+        if os.path.isfile(os.path.join(SKILLS_DIR, name, "SKILL.md"))
+    ]
+    wanted = set(valid)
+    for skill_dir in _all_skill_dirs():
+        target_dir = os.path.join(ws_dir, skill_dir)
+        os.makedirs(target_dir, exist_ok=True)
+        existing = set(os.listdir(target_dir))
+        for name in existing - wanted:
+            stale = os.path.join(target_dir, name)
+            if os.path.islink(stale) or os.path.isfile(stale):
+                os.unlink(stale)
+            elif os.path.isdir(stale):
+                shutil.rmtree(stale, ignore_errors=True)
+        for name in wanted:
+            src = os.path.abspath(os.path.join(SKILLS_DIR, name))
+            dest = os.path.join(target_dir, name)
+            # Already pointing at the right place? Skip.
+            if os.path.islink(dest) and os.path.realpath(dest) == src:
+                continue
+            if os.path.islink(dest) or os.path.isfile(dest):
+                os.unlink(dest)
+            elif os.path.isdir(dest):
+                shutil.rmtree(dest, ignore_errors=True)
+            try:
+                os.symlink(src, dest, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                shutil.copytree(src, dest)
+    return valid
 
-    `skill_dir` is the per-harness mount path (`.claude/skills` for Claude,
-    `.agents/skills` otherwise, `.vibe/skills` for Mistral Vibe) — the only thing
-    that differs across harnesses; the skill folder itself is invariant. A skill
-    not yet vendored under `config/skills/<name>/` (no SKILL.md) is skipped, so a
-    persona may name a skill before it exists. Returns the names actually mounted.
 
-    Symlink fallback: if `os.symlink` fails (Windows without Developer Mode, or
-    a filesystem that doesn't support symlinks), we fall back to `copytree` for
-    that one skill so the session still runs."""
-    ws_dir = ws_dir or WORKSPACE
-    names = load_experts().get(expert, {}).get("skills") or []
-    target_root = os.path.join(ws_dir, skill_dir)
-    os.makedirs(target_root, exist_ok=True)
-    written = []
-    for name in names:
-        src = os.path.join(SKILLS_DIR, name)
-        if not os.path.exists(os.path.join(src, "SKILL.md")):
-            continue  # not vendored yet (or missing its SKILL.md)
-        dest = os.path.join(target_root, name)
-        # Refresh: remove whatever's there (symlink, dir, or stale broken link).
-        if os.path.islink(dest) or os.path.isfile(dest):
-            os.unlink(dest)
-        elif os.path.isdir(dest):
-            shutil.rmtree(dest, ignore_errors=True)
-        try:
-            # Use an absolute target so it resolves regardless of cwd. Skills are
-            # read-only by convention so sharing the source across sessions is safe.
-            os.symlink(os.path.abspath(src), dest, target_is_directory=True)
-        except (OSError, NotImplementedError):
-            # Symlinks not supported (Windows w/o Developer Mode, exotic FS, …).
-            # Fall back to copying so the session still has the skill on hand.
-            shutil.copytree(src, dest)
-        written.append(name)
-    return written
+def expert_workspace_dir(expert: str, ws_root: str | None = None) -> str:
+    """The on-disk home for one expert under `ws_root` (or WORKSPACE).
+    Pure path computation — no side effects. Used by callers that need the
+    path without (re)projecting (UI reveal, log paths, …)."""
+    return os.path.join(ws_root or WORKSPACE, _resolve_expert(expert))
+
+
+def ensure_expert_workspace(expert: str, ws_root: str | None = None) -> str:
+    """Idempotently set up an expert's persistent workspace and return its path.
+
+    Layout (`<ws_root>/<expert>/`):
+
+      AGENTS.md             persona + memory snapshot (the only real content)
+      CLAUDE.md / GEMINI.md / QWEN.md / VIBE.md   → AGENTS.md (cross-vendor shims)
+      .claude/skills/<name> → config/skills/<name>  (for Claude harnesses)
+      .agents/skills/<name> → config/skills/<name>  (Codex / Gemini / Qwen / …)
+      .vibe/skills/<name>   → config/skills/<name>  (Mistral Vibe)
+      .vibe/AGENTS.md       → ../AGENTS.md
+
+    Single source of truth for "set up an expert's home". Replaces the older
+    per-session `install_persona` + `install_skills` + shared skill mount.
+    Why a per-expert dir (not per-session-UUID): the persona + skills are a
+    property of the EXPERT, not of a particular conversation. Re-projecting
+    them per session was pure wasted work — and the agent now keeps its
+    scratch files across sessions of the same expert, which is what we want
+    for cross-session memory of work-in-progress.
+
+    Refresh policy:
+      - **Persona** files are refreshed only when one of their source mtimes
+        has advanced (mtime check, no diffing).
+      - **Skills** are reconciled every call against `experts.json[expert].skills`
+        (O(N) where N = the expert's allowed skills — cheap, and lets a change
+        in experts.json take effect on the next session without explicit refresh).
+
+    Concurrency: ensure_expert_workspace is safe to call multiple times
+    concurrently for the SAME expert — `makedirs(exist_ok=True)` and the
+    unlink-then-symlink pattern tolerate races. Two sessions of the same
+    expert running at once will share this dir (last-write-wins for any
+    files the agent writes — acceptable; matches OpenClaw's default mode)."""
+    expert = _resolve_expert(expert)
+    ws = os.path.join(ws_root or WORKSPACE, expert)
+    os.makedirs(ws, exist_ok=True)
+    _refresh_persona(expert, ws)
+    _refresh_skills(expert, ws)
+    return ws
 
 
 def load_mcp() -> list:

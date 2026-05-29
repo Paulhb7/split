@@ -16,7 +16,7 @@ your Claude Pro plan today and a local Ollama brain tomorrow, no rewrite.
 > one Python client drive several agents over ACP, and does a portable
 > `SKILL.md` actually activate inside them?"* It does. The bench grew the answer:
 > a real expert roster, a multi-session UI, and an auth flow. The proof-of-concept
-> code (the zero-dep `split/acp_client_raw.py`, the `split.terminal` CLI) is still here.
+> CLI (`split.terminal`) is still here.
 
 ---
 
@@ -88,12 +88,13 @@ Cursor, Vibe… — i.e. almost every harness here. **This is the whole portabil
 thesis, and it's a standard, not a bet.**
 
 **Skills are declared per-expert** in [`config/experts.json`](config/experts.json)
-(`"skills": ["frontend-slides", …]`) and mounted at session start by
-`install_skills`, which symlinks the **whole skill folder** into that harness's
-skill dir (`.claude/skills/` for Claude, `.agents/skills/` for most harnesses,
-`.vibe/skills/` for Mistral Vibe — the only per-harness glue). A declared skill
-not yet vendored under `skills/<name>/` is silently skipped, so a persona may
-name a skill before it exists.
+(`"skills": ["frontend-slides", …]`) and mounted ONCE in the expert's persistent
+workspace by `ensure_expert_workspace`, which symlinks each allowed skill into
+every harness skill-dir (`.claude/skills/`, `.agents/skills/`, `.vibe/skills/`)
+so any harness running this expert finds its kit. The set is reconciled idempotently
+on every call — adding a skill to `experts.json` makes it appear on next launch,
+removing one unlinks it. A declared skill not yet vendored under `skills/<name>/`
+is silently skipped, so a persona may name a skill before it exists.
 
 Vendored in [`config/skills/`](config/skills/):
 
@@ -143,10 +144,11 @@ present but not yet validated end to end.
 ## What the app actually does (two fronts, one engine)
 
 Both fronts reuse the same engine in [`split/core.py`](split/core.py)
-(`install_persona` / `install_skills` / `load_mcp` / `resolve_command` + the
-registries) and the same ACP client. A session = spawn the harness → project the
-expert's persona + skills into a **per-session workspace** → mount MCP tools via
-`session/new` → stream the agent's `session/update` events back.
+(`ensure_expert_workspace` / `load_mcp` / `resolve_command` + the registries)
+and the same ACP client. A session = spawn the harness inside the expert's
+**persistent per-expert workspace** (projected once, refreshed only when sources
+change) → mount MCP tools via `session/new` → stream the agent's `session/update`
+events back.
 
 1. **Terminal** — [`split/terminal.py`](split/terminal.py), run as
    `python -m split.terminal`. Switch agents live with `@mentions`
@@ -212,11 +214,14 @@ uv sync             # creates .venv from pyproject.toml + uv.lock (deps + dev to
 **Prerequisites**
 
 - **[uv](https://docs.astral.sh/uv/)** — the Python toolchain (manages the venv +
-  deps from `uv.lock`). `brew install uv`. (Targets Python 3.10+; the
-  `split/acp_client_raw.py` fallback runs on 3.9.)
+  deps from `uv.lock`). `brew install uv`. (Targets Python 3.10+.)
 - **Node** (for `npx`) — launches the Claude/Codex/Gemini/Qwen/Copilot/DeepAgents adapters.
-- **Auth** for whichever harness you test (table above). Provider keys go in
-  `.env` at the repo root (loaded by `split.core`); CLI-login agents use their own login.
+- **Auth** for whichever harness you test (table above). Provider keys saved
+  through the desktop UI go in your **OS keychain** (macOS Keychain / Windows
+  Credential Manager / Linux Secret Service) under `service="split"`; Rust pulls
+  them at session spawn and injects them into the runner's env. A legacy `.env`
+  at the repo root still works as a fallback (read by `split.core` via
+  `load_dotenv()`). CLI-login agents use their own login flow.
 
 **Mistral Vibe binary** (no npx distribution):
 
@@ -264,7 +269,6 @@ split/                # the Python backend (a package, run via `python -m split.
   terminal.py         #   FRONT — the CLI  (python -m split.terminal)        ← "split-cli"
   runner.py           #   the per-session ACP sidecar the desktop spawns     (python -m split.runner)
   acp_client.py       #   the ACP Client protocol on the official SDK (agent-client-protocol)
-  acp_client_raw.py   #   zero-dep fallback: the same client hand-rolled over stdlib (3.9)
   auth.py             #   Agent-Auth detection + the per-harness login commands
 
 config/               # the EXPERT SYSTEM (portable, the OpenClaw "config" half)
@@ -286,7 +290,7 @@ var/                  # generated / vendored — gitignored, safe to delete
   bin/                #   downloaded harness binaries (opencode, vibe-acp, cursor-agent)
   _retired/           #   parked code (the old web front: server.py + web/)
 
-pyproject.toml · uv.lock · .gitignore · .env (your keys) · .venv/
+pyproject.toml · uv.lock · .gitignore · .env (legacy fallback for keys; new keys go to the OS keychain) · .venv/
 ```
 
 ---

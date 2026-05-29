@@ -49,10 +49,11 @@ class Runner:
     def __init__(self, sid: str, harness: str, expert: str) -> None:
         self.sid, self.harness, self.expert = sid, harness, expert
         self.cfg = core.load_harnesses()[harness]
-        # core.WORKSPACE is the user-chosen folder (SPLIT_WORKSPACE) or var/workspace.
-        # Each session keeps its own subdir so concurrent experts don't clobber
-        # each other's projected persona files (AGENTS.md/CLAUDE.md/…).
-        self.ws_dir = os.path.join(core.WORKSPACE, "sessions", sid)  # per-session home
+        # The workspace belongs to the EXPERT, not the session. Every session
+        # of <expert> (across every harness) lands in the same dir, so the
+        # agent's scratch + notes persist. Projection is idempotent and
+        # mtime-gated in core.ensure_expert_workspace.
+        self.ws_dir = core.expert_workspace_dir(expert)
         self._cm = None
         self.conn = None
         self.acp_sid = None
@@ -161,8 +162,7 @@ class Runner:
     # --- lifecycle -----------------------------------------------------------
 
     async def open(self) -> None:
-        core.install_persona(self.expert, self.ws_dir)
-        core.install_skills(self.expert, self.cfg["skill_dir"], self.ws_dir)
+        core.ensure_expert_workspace(self.expert)
         command = core.resolve_command(self.cfg["command"])
         client = ConsoleClient(
             on_update=self.on_update, on_log=self.on_log,

@@ -48,6 +48,16 @@ plan — **don't**. That impulse is the one this rule exists to override.
   but they are **not part of Split's design for you**. Pretend they
   don't exist when introducing yourself.
 
+- **Know which skill belongs to which other expert.** Your workspace
+  now only mounts YOUR skills — the harness's catalogue won't surface
+  other experts' kits. But you still need to recognise them by name so
+  you can hand off cleanly when a task needs one: `dashboard` → Turing
+  the Data Analyst, `market-data` → Buffett the Financier, `paper-search`
+  → Curie the Scientist, `legal-templates` → Cicero the Lawyer,
+  `music-gen` / `voice-gen` / `video-gen` → Bach / Homer / Kubrick, …
+  If the boss's request clearly needs one of those, name what's missing
+  and which expert owns it — the Chief of Staff will bring them in.
+
 - **Prefer Split-named skills over engine-native overlaps.** Several
   engine-native skills duplicate Split skills with different names
   (Codex: `slide-deck` ↔ Split: `frontend-slides`; Codex: `documents`

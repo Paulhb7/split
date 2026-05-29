@@ -8,9 +8,10 @@ Switch agents live with @mentions — like Split's @expert:
     @vibe                       # alias for mistral-vibe
     @                           # list agents
 
-Each agent = a persona (projected into workspace/AGENTS.md + CLAUDE.md) + skills
-(projected into the agent's skill dir) + tools (MCP). Every session/update is
-streamed live. /quit to exit.
+Each agent runs in the consultant's persistent workspace (`var/workspace/consultant/`)
+— persona + skills are projected once via `core.ensure_expert_workspace` and
+reused across runs. Tools come via MCP. Every session/update is streamed live.
+/quit to exit.
 
     .venv/bin/python -m split.terminal            # start with no agent (pick with @)
     .venv/bin/python -m split.terminal claude     # or start on one
@@ -32,6 +33,10 @@ ALIASES = {"vibe": "mistral-vibe", "mistral": "mistral-vibe",
            "qwen-code": "qwen", "github-copilot": "copilot",
            "github-copilot-cli": "copilot", "langchain": "deepagents",
            "claw": "openclaw"}
+
+# Terminal front switches harness, but not expert — the @-picker is a roster
+# of brains. We always run the default expert (Wolfgang the consultant).
+EXPERT = "consultant"
 
 
 # --- terminal coloring (stdlib only) -----------------------------------------
@@ -135,18 +140,17 @@ class AgentSession:
         self.sid = None
 
     async def open(self) -> None:
-        core.install_persona()
-        skills = core.install_skills("consultant", self.cfg["skill_dir"])
+        ws_dir = core.ensure_expert_workspace(EXPERT)
         command = core.resolve_command(self.cfg["command"])
 
         print(c(BOLD, f"\n== {self.cfg['name']} =="))
         print(c(DIM, f"auth: {self.cfg.get('auth', '-')}"))
-        print(c(DIM, f"prompt → workspace/AGENTS.md+CLAUDE.md   skills → {', '.join(skills) or 'none'}"))
+        print(c(DIM, f"workspace → {ws_dir}"))
         print(c(DIM, f"launching: {command} {' '.join(self.cfg['args'])}"))
 
         self._cm = acp.spawn_agent_process(
             self._client, command, *self.cfg["args"],
-            cwd=core.WORKSPACE, env=dict(os.environ),
+            cwd=ws_dir, env=dict(os.environ),
         )
         self.conn, _proc = await self._cm.__aenter__()
         init = await self.conn.initialize(
@@ -160,11 +164,11 @@ class AgentSession:
         if mcp:
             print(c(DIM, f"tools (MCP) → {', '.join(m.name for m in mcp)}"))
         try:
-            sess = await self.conn.new_session(cwd=core.WORKSPACE, mcp_servers=mcp)
+            sess = await self.conn.new_session(cwd=ws_dir, mcp_servers=mcp)
         except Exception as exc:
             if mcp:  # some agents (e.g. Vibe) won't take MCP over ACP — degrade
                 print(c(YELLOW, f"agent rejected MCP servers ({exc}); retrying without"))
-                sess = await self.conn.new_session(cwd=core.WORKSPACE, mcp_servers=[])
+                sess = await self.conn.new_session(cwd=ws_dir, mcp_servers=[])
             else:
                 raise
         self.sid = sess.session_id
@@ -211,9 +215,9 @@ async def switch(session, key, agents):
 async def main() -> None:
     agents = core.load_harnesses()  # ACP-speak: each harness is an "agent"
     # The workspace is the agent's PERSISTENT home/memory (like OpenClaw's) — do
-    # NOT wipe it. install_persona/install_skills only overwrite the generated
-    # projections; anything the agent wrote there survives across runs.
-    # Want a clean slate? `rm -rf var/workspace/` yourself.
+    # NOT wipe it. ensure_expert_workspace only refreshes the projected files
+    # (mtime-gated for persona, reconciled for skills); anything the agent
+    # wrote in the dir survives across runs. Clean slate? `rm -rf var/workspace/<expert>/`.
     os.makedirs(core.WORKSPACE, exist_ok=True)
     banner(agents)
 

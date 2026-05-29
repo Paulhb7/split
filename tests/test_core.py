@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import time
 
 from split import core
 
@@ -33,55 +34,126 @@ def test_resolve_command_bare_passes_through():
     assert core.resolve_command("uvx") == "uvx"
 
 
-# --- install_persona ---------------------------------------------------------
-def test_install_persona_projects_all_instruction_files(tmp_path):
-    written = core.install_persona("lawyer", str(tmp_path))
-    # Universal shims at the workspace root + per-harness scoped copies
-    # (Mistral Vibe scans its own .vibe/ dir). Order matches install_persona.
-    assert written == [
-        "AGENTS.md", "CLAUDE.md", "GEMINI.md", "QWEN.md", "VIBE.md",
-        ".vibe/AGENTS.md",
-    ]
-    src = (tmp_path / "AGENTS.md").read_text(encoding="utf-8")
+# --- ensure_expert_workspace -------------------------------------------------
+def test_ensure_expert_workspace_projects_persona_and_shims(tmp_path):
+    ws = core.ensure_expert_workspace("lawyer", str(tmp_path))
+    assert ws == os.path.join(str(tmp_path), "lawyer")
+    body = open(os.path.join(ws, "AGENTS.md"), encoding="utf-8").read()
     persona = open(os.path.join(core.EXPERTS_DIR, "lawyer.md"), encoding="utf-8").read()
-    # core may prepend a shared `_discipline.md` preamble — assert the persona
-    # body ends up inside the projection (tolerant of the preamble).
-    assert persona in src
-    # The per-vendor shims (root + .vibe/) are identical copies of AGENTS.md.
-    assert (tmp_path / "CLAUDE.md").read_text(encoding="utf-8") == src
-    assert (tmp_path / ".vibe" / "AGENTS.md").read_text(encoding="utf-8") == src
+    assert persona in body  # tolerant of the discipline preamble + memory block
+    # Cross-vendor shims all point at AGENTS.md.
+    for shim in ("CLAUDE.md", "GEMINI.md", "QWEN.md", "VIBE.md"):
+        link = os.path.join(ws, shim)
+        assert os.path.islink(link)
+        assert os.readlink(link) == "AGENTS.md"
+    # Vibe scans its own .vibe/ dir — needs a shim there too.
+    vibe_shim = os.path.join(ws, ".vibe", "AGENTS.md")
+    assert os.path.islink(vibe_shim)
 
 
-def test_install_persona_unknown_expert_falls_back_to_consultant(tmp_path):
-    core.install_persona("does-not-exist", str(tmp_path))
-    got = (tmp_path / "AGENTS.md").read_text(encoding="utf-8")
+def test_ensure_expert_workspace_filters_skills_to_experts_json(tmp_path):
+    """Hard FS-level filter: a lawyer's `.claude/skills/` contains EXACTLY the
+    skills `experts.json[lawyer].skills` lists (intersected with what's vendored
+    in `config/skills/`). No more, no less."""
+    ws = core.ensure_expert_workspace("lawyer", str(tmp_path))
+    allowed = core.load_experts()["lawyer"]["skills"]
+    expected = {
+        name for name in allowed
+        if os.path.isfile(os.path.join(core.SKILLS_DIR, name, "SKILL.md"))
+    }
+    for skill_dir in (".claude/skills", ".agents/skills", ".vibe/skills"):
+        present = set(os.listdir(os.path.join(ws, skill_dir)))
+        assert present == expected, f"{skill_dir} drifted: {present} vs {expected}"
+        for name in expected:
+            link = os.path.join(ws, skill_dir, name)
+            assert os.path.islink(link)
+            # Each symlink points DIRECTLY at config/skills/<name> — no mount.
+            assert os.path.realpath(link) == os.path.realpath(
+                os.path.join(core.SKILLS_DIR, name)
+            )
+
+
+def test_ensure_expert_workspace_unknown_expert_falls_back_to_consultant(tmp_path):
+    ws = core.ensure_expert_workspace("does-not-exist", str(tmp_path))
+    assert ws == os.path.join(str(tmp_path), "consultant")
+    body = open(os.path.join(ws, "AGENTS.md"), encoding="utf-8").read()
     consultant = open(os.path.join(core.EXPERTS_DIR, "consultant.md"), encoding="utf-8").read()
-    assert consultant in got
+    assert consultant in body
 
 
-# --- install_skills ----------------------------------------------------------
-def test_install_skills_mounts_exactly_the_vendored_declared_skills(tmp_path):
-    """Pick any expert with a vendored skill — assert install_skills mounts
-    the vendored subset, in declared order. Data-agnostic to experts.json drift."""
-    e = core.load_experts()
-    pick = next(
-        (slug for slug, ent in e.items()
-         if any(os.path.isfile(os.path.join(core.SKILLS_DIR, s, "SKILL.md"))
-                for s in (ent.get("skills") or []))),
-        None,
-    )
-    assert pick is not None, "no expert with at least one vendored skill"
-    declared = e[pick]["skills"]
-    expected = [s for s in declared if os.path.isfile(os.path.join(core.SKILLS_DIR, s, "SKILL.md"))]
-    mounted = core.install_skills(pick, ".claude/skills", str(tmp_path))
-    assert mounted == expected
-    # The whole folder is copied (including any scripts/), not just SKILL.md.
-    for name in mounted:
-        assert (tmp_path / ".claude/skills" / name / "SKILL.md").is_file()
+def test_ensure_expert_workspace_is_idempotent_no_persona_rewrite(tmp_path):
+    """Persona is mtime-gated: a second call with no source changes must NOT
+    rewrite AGENTS.md (the whole point of the per-expert workspace)."""
+    ws = core.ensure_expert_workspace("lawyer", str(tmp_path))
+    agents = os.path.join(ws, "AGENTS.md")
+    first_mtime = os.path.getmtime(agents)
+    core.ensure_expert_workspace("lawyer", str(tmp_path))
+    assert os.path.getmtime(agents) == first_mtime  # untouched
 
 
-def test_install_skills_unknown_expert_is_safe(tmp_path):
-    assert core.install_skills("does-not-exist", ".agents/skills", str(tmp_path)) == []
+def test_ensure_expert_workspace_refreshes_persona_when_source_newer(tmp_path, monkeypatch):
+    """If a persona source file (memory) gets touched, the next call rewrites
+    AGENTS.md so the in-context snapshot reflects the new content."""
+    mem = tmp_path / "memory"
+    monkeypatch.setattr(core, "MEMORY_DIR", str(mem))
+    ws = core.ensure_expert_workspace("lawyer", str(tmp_path))
+    agents = os.path.join(ws, "AGENTS.md")
+    first_mtime = os.path.getmtime(agents)
+    # Touch the expert's memory file so its mtime is strictly newer.
+    (mem / "lawyer").mkdir(parents=True, exist_ok=True)
+    memory_file = mem / "lawyer" / "MEMORY.md"
+    memory_file.write_text("- Boss likes NY law.", encoding="utf-8")
+    future = first_mtime + 2
+    os.utime(memory_file, (future, future))
+    core.ensure_expert_workspace("lawyer", str(tmp_path))
+    assert os.path.getmtime(agents) > first_mtime
+    assert "NY law" in open(agents, encoding="utf-8").read()  # picked up the new note
+
+
+def test_ensure_expert_workspace_reconciles_skills_on_rerun(tmp_path):
+    """A symlink for a skill no longer in the expert's list is removed; a
+    newly-added skill gets symlinked. Exercises the diff-based reconcile."""
+    ws = core.ensure_expert_workspace("lawyer", str(tmp_path))
+    claude_skills = os.path.join(ws, ".claude/skills")
+    # Drop a fake stale symlink + remove an expected one, then reconcile.
+    stale = os.path.join(claude_skills, "ghost-skill")
+    os.symlink("/nonexistent/somewhere", stale)
+    # Remove one of the wanted symlinks to see it restored.
+    wanted_names = list(os.listdir(claude_skills))
+    if "ghost-skill" in wanted_names:
+        wanted_names.remove("ghost-skill")
+    victim = wanted_names[0]
+    os.unlink(os.path.join(claude_skills, victim))
+    core.ensure_expert_workspace("lawyer", str(tmp_path))
+    after = set(os.listdir(claude_skills))
+    assert "ghost-skill" not in after  # obsolete removed
+    assert victim in after              # missing restored
+
+
+def test_ensure_expert_workspace_empty_skills_list_leaves_dirs_empty(tmp_path):
+    """An expert with `skills: []` (like chief_of_staff/operator) gets empty
+    skill dirs — the FS filter matches the persona's intent literally."""
+    ws = core.ensure_expert_workspace("operator", str(tmp_path))
+    for skill_dir in (".claude/skills", ".agents/skills", ".vibe/skills"):
+        d = os.path.join(ws, skill_dir)
+        assert os.path.isdir(d)
+        assert os.listdir(d) == []
+
+
+def test_ensure_expert_workspace_pre_creates_memory_dirs(tmp_path, monkeypatch):
+    """First-session bootstrap: the agent's first `remember X` write must not
+    fail on a missing parent dir."""
+    monkeypatch.setattr(core, "MEMORY_DIR", str(tmp_path / "memory"))
+    core.ensure_expert_workspace("scientist", str(tmp_path / "ws-root"))
+    assert (tmp_path / "memory" / "_user").is_dir()
+    assert (tmp_path / "memory" / "scientist").is_dir()
+
+
+def test_expert_workspace_dir_is_pure_path(tmp_path):
+    """The path helper must not create anything on disk."""
+    p = core.expert_workspace_dir("lawyer", str(tmp_path))
+    assert p == os.path.join(str(tmp_path), "lawyer")
+    assert not os.path.exists(p)
 
 
 # --- memory_text -------------------------------------------------------------
@@ -136,19 +208,10 @@ def test_persona_text_prepends_memory_when_present(tmp_path, monkeypatch):
     assert got.index("XYZZY") < got.index(persona[:80])
 
 
-def test_install_persona_pre_creates_memory_dirs(tmp_path, monkeypatch):
-    """First session for an expert creates the memory dirs so the agent's
-    first append doesn't fail on a missing parent."""
-    monkeypatch.setattr(core, "MEMORY_DIR", str(tmp_path / "memory"))
-    core.install_persona("scientist", str(tmp_path / "ws"))
-    assert (tmp_path / "memory" / "_user").is_dir()
-    assert (tmp_path / "memory" / "scientist").is_dir()
-
-
-def test_install_persona_unknown_expert_does_not_litter_memory_dir(tmp_path, monkeypatch):
+def test_ensure_expert_workspace_unknown_expert_does_not_litter_memory_dir(tmp_path, monkeypatch):
     """Fallback to consultant must also apply to the memory dir layout —
     no var/memory/does-not-exist/ for personas that don't exist."""
     monkeypatch.setattr(core, "MEMORY_DIR", str(tmp_path / "memory"))
-    core.install_persona("does-not-exist", str(tmp_path / "ws"))
+    core.ensure_expert_workspace("does-not-exist", str(tmp_path / "ws"))
     assert not (tmp_path / "memory" / "does-not-exist").exists()
     assert (tmp_path / "memory" / "consultant").is_dir()
