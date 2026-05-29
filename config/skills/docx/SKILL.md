@@ -97,7 +97,7 @@ for src in sources:  # list of {title, publisher, year, url}
     run = p.add_run(src['url'])
     run.font.color.rgb = RGBColor(0x40, 0x40, 0x40)
 
-doc.save('/Users/aristocat/Desktop/ev-market-memo.docx')
+doc.save('/Desktop/ev-market-memo.docx')
 ```
 
 ## Default Split memo template

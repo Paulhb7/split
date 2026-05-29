@@ -66,7 +66,7 @@ feed vs. an app preview).
 | **Turing** / Data Analyst | analyst | CSV/Excel exploration, models, dashboards, interactive reports | `dashboard`, `ui-ux-pro-max`, `frontend-slides`, `docx`, `web-deploy` |
 | **Tesla** / Engineer | builder | Builds micro-apps and landing pages, then ships them to a public URL | `web-deploy`, `image-search`, `ui-ux-pro-max` |
 | **DaVinci** / Designer | creator | Brand identities, UI mockups, static graphics, redesigns | `web-audit`, `image-search`, `graphics`, `ui-ux-pro-max`, `frontend-slides` |
-| **Babbage** / Vision | operator | Drives real macOS apps in the background | app-control tools when configured |
+| **Alfred** / Operator | operator | Drives real macOS apps in the background | `cua-driver` (background macOS app control via the AX tree) |
 | **Bach** / Musician | creator | Generates original tracks from a prompt | `music-gen` |
 | **Homer** / Podcaster | creator | Scripts, voices, scores, and edits podcast episodes | `voice-gen`, `music-gen` |
 | **Kubrick** / Director | creator | Produces short videos from an idea, shot list, score, and narration | `video-gen`, `music-gen`, `voice-gen` |

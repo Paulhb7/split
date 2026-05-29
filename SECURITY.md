@@ -12,8 +12,8 @@ Read this before exposing Split to anything you don't fully trust.
 
 - **A task you give an expert ≈ a command you'd run yourself in a shell.** Several
   experts (Data Analyst, Software Engineer, Scientist) run the shell and the
-  filesystem on the host, unattended. Vision drives your real macOS apps. Treat
-  every prompt with that in mind.
+  filesystem on the host, unattended. The Operator (Alfred) drives your real
+  macOS apps. Treat every prompt with that in mind.
 - **Don't feed Split untrusted content expecting isolation.** A dropped file, a
   web page it researches, or a third-party MCP tool result can carry instructions
   (prompt injection). Split does not defend against that — it trusts the operator
@@ -41,8 +41,8 @@ hidden. Each is the first thing to revisit if the trust model ever widens.
    LangChain setups). Tool calls always show up in the live event stream, even
    when the harness bypasses approval — so they're at least visible.
 2. **Unattended host access.** The `analyst` / `engineer` / `scientist` experts
-   get `Read`/`Write`/`Bash` on the host; `vision` drives apps via cua. Nothing
-   is sandboxed.
+   get `Read`/`Write`/`Bash` on the host; `operator` drives apps via cua-driver.
+   Nothing is sandboxed.
 3. **Skills run bundled code.** Vendored skills under
    [`config/skills/`](config/skills/) ship `scripts/*.py` that execute and reach
    the network (e.g. `music-gen`/`video-gen` → fal.ai, `voice-gen` → ElevenLabs).
