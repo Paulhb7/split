@@ -171,10 +171,13 @@
 .ecard.sel .check { border-color: var(--brand); background: var(--brand); }
 .ecard.sel .check::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 10px; color: var(--ink); }
 .ecard.reserve { opacity: 0.6; }
+/* When expanded with a rich config panel (e.g. Hermes local/cloud), break out
+   of the auto-fill grid cell and span the full row so the panel breathes. */
+.ecard.wide { grid-column: 1 / -1; }
 
 /* --- lifecycle footer + actions on the ecard --- */
 .ecard-foot { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--line2); background: rgba(255, 255, 255, 0.015); }
-.st-pill { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; border-radius: 99px; border: 1px solid currentColor; margin-right: auto; opacity: 0.9; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-pill { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; border-radius: 99px; border: 1px solid currentColor; margin-right: auto; opacity: 0.9; min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .st-pill.st-ready { color: var(--good); }
 .st-pill.st-missing { color: var(--warn); }
 .st-pill.st-external { color: var(--dim); }
@@ -190,6 +193,32 @@
 .ecard-cfg input { background: rgba(0, 0, 0, 0.25); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; color: var(--text); font-family: var(--mono); font-size: 11.5px; outline: 0; user-select: text; -webkit-user-select: text; }
 .ecard-cfg input:focus { border-color: var(--brand); }
 .cfg-acts { display: flex; gap: 6px; justify-content: flex-end; margin-top: 1px; }
+
+/* Hermes configure panel — local/cloud toggle with provider + model pickers. */
+.hermes-panel { display: flex; flex-direction: column; gap: 9px; }
+.hermes-tabs { display: flex; gap: 6px; padding: 2px; background: rgba(0, 0, 0, 0.22); border-radius: 10px; }
+.hermes-tab { flex: 1; font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 8px; border-radius: 8px; border: 0; background: transparent; color: var(--dim); cursor: pointer; transition: 0.15s; }
+.hermes-tab:hover:not(:disabled) { color: var(--text); }
+.hermes-tab.on { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+.hermes-tab:disabled { opacity: 0.5; cursor: not-allowed; }
+.hermes-body { display: flex; flex-direction: column; gap: 8px; }
+.hermes-row { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 8px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--dim); }
+.hermes-row > span { text-transform: uppercase; }
+.hermes-row select,
+.hermes-row input { background: rgba(0, 0, 0, 0.25); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; color: var(--text); font-family: var(--mono); font-size: 11.5px; outline: 0; user-select: text; -webkit-user-select: text; }
+.hermes-row select:focus,
+.hermes-row input:focus { border-color: var(--brand); }
+.hermes-acts { display: flex; gap: 6px; justify-content: flex-end; align-items: center; }
+.hermes-status { font-family: var(--mono); font-size: 11px; padding: 7px 9px; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--line); border-radius: 8px; color: var(--dim); }
+.hermes-status .ok { color: var(--good); }
+.hermes-status .warn { color: var(--warn, #e0a44e); }
+.hermes-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); }
+.hermes-badge.ok { color: var(--good); border-color: color-mix(in srgb, var(--good) 35%, var(--line)); }
+.hermes-link { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--dim); text-decoration: none; margin-right: auto; }
+.hermes-link:hover { color: var(--text); }
+.hermes-tip { font-family: var(--mono); font-size: 10px; color: var(--dim2); margin: 4px 0 0; line-height: 1.5; }
+.hermes-tip code { background: rgba(0, 0, 0, 0.25); padding: 1px 5px; border-radius: 4px; }
+.hermes-foot { display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px; border-top: 1px solid var(--line2); padding-top: 8px; }
 
 /* ============================ HOME ============================ */
 .home { max-width: 880px; margin: 0 auto; padding: 16px 18px 22px; }

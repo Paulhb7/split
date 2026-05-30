@@ -123,13 +123,30 @@ fn child_path() -> String {
 // Resize the borderless window to a content-fitted height. The React side
 // computes the desired height via a ResizeObserver on the natural content
 // (compact = just the composer row, expanded = thread/stage/teams + composer),
-// dedupes via `lastHeightRef`, and calls this. Width is fixed to BAR_WIDTH so
-// the UI never changes horizontal dimensions during a session.
-const BAR_WIDTH: f64 = 680.0;
+// dedupes via `lastHeightRef`, and calls this. Width is normally fixed at
+// BAR_WIDTH but the React layer can swap to a wider mode via `set_bar_width`
+// (e.g. the "Your agents" overlay that needs more room to breathe).
+static BAR_WIDTH: LazyLock<Mutex<f64>> = LazyLock::new(|| Mutex::new(680.0));
+
 #[tauri::command]
 fn set_bar_height(window: WebviewWindow, height: f64) {
     let h = height.clamp(48.0, 1400.0); // sane clamp; React already clamps too
-    let _ = window.set_size(LogicalSize::new(BAR_WIDTH, h));
+    let w = *BAR_WIDTH.lock().unwrap();
+    let _ = window.set_size(LogicalSize::new(w, h));
+}
+
+// Switch the bar's logical width. Updates the shared state so subsequent
+// `set_bar_height` calls honour the new width, AND resizes immediately so the
+// change is visible without waiting for the next ResizeObserver tick.
+#[tauri::command]
+fn set_bar_width(window: WebviewWindow, width: f64) {
+    let w = width.clamp(400.0, 2200.0);
+    *BAR_WIDTH.lock().unwrap() = w;
+    let scale = window.scale_factor().unwrap_or(1.0);
+    if let Ok(sz) = window.outer_size() {
+        let h_logical = (sz.height as f64) / scale;
+        let _ = window.set_size(LogicalSize::new(w, h_logical));
+    }
 }
 
 // Reveal the workspace folder (or one session's subfolder) in Finder. `workspace`
@@ -185,6 +202,12 @@ fn start_session(app: AppHandle, id: String, harness: String, expert: String, wo
             }
         }
     }
+    // Hermes's model selection lives in `~/.hermes/config.yaml` and accepts
+    // `-m <provider/model> --provider <name>` as CLI overrides, NOT env vars
+    // (verified by grepping hermes source: no HERMES_MODEL anywhere). The
+    // translation from var/state/hermes.config.json → CLI args + HERMES_HOME
+    // happens in core.apply_hermes_config(), called by the Python runner just
+    // before spawning hermes acp. Rust just passes a clean environment.
     let mut child = match cmd.spawn()
     {
         Ok(c) => c,
@@ -495,11 +518,12 @@ fn command_on_path(cmd: &str) -> bool {
 }
 
 // `install`: "npx" → always ready (npx -y warms on first launch);
-// "binary"/"external" → check that the launch command resolves.
+// "binary"/"external"/"script" → check that the launch command resolves
+// (post-install the binary should be on PATH, e.g. ~/.local/bin/hermes).
 fn install_state_for(install_kind: Option<&str>, command: &str) -> &'static str {
     match install_kind {
         Some("npx") => "ready",
-        Some("external") | Some("binary") => {
+        Some("external") | Some("binary") | Some("script") => {
             if command_on_path(command) { "ready" } else { "missing" }
         }
         _ => "ready",
@@ -508,7 +532,9 @@ fn install_state_for(install_kind: Option<&str>, command: &str) -> &'static str 
 
 // `configure`: "oauth" → a creds dotfile OR a fallback env key signals ready;
 // "api-key" → the declared env key is in .env or process env; "external" → the
-// UI just shows a docs link (always reported as "external").
+// UI just shows a docs link (always reported as "external"); "hermes-config" →
+// custom panel (local/cloud + model picker); ready when at least one provider
+// key is in the keychain OR Hermes's own OAuth file exists.
 fn configure_state_for(cfg: Option<&serde_json::Value>) -> &'static str {
     let Some(cfg) = cfg else { return "ready" };
     let kind = cfg.get("kind").and_then(|v| v.as_str()).unwrap_or("");
@@ -527,6 +553,19 @@ fn configure_state_for(cfg: Option<&serde_json::Value>) -> &'static str {
             if ok { "ready" } else { "missing" }
         }
         "external" => "external",
+        "hermes-config" => {
+            let any_key = [
+                "ANTHROPIC_API_KEY",
+                "OPENAI_API_KEY",
+                "GEMINI_API_KEY",
+                "MISTRAL_API_KEY",
+                "DASHSCOPE_API_KEY",
+            ]
+            .iter()
+            .any(|k| secret_present(k));
+            let auth_file = expand_tilde("~/.hermes/auth.json").exists();
+            if any_key || auth_file { "ready" } else { "missing" }
+        }
         _ => "ready",
     }
 }
@@ -584,6 +623,9 @@ fn emit_install(app: &AppHandle, id: &str, line: &str, done: bool, ok: bool) {
 // - "npx" → `npm cache add <pkg>@<ver>` warms the npm tarball cache, so the
 //   first real `npx -y <pkg>` launch doesn't pay the download.
 // - "external" → opens the declared docUrl in the user's browser.
+// - "script" → `bash -c "curl -fsSL <url> | bash"` runs the official installer,
+//   streaming both stdout and stderr as install-event lines. On exit, if
+//   `install.binary` is set, verifies it resolves on PATH.
 // - "binary" → reserved for v2 (curl|chmod download into var/bin/).
 #[tauri::command]
 fn install_harness(app: AppHandle, id: String) -> Result<String, String> {
@@ -629,6 +671,95 @@ fn install_harness(app: AppHandle, id: String) -> Result<String, String> {
             emit_install(&app, &id, &format!("opened {url}"), true, true);
             Ok(json!({ "ok": true, "kind": "external", "url": url }).to_string())
         }
+        "script" => {
+            let url = install
+                .get("url")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| "script install missing url".to_string())?
+                .to_string();
+            let binary = install
+                .get("binary")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let app_outer = app.clone();
+            let id_outer = id.clone();
+            let url_outer = url.clone();
+            std::thread::spawn(move || {
+                emit_install(
+                    &app_outer,
+                    &id_outer,
+                    &format!("curl -fsSL {url_outer} | bash"),
+                    false,
+                    false,
+                );
+                let spawn_result = Command::new("bash")
+                    .arg("-c")
+                    .arg(format!("curl -fsSL '{url_outer}' | bash"))
+                    .env("PATH", child_path())
+                    .stdin(Stdio::null())
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn();
+                let mut child = match spawn_result {
+                    Ok(c) => c,
+                    Err(e) => {
+                        emit_install(&app_outer, &id_outer, &format!("spawn error: {e}"), true, false);
+                        return;
+                    }
+                };
+                let app_out = app_outer.clone();
+                let id_out = id_outer.clone();
+                let t_out = child.stdout.take().map(|out| {
+                    std::thread::spawn(move || {
+                        for line in BufReader::new(out).lines().map_while(Result::ok) {
+                            emit_install(&app_out, &id_out, &line, false, false);
+                        }
+                    })
+                });
+                let app_err = app_outer.clone();
+                let id_err = id_outer.clone();
+                let t_err = child.stderr.take().map(|err| {
+                    std::thread::spawn(move || {
+                        for line in BufReader::new(err).lines().map_while(Result::ok) {
+                            emit_install(&app_err, &id_err, &format!("⚠ {line}"), false, false);
+                        }
+                    })
+                });
+                let status = child.wait();
+                if let Some(t) = t_out {
+                    let _ = t.join();
+                }
+                if let Some(t) = t_err {
+                    let _ = t.join();
+                }
+                match status {
+                    Ok(s) if s.success() => {
+                        let ok = binary.is_empty() || command_on_path(&binary);
+                        if ok {
+                            emit_install(&app_outer, &id_outer, "✓ installed", true, true);
+                        } else {
+                            emit_install(
+                                &app_outer,
+                                &id_outer,
+                                &format!("script ran but {binary} not on PATH"),
+                                true,
+                                false,
+                            );
+                        }
+                    }
+                    Ok(s) => emit_install(
+                        &app_outer,
+                        &id_outer,
+                        &format!("installer exited with {s}"),
+                        true,
+                        false,
+                    ),
+                    Err(e) => emit_install(&app_outer, &id_outer, &format!("wait error: {e}"), true, false),
+                }
+            });
+            Ok(json!({ "ok": true, "kind": "script", "url": url }).to_string())
+        }
         other => Err(format!("install kind not supported: {other}")),
     }
 }
@@ -656,8 +787,210 @@ fn configure_harness(app: AppHandle, id: String) -> Result<String, String> {
             Ok(json!({ "ok": true, "kind": "external", "url": url }).to_string())
         }
         "api-key" => Ok(json!({ "ok": true, "kind": "api-key", "key": cfg.get("key") }).to_string()),
+        "hermes-config" => {
+            // The dedicated React panel drives the whole flow (mode toggle,
+            // provider/model picker, API-key save through save_api_key, Ollama
+            // detect/install/pull through the check_ollama / install_ollama /
+            // pull_ollama_model commands). This dispatch only acknowledges the
+            // click so the UI knows to expand its inline panel.
+            let _ = app;
+            Ok(json!({ "ok": true, "kind": "hermes-config" }).to_string())
+        }
         other => Err(format!("configure kind not supported: {other}")),
     }
+}
+
+// --- Hermes config persistence ----------------------------------------------
+// The Hermes configure panel writes its mode + provider/model choice to
+// localStorage (so the UI repopulates), AND mirrors it to disk here so the
+// Rust spawn path can inject the corresponding HERMES_MODEL env var.
+
+fn hermes_config_path() -> PathBuf {
+    REPO_ROOT.join("var").join("state").join("hermes.config.json")
+}
+
+#[tauri::command]
+fn save_hermes_config(cfg: String) -> Result<(), String> {
+    // Validate it's well-formed JSON before touching disk.
+    let _: serde_json::Value = serde_json::from_str(&cfg).map_err(|e| e.to_string())?;
+    let path = hermes_config_path();
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(&path, cfg).map_err(|e| e.to_string())
+}
+
+// Reading + translation to CLI args happens in `core.apply_hermes_config()`
+// on the Python side, since the runner is what spawns the hermes binary.
+
+// --- Ollama integration (Hermes local mode) ---------------------------------
+// Hermes's local-LLM mode points at any OpenAI-compatible endpoint; the
+// frictionless default we surface in the UI is Ollama (localhost:11434).
+// These three commands cover the lifecycle: detect, install, pull.
+
+// Probe Ollama's CLI + HTTP API:
+// - `ollama` resolves on PATH → installed
+// - GET /api/tags returns 200 → daemon running; list its installed models
+#[tauri::command]
+fn check_ollama() -> String {
+    let installed = command_on_path("ollama");
+    let mut models: Vec<String> = Vec::new();
+    let mut running = false;
+    if installed {
+        if let Ok(out) = Command::new("curl")
+            .args(["-s", "--max-time", "2", "http://localhost:11434/api/tags"])
+            .env("PATH", child_path())
+            .output()
+        {
+            if out.status.success() && !out.stdout.is_empty() {
+                if let Ok(val) = serde_json::from_slice::<serde_json::Value>(&out.stdout) {
+                    if let Some(arr) = val.get("models").and_then(|v| v.as_array()) {
+                        running = true;
+                        for m in arr {
+                            if let Some(name) = m.get("name").and_then(|v| v.as_str()) {
+                                models.push(name.to_string());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    json!({ "installed": installed, "running": running, "models": models }).to_string()
+}
+
+// Install Ollama. Brew if available (cleanest path on macOS), else open the
+// official download page in the user's browser. Streams progress over
+// `install-event` so the Hermes panel reads the same channel as other installs.
+#[tauri::command]
+fn install_ollama(app: AppHandle, harness_id: String) -> Result<String, String> {
+    let sid = if harness_id.is_empty() { "hermes".to_string() } else { harness_id };
+    if command_on_path("brew") {
+        let app2 = app.clone();
+        let sid2 = sid.clone();
+        std::thread::spawn(move || {
+            emit_install(&app2, &sid2, "brew install --cask ollama", false, false);
+            let spawn_result = Command::new("brew")
+                .args(["install", "--cask", "ollama"])
+                .env("PATH", child_path())
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn();
+            let mut child = match spawn_result {
+                Ok(c) => c,
+                Err(e) => {
+                    emit_install(&app2, &sid2, &format!("spawn error: {e}"), true, false);
+                    return;
+                }
+            };
+            let app_out = app2.clone();
+            let sid_out = sid2.clone();
+            let t_out = child.stdout.take().map(|out| {
+                std::thread::spawn(move || {
+                    for line in BufReader::new(out).lines().map_while(Result::ok) {
+                        emit_install(&app_out, &sid_out, &line, false, false);
+                    }
+                })
+            });
+            let app_err = app2.clone();
+            let sid_err = sid2.clone();
+            let t_err = child.stderr.take().map(|err| {
+                std::thread::spawn(move || {
+                    for line in BufReader::new(err).lines().map_while(Result::ok) {
+                        emit_install(&app_err, &sid_err, &format!("⚠ {line}"), false, false);
+                    }
+                })
+            });
+            let status = child.wait();
+            if let Some(t) = t_out {
+                let _ = t.join();
+            }
+            if let Some(t) = t_err {
+                let _ = t.join();
+            }
+            match status {
+                Ok(s) if s.success() => {
+                    let ok = command_on_path("ollama");
+                    if ok {
+                        emit_install(&app2, &sid2, "✓ ollama installed", true, true);
+                    } else {
+                        emit_install(&app2, &sid2, "brew finished but ollama not on PATH", true, false);
+                    }
+                }
+                Ok(s) => emit_install(&app2, &sid2, &format!("brew exited with {s}"), true, false),
+                Err(e) => emit_install(&app2, &sid2, &format!("wait error: {e}"), true, false),
+            }
+        });
+        Ok(json!({ "ok": true, "via": "brew" }).to_string())
+    } else {
+        let url = "https://ollama.com/download";
+        Command::new("open").arg(url).status().map_err(|e| e.to_string())?;
+        emit_install(&app, &sid, &format!("opened {url} (no brew on PATH)"), true, true);
+        Ok(json!({ "ok": true, "via": "browser", "url": url }).to_string())
+    }
+}
+
+// Pull an Ollama model. Streams the (large, multi-minute) download progress
+// over `install-event` to the same panel as install/configure progress.
+#[tauri::command]
+fn pull_ollama_model(app: AppHandle, harness_id: String, model: String) -> Result<String, String> {
+    if model.is_empty() {
+        return Err("model is required".into());
+    }
+    let sid = if harness_id.is_empty() { "hermes".to_string() } else { harness_id };
+    let app2 = app.clone();
+    let sid2 = sid.clone();
+    let model2 = model.clone();
+    std::thread::spawn(move || {
+        emit_install(&app2, &sid2, &format!("ollama pull {model2}"), false, false);
+        let spawn_result = Command::new("ollama")
+            .args(["pull", &model2])
+            .env("PATH", child_path())
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn();
+        let mut child = match spawn_result {
+            Ok(c) => c,
+            Err(e) => {
+                emit_install(&app2, &sid2, &format!("spawn error: {e}"), true, false);
+                return;
+            }
+        };
+        let app_out = app2.clone();
+        let sid_out = sid2.clone();
+        let t_out = child.stdout.take().map(|out| {
+            std::thread::spawn(move || {
+                for line in BufReader::new(out).lines().map_while(Result::ok) {
+                    emit_install(&app_out, &sid_out, &line, false, false);
+                }
+            })
+        });
+        let app_err = app2.clone();
+        let sid_err = sid2.clone();
+        let t_err = child.stderr.take().map(|err| {
+            std::thread::spawn(move || {
+                for line in BufReader::new(err).lines().map_while(Result::ok) {
+                    // ollama writes its progress bar to stderr — show it raw.
+                    emit_install(&app_err, &sid_err, &line, false, false);
+                }
+            })
+        });
+        let status = child.wait();
+        if let Some(t) = t_out {
+            let _ = t.join();
+        }
+        if let Some(t) = t_err {
+            let _ = t.join();
+        }
+        match status {
+            Ok(s) if s.success() => emit_install(&app2, &sid2, &format!("✓ pulled {model2}"), true, true),
+            Ok(s) => emit_install(&app2, &sid2, &format!("ollama pull exited with {s}"), true, false),
+            Err(e) => emit_install(&app2, &sid2, &format!("wait error: {e}"), true, false),
+        }
+    });
+    Ok(json!({ "ok": true, "model": model }).to_string())
 }
 
 // --- file drops --------------------------------------------------------------
@@ -759,6 +1092,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             set_bar_height,
+            set_bar_width,
             open_workspace,
             start_session,
             send_turn,
@@ -775,7 +1109,11 @@ pub fn run() {
             save_api_key,
             harness_states,
             install_harness,
-            configure_harness
+            configure_harness,
+            check_ollama,
+            install_ollama,
+            pull_ollama_model,
+            save_hermes_config
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

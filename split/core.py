@@ -474,3 +474,56 @@ def resolve_command(command: str) -> str:
     if command.startswith(("./", "../")):
         return os.path.normpath(os.path.join(REPO_ROOT, command))
     return command
+
+
+def apply_hermes_config() -> tuple[list[str], dict[str, str]]:
+    """Translate the desktop panel's saved choice into Hermes spawn-time
+    overrides. The panel writes `var/state/hermes.config.json` via the Tauri
+    `save_hermes_config` command; here we read it and produce:
+      - extra CLI args appended to `hermes acp` (`-m <provider/model>
+        --provider <name>`), since Hermes accepts these as per-invocation
+        overrides without touching the user's ~/.hermes/config.yaml
+      - extra env vars to merge into the spawn env (for local Ollama we point
+        `HERMES_HOME` at a managed config dir holding `base_url`, since the
+        OpenAI-compat endpoint isn't a top-level CLI flag)
+
+    Returns ([], {}) when no config is saved or the file is malformed — the
+    harness then falls back to whatever the user's ~/.hermes/ says.
+    """
+    cfg_path = os.path.join(VAR_DIR, "state", "hermes.config.json")
+    if not os.path.exists(cfg_path):
+        return [], {}
+    try:
+        with open(cfg_path, "r", encoding="utf-8") as fh:
+            cfg = json.load(fh)
+    except Exception:
+        return [], {}
+
+    mode = cfg.get("mode")
+    if mode == "cloud":
+        cloud = cfg.get("cloud") or {}
+        provider = cloud.get("providerId")
+        model = cloud.get("modelId")
+        if provider and model:
+            return ["-m", f"{provider}/{model}", "--provider", provider], {}
+    elif mode == "local":
+        local = cfg.get("local") or {}
+        model = local.get("modelId")
+        if model:
+            home = os.path.join(VAR_DIR, "state", "hermes-home")
+            os.makedirs(home, exist_ok=True)
+            # Hermes reads model.base_url from config.yaml; no top-level CLI
+            # flag exposes it. We seed a minimal config here so the user's
+            # ~/.hermes/ stays untouched.
+            with open(os.path.join(home, "config.yaml"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    'model:\n'
+                    f'  default: "ollama/{model}"\n'
+                    '  provider: "ollama"\n'
+                    '  base_url: "http://localhost:11434/v1"\n'
+                )
+            return (
+                ["-m", f"ollama/{model}", "--provider", "ollama"],
+                {"HERMES_HOME": home},
+            )
+    return [], {}

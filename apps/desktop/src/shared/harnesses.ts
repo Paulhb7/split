@@ -21,9 +21,10 @@ export const HARNESSES: Harness[] = [
   { id: "mistral-vibe", label: "Mistral Vibe", vendor: "Mistral AI", brand: "#fa520f", lane: "cloud", tag: "API key", blurb: "Mistral's Vibe agent. Open weights, EU." },
   { id: "copilot", label: "Copilot", vendor: "GitHub", brand: "#a371f7", lane: "cloud", tag: "Copilot sub", blurb: "Your GitHub Copilot subscription." },
   { id: "cursor", label: "Cursor", vendor: "Cursor", brand: "#cfd2d6", lane: "cloud", tag: "Cursor sub", blurb: "The Cursor agent, your Cursor plan." },
-  { id: "deepagents", label: "DeepAgents", vendor: "LangChain", brand: "#1fae9b", lane: "cloud", tag: "Any provider", blurb: "Model-agnostic LangChain agent." },
+  { id: "qwen", label: "Qwen", vendor: "Alibaba", brand: "#7c5cff", lane: "cloud", tag: "Local or key", blurb: "Qwen3.5 — local via Ollama, or cloud." },
   { id: "opencode", label: "OpenCode", vendor: "open source", brand: "#ff7a59", lane: "local", tag: "100% local", blurb: "75+ providers. Point at Ollama → $0." },
-  { id: "qwen", label: "Qwen", vendor: "Alibaba", brand: "#7c5cff", lane: "local", tag: "Local or key", blurb: "Qwen3.5 — local via Ollama, or cloud." },
+  { id: "hermes", label: "Hermes", vendor: "NousResearch", brand: "#fbbf24", lane: "local", tag: "Model-agnostic", blurb: "19+ providers. Local LLMs first-class, OAuth proxy." },
+  { id: "deepagents", label: "DeepAgents", vendor: "LangChain", brand: "#1fae9b", lane: "local", tag: "Any provider", blurb: "Model-agnostic LangChain agent." },
 ];
 
 export const H: Record<string, Harness> = Object.fromEntries(HARNESSES.map((h) => [h.id, h]));

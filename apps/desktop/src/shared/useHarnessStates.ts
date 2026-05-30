@@ -8,8 +8,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 export type LifecycleState = "ready" | "missing" | "external";
-export type InstallKind = "npx" | "binary" | "external" | "";
-export type ConfigureKind = "oauth" | "api-key" | "external" | "";
+export type InstallKind = "npx" | "binary" | "external" | "script" | "";
+export type ConfigureKind = "oauth" | "api-key" | "external" | "hermes-config" | "";
 
 export interface InstallSpecState {
   kind: InstallKind;

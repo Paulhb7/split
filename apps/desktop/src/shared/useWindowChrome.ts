@@ -87,6 +87,10 @@ export function useAdaptiveHeight(opts: {
     if (disabled) return;
     const measureEl = measureRef.current;
     if (!measureEl) return;
+    // Invalidate the cache so the next fit always fires, even if the natural
+    // height equals the last value adapted before we were disabled (typical
+    // case: returning from the overlay's forced-tall height to compact body).
+    lastHeightRef.current = -1;
     let raf = 0;
     const fit = () => {
       cancelAnimationFrame(raf);
@@ -108,6 +112,29 @@ export function useAdaptiveHeight(opts: {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disabled, menuExtra, ...(opts.extraDeps ?? [])]);
+}
+
+/** Drive the Tauri bar's logical WIDTH. Width is normally fixed (680 px) and
+ *  only height adapts to content; this hook switches between widths so
+ *  occasional views that need more room — e.g. the "Your agents" overlay or
+ *  any future model-picker — can breathe. Restores to the default on unmount
+ *  by re-applying it on every effect run (last write wins). */
+export function useBarWidth(width: number) {
+  useEffect(() => {
+    invoke("set_bar_width", { width }).catch(() => { /* ignore */ });
+  }, [width]);
+}
+
+/** Override the bar HEIGHT with an absolute value, bypassing the adaptive fit.
+ *  Pair with `useAdaptiveHeight({ disabled: <same condition> })` so the two
+ *  don't fight. `null` disables the override (no resize fired). Used for views
+ *  whose content sits OUTSIDE `measureRef` (e.g. the overlay), so the
+ *  ResizeObserver can't see them and the natural fit would leave them clipped. */
+export function useBarHeight(height: number | null) {
+  useEffect(() => {
+    if (height == null) return;
+    invoke("set_bar_height", { height }).catch(() => { /* ignore */ });
+  }, [height]);
 }
 
 /** Toggle the Tauri window to native fullscreen (macOS creates a dedicated

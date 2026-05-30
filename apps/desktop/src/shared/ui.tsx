@@ -3,6 +3,7 @@ import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { HARNESSES, H, logoUrl, brandOf } from "./harnesses";
 import { worstOf, type HarnessStateMap } from "./useHarnessStates";
+import { HermesConfigPanel } from "./HermesConfigPanel";
 
 export const vars = (o: Record<string, string | number>) => o as React.CSSProperties;
 
@@ -66,7 +67,9 @@ export function EngineCard({
   async function onConfigure(e: React.MouseEvent) {
     e.stopPropagation();
     if (!state) return;
-    if (state.configure.kind === "api-key") {
+    // Both inline forms — the simple api-key input and Hermes's local/cloud
+    // panel — are driven by the same `expanded` toggle below; no Rust call.
+    if (state.configure.kind === "api-key" || state.configure.kind === "hermes-config") {
       setExpanded((v) => !v);
       return;
     }
@@ -99,10 +102,18 @@ export function EngineCard({
 
   const pillLabel = progress ?? (worst === "ready" ? "ready" : worst === "external" ? "manual" : "setup");
 
+  // The Hermes config panel has two tabs + dropdowns + status + actions; it
+  // breaks out of its grid cell to span the full row when expanded.
+  const wide = expanded && state?.configure.kind === "hermes-config";
+
   return (
     <div
       className={
-        "ecard" + (h.reserve ? " reserve" : "") + (selected ? " sel" : "") + (expanded ? " expanded" : "")
+        "ecard" +
+        (h.reserve ? " reserve" : "") +
+        (selected ? " sel" : "") +
+        (expanded ? " expanded" : "") +
+        (wide ? " wide" : "")
       }
       style={vars({ "--brand": h.brand })}
     >
@@ -132,7 +143,7 @@ export function EngineCard({
               className={"card-act" + (installReady ? " done" : "")}
               disabled={busy}
               onClick={onInstall}
-              title={installReady ? "Re-warm the npm cache" : "Install this agent"}
+              title={installReady ? "Re-run the installer" : "Install this agent"}
             >
               {installReady ? "✓ install" : "install"}
             </button>
@@ -176,6 +187,17 @@ export function EngineCard({
               save
             </button>
           </div>
+        </div>
+      )}
+
+      {expanded && state?.configure.kind === "hermes-config" && (
+        <div className="ecard-cfg">
+          <HermesConfigPanel
+            onClose={() => {
+              setExpanded(false);
+              lifecycle?.refresh();
+            }}
+          />
         </div>
       )}
     </div>

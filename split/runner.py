@@ -160,6 +160,15 @@ class Runner:
     async def open(self) -> None:
         core.ensure_expert_workspace(self.expert)
         command = core.resolve_command(self.cfg["command"])
+        # Hermes is provider-agnostic; translate the desktop panel's saved
+        # choice into per-invocation CLI overrides + (for local Ollama) a
+        # managed HERMES_HOME. Other harnesses get nothing extra.
+        extra_args: list[str] = []
+        extra_env: dict[str, str] = {}
+        if self.harness == "hermes":
+            extra_args, extra_env = core.apply_hermes_config()
+            if extra_args:
+                self.on_log(f"hermes overrides: {' '.join(extra_args)}")
         client = ConsoleClient(
             on_update=self.on_update, on_log=self.on_log,
             permission_mode=PERMISSION_MODE,
@@ -173,8 +182,15 @@ class Runner:
         # frame) blows past that and crashes the receive loop with
         # "Separator is found, but chunk is longer than limit". Bump the
         # JSON-RPC line buffer to 16 MB; the agent's stdout is the ceiling.
+        spawn_env = dict(os.environ)
+        spawn_env.update(extra_env)
+        # Hermes's `-m` / `--provider` are TOP-LEVEL flags that must precede
+        # the subcommand (`acp`); putting them after triggers
+        # "unrecognized arguments". Other harnesses produce empty extra_args
+        # so the order is harmless for them.
         self._cm = acp.spawn_agent_process(
-            client, command, *self.cfg["args"], cwd=self.ws_dir, env=dict(os.environ),
+            client, command, *extra_args, *self.cfg["args"],
+            cwd=self.ws_dir, env=spawn_env,
             transport_kwargs={"limit": 16 * 1024 * 1024},
         )
         self.conn, _ = await self._cm.__aenter__()

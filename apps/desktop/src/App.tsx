@@ -7,7 +7,7 @@ import remarkGfm from "remark-gfm";
 import { HARNESSES, H, logoUrl, brandOf, type Harness } from "./shared/harnesses";
 import { useExperts, composeTurn, type Attachment } from "./shared/util";
 import { useSessions } from "./shared/useSessions";
-import { useWindowChrome, useAdaptiveHeight, useFullscreen } from "./shared/useWindowChrome";
+import { useWindowChrome, useAdaptiveHeight, useFullscreen, useBarWidth, useBarHeight } from "./shared/useWindowChrome";
 import type { Session } from "./shared/models";
 import type { ArchivedSessionMeta } from "./shared/events";
 import { Logo, Tile, League, vars } from "./shared/ui";
@@ -140,9 +140,20 @@ export default function App() {
     : menu === "engine"
       ? Math.min(320, enabledHarnesses.length * 56 + 80)
       : Math.min(320, Object.keys(experts).length * 56 + 16);
+  // The "Your agents" overlay (and any future panel that needs more room) gets
+  // a wider + taller bar — caps to a fraction of the user's screen so it
+  // doesn't overflow a small display. Teams fullscreen owns its own geometry;
+  // don't fight it. The overlay content lives OUTSIDE `measureRef` (rendered
+  // after it in the JSX), so `useAdaptiveHeight` can't see it — disable
+  // adaptive fit and force an explicit tall height for the duration.
+  const wideOverlay = overlay && !isTeamsFullscreen;
+  const screenW = typeof window !== "undefined" ? window.screen?.width ?? 1440 : 1440;
+  const screenH = typeof window !== "undefined" ? window.screen?.height ?? 900 : 900;
+  const wideWidth = Math.min(1200, Math.floor(screenW * 0.7));
+  const tallHeight = Math.min(1100, Math.floor(screenH * 0.85));
   useAdaptiveHeight({
     measureRef,
-    disabled: isTeamsFullscreen,
+    disabled: isTeamsFullscreen || wideOverlay,
     menuExtra,
     extraDeps: [
       menu,
@@ -156,6 +167,8 @@ export default function App() {
       onboarded,
     ],
   });
+  useBarWidth(wideOverlay ? wideWidth : 680);
+  useBarHeight(wideOverlay ? tallHeight : null);
 
   // arm an engine for the next session (persisted)
   const setActive = (id: string) => {
