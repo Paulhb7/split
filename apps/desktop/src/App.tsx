@@ -9,6 +9,7 @@ import { useExperts, composeTurn, type Attachment } from "./shared/util";
 import { useSessions } from "./shared/useSessions";
 import { useWindowChrome, useAdaptiveHeight, useFullscreen } from "./shared/useWindowChrome";
 import type { Session } from "./shared/models";
+import type { ArchivedSessionMeta } from "./shared/events";
 import { Logo, Tile, League, vars } from "./shared/ui";
 import { useHarnessStates } from "./shared/useHarnessStates";
 import Onboarding from "./onboarding/Onboarding";
@@ -61,7 +62,7 @@ function loadActive(): string {
 
 export default function App() {
   const experts = useExperts();
-  const { sessions, start, send, sendAuth, sendPermission, stop, remove, cancelQueued } = useSessions(experts);
+  const { sessions, start, send, sendAuth, sendPermission, stop, remove, cancelQueued, openArchive } = useSessions(experts);
   const teamApi = useMemo(() => ({ start, send, stop }), [start, send, stop]);
   const { project, channels, activeChannel, activeRoster, setActiveChannel, newChannel, stopChannel, removeChannel } = useTeam(teamApi, experts);
   const { pinned, startMove, togglePin, hide } = useWindowChrome();
@@ -96,6 +97,7 @@ export default function App() {
     setSkinMenu(false);
   };
   const [skinMenu, setSkinMenu] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [value, setValue] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -385,6 +387,7 @@ export default function App() {
             ))}
           </div>
         )}
+        <button className="iconbtn" onClick={() => setHistoryOpen(true)} title="Past conversations">📜</button>
         <div className="skin-wrap">
           <button className={"iconbtn" + (skin ? " on" : "")} onClick={() => setSkinMenu((v) => !v)} title="Skin">✿</button>
           {skinMenu && (
@@ -589,6 +592,20 @@ export default function App() {
         </div>
       )}
 
+      {historyOpen && (
+        <HistoryOverlay
+          experts={experts}
+          onClose={() => setHistoryOpen(false)}
+          onOpen={async (meta) => {
+            const id = await openArchive(meta);
+            if (id) {
+              setFocusedId(id);
+              setHistoryOpen(false);
+            }
+          }}
+        />
+      )}
+
       {authSession && <AuthModal session={authSession} onPick={(m) => sendAuth(authSession.id, m)} />}
 
       {toasts.length > 0 && <div className="toasts">{toasts.map((t) => <div key={t.id} className="toast">{t.text}</div>)}</div>}
@@ -665,7 +682,9 @@ function Composer(props: {
 
 function SessionRow({ s, onOpen, onStop, onClose }: { s: Session; onOpen: () => void; onStop: () => void; onClose: () => void }) {
   const h = H[s.harness];
-  const badge = ({ running: "running", idle: "ready", ended: "ended", error: "error", auth: "sign-in" } as Record<string, string>)[s.status] || s.status;
+  const badge = s.archived
+    ? "past"
+    : ({ running: "running", idle: "ready", ended: "ended", error: "error", auth: "sign-in" } as Record<string, string>)[s.status] || s.status;
   return (
     <div className="srow" style={vars({ "--brand": brandOf(s.harness) })} onClick={onOpen}>
       <Tile id={s.harness} size={40} />
@@ -684,6 +703,84 @@ function SessionRow({ s, onOpen, onStop, onClose }: { s: Session; onOpen: () => 
       ) : (
         <button className="xbtn" title="Close" onClick={(e) => { e.stopPropagation(); onClose(); }}>✕</button>
       )}
+    </div>
+  );
+}
+
+// Past-conversations picker. Loads on mount, then refreshes when the user
+// deletes a row. Reads `list_archived_sessions` (sorted desc by started_at)
+// and `delete_archived_session`; the open action is delegated up so the parent
+// can materialize the archive into a focused session.
+function HistoryOverlay({
+  experts,
+  onClose,
+  onOpen,
+}: {
+  experts: ReturnType<typeof useExperts>;
+  onClose: () => void;
+  onOpen: (meta: ArchivedSessionMeta) => void;
+}) {
+  const [items, setItems] = useState<ArchivedSessionMeta[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = () => {
+    invoke<string>("list_archived_sessions")
+      .then((raw) => {
+        try {
+          const arr = JSON.parse(raw) as ArchivedSessionMeta[];
+          setItems(Array.isArray(arr) ? arr : []);
+        } catch {
+          setItems([]);
+        }
+      })
+      .catch((e) => setError(String(e)));
+  };
+  useEffect(refresh, []);
+
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="overlay-card" onClick={(e) => e.stopPropagation()}>
+        <div className="league-head" style={{ marginBottom: 8 }}>
+          <h2 style={{ fontSize: 30 }}>Past <em>conversations</em></h2>
+          <button className="btn ghost" onClick={onClose}>done</button>
+        </div>
+        <div className="ob2-pickhint">Read-only replays from <code>var/sessions/</code>. Click one to open it; the composer stays disabled (the agent process is long gone).</div>
+        {error && <div className="empty">Couldn't load history: {error}</div>}
+        {!items ? (
+          <div className="empty">Loading…</div>
+        ) : items.length === 0 ? (
+          <div className="empty">No past conversations yet. Each session you run from now on shows up here.</div>
+        ) : (
+          <div className="sessions" style={{ maxHeight: 420, overflowY: "auto" }}>
+            {items.map((m) => {
+              const h = H[m.harness];
+              const expertLabel = experts[m.expert]?.label ?? m.expert;
+              const when = m.started_at ? new Date(m.started_at).toLocaleString() : "";
+              return (
+                <div key={m.id} className="srow" style={vars({ "--brand": brandOf(m.harness) })} onClick={() => onOpen(m)}>
+                  <Tile id={m.harness} size={40} />
+                  <div className="meta">
+                    <div className="ln1">
+                      <span className="who">@{expertLabel}</span>
+                      <span className="on">on <b>{h?.label || m.harness}</b></span>
+                    </div>
+                    <div className="sum">{m.title || "(untitled)"}</div>
+                  </div>
+                  <span className="badge">{when}</span>
+                  <button
+                    className="xbtn"
+                    title="Delete this archive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      invoke("delete_archived_session", { id: m.id }).then(refresh);
+                    }}
+                  >✕</button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -21,6 +21,7 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
+import uuid
 
 import acp
 
@@ -133,7 +134,19 @@ class AgentSession:
     def __init__(self, key: str, cfg: dict) -> None:
         self.key = key
         self.cfg = cfg
-        self._client = ConsoleClient(on_update=Renderer(),
+        # One on-disk archive per terminal session (same shape as the desktop
+        # runner's — listed and replayable from the desktop's "past sessions"
+        # menu without distinction). sid is a fresh uuid; harness = `key`.
+        self.archive = core.SessionArchive(uuid.uuid4().hex, key, EXPERT)
+        renderer = Renderer()
+
+        def on_update(update) -> None:
+            renderer(update)
+            payload = core.update_to_vevt(update)
+            if payload is not None:
+                self.archive.write_event(payload)
+
+        self._client = ConsoleClient(on_update=on_update,
                                      on_log=lambda s: print(c(DIM, s)))
         self._cm = None
         self.conn = None
@@ -175,7 +188,16 @@ class AgentSession:
         print(c(GREEN, f"session: {self.sid}\n"))
 
     async def prompt(self, text: str):
-        return await self.conn.prompt(prompt=[acp.text_block(text)], session_id=self.sid)
+        self.archive.write_turn(text)
+        self.archive.write_event({"type": "status", "status": "running"})
+        try:
+            resp = await self.conn.prompt(prompt=[acp.text_block(text)], session_id=self.sid)
+            self.archive.write_event({"type": "status", "status": "idle",
+                                      "stop": str(getattr(resp, "stop_reason", ""))})
+            return resp
+        except Exception as exc:
+            self.archive.write_event({"type": "status", "status": "error", "error": str(exc)[:400]})
+            raise
 
     async def close(self) -> None:
         if self._cm is not None:
@@ -184,6 +206,10 @@ class AgentSession:
             except Exception:
                 pass
             self._cm = None
+        try:
+            self.archive.close()
+        except Exception:
+            pass
 
 
 # --- main --------------------------------------------------------------------

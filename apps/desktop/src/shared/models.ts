@@ -52,6 +52,9 @@ export interface Session {
   auth: AuthAsk | null;
   pendingPermission: PermissionAsk | null;
   queued: QueuedTurn | null;
+  // true = materialised from `var/sessions/<id>/` (a past conversation, read-only).
+  // Used by the UI to hide the composer and show a "PAST" badge.
+  archived?: boolean;
 }
 
 // What a session is doing *right now* — derived purely from status + summary

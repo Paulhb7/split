@@ -54,6 +54,9 @@ class Runner:
         # agent's scratch + notes persist. Projection is idempotent and
         # mtime-gated in core.ensure_expert_workspace.
         self.ws_dir = core.expert_workspace_dir(expert)
+        # Per-session on-disk archive (events.ndjson + meta.json). Best-effort
+        # — failures never break the live session. Drives "past conversations".
+        self.archive = core.SessionArchive(sid, harness, expert)
         self._cm = None
         self.conn = None
         self.acp_sid = None
@@ -130,6 +133,10 @@ class Runner:
     # --- emit: one VEVT line per structured event ----------------------------
 
     def _emit(self, **msg: Any) -> None:
+        # Archive every event before queuing the write — replay through the
+        # same reducer rebuilds the exact final state (the reducer commits the
+        # streamed answer at `status:idle`, so per-token `say` chunks are fine).
+        self.archive.write_event(msg)
         asyncio.create_task(self._send(msg))
 
     async def _send(self, msg: dict) -> None:
@@ -142,22 +149,11 @@ class Runner:
         # logs go to stderr; Rust classifies stderr lines as `.log`
         print(line, file=sys.stderr, flush=True)
 
-    # ACP Client.session_update -> VEVT (mirrors server.py:Sess.on_update)
+    # ACP Client.session_update -> VEVT (translation in core.update_to_vevt)
     def on_update(self, update) -> None:
-        n = type(update).__name__
-        if n == "AgentMessageChunk" and getattr(update.content, "type", None) == "text":
-            self._emit(type="say", text=update.content.text)
-        elif n == "AgentThoughtChunk" and getattr(update.content, "type", None) == "text":
-            self._emit(type="thought", text=update.content.text)
-        elif n in ("ToolCallStart", "ToolCallProgress"):
-            self._emit(type="step", title=update.title or update.kind, status=str(update.status))
-        elif n == "AgentPlanUpdate":
-            self._emit(type="plan", entries=[
-                {"content": e.content, "status": str(e.status)} for e in (update.entries or [])
-            ])
-        elif n == "UsageUpdate":
-            cost = getattr(update.cost, "amount", None) if update.cost else None
-            self._emit(type="usage", used=update.used, size=update.size, cost=cost)
+        payload = core.update_to_vevt(update)
+        if payload is not None:
+            self._emit(**payload)
 
     # --- lifecycle -----------------------------------------------------------
 
@@ -200,6 +196,8 @@ class Runner:
         self.acp_sid = sess.session_id
 
     async def run(self, text: str) -> None:
+        # Archive the user turn BEFORE running — survives a crash mid-prompt.
+        self.archive.write_turn(text)
         self._emit(type="status", status="running")
         try:
             if self.conn is None:
@@ -266,6 +264,10 @@ class Runner:
             except Exception:
                 pass
             self._cm = None
+        try:
+            self.archive.close()
+        except Exception:
+            pass
 
 
 async def main() -> None:

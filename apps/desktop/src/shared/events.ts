@@ -40,3 +40,14 @@ export interface SessionEvent {
   log: string | null;
   exit: boolean;
 }
+
+// One row of `list_archived_sessions` — the `meta.json` written by the runner
+// at start (+ updated at close). Drives the "past conversations" picker.
+export interface ArchivedSessionMeta {
+  id: string;
+  harness: string;
+  expert: string;
+  title: string;
+  started_at: string;
+  ended_at: string;
+}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import type { SessionEvent, VEvt } from "./events";
+import type { ArchivedSessionMeta, SessionEvent, VEvt } from "./events";
 import type { ExpertMap } from "./experts";
 import { applyEvent } from "./reducer";
 import { newSession, type QueuedTurn, type Session } from "./models";
@@ -11,6 +11,45 @@ const uid = () =>
 
 const labelFor = (experts: ExpertMap, slug: string) =>
   experts[slug]?.label ?? slug.charAt(0).toUpperCase() + slug.slice(1);
+
+// Replay one archived session: fold each line of `events.ndjson` through the
+// SAME reducer that draws live sessions, so the read-only view is identical
+// to what the user originally saw. User prompts live in the archive as
+// synthetic `{type:"turn", text:...}` records (not part of the VEVT vocab) —
+// they're pushed straight into the thread. Forces `archived:true` + `status:
+// "ended"` at the end so the composer stays hidden.
+function replayArchive(
+  meta: ArchivedSessionMeta,
+  ndjson: string,
+  experts: ExpertMap
+): Session {
+  let s = newSession(meta.id, meta.harness, meta.expert, labelFor(experts, meta.expert), "");
+  for (const line of ndjson.split("\n")) {
+    const t = line.trim();
+    if (!t) continue;
+    let rec: { type: string; text?: string } & Record<string, unknown>;
+    try {
+      rec = JSON.parse(t);
+    } catch {
+      continue;
+    }
+    if (rec.type === "turn") {
+      // Defensive flush of any uncommitted stream before a new user turn
+      // (a session killed mid-answer wouldn't have a closing `status:idle`).
+      if (s.answer || s.thoughts) {
+        s = applyEvent(s, { type: "status", status: "idle" });
+      }
+      s = { ...s, thread: [...s.thread, { role: "user", text: rec.text || "" }] };
+      continue;
+    }
+    s = applyEvent(s, rec as VEvt);
+  }
+  // Final flush: if the archive ended mid-stream, commit whatever was streaming.
+  if (s.answer || s.thoughts) {
+    s = applyEvent(s, { type: "status", status: "idle" });
+  }
+  return { ...s, status: "ended", archived: true, summary: meta.title || "past conversation" };
+}
 
 export interface StartArgs {
   harness: string;
@@ -166,5 +205,24 @@ export function useSessions(experts: ExpertMap) {
     [update]
   );
 
-  return { sessions, start, send, sendAuth, sendPermission, stop, remove, cancelQueued };
+  // Open a past conversation from `var/sessions/<id>/`. If a live session with
+  // the same id is already in the list, focus it (don't materialize a stale
+  // archived copy on top). Returns the id to focus, or null on failure.
+  const openArchive = useCallback(
+    async (meta: ArchivedSessionMeta): Promise<string | null> => {
+      const existing = sessions.find((s) => s.id === meta.id);
+      if (existing) return existing.id;
+      try {
+        const ndjson = await invoke<string>("read_session_events", { id: meta.id });
+        const s = replayArchive(meta, ndjson, expertsRef.current);
+        setSessions((prev) => [...prev, s]);
+        return s.id;
+      } catch {
+        return null;
+      }
+    },
+    [sessions]
+  );
+
+  return { sessions, start, send, sendAuth, sendPermission, stop, remove, cancelQueued, openArchive };
 }

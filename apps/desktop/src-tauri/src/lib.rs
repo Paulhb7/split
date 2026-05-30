@@ -296,6 +296,62 @@ fn list_sessions() -> String {
     json!(arr).to_string()
 }
 
+// Scan `var/sessions/` for archived (past) conversations. Each subfolder is a
+// session id with a `meta.json`. Returns a JSON array sorted by started_at
+// desc, so the desktop's "past conversations" menu shows the most recent first.
+// Best-effort: malformed dirs are skipped silently.
+#[tauri::command]
+fn list_archived_sessions() -> String {
+    let root = REPO_ROOT.join("var").join("sessions");
+    let mut out: Vec<serde_json::Value> = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(&root) {
+        for ent in entries.flatten() {
+            let dir = ent.path();
+            if !dir.is_dir() {
+                continue;
+            }
+            let meta_path = dir.join("meta.json");
+            let Ok(raw) = std::fs::read_to_string(&meta_path) else { continue };
+            let Ok(val) = serde_json::from_str::<serde_json::Value>(&raw) else { continue };
+            out.push(val);
+        }
+    }
+    out.sort_by(|a, b| {
+        let sb = b.get("started_at").and_then(|v| v.as_str()).unwrap_or("");
+        let sa = a.get("started_at").and_then(|v| v.as_str()).unwrap_or("");
+        sb.cmp(sa)
+    });
+    json!(out).to_string()
+}
+
+// Read one archived session's full event stream as a single string (the raw
+// NDJSON content of `var/sessions/<id>/events.ndjson`). The renderer parses
+// it line-by-line and folds each event through the same reducer that draws
+// live sessions, so the read-only replay is pixel-identical to the original.
+#[tauri::command]
+fn read_session_events(id: String) -> Result<String, String> {
+    // Defence in depth: refuse anything that looks like a path traversal.
+    if id.is_empty() || id.contains('/') || id.contains('\\') || id.contains("..") {
+        return Err("invalid session id".into());
+    }
+    let path = REPO_ROOT.join("var").join("sessions").join(&id).join("events.ndjson");
+    std::fs::read_to_string(&path).map_err(|e| e.to_string())
+}
+
+// Delete one archived session's folder (meta + events). Used by the UI's
+// "remove from history" action. Returns Ok(()) if the dir was missing too.
+#[tauri::command]
+fn delete_archived_session(id: String) -> Result<(), String> {
+    if id.is_empty() || id.contains('/') || id.contains('\\') || id.contains("..") {
+        return Err("invalid session id".into());
+    }
+    let path = REPO_ROOT.join("var").join("sessions").join(&id);
+    if path.exists() {
+        std::fs::remove_dir_all(&path).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 // The expert registry (experts.json), filtering `_`-prefixed comment keys.
 #[tauri::command]
 fn list_experts() -> Result<String, String> {
@@ -710,6 +766,9 @@ pub fn run() {
             send_permission,
             stop_session,
             list_sessions,
+            list_archived_sessions,
+            read_session_events,
+            delete_archived_session,
             list_experts,
             browser_login,
             read_files_for_agent,

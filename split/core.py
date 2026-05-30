@@ -19,7 +19,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
-from datetime import date
+from datetime import date, datetime, timezone
 
 import acp
 
@@ -47,6 +47,12 @@ WORKSPACE = os.environ.get("SPLIT_WORKSPACE") or os.path.join(VAR_DIR, "workspac
 # Mid-session writes hit disk immediately but only appear in the NEXT session's
 # snapshot (frozen-snapshot pattern, like Hermes' built-in memory tool).
 MEMORY_DIR = os.path.join(VAR_DIR, "memory")
+
+# Per-session archive: raw VEVT stream + user turns + meta. One folder per session
+# under `var/sessions/<sid>/`, written live by the runner/terminal — survives the
+# process exit so the desktop can list "past conversations" (ChatGPT-style) and
+# replay them through the same reducer that draws live sessions. See SessionArchive.
+SESSIONS_DIR = os.path.join(VAR_DIR, "sessions")
 
 # Provider keys: load <repo>/.env into the environment once, for every front
 # (the desktop runner relied on this; the terminal front benefits too).
@@ -343,6 +349,106 @@ def load_mcp() -> list:
             args=srv.get("args", []), env=env,
         ))
     return servers
+
+
+def _iso_now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def update_to_vevt(update) -> dict | None:
+    """Translate one ACP `SessionUpdate` into the VEVT payload Split's reducer
+    consumes. Returns `None` if the update has no representation in our vocab
+    (UserMessageChunk, AvailableCommandsUpdate, …). Single source of truth so
+    the runner (desktop) and the terminal front speak the exact same dialect —
+    archives produced by either replay identically through the React reducer."""
+    n = type(update).__name__
+    if n == "AgentMessageChunk" and getattr(update.content, "type", None) == "text":
+        return {"type": "say", "text": update.content.text}
+    if n == "AgentThoughtChunk" and getattr(update.content, "type", None) == "text":
+        return {"type": "thought", "text": update.content.text}
+    if n in ("ToolCallStart", "ToolCallProgress"):
+        return {"type": "step", "title": update.title or update.kind, "status": str(update.status)}
+    if n == "AgentPlanUpdate":
+        return {
+            "type": "plan",
+            "entries": [
+                {"content": e.content, "status": str(e.status)} for e in (update.entries or [])
+            ],
+        }
+    if n == "UsageUpdate":
+        cost = getattr(update.cost, "amount", None) if update.cost else None
+        return {"type": "usage", "used": update.used, "size": update.size, "cost": cost}
+    return None
+
+
+class SessionArchive:
+    """Append-only per-session log: `events.ndjson` (one VEVT-shaped event per
+    line) + `meta.json` (`{id, harness, expert, title, started_at, ended_at}`).
+
+    Lives at `<SESSIONS_DIR>/<sid>/`. Written live — every event is flushed so
+    the archive is replayable even if the process is killed mid-turn. Meta is
+    rewritten on each title/ended_at change; events are append-only.
+
+    The title comes from the first user turn (≤63 chars, Hermes-style). User
+    turns are written as a synthetic `{"type":"turn","text":...}` event so the
+    ndjson alone is enough to rebuild the thread (no separate transcript file)."""
+
+    def __init__(self, sid: str, harness: str, expert: str, root: str | None = None) -> None:
+        self.sid = sid
+        self.harness = harness
+        self.expert = expert
+        self.dir = os.path.join(root or SESSIONS_DIR, sid)
+        os.makedirs(self.dir, exist_ok=True)
+        self.events_path = os.path.join(self.dir, "events.ndjson")
+        self.meta_path = os.path.join(self.dir, "meta.json")
+        self.meta = {
+            "id": sid,
+            "harness": harness,
+            "expert": expert,
+            "title": "",
+            "started_at": _iso_now(),
+            "ended_at": "",
+        }
+        # Don't clobber a pre-existing meta (resumed session id) — only seed
+        # if the file isn't there yet.
+        if not os.path.exists(self.meta_path):
+            self._save_meta()
+        self._events_fh = open(self.events_path, "a", encoding="utf-8")
+
+    def _save_meta(self) -> None:
+        tmp = self.meta_path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(self.meta, f, indent=2)
+        os.replace(tmp, self.meta_path)
+
+    def _append(self, record: dict) -> None:
+        try:
+            self._events_fh.write(json.dumps(record) + "\n")
+            self._events_fh.flush()
+        except Exception:
+            # Archive is best-effort — never break the live session over an I/O hiccup.
+            pass
+
+    def write_event(self, payload: dict) -> None:
+        """Append one VEVT payload (already shaped {type, ...}). Adds a timestamp."""
+        self._append({"at": _iso_now(), **payload})
+
+    def write_turn(self, text: str) -> None:
+        """Append a user turn AND set the title if this is the first turn."""
+        self._append({"at": _iso_now(), "type": "turn", "text": text})
+        if not self.meta["title"]:
+            t = " ".join(text.split())[:63].strip()
+            if t:
+                self.meta["title"] = t
+                self._save_meta()
+
+    def close(self) -> None:
+        self.meta["ended_at"] = _iso_now()
+        self._save_meta()
+        try:
+            self._events_fh.close()
+        except Exception:
+            pass
 
 
 def resolve_command(command: str) -> str:
