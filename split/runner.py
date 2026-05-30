@@ -160,15 +160,18 @@ class Runner:
     async def open(self) -> None:
         core.ensure_expert_workspace(self.expert)
         command = core.resolve_command(self.cfg["command"])
-        # Hermes is provider-agnostic; translate the desktop panel's saved
-        # choice into per-invocation CLI overrides + (for local Ollama) a
-        # managed HERMES_HOME. Other harnesses get nothing extra.
+        # Model-agnostic harnesses translate the desktop panel's saved choice
+        # into per-invocation CLI overrides + (for local Ollama) a managed
+        # config dir via env vars. Each harness has its own apply_X_config
+        # because the override syntax differs (-m provider/model, --provider,
+        # XDG_CONFIG_HOME, HERMES_HOME, …). Other harnesses get nothing extra.
         extra_args: list[str] = []
         extra_env: dict[str, str] = {}
-        if self.harness == "hermes":
-            extra_args, extra_env = core.apply_hermes_config()
+        apply_fn = getattr(core, f"apply_{self.harness}_config", None)
+        if callable(apply_fn):
+            extra_args, extra_env = apply_fn()
             if extra_args:
-                self.on_log(f"hermes overrides: {' '.join(extra_args)}")
+                self.on_log(f"{self.harness} overrides: {' '.join(extra_args)}")
         client = ConsoleClient(
             on_update=self.on_update, on_log=self.on_log,
             permission_mode=PERMISSION_MODE,

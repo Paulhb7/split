@@ -1,28 +1,15 @@
 // Hand-curated catalogue of cloud providers + Ollama model recipes for the
-// Hermes configure panel. Hermes itself is provider-agnostic; this is just the
-// short list we offer as a dropdown so the user doesn't have to type
-// `provider:model` strings or read the upstream docs.
+// generic model picker (used by Hermes via [[model-picker]]). The shared
+// `OLLAMA_RECIPES` list is also re-used by other model-agnostic harnesses
+// (OpenCode etc.).
 //
 // Each cloud provider's `keyEnv` MUST be in lib.rs's KNOWN_KEYS allowlist
 // (otherwise save_api_key refuses to persist it to the keychain). Extend both
 // in lockstep when adding a new provider.
-import { invoke } from "@tauri-apps/api/core";
 
-export interface HermesCloudModel {
-  id: string;       // string Hermes accepts: e.g. "claude-sonnet-4-6"
-  name: string;     // human label for the dropdown
-  blurb?: string;
-}
+import type { CloudProvider, OllamaRecipe } from "./model-picker";
 
-export interface HermesCloudProvider {
-  id: string;
-  name: string;
-  keyEnv: string;   // env var name; saved to the OS keychain via save_api_key
-  models: HermesCloudModel[];
-  signupUrl?: string;
-}
-
-export const HERMES_CLOUD_PROVIDERS: HermesCloudProvider[] = [
+export const HERMES_CLOUD_PROVIDERS: CloudProvider[] = [
   {
     id: "anthropic",
     name: "Anthropic",
@@ -76,16 +63,11 @@ export const HERMES_CLOUD_PROVIDERS: HermesCloudProvider[] = [
   },
 ];
 
-export interface OllamaRecipe {
-  id: string;       // tag passed to `ollama pull` and used in API requests
-  name: string;     // human label
-  size: string;     // approximate on-disk size shown in the picker
-  blurb?: string;
-}
-
-// Curated short list — opinionated picks across coding + general use. The user
-// can pull anything from ollama.com/library outside this menu; this is just
-// the "no need to think" starting point.
+// Curated short list — opinionated picks across coding + general use. The
+// user can pull anything from ollama.com/library outside this menu; this is
+// just the "no need to think" starting point. Shared across every model-
+// agnostic harness — the local-LLM choice doesn't care which harness will
+// consume it.
 export const OLLAMA_RECIPES: OllamaRecipe[] = [
   { id: "qwen2.5-coder:7b", name: "Qwen 2.5 Coder 7B", size: "4.7 GB", blurb: "Fast coder, fits 16 GB RAM" },
   { id: "qwen2.5-coder:14b", name: "Qwen 2.5 Coder 14B", size: "9.0 GB", blurb: "Better coder, needs 24 GB" },
@@ -93,35 +75,3 @@ export const OLLAMA_RECIPES: OllamaRecipe[] = [
   { id: "deepseek-coder-v2:16b", name: "DeepSeek Coder v2 16B", size: "10 GB", blurb: "Strong coding alt" },
   { id: "llama3.3:70b", name: "Llama 3.3 70B", size: "40 GB", blurb: "General reasoning — needs 64 GB+" },
 ];
-
-// Persisted shape in localStorage under "split.hermes.config".
-export interface HermesConfig {
-  mode: "cloud" | "local";
-  cloud?: { providerId: string; modelId: string };
-  local?: { modelId: string };
-}
-
-export const HERMES_CONFIG_KEY = "split.hermes.config";
-
-export function loadHermesConfig(): HermesConfig | null {
-  try {
-    const raw = localStorage.getItem(HERMES_CONFIG_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as HermesConfig;
-  } catch {
-    return null;
-  }
-}
-
-// Mirror the choice to disk via Tauri so the Rust spawn path can read it and
-// inject the HERMES_MODEL env var into hermes acp. localStorage alone isn't
-// readable from Rust, hence the dual write. Best-effort: a failed Tauri call
-// still leaves localStorage populated for the UI.
-export async function saveHermesConfig(cfg: HermesConfig) {
-  localStorage.setItem(HERMES_CONFIG_KEY, JSON.stringify(cfg));
-  try {
-    await invoke("save_hermes_config", { cfg: JSON.stringify(cfg) });
-  } catch (e) {
-    console.error("save_hermes_config (disk mirror) failed", e);
-  }
-}

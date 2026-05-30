@@ -476,29 +476,30 @@ def resolve_command(command: str) -> str:
     return command
 
 
-def apply_hermes_config() -> tuple[list[str], dict[str, str]]:
-    """Translate the desktop panel's saved choice into Hermes spawn-time
-    overrides. The panel writes `var/state/hermes.config.json` via the Tauri
-    `save_hermes_config` command; here we read it and produce:
-      - extra CLI args appended to `hermes acp` (`-m <provider/model>
-        --provider <name>`), since Hermes accepts these as per-invocation
-        overrides without touching the user's ~/.hermes/config.yaml
-      - extra env vars to merge into the spawn env (for local Ollama we point
-        `HERMES_HOME` at a managed config dir holding `base_url`, since the
-        OpenAI-compat endpoint isn't a top-level CLI flag)
-
-    Returns ([], {}) when no config is saved or the file is malformed — the
-    harness then falls back to whatever the user's ~/.hermes/ says.
-    """
-    cfg_path = os.path.join(VAR_DIR, "state", "hermes.config.json")
+def _load_model_config(harness: str) -> dict | None:
+    """Read the saved Local/Cloud picker choice for one harness (written by
+    the React panel via the Tauri `save_model_config` command). Returns None
+    when no config is saved or the file is malformed."""
+    cfg_path = os.path.join(VAR_DIR, "state", f"{harness}.config.json")
     if not os.path.exists(cfg_path):
-        return [], {}
+        return None
     try:
         with open(cfg_path, "r", encoding="utf-8") as fh:
-            cfg = json.load(fh)
+            return json.load(fh)
     except Exception:
-        return [], {}
+        return None
 
+
+def apply_hermes_config() -> tuple[list[str], dict[str, str]]:
+    """Hermes-specific translation of the saved picker choice into spawn-time
+    overrides. Hermes accepts top-level `-m <provider/model> --provider
+    <name>` flags BEFORE the `acp` subcommand (validated 2026-05-30 by
+    grepping the source); the OpenAI-compat `base_url` for local Ollama is
+    only readable from `<HERMES_HOME>/config.yaml`, so we seed a managed
+    HERMES_HOME and point at it via env. Returns ([], {}) when no config."""
+    cfg = _load_model_config("hermes")
+    if not cfg:
+        return [], {}
     mode = cfg.get("mode")
     if mode == "cloud":
         cloud = cfg.get("cloud") or {}
@@ -512,9 +513,6 @@ def apply_hermes_config() -> tuple[list[str], dict[str, str]]:
         if model:
             home = os.path.join(VAR_DIR, "state", "hermes-home")
             os.makedirs(home, exist_ok=True)
-            # Hermes reads model.base_url from config.yaml; no top-level CLI
-            # flag exposes it. We seed a minimal config here so the user's
-            # ~/.hermes/ stays untouched.
             with open(os.path.join(home, "config.yaml"), "w", encoding="utf-8") as fh:
                 fh.write(
                     'model:\n'
@@ -526,4 +524,58 @@ def apply_hermes_config() -> tuple[list[str], dict[str, str]]:
                 ["-m", f"ollama/{model}", "--provider", "ollama"],
                 {"HERMES_HOME": home},
             )
+    return [], {}
+
+
+def apply_opencode_config() -> tuple[list[str], dict[str, str]]:
+    """OpenCode-specific translation. Unlike Hermes, `opencode acp` does NOT
+    accept `-m` as a flag (validated 2026-05-30: only `opencode run` does,
+    and `opencode -m foo acp` parses `acp` as the positional [project] arg).
+    The only way to set the model for `opencode acp` is the `"model"` field
+    at the root of `opencode.json`. We seed a managed XDG_CONFIG_HOME with
+    that file so the user's ~/.config/opencode/ stays untouched; no CLI args
+    are needed. For local Ollama we ALSO declare the ollama provider block
+    (with explicit baseURL — OpenCode doesn't auto-detect). For cloud mode
+    we trust the user's existing `opencode auth login` state (stored at
+    ~/.local/share/opencode/auth.json — unaffected by XDG_CONFIG_HOME).
+    Returns ([], {}) when no config."""
+    cfg = _load_model_config("opencode")
+    if not cfg:
+        return [], {}
+    mode = cfg.get("mode")
+    xdg = os.path.join(VAR_DIR, "state", "opencode-home")
+    os.makedirs(os.path.join(xdg, "opencode"), exist_ok=True)
+    cfg_path = os.path.join(xdg, "opencode", "opencode.json")
+
+    if mode == "cloud":
+        cloud = cfg.get("cloud") or {}
+        provider = cloud.get("providerId")
+        model = cloud.get("modelId")
+        if provider and model:
+            payload = {
+                "$schema": "https://opencode.ai/config.json",
+                "model": f"{provider}/{model}",
+            }
+            with open(cfg_path, "w", encoding="utf-8") as fh:
+                json.dump(payload, fh, indent=2)
+            return [], {"XDG_CONFIG_HOME": xdg}
+    elif mode == "local":
+        local = cfg.get("local") or {}
+        model = local.get("modelId")
+        if model:
+            payload = {
+                "$schema": "https://opencode.ai/config.json",
+                "model": f"ollama/{model}",
+                "provider": {
+                    "ollama": {
+                        "npm": "@ai-sdk/openai-compatible",
+                        "name": "Ollama (local)",
+                        "options": {"baseURL": "http://localhost:11434/v1"},
+                        "models": {model: {"name": model}},
+                    },
+                },
+            }
+            with open(cfg_path, "w", encoding="utf-8") as fh:
+                json.dump(payload, fh, indent=2)
+            return [], {"XDG_CONFIG_HOME": xdg}
     return [], {}

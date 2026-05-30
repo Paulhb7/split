@@ -3,7 +3,7 @@ import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { HARNESSES, H, logoUrl, brandOf } from "./harnesses";
 import { worstOf, type HarnessStateMap } from "./useHarnessStates";
-import { HermesConfigPanel } from "./HermesConfigPanel";
+import { ModelPickerPanel } from "./ModelPickerPanel";
 
 export const vars = (o: Record<string, string | number>) => o as React.CSSProperties;
 
@@ -67,9 +67,10 @@ export function EngineCard({
   async function onConfigure(e: React.MouseEvent) {
     e.stopPropagation();
     if (!state) return;
-    // Both inline forms — the simple api-key input and Hermes's local/cloud
-    // panel — are driven by the same `expanded` toggle below; no Rust call.
-    if (state.configure.kind === "api-key" || state.configure.kind === "hermes-config") {
+    // Both inline forms — the simple api-key input and the generic
+    // local/cloud model picker — are driven by the same `expanded` toggle
+    // below; no Rust call.
+    if (state.configure.kind === "api-key" || state.configure.kind === "model-picker") {
       setExpanded((v) => !v);
       return;
     }
@@ -102,9 +103,10 @@ export function EngineCard({
 
   const pillLabel = progress ?? (worst === "ready" ? "ready" : worst === "external" ? "manual" : "setup");
 
-  // The Hermes config panel has two tabs + dropdowns + status + actions; it
-  // breaks out of its grid cell to span the full row when expanded.
-  const wide = expanded && state?.configure.kind === "hermes-config";
+  // The generic model picker panel (Local/Cloud + dropdowns + status +
+  // actions) is too dense for a single grid cell; break out and span the
+  // full row when expanded.
+  const wide = expanded && state?.configure.kind === "model-picker";
 
   return (
     <div
@@ -190,9 +192,10 @@ export function EngineCard({
         </div>
       )}
 
-      {expanded && state?.configure.kind === "hermes-config" && (
+      {expanded && state?.configure.kind === "model-picker" && (
         <div className="ecard-cfg">
-          <HermesConfigPanel
+          <ModelPickerPanel
+            harnessId={id}
             onClose={() => {
               setExpanded(false);
               lifecycle?.refresh();

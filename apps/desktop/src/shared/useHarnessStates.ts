@@ -9,7 +9,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 export type LifecycleState = "ready" | "missing" | "external";
 export type InstallKind = "npx" | "binary" | "external" | "script" | "";
-export type ConfigureKind = "oauth" | "api-key" | "external" | "hermes-config" | "";
+export type ConfigureKind = "oauth" | "api-key" | "external" | "model-picker" | "";
 
 export interface InstallSpecState {
   kind: InstallKind;

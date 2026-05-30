@@ -47,9 +47,12 @@
     "command": "./var/bin/opencode",
     "args": ["acp"],
     "skill_dir": ".agents/skills",
-    "auth": "Model-agnostic (75+ providers incl. local). For a zero-key local brain, configure an Ollama provider (http://localhost:11434/v1).",
+    "auth": "Model-agnostic (75+ providers incl. local). For a zero-key local brain, configure an Ollama provider (http://localhost:11434/v1). Cloud providers via `opencode auth login`.",
     "install": { "kind": "external", "docUrl": "https://opencode.ai/docs/install" },
-    "configure": { "kind": "external", "docUrl": "https://opencode.ai/docs/providers" }
+    "configure": {
+      "kind": "model-picker",
+      "docUrl": "https://opencode.ai/docs/providers"
+    }
   },
 
   "copilot": {
@@ -118,7 +121,7 @@
       "binary": "hermes"
     },
     "configure": {
-      "kind": "hermes-config",
+      "kind": "model-picker",
       "docUrl": "https://github.com/NousResearch/hermes-agent"
     }
   }

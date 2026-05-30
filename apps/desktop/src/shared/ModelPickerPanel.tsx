@@ -1,17 +1,17 @@
-// Hermes is provider-agnostic, so its configure step is richer than the other
-// harnesses: the user picks a MODE (local Ollama vs cloud provider), then a
-// model, then either drops an API key (cloud) or pulls the model (local). The
-// selection is persisted to localStorage; the actual injection into the
-// spawned `hermes acp` process is wired in step 3 (runner env vars or YAML).
+// Generic Local/Cloud model picker for any model-agnostic harness (Hermes,
+// OpenCode, eventually Qwen / DeepAgents). The UX is identical across
+// harnesses; what varies is (1) the cloud-provider catalogue (per
+// [[model-picker]] registry, keyed by harnessId) and (2) the harness-specific
+// translation from the saved JSON to spawn-time CLI args + env, which lives
+// on the Python side in `split/core.py::apply_<harness>_config`.
 import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
-  HERMES_CLOUD_PROVIDERS,
-  OLLAMA_RECIPES,
-  loadHermesConfig,
-  saveHermesConfig,
-  type HermesConfig,
-} from "./hermes-providers";
+  PICKERS,
+  loadConfig,
+  saveConfig,
+  type ModelConfig,
+} from "./model-picker";
 
 interface OllamaState {
   installed: boolean;
@@ -19,26 +19,46 @@ interface OllamaState {
   models: string[];
 }
 
-export function HermesConfigPanel({ onClose }: { onClose: () => void }) {
-  const initial = loadHermesConfig();
+export function ModelPickerPanel({
+  harnessId,
+  onClose,
+}: {
+  harnessId: string;
+  onClose: () => void;
+}) {
+  // Defensive: a harness with configure.kind="model-picker" but no registry
+  // entry shouldn't crash the UI. We can't early-return here (the Rules of
+  // Hooks demand a stable hook order across renders), so we fall back to a
+  // safe empty picker and render the missing-registry message at the JSX
+  // level when relevant. This keeps every useState/useEffect below
+  // unconditional. Memoize the fallback so the object identity is stable
+  // across renders (otherwise it churns dependent useMemo / useEffect).
+  const noPicker = !PICKERS[harnessId];
+  const picker = useMemo(
+    () => PICKERS[harnessId] ?? { cloud: [], ollama: [] },
+    [harnessId],
+  );
+
+  const initial = loadConfig(harnessId);
   const [mode, setMode] = useState<"local" | "cloud">(initial?.mode ?? "cloud");
 
-  // Cloud state
+  // Cloud state — picker.cloud may be empty when noPicker is true; guard the
+  // initial values so we don't deref an undefined entry.
   const [providerId, setProviderId] = useState(
-    initial?.cloud?.providerId ?? HERMES_CLOUD_PROVIDERS[0].id,
+    initial?.cloud?.providerId ?? picker.cloud[0]?.id ?? "",
   );
   const provider = useMemo(
-    () => HERMES_CLOUD_PROVIDERS.find((p) => p.id === providerId) ?? HERMES_CLOUD_PROVIDERS[0],
-    [providerId],
+    () => picker.cloud.find((p) => p.id === providerId) ?? picker.cloud[0],
+    [picker, providerId],
   );
   const [cloudModelId, setCloudModelId] = useState(
-    initial?.cloud?.modelId ?? provider.models[0].id,
+    initial?.cloud?.modelId ?? provider?.models[0]?.id ?? "",
   );
   const [apiKey, setApiKey] = useState("");
 
   // Local state
   const [localModelId, setLocalModelId] = useState(
-    initial?.local?.modelId ?? OLLAMA_RECIPES[0].id,
+    initial?.local?.modelId ?? picker.ollama[0]?.id ?? "",
   );
   const [ollama, setOllama] = useState<OllamaState | null>(null);
   const [ollamaChecking, setOllamaChecking] = useState(false);
@@ -61,9 +81,11 @@ export function HermesConfigPanel({ onClose }: { onClose: () => void }) {
     if (mode === "local") refreshOllama();
   }, [mode]);
 
-  // Switching provider resets the model to the first model of the new provider
-  // (otherwise the picker can end up with a model that doesn't belong here).
+  // Switching provider resets the model to the first model of the new
+  // provider (otherwise the picker can end up with a model that doesn't
+  // belong here).
   useEffect(() => {
+    if (!provider) return;
     if (!provider.models.some((m) => m.id === cloudModelId)) {
       setCloudModelId(provider.models[0].id);
     }
@@ -73,7 +95,7 @@ export function HermesConfigPanel({ onClose }: { onClose: () => void }) {
   // Recommended Ollama models the user hasn't pulled yet — split so the
   // dropdown can show "On your machine" first (instantly usable) and then
   // "Recommended (will pull X GB)" second.
-  const recommendedToPull = OLLAMA_RECIPES.filter(
+  const recommendedToPull = picker.ollama.filter(
     (r) => !ollama?.models.includes(r.id),
   );
 
@@ -91,9 +113,7 @@ export function HermesConfigPanel({ onClose }: { onClose: () => void }) {
   async function onInstallOllama() {
     setBusy(true);
     try {
-      await invoke("install_ollama", { harnessId: "hermes" });
-      // The install streams via install-event; useHarnessStates picks it up and
-      // we re-check Ollama after a beat so the UI flips when brew finishes.
+      await invoke("install_ollama", { harnessId });
       setTimeout(refreshOllama, 1500);
     } catch (e) {
       console.error("install_ollama failed", e);
@@ -105,8 +125,7 @@ export function HermesConfigPanel({ onClose }: { onClose: () => void }) {
   async function onPullModel() {
     setBusy(true);
     try {
-      await invoke("pull_ollama_model", { harnessId: "hermes", model: localModelId });
-      // Re-check models so the "already pulled" badge updates.
+      await invoke("pull_ollama_model", { harnessId, model: localModelId });
       setTimeout(refreshOllama, 2000);
     } catch (e) {
       console.error("pull_ollama_model failed", e);
@@ -129,13 +148,13 @@ export function HermesConfigPanel({ onClose }: { onClose: () => void }) {
   }
 
   async function onSaveConfig() {
-    const cfg: HermesConfig =
+    const cfg: ModelConfig =
       mode === "cloud"
         ? { mode: "cloud", cloud: { providerId, modelId: cloudModelId } }
         : { mode: "local", local: { modelId: localModelId } };
     setBusy(true);
     try {
-      await saveHermesConfig(cfg);
+      await saveConfig(harnessId, cfg);
     } finally {
       setBusy(false);
       onClose();
@@ -145,9 +164,30 @@ export function HermesConfigPanel({ onClose }: { onClose: () => void }) {
   // EngineCard's outer button (.ecard-pick) sits as a sibling in the same
   // .ecard container; bubbled mousedown/click events can race with select
   // dropdown openings and input focus on Tauri's WKWebView. We stop every
-  // pointer event at the panel root AND at each interactive control — same
-  // pattern as the api-key inline form which already does it on its input.
+  // pointer event at the panel root AND at each interactive control.
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+
+  if (noPicker) {
+    return (
+      <div
+        className="hermes-panel"
+        onClick={stop}
+        onMouseDown={stop}
+        onPointerDown={stop}
+      >
+        <p className="hermes-tip">No model picker registered for "{harnessId}".</p>
+        <div className="hermes-foot">
+          <button
+            className="card-act"
+            onClick={(e) => { stop(e); onClose(); }}
+            type="button"
+          >
+            close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -186,7 +226,7 @@ export function HermesConfigPanel({ onClose }: { onClose: () => void }) {
               onMouseDown={stop}
               disabled={busy}
             >
-              {HERMES_CLOUD_PROVIDERS.map((p) => (
+              {picker.cloud.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
                 </option>

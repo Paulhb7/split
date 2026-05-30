@@ -553,7 +553,12 @@ fn configure_state_for(cfg: Option<&serde_json::Value>) -> &'static str {
             if ok { "ready" } else { "missing" }
         }
         "external" => "external",
-        "hermes-config" => {
+        "model-picker" => {
+            // The generic picker is "ready" once the user has either picked
+            // anything (cloud or local — we treat the existence of either
+            // var/state/<harness>.config.json as a strong signal), or there's
+            // at least one provider key in the keychain (so a cloud-mode
+            // session can spawn even without our state file).
             let any_key = [
                 "ANTHROPIC_API_KEY",
                 "OPENAI_API_KEY",
@@ -563,8 +568,7 @@ fn configure_state_for(cfg: Option<&serde_json::Value>) -> &'static str {
             ]
             .iter()
             .any(|k| secret_present(k));
-            let auth_file = expand_tilde("~/.hermes/auth.json").exists();
-            if any_key || auth_file { "ready" } else { "missing" }
+            if any_key { "ready" } else { "missing" }
         }
         _ => "ready",
     }
@@ -787,41 +791,47 @@ fn configure_harness(app: AppHandle, id: String) -> Result<String, String> {
             Ok(json!({ "ok": true, "kind": "external", "url": url }).to_string())
         }
         "api-key" => Ok(json!({ "ok": true, "kind": "api-key", "key": cfg.get("key") }).to_string()),
-        "hermes-config" => {
+        "model-picker" => {
             // The dedicated React panel drives the whole flow (mode toggle,
             // provider/model picker, API-key save through save_api_key, Ollama
             // detect/install/pull through the check_ollama / install_ollama /
-            // pull_ollama_model commands). This dispatch only acknowledges the
-            // click so the UI knows to expand its inline panel.
+            // pull_ollama_model commands, persistence through save_model_config).
+            // This dispatch only acknowledges the click so the UI knows to
+            // expand its inline panel.
             let _ = app;
-            Ok(json!({ "ok": true, "kind": "hermes-config" }).to_string())
+            Ok(json!({ "ok": true, "kind": "model-picker" }).to_string())
         }
         other => Err(format!("configure kind not supported: {other}")),
     }
 }
 
-// --- Hermes config persistence ----------------------------------------------
-// The Hermes configure panel writes its mode + provider/model choice to
-// localStorage (so the UI repopulates), AND mirrors it to disk here so the
-// Rust spawn path can inject the corresponding HERMES_MODEL env var.
+// --- Model picker config persistence ----------------------------------------
+// The generic Local/Cloud picker panel (used by Hermes, OpenCode, …) writes
+// its mode + provider/model choice to localStorage (so the UI repopulates),
+// AND mirrors it to disk here so the Python runner can read it at spawn time
+// and translate to the harness-specific CLI args via apply_<harness>_config.
 
-fn hermes_config_path() -> PathBuf {
-    REPO_ROOT.join("var").join("state").join("hermes.config.json")
+fn model_config_path(harness: &str) -> PathBuf {
+    REPO_ROOT.join("var").join("state").join(format!("{harness}.config.json"))
 }
 
 #[tauri::command]
-fn save_hermes_config(cfg: String) -> Result<(), String> {
-    // Validate it's well-formed JSON before touching disk.
+fn save_model_config(harness: String, cfg: String) -> Result<(), String> {
+    if harness.is_empty() || harness.contains('/') || harness.contains("..") {
+        return Err("invalid harness id".into());
+    }
+    // Validate the payload is well-formed JSON before touching disk.
     let _: serde_json::Value = serde_json::from_str(&cfg).map_err(|e| e.to_string())?;
-    let path = hermes_config_path();
+    let path = model_config_path(&harness);
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
     std::fs::write(&path, cfg).map_err(|e| e.to_string())
 }
 
-// Reading + translation to CLI args happens in `core.apply_hermes_config()`
-// on the Python side, since the runner is what spawns the hermes binary.
+// Reading + translation to CLI args happens in
+// `core.apply_<harness>_config()` on the Python side, since the runner is
+// what spawns the harness binary.
 
 // --- Ollama integration (Hermes local mode) ---------------------------------
 // Hermes's local-LLM mode points at any OpenAI-compatible endpoint; the
@@ -1113,7 +1123,7 @@ pub fn run() {
             check_ollama,
             install_ollama,
             pull_ollama_model,
-            save_hermes_config
+            save_model_config
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
