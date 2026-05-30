@@ -22,6 +22,7 @@ import shutil
 from datetime import date, datetime, timezone
 
 import acp
+from filelock import FileLock
 
 # --- layout ------------------------------------------------------------------
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # split/ -> repo
@@ -194,6 +195,15 @@ def _persona_sources_mtime(expert: str) -> float:
     return max((os.path.getmtime(p) for p in paths if os.path.exists(p)), default=0.0)
 
 
+def _safe_unlink(path: str) -> None:
+    """Unlink that swallows FileNotFoundError — race-tolerant if the lock is
+    bypassed (ad-hoc scripts, future code paths, agent self-edits)."""
+    try:
+        os.unlink(path)
+    except FileNotFoundError:
+        pass
+
+
 def _refresh_persona(expert: str, ws_dir: str) -> None:
     """Project the persona into `<ws_dir>` if any source file is newer than
     the existing `AGENTS.md` (or if it's missing). Layout:
@@ -214,13 +224,13 @@ def _refresh_persona(expert: str, ws_dir: str) -> None:
         os.makedirs(os.path.join(MEMORY_DIR, sub), exist_ok=True)
     body = persona_text(expert)
     if os.path.islink(canonical) or os.path.isfile(canonical):
-        os.unlink(canonical)
+        _safe_unlink(canonical)
     with open(canonical, "w", encoding="utf-8") as f:
         f.write(body)
     for fname in ("CLAUDE.md", "GEMINI.md", "QWEN.md", "VIBE.md"):
         out = os.path.join(ws_dir, fname)
         if os.path.islink(out) or os.path.isfile(out):
-            os.unlink(out)
+            _safe_unlink(out)
         try:
             os.symlink("AGENTS.md", out)
         except (OSError, NotImplementedError):
@@ -230,7 +240,7 @@ def _refresh_persona(expert: str, ws_dir: str) -> None:
     os.makedirs(vibe, exist_ok=True)
     vibe_shim = os.path.join(vibe, "AGENTS.md")
     if os.path.islink(vibe_shim) or os.path.isfile(vibe_shim):
-        os.unlink(vibe_shim)
+        _safe_unlink(vibe_shim)
     try:
         os.symlink(os.path.join("..", "AGENTS.md"), vibe_shim)
     except (OSError, NotImplementedError):
@@ -266,7 +276,7 @@ def _refresh_skills(expert: str, ws_dir: str) -> list[str]:
         for name in existing - wanted:
             stale = os.path.join(target_dir, name)
             if os.path.islink(stale) or os.path.isfile(stale):
-                os.unlink(stale)
+                _safe_unlink(stale)
             elif os.path.isdir(stale):
                 shutil.rmtree(stale, ignore_errors=True)
         for name in wanted:
@@ -276,7 +286,7 @@ def _refresh_skills(expert: str, ws_dir: str) -> list[str]:
             if os.path.islink(dest) and os.path.realpath(dest) == src:
                 continue
             if os.path.islink(dest) or os.path.isfile(dest):
-                os.unlink(dest)
+                _safe_unlink(dest)
             elif os.path.isdir(dest):
                 shutil.rmtree(dest, ignore_errors=True)
             try:
@@ -320,16 +330,23 @@ def ensure_expert_workspace(expert: str, ws_root: str | None = None) -> str:
         (O(N) where N = the expert's allowed skills — cheap, and lets a change
         in experts.json take effect on the next session without explicit refresh).
 
-    Concurrency: ensure_expert_workspace is safe to call multiple times
-    concurrently for the SAME expert — `makedirs(exist_ok=True)` and the
-    unlink-then-symlink pattern tolerate races. Two sessions of the same
-    expert running at once will share this dir (last-write-wins for any
-    files the agent writes — acceptable; matches OpenClaw's default mode)."""
+    Concurrency: serialized per-expert via a cross-process file lock at
+    `<ws_root>/.locks/<expert>.lock` (a sibling of `<expert>/`, not inside it,
+    so the agent's cwd `ls` stays clean). Two runners spawning sessions of the
+    same expert at the same time project sequentially, not in a race; different
+    experts proceed in parallel. The lock is held only for the projection,
+    not for the session — once `ensure_expert_workspace` returns, the agent
+    runs freely in its workspace (where two sessions of the same expert still
+    share the cwd and so can collide on artifact writes — out of scope here)."""
     expert = _resolve_expert(expert)
-    ws = os.path.join(ws_root or WORKSPACE, expert)
+    root = ws_root or WORKSPACE
+    ws = os.path.join(root, expert)
+    locks_dir = os.path.join(root, ".locks")
     os.makedirs(ws, exist_ok=True)
-    _refresh_persona(expert, ws)
-    _refresh_skills(expert, ws)
+    os.makedirs(locks_dir, exist_ok=True)
+    with FileLock(os.path.join(locks_dir, f"{expert}.lock"), timeout=30):
+        _refresh_persona(expert, ws)
+        _refresh_skills(expert, ws)
     return ws
 
 

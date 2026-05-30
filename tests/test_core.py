@@ -214,3 +214,58 @@ def test_ensure_expert_workspace_unknown_expert_does_not_litter_memory_dir(tmp_p
     core.ensure_expert_workspace("does-not-exist", str(tmp_path / "ws"))
     assert not (tmp_path / "memory" / "does-not-exist").exists()
     assert (tmp_path / "memory" / "consultant").is_dir()
+
+
+# --- concurrency -------------------------------------------------------------
+def _hammer_ensure_expert_workspace(args):
+    """Module-level so multiprocessing can pickle it. Each worker imports its
+    own `core` fresh — matches the desktop's process-per-runner reality."""
+    expert, ws_root = args
+    from split import core as _core
+    return _core.ensure_expert_workspace(expert, ws_root=ws_root)
+
+
+def _init_concurrent_worker(memory_dir):
+    """Pool initializer: each worker process needs MEMORY_DIR pointed at the
+    test's tmp dir. Monkeypatch in the parent doesn't cross the `spawn`
+    boundary, so we re-assign in the worker after its fresh import."""
+    from split import core as _core
+    _core.MEMORY_DIR = memory_dir
+
+
+def test_ensure_expert_workspace_concurrent_processes_dont_race(tmp_path):
+    """N parallel `python -m split.runner` processes projecting the SAME
+    expert must complete without FileNotFoundError on the unlink-then-symlink
+    pattern, and leave a consistent workspace.
+
+    multiprocessing.Pool defaults to `spawn` on macOS — this is a true
+    cross-process race (matches the Tauri shell spawning one runner per
+    session), not a threading scenario the GIL would hide. Pre-fix this hit
+    `os.unlink` after another worker had already removed the file."""
+    import multiprocessing as mp
+    ws_root = str(tmp_path / "ws")
+    memory = str(tmp_path / "memory")
+    expert = "consultant"
+    ctx = mp.get_context("spawn")
+    with ctx.Pool(8, initializer=_init_concurrent_worker, initargs=(memory,)) as pool:
+        results = pool.map(_hammer_ensure_expert_workspace, [(expert, ws_root)] * 16)
+    # Every worker returned the same canonical workspace path.
+    assert all(r == os.path.join(ws_root, expert) for r in results)
+    ws = os.path.join(ws_root, expert)
+    # Persona + vendor shims survived the parallel projection.
+    assert os.path.isfile(os.path.join(ws, "AGENTS.md"))
+    for shim in ("CLAUDE.md", "GEMINI.md", "QWEN.md", "VIBE.md"):
+        assert os.path.exists(os.path.join(ws, shim))
+    # Skills are exactly the expected set (no extras, no missing, no half-replaced).
+    allowed = core.load_experts()[expert]["skills"]
+    expected = {n for n in allowed
+                if os.path.isfile(os.path.join(core.SKILLS_DIR, n, "SKILL.md"))}
+    for skill_dir in (".claude/skills", ".agents/skills", ".vibe/skills"):
+        present = set(os.listdir(os.path.join(ws, skill_dir)))
+        assert present == expected, f"{skill_dir}: {present} vs {expected}"
+    # Lock dir lives at the workspace root (sibling of <expert>/), NOT inside
+    # the agent's cwd — matches the "out of the agent's `ls`" invariant. (The
+    # lock file itself may be reaped by filelock after release; only the dir
+    # is a reliable post-condition.)
+    assert os.path.isdir(os.path.join(ws_root, ".locks"))
+    assert not os.path.exists(os.path.join(ws, ".locks"))
