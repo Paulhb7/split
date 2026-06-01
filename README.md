@@ -197,9 +197,22 @@ make app        # run the desktop app — native Rust runner
 tests (`cargo test --workspace`) + vitest; `make` (no target) lists everything.
 The retired Python sidecar is no longer in the Makefile — to compare behaviour,
 run it standalone from inside the gitignored `split-python/` (see *Legacy
-Python* below). The same `make` targets build on macOS and Windows (see
-*Platforms* below); macOS is the tested target, Windows is the cross-platform
-build.
+Python* below).
+
+**Windows** (no `make` — it isn't installed by default; the Makefile is just a
+Unix-side convenience wrapper around the npm scripts below). From `apps/desktop/`:
+
+```powershell
+npm install
+npm run tauri dev      # run the app in dev (equivalent of `make app`)
+npm run tauri build    # bundle the .exe / .msi (equivalent of `make build`)
+npm test               # vitest          # cargo test --workspace   (Rust tests)
+```
+
+Prereqs are the same as macOS — Rust (`rustup`) + Node on PATH. macOS is the
+tested target; Windows is the cross-platform build (compiled + unit-tested in
+CI, see *Platforms* below). If you'd rather use the `make` targets on Windows,
+install GNU Make (`winget install ezwinports.make`, scoop, or Git Bash).
 
 Or do it manually:
 
