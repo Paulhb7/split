@@ -6,8 +6,8 @@
 #   make test       # cargo + vitest
 #
 # The desktop bar runs exclusively on the native Rust runner (the Python
-# backend was retired). Windows isn't covered here: desktop is macOS-only today
-# (osascript login, vibrancy). See the README "Platforms" section.
+# backend was retired). These targets build on macOS (the tested target) and
+# Windows (cross-platform build, unsigned). See the README "Platforms" section.
 
 .DEFAULT_GOAL := help
 SHELL := /bin/bash

@@ -93,9 +93,10 @@ fn emit_exit(app: &AppHandle, id: &str) {
     );
 }
 
-// A GUI app launched from Finder gets a minimal PATH, so `npx`/`uvx`/`node`
-// (the agent CLIs) aren't found. Prepend the usual install dirs so the agent
-// processes the runner spawns can resolve them.
+// A GUI app launched from Finder (macOS) gets a minimal PATH, so `npx`/`uvx`/
+// `node` (the agent CLIs) aren't found. Prepend the usual install dirs so the
+// agent processes the runner spawns can resolve them.
+#[cfg(not(target_os = "windows"))]
 fn child_path() -> String {
     let mut parts: Vec<String> = vec![
         "/opt/homebrew/bin".into(),
@@ -114,6 +115,46 @@ fn child_path() -> String {
         parts.push(existing);
     }
     parts.join(":")
+}
+
+// Windows GUI processes inherit the user PATH normally (no Finder-minimal-PATH
+// problem), so we pass it through, appending the per-user cargo bin so
+// locally-built harness binaries resolve. PATH separator is `;`.
+#[cfg(target_os = "windows")]
+fn child_path() -> String {
+    let mut parts: Vec<String> = Vec::new();
+    if let Ok(existing) = std::env::var("PATH") {
+        parts.push(existing);
+    }
+    if let Ok(profile) = std::env::var("USERPROFILE") {
+        parts.push(format!("{profile}\\.cargo\\bin"));
+    }
+    parts.join(";")
+}
+
+// Open a file path or URL with the OS default handler (Finder/Explorer/xdg,
+// default browser). Cross-platform replacement for the macOS `open` command.
+fn open_external(target: &str) -> std::io::Result<()> {
+    #[cfg(target_os = "macos")]
+    let mut cmd = {
+        let mut c = Command::new("open");
+        c.arg(target);
+        c
+    };
+    #[cfg(target_os = "windows")]
+    let mut cmd = {
+        // `start` is a cmd builtin; the empty "" is the (required) window title.
+        let mut c = Command::new("cmd");
+        c.args(["/C", "start", "", target]);
+        c
+    };
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let mut cmd = {
+        let mut c = Command::new("xdg-open");
+        c.arg(target);
+        c
+    };
+    cmd.status().map(|_| ())
 }
 
 // Resize the borderless window to a content-fitted height. The React side
@@ -159,7 +200,7 @@ fn open_workspace(workspace: String, session_id: Option<String>) {
         _ => root,
     };
     let _ = std::fs::create_dir_all(&target);
-    let _ = Command::new("open").arg(&target).status();
+    let _ = open_external(&target.to_string_lossy());
 }
 
 // Read `config/tools.json` and build the list of MCP servers to pass to the
@@ -757,7 +798,13 @@ fn command_on_path(cmd: &str) -> bool {
     if cmd.starts_with("./") || cmd.starts_with("../") {
         return REPO_ROOT.join(cmd).exists();
     }
-    Command::new("/usr/bin/which")
+    // `where` on Windows, `which` elsewhere.
+    let probe = if cfg!(target_os = "windows") {
+        "where"
+    } else {
+        "/usr/bin/which"
+    };
+    Command::new(probe)
         .arg(cmd)
         .env("PATH", child_path())
         .output()
@@ -961,10 +1008,7 @@ fn install_harness(app: AppHandle, id: String) -> Result<String, String> {
                 .get("docUrl")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| "external install missing docUrl".to_string())?;
-            Command::new("open")
-                .arg(url)
-                .status()
-                .map_err(|e| e.to_string())?;
+            open_external(url).map_err(|e| e.to_string())?;
             emit_install(&app, &id, &format!("opened {url}"), true, true);
             Ok(json!({ "ok": true, "kind": "external", "url": url }).to_string())
         }
@@ -1099,10 +1143,7 @@ fn configure_harness(app: AppHandle, id: String) -> Result<String, String> {
                 .get("docUrl")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| "external configure missing docUrl".to_string())?;
-            Command::new("open")
-                .arg(url)
-                .status()
-                .map_err(|e| e.to_string())?;
+            open_external(url).map_err(|e| e.to_string())?;
             Ok(json!({ "ok": true, "kind": "external", "url": url }).to_string())
         }
         "api-key" => {
@@ -1264,10 +1305,7 @@ fn install_ollama(app: AppHandle, harness_id: String) -> Result<String, String> 
         Ok(json!({ "ok": true, "via": "brew" }).to_string())
     } else {
         let url = "https://ollama.com/download";
-        Command::new("open")
-            .arg(url)
-            .status()
-            .map_err(|e| e.to_string())?;
+        open_external(url).map_err(|e| e.to_string())?;
         emit_install(
             &app,
             &sid,
@@ -1437,7 +1475,12 @@ pub fn run() {
                 use tauri_plugin_global_shortcut::{
                     Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState,
                 };
-                let cmd_j = Shortcut::new(Some(Modifiers::SUPER), Code::KeyJ);
+                // ⌘J on macOS; Ctrl+J on Windows/Linux (SUPER is the Win key).
+                #[cfg(target_os = "macos")]
+                let toggle_mod = Modifiers::SUPER;
+                #[cfg(not(target_os = "macos"))]
+                let toggle_mod = Modifiers::CONTROL;
+                let cmd_j = Shortcut::new(Some(toggle_mod), Code::KeyJ);
                 app.handle().plugin(
                     tauri_plugin_global_shortcut::Builder::new()
                         .with_handler(move |app, shortcut, event| {

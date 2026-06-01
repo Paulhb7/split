@@ -19,8 +19,26 @@
 //!     subtly wrong and serving stale persona.
 
 use std::collections::HashSet;
-use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
+
+// Cross-platform symlink shim. On Unix we create real symlinks, so the
+// projected workspace stays a thin view over `config/`. On Windows symlink
+// creation needs elevated privilege / Developer Mode, so we deliberately fail
+// here and let every call site fall back to copying the skill dir / writing the
+// persona body — the projection is correct either way, just not deduplicated
+// (re-copied each session).
+#[cfg(unix)]
+fn symlink<P: AsRef<Path>, Q: AsRef<Path>>(src: P, dst: Q) -> std::io::Result<()> {
+    std::os::unix::fs::symlink(src, dst)
+}
+
+#[cfg(not(unix))]
+fn symlink<P: AsRef<Path>, Q: AsRef<Path>>(_src: P, _dst: Q) -> std::io::Result<()> {
+    Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "symlinks not used on this platform; falling back to copy",
+    ))
+}
 
 /// Project an expert's persona + allowed skills into a per-expert workspace
 /// under `<workspace_root>/<expert>/`. Returns that path (the agent's cwd).
@@ -330,12 +348,21 @@ mod tests {
         assert!(ws.join("AGENTS.md").is_file());
         let body = fs::read_to_string(ws.join("AGENTS.md")).unwrap();
         assert!(body.contains("# Lawyer persona body"));
-        // Cross-vendor shims must symlink AGENTS.md.
+        // Cross-vendor shims must exist and carry the persona body. On Unix they
+        // are symlinks to AGENTS.md; on platforms without symlinks they are
+        // copies (same content) — assert the strong symlink shape only on Unix.
         for shim in &["CLAUDE.md", "GEMINI.md", "QWEN.md", "VIBE.md"] {
             let p = ws.join(shim);
             assert!(p.symlink_metadata().is_ok(), "{shim} missing");
-            let target = fs::read_link(&p).unwrap();
-            assert_eq!(target, std::path::PathBuf::from("AGENTS.md"));
+            #[cfg(unix)]
+            {
+                let target = fs::read_link(&p).unwrap();
+                assert_eq!(target, std::path::PathBuf::from("AGENTS.md"));
+            }
+            #[cfg(not(unix))]
+            {
+                assert!(fs::read_to_string(&p).unwrap().contains("# Lawyer persona body"));
+            }
         }
         assert!(ws.join(".vibe/AGENTS.md").symlink_metadata().is_ok());
     }

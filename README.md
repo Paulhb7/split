@@ -197,8 +197,9 @@ make app        # run the desktop app — native Rust runner
 tests (`cargo test --workspace`) + vitest; `make` (no target) lists everything.
 The retired Python sidecar is no longer in the Makefile — to compare behaviour,
 run it standalone from inside the gitignored `split-python/` (see *Legacy
-Python* below). Windows isn't covered — desktop is macOS-only today (see
-*Platforms — macOS only, today* below).
+Python* below). The same `make` targets build on macOS and Windows (see
+*Platforms* below); macOS is the tested target, Windows is the cross-platform
+build.
 
 Or do it manually:
 
@@ -323,31 +324,48 @@ still replay correctly through the Rust path.
 
 ---
 
-## Platforms — **macOS only, today**
+## Platforms — **macOS + Windows (unsigned)**
 
-The ACP/Python core is portable, but the app as a whole is currently pinned to
-macOS. Honest blockers if you try Windows/Linux:
+macOS is the primary, battle-tested target. **Windows** is supported as a
+cross-platform build: the Rust + Tauri code is platform-portable and is
+compiled + unit-tested on `windows-latest` in CI. The Windows *runtime* is not
+yet exercised end-to-end in CI, so treat it as "builds and should run" rather
+than "fully QA'd". Neither platform ships **code-signed** today (see below).
 
-- **Repo-root resolution** — the Tauri shell (`apps/desktop/src-tauri/src/lib.rs`)
-  resolves the repo root at runtime (`SPLIT_REPO_ROOT`, else exe-ancestor markers
-  holding `config/harnesses.json` + `Cargo.toml`, else `CARGO_MANIFEST_DIR`), so
-  it's no longer pinned to one machine.
-- **Auth launchers** — `lib.rs` starts browser-based login commands as detached
-  subprocesses. That avoids Terminal.app scripting, but the commands and auth
-  dotfiles are still tested only on macOS.
-- **Session teardown** — the runner shuts a session down gracefully over ACP
-  (session/cancel + session/close); the agent subprocess is owned by the ACP SDK.
-  Any per-OS process-tree cleanup beyond that is still macOS-shaped.
-- **`PATH`** — built with a `:` separator and `/opt/homebrew` entries (Unix).
-- **Binaries** — `var/bin/opencode`, `var/bin/vibe-acp`, the `*.node` addons are
-  **darwin-arm64**; you'd need per-platform builds.
-- **Window chrome** — `macOSPrivateApi`, vibrancy, `transparent` + borderless
-  render differently (or not at all) off macOS.
+What's portable (and how):
+- **Repo-root resolution** — resolved at runtime (`SPLIT_REPO_ROOT`, else
+  exe-ancestor markers holding `config/harnesses.json` + `Cargo.toml`, else
+  `CARGO_MANIFEST_DIR`); not pinned to one machine or OS.
+- **`PATH`** — per-OS: `:`-joined Unix dirs (`/opt/homebrew`, …) on macOS/Linux,
+  `;`-joined inherited PATH (+ `%USERPROFILE%\.cargo\bin`) on Windows.
+- **Command portability** — `which`→`where`, `open`→`start`/`xdg-open`, the
+  ⌘J global toggle becomes Ctrl+J off macOS.
+- **Workspace projection** — persona/skill projection uses symlinks on Unix and
+  falls back to copies on Windows (no Developer-Mode requirement), via the
+  `symlink` shim in [core-rs/src/persona.rs](core-rs/src/persona.rs).
+- **Secrets** — the `keyring` crate already targets the Windows Credential
+  Manager / macOS Keychain / Linux Secret Service.
 
-The Python package itself uses no `fcntl`/`pty`/`os.fork`/`termios`, so
-`split/` ports cleanly; cross-platform support is an enclosing-shell job
-(relative paths, per-OS auth, `taskkill`, per-platform binaries, CI) — roughly a
-few weeks.
+Remaining Windows rough edges (degrade gracefully, don't block):
+- **Vendored binaries** — `var/bin/opencode`, `var/bin/vibe-acp` are
+  **darwin-arm64**; the npx-based harnesses work cross-platform, the vendored
+  ones need a Windows build.
+- **Harness installers** — the `brew`/`curl | bash` install paths are Unix; on
+  Windows they fall through to opening the docs URL (install the runtime
+  manually).
+- **Window chrome** — vibrancy is macOS-only; the Windows window renders without
+  the blur backdrop.
+
+### Code signing — not done (free, with friction)
+
+Neither build is signed, so first launch shows a security prompt:
+- **macOS** (Gatekeeper): right-click → **Open**, or
+  `xattr -dr com.apple.quarantine /Applications/Split.app`.
+- **Windows** (SmartScreen): **More info → Run anyway**.
+
+Signing is optional and costs money (Apple Developer ID ≈ $99/yr; a Windows
+Authenticode cert ≈ $200–700/yr on a hardware token), so it's deferred until
+there's real external distribution.
 
 ---
 

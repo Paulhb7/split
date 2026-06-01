@@ -19,11 +19,17 @@ jobs:
   # native Rust runner (`core-rs/` + `apps/desktop/src-tauri/src/runner.rs`).
   # Python code lives in `split-python/` locally, gitignored — fresh clones
   # don't have it, so there's nothing for CI to lint or test on that side.
-  # The `desktop` job below is now the whole pipeline.
+  # The `desktop` job below is the whole pipeline; it runs on macOS (the
+  # shipping platform) AND Windows (compile + test coverage for the
+  # cross-platform port — runtime there is not yet exercised by CI).
 
   desktop:
-    name: Desktop (Tauri + React)
-    runs-on: macos-latest
+    name: Desktop (Tauri + React) — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
     defaults:
       run:
         working-directory: apps/desktop
