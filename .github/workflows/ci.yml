@@ -2,15 +2,12 @@ name: CI
 
 on:
   push:
-    # `feat/**` is temporary — it lets the cross-platform matrix (incl. the
-    # Windows job) run on feature branches before they reach main. Drop it back
-    # to `[main]` once the Windows pipeline is proven green.
     branches: [main, "feat/**"]
     paths-ignore: ["**/*.md"]
   pull_request:
     paths-ignore: ["**/*.md"]
-  # Manual "Run workflow" button / `gh workflow run` — only selectable once this
-  # trigger exists on the default branch (main).
+  # Manual "Run workflow" button / `gh workflow run CI --ref <branch>`.
+  # NB: only selectable once this trigger exists on the default branch (main).
   workflow_dispatch:
 
 permissions:
@@ -20,25 +17,21 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Cost-aware split (this is a PRIVATE repo, so runners are metered — macOS bills
+# at 10×, Windows 2×, Linux 1×):
+#   * `gate`           — every push/PR/dispatch, on cheap Linux. Frontend
+#                        (eslint + vitest + tsc) + the portable `split-core`
+#                        engine (clippy + tests). No system deps, no Tauri.
+#   * `cross-platform` — PR-to-main + manual dispatch ONLY. Compiles the full
+#                        desktop crate (Tauri) on macOS + Windows — the only
+#                        genuinely platform-specific check, and the only place
+#                        we pay the macOS/Windows premium.
+# The retired Python backend isn't in CI (it lives in the gitignored
+# `split-python/`; fresh clones don't have it).
 jobs:
-  # The Python backend was retired from the default runtime in favour of the
-  # native Rust runner (`core-rs/` + `apps/desktop/src-tauri/src/runner.rs`).
-  # Python code lives in `split-python/` locally, gitignored — fresh clones
-  # don't have it, so there's nothing for CI to lint or test on that side.
-  # The `desktop` job below is the whole pipeline; it runs on macOS (the
-  # shipping platform) AND Windows (compile + test coverage for the
-  # cross-platform port — runtime there is not yet exercised by CI).
-
-  desktop:
-    name: Desktop (Tauri + React) — ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest]
-    defaults:
-      run:
-        working-directory: apps/desktop
+  gate:
+    name: Gate (frontend + engine) — ubuntu
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,23 +40,61 @@ jobs:
           cache: npm
           cache-dependency-path: apps/desktop/package-lock.json
       - name: Install frontend deps
+        working-directory: apps/desktop
         run: npm ci
       - name: Lint (eslint)
+        working-directory: apps/desktop
         run: npm run lint
       - name: Build frontend (tsc + vite)
+        working-directory: apps/desktop
         run: npm run build
       - name: Unit tests (vitest)
+        working-directory: apps/desktop
         run: npm test
       - name: Cargo cache
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: .
+      # Only the portable engine here — it has no Tauri / system-lib deps, so it
+      # builds cleanly on a bare Linux runner. The Tauri desktop crate is
+      # compiled in the cross-platform job instead.
+      - name: Lint engine (clippy — split-core)
+        run: cargo clippy -p split-core --all-targets -- -D warnings
+      - name: Engine unit tests (split-core)
+        run: cargo test -p split-core --quiet
+
+  cross-platform:
+    name: Cross-platform build — ${{ matrix.os }}
+    # Skip on plain pushes (incl. feature branches) — only validate the full
+    # macOS/Windows compile when reviewing a PR or when triggered by hand.
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      # Frontend deps + build produce `apps/desktop/dist`, which tauri-build
+      # expects at compile time (lint/tests already ran in `gate`).
+      - name: Install frontend deps
+        working-directory: apps/desktop
+        run: npm ci
+      - name: Build frontend (tsc + vite)
+        working-directory: apps/desktop
+        run: npm run build
+      - name: Cargo cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .
       - name: Lint (clippy — workspace, all targets)
-        working-directory: ${{ github.workspace }}
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: cargo check (workspace)
-        working-directory: ${{ github.workspace }}
         run: cargo check --workspace
-      - name: Rust unit tests (split-core)
-        working-directory: ${{ github.workspace }}
+      - name: Rust unit tests (workspace)
         run: cargo test --workspace --quiet
