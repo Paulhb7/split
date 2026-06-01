@@ -30,10 +30,11 @@ CONFIG_DIR = os.path.join(REPO_ROOT, "config")
 VAR_DIR = os.path.join(REPO_ROOT, "var")
 
 HARNESSES_SRC = os.path.join(CONFIG_DIR, "harnesses.json")          # the HARNESSES (brains)
-EXPERTS_SRC = os.path.join(CONFIG_DIR, "experts.json")             # the EXPERT registry
+EXPERTS_SRC = os.path.join(CONFIG_DIR, "experts.json")             # the EXPERT registry (shipped)
 TOOLS_SRC = os.path.join(CONFIG_DIR, "tools.json")                 # the TOOLS (MCP servers)
-EXPERTS_DIR = os.path.join(CONFIG_DIR, "experts")                  # persona prompts (experts/<name>.md)
+EXPERTS_DIR = os.path.join(CONFIG_DIR, "experts")                  # persona prompts (experts/<name>.md, shipped)
 SKILLS_DIR = os.path.join(CONFIG_DIR, "skills")                    # portable SKILLs (skills/<name>/)
+CUSTOM_EXPERTS_DIR = os.path.join(VAR_DIR, "experts")              # user-created experts: <VAR_DIR>/experts/<slug>.{md,json}
 
 # Generated: the agent's PERSISTENT home. The desktop shell sets SPLIT_WORKSPACE
 # per session; otherwise default to var/workspace. Each expert gets its OWN
@@ -77,9 +78,34 @@ def load_harnesses() -> dict:
     return _load_object(HARNESSES_SRC)
 
 
+def _load_custom_experts() -> dict:
+    """Load user-created experts from `<VAR_DIR>/experts/*.json`. Each file is
+    one expert entry (no shared index — no race). Slug = filename stem.
+    Malformed entries are silently skipped to keep the picker robust."""
+    if not os.path.isdir(CUSTOM_EXPERTS_DIR):
+        return {}
+    out: dict = {}
+    for fname in os.listdir(CUSTOM_EXPERTS_DIR):
+        if not fname.endswith(".json"):
+            continue
+        slug = fname[:-5]
+        try:
+            with open(os.path.join(CUSTOM_EXPERTS_DIR, fname), encoding="utf-8") as fh:
+                out[slug] = json.load(fh)
+        except Exception:
+            pass
+    return out
+
+
 def load_experts() -> dict:
-    """The expert registry (persona = experts/<name>.md, skills = a name list)."""
-    return _load_object(EXPERTS_SRC)
+    """Merged expert registry: shipped (`config/experts.json`) + custom
+    (`<VAR_DIR>/experts/*.json`, created by Recruiter/Socrates). Shipped wins
+    on slug collision — users can't shadow built-ins."""
+    shipped = _load_object(EXPERTS_SRC)
+    for slug, entry in _load_custom_experts().items():
+        if slug not in shipped:
+            shipped[slug] = entry
+    return shipped
 
 
 # --- projecting an expert into a workspace -----------------------------------
@@ -129,17 +155,35 @@ def memory_text(expert: str) -> str:
     return "\n".join(lines)
 
 
+def _persona_path(expert: str) -> str | None:
+    """Resolve the persona MD file for an expert: shipped (`config/experts/`)
+    first, then user-custom (`<VAR_DIR>/experts/`). None if neither exists."""
+    shipped = os.path.join(EXPERTS_DIR, f"{expert}.md")
+    if os.path.exists(shipped):
+        return shipped
+    custom = os.path.join(CUSTOM_EXPERTS_DIR, f"{expert}.md")
+    if os.path.exists(custom):
+        return custom
+    return None
+
+
 def persona_text(expert: str = "consultant") -> str:
     """Compose the persona text for an expert: `_discipline.md` preamble (if
-    present) + `memory_text(expert)` (if any notes exist) + `experts/<expert>.md`
-    body. Falls back to `consultant.md` if the requested expert isn't on disk yet.
+    present) + `memory_text(expert)` (if any notes exist) + persona body
+    (shipped `experts/<expert>.md` OR custom `<VAR_DIR>/experts/<expert>.md`).
+    Falls back to `consultant.md` if the requested expert isn't on disk yet.
+
+    A trailing "Runtime paths" section is appended so personas can reference
+    `<REPO_ROOT>` / `<VAR_DIR>` in their body and find the resolved absolute
+    values at the bottom (Recruiter/Socrates relies on this to know where to
+    write user-created experts).
 
     This is the single source of truth for "what the agent should be told about
     its character". Both `ensure_expert_workspace` (cwd file projection) and
     the runner's first-turn prompt injection consume this — same content, two
     delivery channels."""
-    src = os.path.join(EXPERTS_DIR, f"{expert}.md")
-    if not os.path.exists(src):
+    src = _persona_path(expert)
+    if src is None:
         expert = "consultant"
         src = os.path.join(EXPERTS_DIR, "consultant.md")
     preamble = ""
@@ -158,7 +202,13 @@ def persona_text(expert: str = "consultant") -> str:
         f"When formulating web searches, prefer freshness keywords "
         f"(\"latest\", \"this week\", \"past 30 days\") over hard-coded years.\n\n"
     )
-    return date_header + preamble + memory + persona
+    runtime_paths = (
+        "\n\n---\n\n## Runtime paths\n\n"
+        "Substitute these wherever this persona uses `<REPO_ROOT>` or `<VAR_DIR>`:\n\n"
+        f"- `<REPO_ROOT>` = `{REPO_ROOT}`\n"
+        f"- `<VAR_DIR>` = `{VAR_DIR}`\n"
+    )
+    return date_header + preamble + memory + persona + runtime_paths
 
 
 def _all_skill_dirs() -> list[str]:
@@ -176,18 +226,20 @@ def _all_skill_dirs() -> list[str]:
 
 
 def _resolve_expert(expert: str) -> str:
-    """Fall back to consultant when the requested persona isn't vendored."""
-    if not os.path.exists(os.path.join(EXPERTS_DIR, f"{expert}.md")):
+    """Fall back to consultant when the requested persona isn't vendored in
+    either shipped (`config/experts/`) or custom (`<VAR_DIR>/experts/`)."""
+    if _persona_path(expert) is None:
         return "consultant"
     return expert
 
 
 def _persona_sources_mtime(expert: str) -> float:
     """Newest mtime across every file that contributes to the persona body —
-    persona, shared preamble, both memory files. Drives the persona-refresh
-    check in `ensure_expert_workspace`."""
+    persona (shipped OR custom), shared preamble, both memory files. Drives
+    the persona-refresh check in `ensure_expert_workspace`."""
     paths = [
         os.path.join(EXPERTS_DIR, f"{expert}.md"),
+        os.path.join(CUSTOM_EXPERTS_DIR, f"{expert}.md"),
         os.path.join(EXPERTS_DIR, "_discipline.md"),
         os.path.join(MEMORY_DIR, "_user", "USER.md"),
         os.path.join(MEMORY_DIR, expert, "MEMORY.md"),
