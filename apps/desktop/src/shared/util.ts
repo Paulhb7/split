@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { DEFAULT_EXPERTS, type ExpertMap } from "./experts";
 
 // A file dropped on a window, read by Rust, pending attachment to the next turn.
@@ -32,16 +33,33 @@ export function composeTurn(typed: string, attachments: Attachment[]) {
   };
 }
 
-// Load the expert registry from Rust (experts.json), falling back to defaults.
+// Load the expert registry from Rust (shipped config/experts.json merged with
+// custom <VAR_DIR>/experts/*.json — written by Recruiter/Socrates), falling
+// back to defaults. Refreshes on app focus AND whenever any session goes idle,
+// so an expert Socrates wrote during a turn appears in the picker without an
+// app restart.
 export function useExperts(): ExpertMap {
   const [experts, setExperts] = useState<ExpertMap>(DEFAULT_EXPERTS);
   useEffect(() => {
-    invoke<string>("list_experts")
-      .then((raw) => {
-        const obj = JSON.parse(raw) as ExpertMap;
-        if (obj && Object.keys(obj).length) setExperts(obj);
-      })
-      .catch(() => {});
+    const refresh = () =>
+      invoke<string>("list_experts")
+        .then((raw) => {
+          const obj = JSON.parse(raw) as ExpertMap;
+          if (obj && Object.keys(obj).length) setExperts(obj);
+        })
+        .catch(() => {});
+    refresh();
+    let unlisten: UnlistenFn | null = null;
+    listen<{ type?: string; status?: string }>("session-event", (e) => {
+      if (e.payload?.type === "status" && e.payload?.status === "idle") refresh();
+    }).then((fn) => {
+      unlisten = fn;
+    });
+    window.addEventListener("focus", refresh);
+    return () => {
+      unlisten?.();
+      window.removeEventListener("focus", refresh);
+    };
   }, []);
   return experts;
 }
