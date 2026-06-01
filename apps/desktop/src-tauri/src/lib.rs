@@ -1,17 +1,17 @@
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
-use std::process::{ChildStdin, Command, Stdio};
+use std::process::{Command, Stdio};
 use std::sync::{LazyLock, Mutex};
 
 use serde_json::json;
 use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewWindow};
 
-// The native Rust ACP runner — exposed via `start_session_rust` alongside
-// the existing Python `start_session`. Routing is opt-in from the React
-// side (localStorage flag); the two paths coexist on this branch so we can
-// burn down the parity gap while keeping the Python path usable. Imports
-// the portable engine from the workspace's `split-core` crate.
+// The native Rust ACP runner — the sole session backend. `start_session`
+// drives ACP in-process via `runner.rs` + the portable `split-core` engine,
+// so the shipped `.dmg` needs no Python runtime. (The retired Python sidecar
+// lives, reference-only, in the gitignored `split-python/`; it is no longer
+// wired into the app.)
 mod runner;
 
 // Engine modules from the workspace's `split-core` crate. `lib.rs` uses
@@ -19,24 +19,12 @@ mod runner;
 // projection); `runner.rs` reaches for the rest directly.
 use split_core::{harness_config, persona};
 
-// Two backends coexist:
-//
-//   * `start_session_rust` — DEFAULT — drives ACP in-process via the native
-//     Rust runner (`runner.rs` + `split-core`). The path that ships in the
-//     `.dmg` (no Python needed on the user's machine).
-//
-//   * `start_session`      — Python sidecar (`python -m split.runner`).
-//     Retained for boss-machine debugging / parity sweeps; only works if
-//     the gitignored `split-python/` folder is present locally with a
-//     `.venv/`. Opt in via `localStorage.setItem("split.runner", "python")`.
-//
-// Repo root and Python interpreter are resolved at RUNTIME — nothing machine-
-// specific is baked in. Resolution order:
-//   1. env override   — `SPLIT_REPO_ROOT` / `SPLIT_PYTHON`
+// The repo root is resolved at RUNTIME — nothing machine-specific is baked
+// in. Resolution order:
+//   1. env override   — `SPLIT_REPO_ROOT`
 //   2. walk up from the executable to the dir holding `config/harnesses.json`
 //      + `Cargo.toml` (the workspace root marker — covers `tauri dev` and
-//      `tauri build`). Replaces the old `split/core.py` marker that's no
-//      longer in-tree.
+//      `tauri build`).
 //   3. compile-time fallback — three levels up from `CARGO_MANIFEST_DIR`.
 static REPO_ROOT: LazyLock<PathBuf> = LazyLock::new(resolve_repo_root);
 
@@ -57,51 +45,18 @@ fn resolve_repo_root() -> PathBuf {
     crate_root.canonicalize().unwrap_or(crate_root)
 }
 
-// The Python interpreter for the legacy backend: explicit override, else
-// `split-python/.venv/bin/python`, else `python3`. Only consulted by
-// `start_session` (the Python dispatch path); a missing venv means the
-// Python backend is unavailable on this machine and the user is on Rust.
-fn python_bin() -> PathBuf {
-    if let Ok(p) = std::env::var("SPLIT_PYTHON") {
-        if !p.is_empty() {
-            return PathBuf::from(p);
-        }
-    }
-    let venv = REPO_ROOT.join("split-python/.venv/bin/python");
-    if venv.is_file() {
-        venv
-    } else {
-        PathBuf::from("python3")
-    }
-}
-
 // --- multi-session ----------------------------------------------------------
-// Each session is a long-lived `split.runner` speaking ACP to one agent.
-// We keep its pid (to kill), its stdin (to feed turns + auth control), and what
-// it is (harness/expert) so a window opened later can hydrate via list_sessions.
+// Each session is a long-lived agent driven by the native Rust ACP runner
+// (see `runner.rs`). We keep the control-channel sender (to feed turns / auth
+// / stop) plus what it is (harness/expert) so a window opened later can
+// hydrate via `list_sessions`.
 struct Session {
-    pid: u32,
-    stdin: ChildStdin,
-    harness: String,
-    expert: String,
-}
-
-static SESSIONS: LazyLock<Mutex<HashMap<String, Session>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
-
-// Parallel map for sessions driven by the native Rust ACP runner (see
-// `runner.rs`). `start_session_rust` populates this; `send_turn` /
-// `stop_session` / `list_sessions` consult both maps. The two paths
-// coexist on the `rust-port` branch so the Python runner stays usable
-// while the Rust path matures. Race-free: each session lives in exactly
-// one map (`start_session_rust` never touches `SESSIONS`).
-struct RustSession {
     tx: tokio::sync::mpsc::UnboundedSender<runner::RunnerInput>,
     harness: String,
     expert: String,
 }
 
-static SESSIONS_RUST: LazyLock<Mutex<HashMap<String, RustSession>>> =
+static SESSIONS: LazyLock<Mutex<HashMap<String, Session>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
 // One stdout/stderr line from a session, tagged with its id. Exactly one of
@@ -112,18 +67,6 @@ struct SessionEvent {
     vevt: Option<String>,
     log: Option<String>,
     exit: bool,
-}
-
-fn emit_vevt(app: &AppHandle, id: &str, payload: String) {
-    let _ = app.emit(
-        "session-event",
-        SessionEvent {
-            id: id.into(),
-            vevt: Some(payload),
-            log: None,
-            exit: false,
-        },
-    );
 }
 
 fn emit_log(app: &AppHandle, id: &str, line: String) {
@@ -151,8 +94,8 @@ fn emit_exit(app: &AppHandle, id: &str) {
 }
 
 // A GUI app launched from Finder gets a minimal PATH, so `npx`/`uvx`/`node`
-// (the agent CLIs) aren't found. Prepend the usual install dirs so the spawned
-// python — and the agent processes it spawns — can resolve them.
+// (the agent CLIs) aren't found. Prepend the usual install dirs so the agent
+// processes the runner spawns can resolve them.
 fn child_path() -> String {
     let mut parts: Vec<String> = vec![
         "/opt/homebrew/bin".into(),
@@ -217,172 +160,6 @@ fn open_workspace(workspace: String, session_id: Option<String>) {
     };
     let _ = std::fs::create_dir_all(&target);
     let _ = Command::new("open").arg(&target).status();
-}
-
-// Start a long-lived session: spawn `python -m split.runner --harness <h> --expert
-// <e>` with a piped stdin (turns + auth control) and stream its stdout back as
-// `session-event`s tagged `id`, broadcast to every window so the bar and the
-// dashboard both materialize the session.
-//
-// `resume=Some(true)` adds `--resume`, which makes the runner reconnect to the
-// agent's prior ACP session (read from `var/sessions/<id>/meta.json::acp_sid`)
-// instead of opening a new one. Falls back to new_session if the agent does
-// not advertise `sessionCapabilities.resume` or the resume call fails.
-#[tauri::command]
-fn start_session(
-    app: AppHandle,
-    id: String,
-    harness: String,
-    expert: String,
-    workspace: String,
-    resume: Option<bool>,
-) {
-    let harness = if harness.is_empty() {
-        "claude".to_string()
-    } else {
-        harness
-    };
-    let expert = if expert.is_empty() {
-        "consultant".to_string()
-    } else {
-        expert
-    };
-    let resume = resume.unwrap_or(false);
-    // Python is no longer in the default tree — fail fast with a clear message
-    // if the user opted into the Python backend without keeping
-    // `split-python/` checked out locally. The Rust path is the default and
-    // doesn't go through this function.
-    let split_python_dir = REPO_ROOT.join("split-python");
-    if !split_python_dir.join("split/runner.py").is_file() {
-        emit_log(
-            &app,
-            &id,
-            "Python backend selected but split-python/ not found. Either keep \
-             split-python/ checked out locally, or clear `split.runner` from \
-             DevTools localStorage to fall back to the Rust runner."
-                .to_string(),
-        );
-        emit_exit(&app, &id);
-        return;
-    }
-    let python = python_bin();
-    eprintln!(
-        "[start_session] {id} ({harness}/{expert}) resume={resume} ws={workspace:?} py={python:?}"
-    );
-    let mut cmd = Command::new(&python);
-    cmd.arg("-u")
-        .arg("-m")
-        .arg("split.runner")
-        .arg("--harness")
-        .arg(&harness)
-        .arg("--expert")
-        .arg(&expert);
-    if resume {
-        cmd.arg("--resume");
-    }
-    // cwd = split-python/ so `python -m split.runner` resolves the `split`
-    // package. core.py reads SPLIT_REPO_ROOT to anchor `var/`, `config/`, etc.
-    // to the actual repo (not the split-python/ subdir).
-    cmd.current_dir(&split_python_dir)
-        .env("SPLIT_REPO_ROOT", REPO_ROOT.to_string_lossy().as_ref())
-        .env("SPLIT_SID", &id)
-        .env("SPLIT_WORKSPACE", &workspace) // empty → runner uses the default root
-        .env("SPLIT_PERMISSION_MODE", "prompt") // route every tool ask to the UI
-        .env("PATH", child_path())
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    // Inject provider keys from the OS keychain. Set BEFORE the child runs
-    // dotenv, so python-dotenv's default override=False can't clobber them —
-    // .env (if any) only fills holes the keychain doesn't cover.
-    for key in KNOWN_KEYS {
-        if let Some(val) = secret_get(key) {
-            if !val.is_empty() {
-                cmd.env(key, val);
-            }
-        }
-    }
-    // OpenTelemetry passthrough — opt-in via the user's env (per ACP RFD
-    // `agent-telemetry-export`). If they have a local OTLP receiver running
-    // and exported `OTEL_EXPORTER_OTLP_ENDPOINT`, we forward it + tag the
-    // service per harness so agents that implement OTel stream traces
-    // out-of-band instead of via stdio.
-    if let Ok(endpoint) = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT") {
-        if !endpoint.is_empty() {
-            cmd.env("OTEL_EXPORTER_OTLP_ENDPOINT", &endpoint);
-            cmd.env("OTEL_SERVICE_NAME", format!("split-{harness}"));
-            cmd.env(
-                "OTEL_RESOURCE_ATTRIBUTES",
-                format!("split.session_id={id},split.expert={expert}"),
-            );
-            for k in [
-                "OTEL_EXPORTER_OTLP_HEADERS",
-                "OTEL_EXPORTER_OTLP_PROTOCOL",
-                "OTEL_TRACES_EXPORTER",
-            ] {
-                if let Ok(v) = std::env::var(k) {
-                    if !v.is_empty() {
-                        cmd.env(k, v);
-                    }
-                }
-            }
-        }
-    }
-    // Hermes's model selection lives in `~/.hermes/config.yaml` and accepts
-    // `-m <provider/model> --provider <name>` as CLI overrides, NOT env vars
-    // (verified by grepping hermes source: no HERMES_MODEL anywhere). The
-    // translation from var/state/hermes.config.json → CLI args + HERMES_HOME
-    // happens in core.apply_hermes_config(), called by the Python runner just
-    // before spawning hermes acp. Rust just passes a clean environment.
-    let mut child = match cmd.spawn() {
-        Ok(c) => c,
-        Err(e) => {
-            emit_log(&app, &id, format!("spawn error: {e}"));
-            emit_exit(&app, &id);
-            return;
-        }
-    };
-
-    let pid = child.id();
-    let stdin = match child.stdin.take() {
-        Some(s) => s,
-        None => return,
-    };
-    SESSIONS.lock().unwrap().insert(
-        id.clone(),
-        Session {
-            pid,
-            stdin,
-            harness: harness.clone(),
-            expert: expert.clone(),
-        },
-    );
-
-    if let Some(err) = child.stderr.take() {
-        let (a, sid) = (app.clone(), id.clone());
-        std::thread::spawn(move || {
-            for line in BufReader::new(err).lines().map_while(Result::ok) {
-                emit_log(&a, &sid, format!("⚠ {line}"));
-            }
-        });
-    }
-
-    // The stdout reader owns the child and waits on it; on exit it drops the
-    // session from the registry and signals every window.
-    std::thread::spawn(move || {
-        let mut child = child;
-        if let Some(out) = child.stdout.take() {
-            for line in BufReader::new(out).lines().map_while(Result::ok) {
-                match line.strip_prefix("VEVT ") {
-                    Some(j) => emit_vevt(&app, &id, j.to_string()),
-                    None => emit_log(&app, &id, line),
-                }
-            }
-        }
-        let _ = child.wait();
-        SESSIONS.lock().unwrap().remove(&id);
-        emit_exit(&app, &id);
-    });
 }
 
 // Read `config/tools.json` and build the list of MCP servers to pass to the
@@ -495,20 +272,19 @@ fn expand_env(s: &str) -> String {
     out
 }
 
-// Native Rust counterpart of `start_session`: spawns the agent directly via
-// the ACP Rust SDK inside this process (one tokio task per session), instead
-// of going through a Python middleman. Same VEVT output, same `session-event`
-// channel — only the producer differs. Resolves the harness command + args
-// from `config/harnesses.json` (same source the Python path uses).
+// Start a long-lived session: spawn the agent directly via the ACP Rust SDK
+// inside this process (one tokio task per session — no subprocess middleman),
+// stream its VEVT output back over the `session-event` channel, and persist a
+// per-session archive under `var/sessions/<id>/`. Resolves the harness command
+// + args from `config/harnesses.json`, projects the expert's persona + skills
+// into its workspace, mounts MCP tools, and routes auth / resume / logout /
+// cancel through the control channel.
 //
-// Known gaps versus the Python path on this branch:
-//   * no persona / skill workspace projection (the agent runs default)
-//   * no MCP servers passed to `new_session`
-//   * no resume / logout / cancel routing (auto-stop on channel drop)
-//   * no auth flow (agents that need sign-in fail at `initialize`)
-// These are intentional — we walk down the gap commit by commit.
+// `resume=Some(true)` reconnects to the agent's prior ACP session (read from
+// `var/sessions/<id>/meta.json::acp_sid`); the runner falls back to a new
+// session if the agent doesn't advertise `sessionCapabilities.resume`.
 #[tauri::command]
-fn start_session_rust(
+fn start_session(
     app: AppHandle,
     id: String,
     harness: String,
@@ -526,7 +302,7 @@ fn start_session_rust(
     } else {
         expert
     };
-    eprintln!("[start_session_rust] {id} ({harness}/{expert}) ws={workspace:?}");
+    eprintln!("[start_session] {id} ({harness}/{expert}) ws={workspace:?}");
 
     // Resolve the harness's launch command from harnesses.json (same source
     // the Python runner reads via `core.load_harnesses`).
@@ -600,7 +376,7 @@ fn start_session_rust(
     // First-turn persona injection — ACP has no standardised system prompt,
     // and per-harness cwd conventions all differ. Prepending the persona to
     // the first user prompt of the session lands it in the agent's history
-    // and persists across turns, exactly like `split.runner` does.
+    // and persists across turns, exactly like the runner does.
     let persona_body = persona::persona_text_for_injection(&REPO_ROOT, &var_dir, &expert);
 
     let mcp_servers = load_mcp_servers();
@@ -663,9 +439,9 @@ fn start_session_rust(
         resume.unwrap_or(false),
     );
 
-    SESSIONS_RUST.lock().unwrap().insert(
+    SESSIONS.lock().unwrap().insert(
         id,
-        RustSession {
+        Session {
             tx: handle.tx,
             harness,
             expert,
@@ -673,75 +449,41 @@ fn start_session_rust(
     );
 }
 
-// Feed the next turn to a running session. Consults the Python map first
-// (existing path), then the Rust map. A session lives in exactly one of
-// the two — start_session populates SESSIONS, start_session_rust populates
-// SESSIONS_RUST — so the dispatch is unambiguous.
+// Feed the next turn to a running session — send `RunnerInput::Turn` on the
+// session's control channel.
 #[tauri::command]
 fn send_turn(id: String, text: String) -> Result<(), String> {
-    {
-        let mut map = SESSIONS.lock().unwrap();
-        if let Some(s) = map.get_mut(&id) {
-            let line = format!("{}\n", json!({ "text": text }));
-            s.stdin
-                .write_all(line.as_bytes())
-                .map_err(|e| e.to_string())?;
-            return s.stdin.flush().map_err(|e| e.to_string());
-        }
-    }
-    let map = SESSIONS_RUST.lock().unwrap();
+    let map = SESSIONS.lock().unwrap();
     let s = map.get(&id).ok_or("no such session")?;
     s.tx.send(runner::RunnerInput::Turn(text))
         .map_err(|e| e.to_string())
 }
 
-// Answer an `auth_required` for a session — Python: write the chosen ACP
-// auth method on stdin; Rust: send `RunnerInput::Auth` on the channel. Both
-// runners then authenticate and auto-replay the pending prompt.
+// Answer an `auth_required` for a session — send `RunnerInput::Auth` on the
+// control channel. The runner authenticates and auto-replays the pending prompt.
 #[tauri::command]
 fn send_auth(id: String, method_id: String) -> Result<(), String> {
-    {
-        let mut map = SESSIONS.lock().unwrap();
-        if let Some(s) = map.get_mut(&id) {
-            let line = format!("{}\n", json!({ "auth": { "methodId": method_id } }));
-            s.stdin
-                .write_all(line.as_bytes())
-                .map_err(|e| e.to_string())?;
-            return s.stdin.flush().map_err(|e| e.to_string());
-        }
-    }
-    let map = SESSIONS_RUST.lock().unwrap();
+    let map = SESSIONS.lock().unwrap();
     let s = map.get(&id).ok_or("no such session")?;
     s.tx.send(runner::RunnerInput::Auth { method_id })
         .map_err(|e| e.to_string())
 }
 
-// Trigger an ACP logout for a session — Python: stdin line; Rust: channel.
-// Both runners then call the agent's `logout` method (gated by
-// `agentCapabilities.auth.logout`) and re-surface `auth_required`.
+// Trigger an ACP logout for a session. The runner calls the agent's `logout`
+// method (gated by `agentCapabilities.auth.logout`) and re-surfaces `auth_required`.
 #[tauri::command]
 fn send_logout(id: String) -> Result<(), String> {
-    {
-        let mut map = SESSIONS.lock().unwrap();
-        if let Some(s) = map.get_mut(&id) {
-            let line = format!("{}\n", json!({ "type": "logout" }));
-            s.stdin
-                .write_all(line.as_bytes())
-                .map_err(|e| e.to_string())?;
-            return s.stdin.flush().map_err(|e| e.to_string());
-        }
-    }
-    let map = SESSIONS_RUST.lock().unwrap();
+    let map = SESSIONS.lock().unwrap();
     let s = map.get(&id).ok_or("no such session")?;
     s.tx.send(runner::RunnerInput::Logout)
         .map_err(|e| e.to_string())
 }
 
-// Answer a `permission_request`. Python: stdin line; Rust: pop the oneshot
-// from `PENDING_PERMS_RUST` keyed by request_id. The `scope` parameter
-// drives persistence on the Python path (allow rules in
-// `var/permissions.json`); on the Rust path it's currently a no-op — the
-// permission engine port is the next iteration.
+// Answer a `permission_request`: pop the oneshot from `PENDING_PERMS_RUST`
+// keyed by request_id and hand the runner the picked option + scope. The
+// runner persists per scope (`session` / `always-allow` / `always-deny`)
+// before responding to the agent. `id` is accepted for API symmetry with the
+// other session commands but isn't needed (the request_id is globally unique).
 #[tauri::command]
 fn send_permission(
     id: String,
@@ -749,22 +491,7 @@ fn send_permission(
     option_id: Option<String>,
     scope: String,
 ) -> Result<(), String> {
-    {
-        let mut map = SESSIONS.lock().unwrap();
-        if let Some(s) = map.get_mut(&id) {
-            let line = format!(
-                "{}\n",
-                json!({ "permission": { "id": request_id, "optionId": option_id, "scope": scope } })
-            );
-            s.stdin
-                .write_all(line.as_bytes())
-                .map_err(|e| e.to_string())?;
-            return s.stdin.flush().map_err(|e| e.to_string());
-        }
-    }
-    // Rust path: route to the runner's oneshot with (option_id, scope) —
-    // the handler persists per scope (`session` / `always-allow` /
-    // `always-deny`) before responding to the agent.
+    let _ = id;
     if let Some(tx) = runner::PENDING_PERMS_RUST
         .lock()
         .unwrap()
@@ -777,53 +504,25 @@ fn send_permission(
     }
 }
 
-// Stop one session: ask the runner to shut down gracefully (it sends
-// session/cancel + session/close to the agent before dropping the connection),
-// then hard-kill the process tree as a safety net after a short drain window.
-// For Rust sessions, send the `Stop` enum on the mpsc channel — the runner
-// task observes it, breaks the loop, drops the ACP connection, emits exit.
+// Stop one session: send `RunnerInput::Stop` on the control channel. The
+// runner task observes it, sends session/cancel + session/close to the agent,
+// drops the ACP connection, and emits exit.
 #[tauri::command]
 fn stop_session(id: String) {
-    if let Some(mut s) = SESSIONS.lock().unwrap().remove(&id) {
-        let _ = s.stdin.write_all(b"{\"type\":\"stop\"}\n");
-        let _ = s.stdin.flush();
-        let p = s.pid.to_string();
-        std::thread::spawn(move || {
-            std::thread::sleep(std::time::Duration::from_millis(500));
-            let _ = Command::new("pkill").arg("-P").arg(&p).status();
-            let _ = Command::new("kill").arg("-KILL").arg(&p).status();
-        });
-        return;
-    }
-    if let Some(s) = SESSIONS_RUST.lock().unwrap().remove(&id) {
+    if let Some(s) = SESSIONS.lock().unwrap().remove(&id) {
         let _ = s.tx.send(runner::RunnerInput::Stop);
     }
 }
 
-// The sessions Rust still tracks, for a window that opened after they
-// started. Returns sessions from BOTH the Python path (`SESSIONS`) and the
-// native Rust path (`SESSIONS_RUST`), tagged with `backend` so the React
-// side can render which is which if it wants — today the UI treats them
-// identically.
+// The sessions the runner is still tracking, for a window that opened after
+// they started (it missed their `ready` broadcast).
 #[tauri::command]
 fn list_sessions() -> String {
-    let mut arr: Vec<serde_json::Value> = Vec::new();
-    {
-        let map = SESSIONS.lock().unwrap();
-        for (id, s) in map.iter() {
-            arr.push(json!({
-                "id": id, "harness": s.harness, "expert": s.expert, "backend": "python",
-            }));
-        }
-    }
-    {
-        let map = SESSIONS_RUST.lock().unwrap();
-        for (id, s) in map.iter() {
-            arr.push(json!({
-                "id": id, "harness": s.harness, "expert": s.expert, "backend": "rust",
-            }));
-        }
-    }
+    let map = SESSIONS.lock().unwrap();
+    let arr: Vec<serde_json::Value> = map
+        .iter()
+        .map(|(id, s)| json!({ "id": id, "harness": s.harness, "expert": s.expert }))
+        .collect();
     json!(arr).to_string()
 }
 
@@ -968,11 +667,12 @@ fn browser_login(harness: String) -> Result<String, String> {
 // Provider keys the ACP harnesses may need. The bar collects them and we persist
 // to the OS secret store (macOS Keychain / Windows Credential Manager / Linux
 // Secret Service via the `keyring` crate), so keys never touch disk in plaintext.
-// At session spawn we read them back and inject them into the runner's env,
-// where python-dotenv's load_dotenv() can't override them (override=False).
-// A legacy .env at the repo root still works as a fallback (read by split.core)
-// for users who provisioned keys before the Keychain switch.
-// Allowlisted so the UI can't store arbitrary secrets in the OS keychain.
+// At session spawn we read them back and inject them into the agent child's
+// env (via `McpServerStdio.env`). A legacy `.env` at the repo root is still
+// consulted for the UI's "configured?" detection (see `env_in_dotenv`), and
+// any key the user exported in their shell is inherited by the agent — but the
+// app no longer auto-loads `.env` itself. Allowlisted so the UI can't store
+// arbitrary secrets in the OS keychain.
 const KNOWN_KEYS: &[&str] = &[
     "ANTHROPIC_API_KEY",
     "OPENAI_API_KEY",
@@ -1425,8 +1125,8 @@ fn configure_harness(app: AppHandle, id: String) -> Result<String, String> {
 // --- Model picker config persistence ----------------------------------------
 // The generic Local/Cloud picker panel (used by Hermes, OpenCode, …) writes
 // its mode + provider/model choice to localStorage (so the UI repopulates),
-// AND mirrors it to disk here so the Python runner can read it at spawn time
-// and translate to the harness-specific CLI args via apply_<harness>_config.
+// AND mirrors it to disk here so the Rust runner can read it at spawn time and
+// translate to the harness-specific CLI args via `harness_config::apply`.
 
 fn model_config_path(harness: &str) -> PathBuf {
     REPO_ROOT
@@ -1449,9 +1149,8 @@ fn save_model_config(harness: String, cfg: String) -> Result<(), String> {
     std::fs::write(&path, cfg).map_err(|e| e.to_string())
 }
 
-// Reading + translation to CLI args happens in
-// `core.apply_<harness>_config()` on the Python side, since the runner is
-// what spawns the harness binary.
+// Reading + translation to CLI args happens in `harness_config::apply`
+// (`core-rs`) at session spawn, since the runner is what spawns the harness.
 
 // --- Ollama integration (Hermes local mode) ---------------------------------
 // Hermes's local-LLM mode points at any OpenAI-compatible endpoint; the
@@ -1765,7 +1464,6 @@ pub fn run() {
             set_bar_width,
             open_workspace,
             start_session,
-            start_session_rust,
             send_turn,
             send_auth,
             send_logout,
