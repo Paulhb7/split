@@ -9,6 +9,23 @@ import { newSession, type QueuedTurn, type Session } from "./models";
 const uid = () =>
   crypto.randomUUID?.() ?? `s-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+// --- backend selector --------------------------------------------------------
+// The native Rust runner (`core-rs/` + `src-tauri/src/runner.rs`) is the
+// DEFAULT. It speaks ACP in-process, lets the `.dmg` ship without a Python
+// runtime, and matches the Python sidecar on every capability (auth, resume,
+// logout, permissions, MCP, fs callbacks, model picker, …).
+//
+// The Python sidecar is retained as an opt-in fallback for boss-machine
+// debugging — the `split-python/` folder is gitignored and only present on
+// machines that explicitly keep it. To opt in:
+//
+//     localStorage.setItem("split.runner", "python")
+//
+// To go back to Rust (or just stay on the default), clear the key. Any value
+// other than the literal `"python"` is treated as Rust.
+const BACKEND_FLAG_KEY = "split.runner";
+const isRustBackendEnabled = () => localStorage.getItem(BACKEND_FLAG_KEY) !== "python";
+
 const labelFor = (experts: ExpertMap, slug: string) =>
   experts[slug]?.label ?? slug.charAt(0).toUpperCase() + slug.slice(1);
 
@@ -66,8 +83,9 @@ export interface StartArgs {
 }
 
 // Owns the session list for one window. Subscribes to the broadcast
-// `session-event` stream, so sessions started in EITHER window materialize here
-// (Rust is the source of truth). Exposes start/send/stop/auth.
+// `session-event` stream, so sessions started in EITHER window materialize
+// here (the Tauri shell's `SESSIONS` map is the source of truth across
+// windows; we mirror it via app-wide events). Exposes start/send/stop/auth.
 export function useSessions(experts: ExpertMap) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const expertsRef = useRef(experts);
@@ -155,7 +173,11 @@ export function useSessions(experts: ExpertMap) {
     const s = newSession(id, a.harness, a.expertSlug, labelFor(expertsRef.current, a.expertSlug), a.display, files);
     setSessions((prev) => [...prev, s]);
     const workspace = localStorage.getItem("split.workspace") || ""; // empty → default root
-    await invoke("start_session", { id, harness: a.harness, expert: a.expertSlug, workspace });
+    // Pick the runtime per session — Rust by default (the source of truth
+    // is `isRustBackendEnabled` at the top of this file). The Python sidecar
+    // is opt-in via DevTools and only resolves if `split-python/` is on disk.
+    const backend = isRustBackendEnabled() ? "start_session_rust" : "start_session";
+    await invoke(backend, { id, harness: a.harness, expert: a.expertSlug, workspace });
     await invoke("send_turn", { id, text: a.wire });
     return id;
   }, []);
@@ -255,7 +277,8 @@ export function useSessions(experts: ExpertMap) {
           return had ? prev.map((x) => (x.id === s.id ? s : x)) : [...prev, s];
         });
         const workspace = localStorage.getItem("split.workspace") || "";
-        await invoke("start_session", {
+        const backend = isRustBackendEnabled() ? "start_session_rust" : "start_session";
+        await invoke(backend, {
           id: meta.id,
           harness: meta.harness,
           expert: meta.expert,

@@ -15,24 +15,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  python:
-    name: Python engine (split/)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-      - name: Install deps (uv sync)
-        run: uv sync
-      - name: Lint (ruff)
-        run: uv run ruff check split tests
-      - name: Compile
-        run: uv run python -m py_compile split/*.py
-      - name: Import smoke (loads config registries)
-        run: uv run python -c "from split import core; print(len(core.load_harnesses()), 'harnesses,', len(core.load_experts()), 'experts')"
-      - name: Unit tests (pytest)
-        run: uv run pytest -q
+  # The Python backend was retired from the default runtime in favour of the
+  # native Rust runner (`core-rs/` + `apps/desktop/src-tauri/src/runner.rs`).
+  # Python code lives in `split-python/` locally, gitignored — fresh clones
+  # don't have it, so there's nothing for CI to lint or test on that side.
+  # The `desktop` job below is now the whole pipeline.
 
   desktop:
     name: Desktop (Tauri + React)
@@ -58,10 +45,13 @@ jobs:
       - name: Cargo cache
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: apps/desktop/src-tauri
-      - name: Lint (clippy)
-        working-directory: apps/desktop/src-tauri
-        run: cargo clippy -- -D warnings
-      - name: cargo check (Tauri crate)
-        working-directory: apps/desktop/src-tauri
-        run: cargo check
+          workspaces: .
+      - name: Lint (clippy — workspace, all targets)
+        working-directory: ${{ github.workspace }}
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: cargo check (workspace)
+        working-directory: ${{ github.workspace }}
+        run: cargo check --workspace
+      - name: Rust unit tests (split-core)
+        working-directory: ${{ github.workspace }}
+        run: cargo test --workspace --quiet

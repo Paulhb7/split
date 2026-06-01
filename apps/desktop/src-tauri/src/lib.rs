@@ -7,17 +7,37 @@ use std::sync::{LazyLock, Mutex};
 use serde_json::json;
 use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewWindow};
 
-// The ACP backend: one `split.runner` process per session, run as
-// `python -m split.runner` from the repo root (so the `split` package resolves).
-// The repo root and the Python interpreter are resolved at RUNTIME — nothing
-// machine-specific is baked in, so the app runs from wherever it's checked out.
-// Resolution order, most explicit first:
-//   1. env override  — SPLIT_REPO_ROOT / SPLIT_PYTHON
-//   2. walk up from the executable to the dir holding our repo markers
-//      (config/harnesses.json + split/core.py) — covers `tauri dev`, where the
-//      binary lives under apps/desktop/src-tauri/target/<profile>/
-//   3. compile-time fallback — this crate sits at apps/desktop/src-tauri, so the
-//      repo root is three levels up from CARGO_MANIFEST_DIR
+// The native Rust ACP runner — exposed via `start_session_rust` alongside
+// the existing Python `start_session`. Routing is opt-in from the React
+// side (localStorage flag); the two paths coexist on this branch so we can
+// burn down the parity gap while keeping the Python path usable. Imports
+// the portable engine from the workspace's `split-core` crate.
+mod runner;
+
+// Engine modules from the workspace's `split-core` crate. `lib.rs` uses
+// `harness_config` (model picker translation) + `persona` (workspace
+// projection); `runner.rs` reaches for the rest directly.
+use split_core::{harness_config, persona};
+
+// Two backends coexist:
+//
+//   * `start_session_rust` — DEFAULT — drives ACP in-process via the native
+//     Rust runner (`runner.rs` + `split-core`). The path that ships in the
+//     `.dmg` (no Python needed on the user's machine).
+//
+//   * `start_session`      — Python sidecar (`python -m split.runner`).
+//     Retained for boss-machine debugging / parity sweeps; only works if
+//     the gitignored `split-python/` folder is present locally with a
+//     `.venv/`. Opt in via `localStorage.setItem("split.runner", "python")`.
+//
+// Repo root and Python interpreter are resolved at RUNTIME — nothing machine-
+// specific is baked in. Resolution order:
+//   1. env override   — `SPLIT_REPO_ROOT` / `SPLIT_PYTHON`
+//   2. walk up from the executable to the dir holding `config/harnesses.json`
+//      + `Cargo.toml` (the workspace root marker — covers `tauri dev` and
+//      `tauri build`). Replaces the old `split/core.py` marker that's no
+//      longer in-tree.
+//   3. compile-time fallback — three levels up from `CARGO_MANIFEST_DIR`.
 static REPO_ROOT: LazyLock<PathBuf> = LazyLock::new(resolve_repo_root);
 
 fn resolve_repo_root() -> PathBuf {
@@ -27,7 +47,7 @@ fn resolve_repo_root() -> PathBuf {
         }
     }
     let is_root =
-        |p: &Path| p.join("config/harnesses.json").is_file() && p.join("split/core.py").is_file();
+        |p: &Path| p.join("config/harnesses.json").is_file() && p.join("Cargo.toml").is_file();
     if let Ok(exe) = std::env::current_exe() {
         if let Some(root) = exe.ancestors().find(|&p| is_root(p)) {
             return root.to_path_buf();
@@ -37,14 +57,17 @@ fn resolve_repo_root() -> PathBuf {
     crate_root.canonicalize().unwrap_or(crate_root)
 }
 
-// The Python interpreter: explicit override, else the repo's venv, else `python3`.
+// The Python interpreter for the legacy backend: explicit override, else
+// `split-python/.venv/bin/python`, else `python3`. Only consulted by
+// `start_session` (the Python dispatch path); a missing venv means the
+// Python backend is unavailable on this machine and the user is on Rust.
 fn python_bin() -> PathBuf {
     if let Ok(p) = std::env::var("SPLIT_PYTHON") {
         if !p.is_empty() {
             return PathBuf::from(p);
         }
     }
-    let venv = REPO_ROOT.join(".venv/bin/python");
+    let venv = REPO_ROOT.join("split-python/.venv/bin/python");
     if venv.is_file() {
         venv
     } else {
@@ -66,6 +89,21 @@ struct Session {
 static SESSIONS: LazyLock<Mutex<HashMap<String, Session>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
+// Parallel map for sessions driven by the native Rust ACP runner (see
+// `runner.rs`). `start_session_rust` populates this; `send_turn` /
+// `stop_session` / `list_sessions` consult both maps. The two paths
+// coexist on the `rust-port` branch so the Python runner stays usable
+// while the Rust path matures. Race-free: each session lives in exactly
+// one map (`start_session_rust` never touches `SESSIONS`).
+struct RustSession {
+    tx: tokio::sync::mpsc::UnboundedSender<runner::RunnerInput>,
+    harness: String,
+    expert: String,
+}
+
+static SESSIONS_RUST: LazyLock<Mutex<HashMap<String, RustSession>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
 // One stdout/stderr line from a session, tagged with its id. Exactly one of
 // `vevt` / `log` / `exit` carries meaning per event. Broadcast to ALL windows.
 #[derive(Clone, serde::Serialize)]
@@ -79,21 +117,36 @@ struct SessionEvent {
 fn emit_vevt(app: &AppHandle, id: &str, payload: String) {
     let _ = app.emit(
         "session-event",
-        SessionEvent { id: id.into(), vevt: Some(payload), log: None, exit: false },
+        SessionEvent {
+            id: id.into(),
+            vevt: Some(payload),
+            log: None,
+            exit: false,
+        },
     );
 }
 
 fn emit_log(app: &AppHandle, id: &str, line: String) {
     let _ = app.emit(
         "session-event",
-        SessionEvent { id: id.into(), vevt: None, log: Some(line), exit: false },
+        SessionEvent {
+            id: id.into(),
+            vevt: None,
+            log: Some(line),
+            exit: false,
+        },
     );
 }
 
 fn emit_exit(app: &AppHandle, id: &str) {
     let _ = app.emit(
         "session-event",
-        SessionEvent { id: id.into(), vevt: None, log: None, exit: true },
+        SessionEvent {
+            id: id.into(),
+            vevt: None,
+            log: None,
+            exit: true,
+        },
     );
 }
 
@@ -184,11 +237,38 @@ fn start_session(
     workspace: String,
     resume: Option<bool>,
 ) {
-    let harness = if harness.is_empty() { "claude".to_string() } else { harness };
-    let expert = if expert.is_empty() { "consultant".to_string() } else { expert };
+    let harness = if harness.is_empty() {
+        "claude".to_string()
+    } else {
+        harness
+    };
+    let expert = if expert.is_empty() {
+        "consultant".to_string()
+    } else {
+        expert
+    };
     let resume = resume.unwrap_or(false);
+    // Python is no longer in the default tree — fail fast with a clear message
+    // if the user opted into the Python backend without keeping
+    // `split-python/` checked out locally. The Rust path is the default and
+    // doesn't go through this function.
+    let split_python_dir = REPO_ROOT.join("split-python");
+    if !split_python_dir.join("split/runner.py").is_file() {
+        emit_log(
+            &app,
+            &id,
+            "Python backend selected but split-python/ not found. Either keep \
+             split-python/ checked out locally, or clear `split.runner` from \
+             DevTools localStorage to fall back to the Rust runner."
+                .to_string(),
+        );
+        emit_exit(&app, &id);
+        return;
+    }
     let python = python_bin();
-    eprintln!("[start_session] {id} ({harness}/{expert}) resume={resume} ws={workspace:?} py={python:?}");
+    eprintln!(
+        "[start_session] {id} ({harness}/{expert}) resume={resume} ws={workspace:?} py={python:?}"
+    );
     let mut cmd = Command::new(&python);
     cmd.arg("-u")
         .arg("-m")
@@ -200,7 +280,11 @@ fn start_session(
     if resume {
         cmd.arg("--resume");
     }
-    cmd.current_dir(&*REPO_ROOT)
+    // cwd = split-python/ so `python -m split.runner` resolves the `split`
+    // package. core.py reads SPLIT_REPO_ROOT to anchor `var/`, `config/`, etc.
+    // to the actual repo (not the split-python/ subdir).
+    cmd.current_dir(&split_python_dir)
+        .env("SPLIT_REPO_ROOT", REPO_ROOT.to_string_lossy().as_ref())
         .env("SPLIT_SID", &id)
         .env("SPLIT_WORKSPACE", &workspace) // empty → runner uses the default root
         .env("SPLIT_PERMISSION_MODE", "prompt") // route every tool ask to the UI
@@ -227,8 +311,15 @@ fn start_session(
         if !endpoint.is_empty() {
             cmd.env("OTEL_EXPORTER_OTLP_ENDPOINT", &endpoint);
             cmd.env("OTEL_SERVICE_NAME", format!("split-{harness}"));
-            cmd.env("OTEL_RESOURCE_ATTRIBUTES", format!("split.session_id={id},split.expert={expert}"));
-            for k in ["OTEL_EXPORTER_OTLP_HEADERS", "OTEL_EXPORTER_OTLP_PROTOCOL", "OTEL_TRACES_EXPORTER"] {
+            cmd.env(
+                "OTEL_RESOURCE_ATTRIBUTES",
+                format!("split.session_id={id},split.expert={expert}"),
+            );
+            for k in [
+                "OTEL_EXPORTER_OTLP_HEADERS",
+                "OTEL_EXPORTER_OTLP_PROTOCOL",
+                "OTEL_TRACES_EXPORTER",
+            ] {
                 if let Ok(v) = std::env::var(k) {
                     if !v.is_empty() {
                         cmd.env(k, v);
@@ -243,8 +334,7 @@ fn start_session(
     // translation from var/state/hermes.config.json → CLI args + HERMES_HOME
     // happens in core.apply_hermes_config(), called by the Python runner just
     // before spawning hermes acp. Rust just passes a clean environment.
-    let mut child = match cmd.spawn()
-    {
+    let mut child = match cmd.spawn() {
         Ok(c) => c,
         Err(e) => {
             emit_log(&app, &id, format!("spawn error: {e}"));
@@ -260,7 +350,12 @@ fn start_session(
     };
     SESSIONS.lock().unwrap().insert(
         id.clone(),
-        Session { pid, stdin, harness: harness.clone(), expert: expert.clone() },
+        Session {
+            pid,
+            stdin,
+            harness: harness.clone(),
+            expert: expert.clone(),
+        },
     );
 
     if let Some(err) = child.stderr.take() {
@@ -290,43 +385,363 @@ fn start_session(
     });
 }
 
-// Feed the next turn to a running session — one JSON line on its stdin, so
-// multi-line tasks survive the line-delimited channel.
+// Read `config/tools.json` and build the list of MCP servers to pass to the
+// Rust runner's `NewSessionRequest`. Mirrors `core.load_mcp` (Python). Only
+// the stdio transport is supported here — the HTTP / SSE / ACP variants
+// require capability negotiation we don't surface yet.
+fn load_mcp_servers() -> Vec<agent_client_protocol::schema::McpServer> {
+    use agent_client_protocol::schema::{EnvVariable, McpServer, McpServerStdio};
+    let path = REPO_ROOT.join("config").join("tools.json");
+    let Ok(raw) = std::fs::read_to_string(&path) else {
+        return vec![];
+    };
+    let Ok(val) = serde_json::from_str::<serde_json::Value>(&raw) else {
+        return vec![];
+    };
+    let Some(servers_obj) = val.get("mcpServers").and_then(|v| v.as_object()) else {
+        return vec![];
+    };
+    let mut out: Vec<McpServer> = Vec::new();
+    for (name, srv) in servers_obj {
+        let Some(command) = srv.get("command").and_then(|v| v.as_str()) else {
+            continue;
+        };
+        let args: Vec<String> = srv
+            .get("args")
+            .and_then(|v| v.as_array())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect()
+            })
+            .unwrap_or_default();
+        // `${VAR}` expansion mirrors Python's `os.path.expandvars`.
+        let env: Vec<EnvVariable> = srv
+            .get("env")
+            .and_then(|v| v.as_object())
+            .map(|env_obj| {
+                env_obj
+                    .iter()
+                    .filter_map(|(k, v)| {
+                        let raw = v.as_str()?;
+                        Some(EnvVariable::new(k.clone(), expand_env(raw)))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        let stdio = McpServerStdio::new(name.as_str(), PathBuf::from(command))
+            .args(args)
+            .env(env);
+        out.push(McpServer::Stdio(stdio));
+    }
+    out
+}
+
+// `${VAR}` and `$VAR` expansion — minimal port of Python's `os.path.expandvars`.
+// Used by `load_mcp_servers` so tools.json can reference provider keys without
+// hardcoding them in the repo.
+fn expand_env(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'$' && i + 1 < bytes.len() {
+            let (name, advance) = if bytes[i + 1] == b'{' {
+                // `${NAME}` form — read until matching `}`.
+                let end = bytes[i + 2..].iter().position(|&b| b == b'}');
+                if let Some(end) = end {
+                    let name = std::str::from_utf8(&bytes[i + 2..i + 2 + end]).unwrap_or("");
+                    (name.to_string(), end + 3)
+                } else {
+                    out.push('$');
+                    i += 1;
+                    continue;
+                }
+            } else {
+                // `$NAME` form — read while alphanumeric or `_`.
+                let end = bytes[i + 1..]
+                    .iter()
+                    .position(|&b| !b.is_ascii_alphanumeric() && b != b'_')
+                    .unwrap_or(bytes.len() - i - 1);
+                let name = std::str::from_utf8(&bytes[i + 1..i + 1 + end]).unwrap_or("");
+                if name.is_empty() {
+                    out.push('$');
+                    i += 1;
+                    continue;
+                }
+                (name.to_string(), end + 1)
+            };
+            match std::env::var(&name) {
+                Ok(v) => out.push_str(&v),
+                Err(_) => {
+                    // Leave the placeholder in-place (Python `os.path.expandvars`
+                    // semantics — unknown vars are kept verbatim).
+                    out.push('$');
+                    if s.as_bytes()[i + 1] == b'{' {
+                        out.push('{');
+                        out.push_str(&name);
+                        out.push('}');
+                    } else {
+                        out.push_str(&name);
+                    }
+                }
+            }
+            i += advance;
+        } else {
+            out.push(bytes[i] as char);
+            i += 1;
+        }
+    }
+    out
+}
+
+// Native Rust counterpart of `start_session`: spawns the agent directly via
+// the ACP Rust SDK inside this process (one tokio task per session), instead
+// of going through a Python middleman. Same VEVT output, same `session-event`
+// channel — only the producer differs. Resolves the harness command + args
+// from `config/harnesses.json` (same source the Python path uses).
+//
+// Known gaps versus the Python path on this branch:
+//   * no persona / skill workspace projection (the agent runs default)
+//   * no MCP servers passed to `new_session`
+//   * no resume / logout / cancel routing (auto-stop on channel drop)
+//   * no auth flow (agents that need sign-in fail at `initialize`)
+// These are intentional — we walk down the gap commit by commit.
+#[tauri::command]
+fn start_session_rust(
+    app: AppHandle,
+    id: String,
+    harness: String,
+    expert: String,
+    workspace: String,
+    resume: Option<bool>,
+) {
+    let harness = if harness.is_empty() {
+        "claude".to_string()
+    } else {
+        harness
+    };
+    let expert = if expert.is_empty() {
+        "consultant".to_string()
+    } else {
+        expert
+    };
+    eprintln!("[start_session_rust] {id} ({harness}/{expert}) ws={workspace:?}");
+
+    // Resolve the harness's launch command from harnesses.json (same source
+    // the Python runner reads via `core.load_harnesses`).
+    let map = match read_harnesses_map() {
+        Ok(m) => m,
+        Err(e) => {
+            emit_log(&app, &id, format!("harnesses.json error: {e}"));
+            emit_exit(&app, &id);
+            return;
+        }
+    };
+    let row = match map.get(&harness) {
+        Some(r) => r,
+        None => {
+            emit_log(&app, &id, format!("unknown harness: {harness}"));
+            emit_exit(&app, &id);
+            return;
+        }
+    };
+    let command_raw = row
+        .get("command")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    // Resolve `./var/bin/...` relative to REPO_ROOT (mirrors `core.resolve_command`).
+    let command = if command_raw.starts_with("./") || command_raw.starts_with("../") {
+        REPO_ROOT.join(&command_raw).to_string_lossy().into_owned()
+    } else {
+        command_raw
+    };
+    let base_args: Vec<String> = row
+        .get("args")
+        .and_then(|v| v.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    // Apply per-harness model-picker config (Hermes / OpenCode). Returns
+    // extra CLI args prepended to the harness's own args, plus env vars
+    // applied to the spawned child. Other harnesses pass through unchanged.
+    let var_dir_for_cfg = REPO_ROOT.join("var");
+    let (extra_args, extra_env) = harness_config::apply(&REPO_ROOT, &var_dir_for_cfg, &harness);
+    // Top-level Hermes flags must precede the `acp` subcommand — `-m` /
+    // `--provider` are global, not subcommand-scoped. Putting them after
+    // breaks with "unrecognised arguments". OpenCode produces empty
+    // extra_args (XDG_CONFIG_HOME drives everything), so the order is
+    // harmless there.
+    let mut args = Vec::with_capacity(extra_args.len() + base_args.len());
+    args.extend(extra_args);
+    args.extend(base_args);
+
+    // Compute + project the per-expert workspace. Mirrors the Python path's
+    // `core.expert_workspace_dir` + `core.ensure_expert_workspace`: each
+    // expert gets `<repo>/var/workspace/<expert>/`, the persona body lands
+    // in `AGENTS.md` (with CLAUDE.md / GEMINI.md / QWEN.md / VIBE.md +
+    // .vibe/AGENTS.md shims), and allowed skills are symlinked into the
+    // harness-specific skill dirs (`.claude/skills/`, `.agents/skills/`,
+    // `.vibe/skills/`). Empty `workspace` from the caller means "default".
+    let var_dir = REPO_ROOT.join("var");
+    let workspace_root = if workspace.is_empty() {
+        var_dir.join("workspace")
+    } else {
+        PathBuf::from(&workspace)
+    };
+    let ws = persona::ensure_expert_workspace(&REPO_ROOT, &var_dir, &workspace_root, &expert);
+    let resolved_workspace = ws.to_string_lossy().into_owned();
+
+    // First-turn persona injection — ACP has no standardised system prompt,
+    // and per-harness cwd conventions all differ. Prepending the persona to
+    // the first user prompt of the session lands it in the agent's history
+    // and persists across turns, exactly like `split.runner` does.
+    let persona_body = persona::persona_text_for_injection(&REPO_ROOT, &var_dir, &expert);
+
+    let mcp_servers = load_mcp_servers();
+    let sessions_dir = var_dir.join("sessions");
+    let _ = std::fs::create_dir_all(&sessions_dir);
+
+    // Build the env we'll inject into the agent child (provider keys from the
+    // OS keychain + OTLP forwards if the user has them in their env). The
+    // Python path does this via the Python child's env; we do it via the
+    // `McpServerStdio.env` the SDK applies on spawn.
+    let mut agent_env: HashMap<String, String> = HashMap::new();
+    for key in KNOWN_KEYS {
+        if let Some(val) = secret_get(key) {
+            if !val.is_empty() {
+                agent_env.insert((*key).to_string(), val);
+            }
+        }
+    }
+    if let Ok(endpoint) = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT") {
+        if !endpoint.is_empty() {
+            agent_env.insert("OTEL_EXPORTER_OTLP_ENDPOINT".into(), endpoint);
+            agent_env.insert("OTEL_SERVICE_NAME".into(), format!("split-{harness}"));
+            agent_env.insert(
+                "OTEL_RESOURCE_ATTRIBUTES".into(),
+                format!("split.session_id={id},split.expert={expert}"),
+            );
+            for k in [
+                "OTEL_EXPORTER_OTLP_HEADERS",
+                "OTEL_EXPORTER_OTLP_PROTOCOL",
+                "OTEL_TRACES_EXPORTER",
+            ] {
+                if let Ok(v) = std::env::var(k) {
+                    if !v.is_empty() {
+                        agent_env.insert(k.to_string(), v);
+                    }
+                }
+            }
+        }
+    }
+    // PATH gets `child_path()` so npx / uvx / node resolve in a Finder-
+    // launched bundle (same fix the Python path needed).
+    agent_env.insert("PATH".to_string(), child_path());
+    // Harness-specific env (HERMES_HOME, XDG_CONFIG_HOME for OpenCode).
+    for (k, v) in extra_env {
+        agent_env.insert(k, v);
+    }
+
+    let handle = runner::start(
+        app,
+        id.clone(),
+        harness.clone(),
+        expert.clone(),
+        sessions_dir,
+        resolved_workspace,
+        command,
+        args,
+        agent_env,
+        mcp_servers,
+        persona_body,
+        resume.unwrap_or(false),
+    );
+
+    SESSIONS_RUST.lock().unwrap().insert(
+        id,
+        RustSession {
+            tx: handle.tx,
+            harness,
+            expert,
+        },
+    );
+}
+
+// Feed the next turn to a running session. Consults the Python map first
+// (existing path), then the Rust map. A session lives in exactly one of
+// the two — start_session populates SESSIONS, start_session_rust populates
+// SESSIONS_RUST — so the dispatch is unambiguous.
 #[tauri::command]
 fn send_turn(id: String, text: String) -> Result<(), String> {
-    let mut map = SESSIONS.lock().unwrap();
-    let s = map.get_mut(&id).ok_or("no such session")?;
-    let line = format!("{}\n", json!({ "text": text }));
-    s.stdin.write_all(line.as_bytes()).map_err(|e| e.to_string())?;
-    s.stdin.flush().map_err(|e| e.to_string())
+    {
+        let mut map = SESSIONS.lock().unwrap();
+        if let Some(s) = map.get_mut(&id) {
+            let line = format!("{}\n", json!({ "text": text }));
+            s.stdin
+                .write_all(line.as_bytes())
+                .map_err(|e| e.to_string())?;
+            return s.stdin.flush().map_err(|e| e.to_string());
+        }
+    }
+    let map = SESSIONS_RUST.lock().unwrap();
+    let s = map.get(&id).ok_or("no such session")?;
+    s.tx.send(runner::RunnerInput::Turn(text))
+        .map_err(|e| e.to_string())
 }
 
-// Answer an `auth_required` for a session — write the chosen ACP auth method on
-// its stdin; the runner authenticates then auto-replays the pending prompt.
+// Answer an `auth_required` for a session — Python: write the chosen ACP
+// auth method on stdin; Rust: send `RunnerInput::Auth` on the channel. Both
+// runners then authenticate and auto-replay the pending prompt.
 #[tauri::command]
 fn send_auth(id: String, method_id: String) -> Result<(), String> {
-    let mut map = SESSIONS.lock().unwrap();
-    let s = map.get_mut(&id).ok_or("no such session")?;
-    let line = format!("{}\n", json!({ "auth": { "methodId": method_id } }));
-    s.stdin.write_all(line.as_bytes()).map_err(|e| e.to_string())?;
-    s.stdin.flush().map_err(|e| e.to_string())
+    {
+        let mut map = SESSIONS.lock().unwrap();
+        if let Some(s) = map.get_mut(&id) {
+            let line = format!("{}\n", json!({ "auth": { "methodId": method_id } }));
+            s.stdin
+                .write_all(line.as_bytes())
+                .map_err(|e| e.to_string())?;
+            return s.stdin.flush().map_err(|e| e.to_string());
+        }
+    }
+    let map = SESSIONS_RUST.lock().unwrap();
+    let s = map.get(&id).ok_or("no such session")?;
+    s.tx.send(runner::RunnerInput::Auth { method_id })
+        .map_err(|e| e.to_string())
 }
 
-// Trigger an ACP logout for a session — the runner calls the agent's `logout`
-// method (gated by `agentCapabilities.auth.logout`) then surfaces a fresh
-// auth_required so the UI can re-prompt sign-in.
+// Trigger an ACP logout for a session — Python: stdin line; Rust: channel.
+// Both runners then call the agent's `logout` method (gated by
+// `agentCapabilities.auth.logout`) and re-surface `auth_required`.
 #[tauri::command]
 fn send_logout(id: String) -> Result<(), String> {
-    let mut map = SESSIONS.lock().unwrap();
-    let s = map.get_mut(&id).ok_or("no such session")?;
-    let line = format!("{}\n", json!({ "type": "logout" }));
-    s.stdin.write_all(line.as_bytes()).map_err(|e| e.to_string())?;
-    s.stdin.flush().map_err(|e| e.to_string())
+    {
+        let mut map = SESSIONS.lock().unwrap();
+        if let Some(s) = map.get_mut(&id) {
+            let line = format!("{}\n", json!({ "type": "logout" }));
+            s.stdin
+                .write_all(line.as_bytes())
+                .map_err(|e| e.to_string())?;
+            return s.stdin.flush().map_err(|e| e.to_string());
+        }
+    }
+    let map = SESSIONS_RUST.lock().unwrap();
+    let s = map.get(&id).ok_or("no such session")?;
+    s.tx.send(runner::RunnerInput::Logout)
+        .map_err(|e| e.to_string())
 }
 
-// Answer a `permission_request` for a session — the chosen ACP option (None =
-// deny) plus the persistence scope (once / session / always-allow / always-deny).
-// The runner resolves the pending Future and optionally writes a rule.
+// Answer a `permission_request`. Python: stdin line; Rust: pop the oneshot
+// from `PENDING_PERMS_RUST` keyed by request_id. The `scope` parameter
+// drives persistence on the Python path (allow rules in
+// `var/permissions.json`); on the Rust path it's currently a no-op — the
+// permission engine port is the next iteration.
 #[tauri::command]
 fn send_permission(
     id: String,
@@ -334,19 +749,39 @@ fn send_permission(
     option_id: Option<String>,
     scope: String,
 ) -> Result<(), String> {
-    let mut map = SESSIONS.lock().unwrap();
-    let s = map.get_mut(&id).ok_or("no such session")?;
-    let line = format!(
-        "{}\n",
-        json!({ "permission": { "id": request_id, "optionId": option_id, "scope": scope } })
-    );
-    s.stdin.write_all(line.as_bytes()).map_err(|e| e.to_string())?;
-    s.stdin.flush().map_err(|e| e.to_string())
+    {
+        let mut map = SESSIONS.lock().unwrap();
+        if let Some(s) = map.get_mut(&id) {
+            let line = format!(
+                "{}\n",
+                json!({ "permission": { "id": request_id, "optionId": option_id, "scope": scope } })
+            );
+            s.stdin
+                .write_all(line.as_bytes())
+                .map_err(|e| e.to_string())?;
+            return s.stdin.flush().map_err(|e| e.to_string());
+        }
+    }
+    // Rust path: route to the runner's oneshot with (option_id, scope) —
+    // the handler persists per scope (`session` / `always-allow` /
+    // `always-deny`) before responding to the agent.
+    if let Some(tx) = runner::PENDING_PERMS_RUST
+        .lock()
+        .unwrap()
+        .remove(&request_id)
+    {
+        let _ = tx.send((option_id, scope));
+        Ok(())
+    } else {
+        Err("no such pending permission".into())
+    }
 }
 
 // Stop one session: ask the runner to shut down gracefully (it sends
 // session/cancel + session/close to the agent before dropping the connection),
 // then hard-kill the process tree as a safety net after a short drain window.
+// For Rust sessions, send the `Stop` enum on the mpsc channel — the runner
+// task observes it, breaks the loop, drops the ACP connection, emits exit.
 #[tauri::command]
 fn stop_session(id: String) {
     if let Some(mut s) = SESSIONS.lock().unwrap().remove(&id) {
@@ -358,17 +793,37 @@ fn stop_session(id: String) {
             let _ = Command::new("pkill").arg("-P").arg(&p).status();
             let _ = Command::new("kill").arg("-KILL").arg(&p).status();
         });
+        return;
+    }
+    if let Some(s) = SESSIONS_RUST.lock().unwrap().remove(&id) {
+        let _ = s.tx.send(runner::RunnerInput::Stop);
     }
 }
 
-// The sessions Rust still tracks, for a window that opened after they started.
+// The sessions Rust still tracks, for a window that opened after they
+// started. Returns sessions from BOTH the Python path (`SESSIONS`) and the
+// native Rust path (`SESSIONS_RUST`), tagged with `backend` so the React
+// side can render which is which if it wants — today the UI treats them
+// identically.
 #[tauri::command]
 fn list_sessions() -> String {
-    let map = SESSIONS.lock().unwrap();
-    let arr: Vec<_> = map
-        .iter()
-        .map(|(id, s)| json!({ "id": id, "harness": s.harness, "expert": s.expert }))
-        .collect();
+    let mut arr: Vec<serde_json::Value> = Vec::new();
+    {
+        let map = SESSIONS.lock().unwrap();
+        for (id, s) in map.iter() {
+            arr.push(json!({
+                "id": id, "harness": s.harness, "expert": s.expert, "backend": "python",
+            }));
+        }
+    }
+    {
+        let map = SESSIONS_RUST.lock().unwrap();
+        for (id, s) in map.iter() {
+            arr.push(json!({
+                "id": id, "harness": s.harness, "expert": s.expert, "backend": "rust",
+            }));
+        }
+    }
     json!(arr).to_string()
 }
 
@@ -387,8 +842,12 @@ fn list_archived_sessions() -> String {
                 continue;
             }
             let meta_path = dir.join("meta.json");
-            let Ok(raw) = std::fs::read_to_string(&meta_path) else { continue };
-            let Ok(val) = serde_json::from_str::<serde_json::Value>(&raw) else { continue };
+            let Ok(raw) = std::fs::read_to_string(&meta_path) else {
+                continue;
+            };
+            let Ok(val) = serde_json::from_str::<serde_json::Value>(&raw) else {
+                continue;
+            };
             out.push(val);
         }
     }
@@ -410,7 +869,11 @@ fn read_session_events(id: String) -> Result<String, String> {
     if id.is_empty() || id.contains('/') || id.contains('\\') || id.contains("..") {
         return Err("invalid session id".into());
     }
-    let path = REPO_ROOT.join("var").join("sessions").join(&id).join("events.ndjson");
+    let path = REPO_ROOT
+        .join("var")
+        .join("sessions")
+        .join(&id)
+        .join("events.ndjson");
     std::fs::read_to_string(&path).map_err(|e| e.to_string())
 }
 
@@ -459,8 +922,12 @@ fn list_experts() -> Result<String, String> {
             if merged.contains_key(&slug) {
                 continue; // shipped wins
             }
-            let Ok(body) = std::fs::read_to_string(&path) else { continue };
-            let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&body) else { continue };
+            let Ok(body) = std::fs::read_to_string(&path) else {
+                continue;
+            };
+            let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&body) else {
+                continue;
+            };
             merged.insert(slug, parsed);
         }
     }
@@ -528,7 +995,9 @@ fn secret_entry(name: &str) -> Result<keyring::Entry, String> {
 }
 
 fn secret_set(name: &str, value: &str) -> Result<(), String> {
-    secret_entry(name)?.set_password(value).map_err(|e| e.to_string())
+    secret_entry(name)?
+        .set_password(value)
+        .map_err(|e| e.to_string())
 }
 
 fn secret_get(name: &str) -> Option<String> {
@@ -536,7 +1005,9 @@ fn secret_get(name: &str) -> Option<String> {
 }
 
 fn secret_present(name: &str) -> bool {
-    secret_get(name).map(|v| !v.trim().is_empty()).unwrap_or(false)
+    secret_get(name)
+        .map(|v| !v.trim().is_empty())
+        .unwrap_or(false)
 }
 
 #[tauri::command]
@@ -568,12 +1039,16 @@ fn env_in_dotenv(key: &str) -> bool {
     env.lines().any(|l| {
         let l = l.trim_start();
         l.starts_with(&format!("{key}="))
-            && l.split_once('=').map(|x| !x.1.trim().is_empty()).unwrap_or(false)
+            && l.split_once('=')
+                .map(|x| !x.1.trim().is_empty())
+                .unwrap_or(false)
     })
 }
 
 fn env_set(key: &str) -> bool {
-    std::env::var(key).map(|v| !v.trim().is_empty()).unwrap_or(false)
+    std::env::var(key)
+        .map(|v| !v.trim().is_empty())
+        .unwrap_or(false)
         || secret_present(key)
         || env_in_dotenv(key)
 }
@@ -597,7 +1072,11 @@ fn install_state_for(install_kind: Option<&str>, command: &str) -> &'static str 
     match install_kind {
         Some("npx") => "ready",
         Some("external") | Some("binary") | Some("script") => {
-            if command_on_path(command) { "ready" } else { "missing" }
+            if command_on_path(command) {
+                "ready"
+            } else {
+                "missing"
+            }
         }
         _ => "ready",
     }
@@ -618,12 +1097,28 @@ fn configure_state_for(cfg: Option<&serde_json::Value>) -> &'static str {
                 .and_then(|v| v.as_str())
                 .map(|p| expand_tilde(p).exists())
                 .unwrap_or(false);
-            let env_ok = cfg.get("check_env").and_then(|v| v.as_str()).map(env_set).unwrap_or(false);
-            if file_ok || env_ok { "ready" } else { "missing" }
+            let env_ok = cfg
+                .get("check_env")
+                .and_then(|v| v.as_str())
+                .map(env_set)
+                .unwrap_or(false);
+            if file_ok || env_ok {
+                "ready"
+            } else {
+                "missing"
+            }
         }
         "api-key" => {
-            let ok = cfg.get("key").and_then(|v| v.as_str()).map(env_set).unwrap_or(false);
-            if ok { "ready" } else { "missing" }
+            let ok = cfg
+                .get("key")
+                .and_then(|v| v.as_str())
+                .map(env_set)
+                .unwrap_or(false);
+            if ok {
+                "ready"
+            } else {
+                "missing"
+            }
         }
         "external" => "external",
         "model-picker" => {
@@ -641,7 +1136,11 @@ fn configure_state_for(cfg: Option<&serde_json::Value>) -> &'static str {
             ]
             .iter()
             .any(|k| secret_present(k));
-            if any_key { "ready" } else { "missing" }
+            if any_key {
+                "ready"
+            } else {
+                "missing"
+            }
         }
         _ => "ready",
     }
@@ -652,7 +1151,9 @@ fn read_harnesses_map() -> Result<serde_json::Map<String, serde_json::Value>, St
     let raw = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
     let val: serde_json::Value = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
     match val {
-        serde_json::Value::Object(m) => Ok(m.into_iter().filter(|(k, _)| !k.starts_with('_')).collect()),
+        serde_json::Value::Object(m) => {
+            Ok(m.into_iter().filter(|(k, _)| !k.starts_with('_')).collect())
+        }
         _ => Err("harnesses.json is not an object".into()),
     }
 }
@@ -664,8 +1165,13 @@ fn harness_states() -> Result<String, String> {
     for (id, val) in map {
         let install_spec = val.get("install");
         let cfg_spec = val.get("configure");
-        let install_kind = install_spec.and_then(|i| i.get("kind")).and_then(|v| v.as_str());
-        let cfg_kind = cfg_spec.and_then(|c| c.get("kind")).and_then(|v| v.as_str()).unwrap_or("");
+        let install_kind = install_spec
+            .and_then(|i| i.get("kind"))
+            .and_then(|v| v.as_str());
+        let cfg_kind = cfg_spec
+            .and_then(|c| c.get("kind"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
         let command = val.get("command").and_then(|v| v.as_str()).unwrap_or("");
         let install_state = install_state_for(install_kind, command);
         let configure_state = configure_state_for(cfg_spec);
@@ -693,7 +1199,10 @@ fn harness_states() -> Result<String, String> {
 }
 
 fn emit_install(app: &AppHandle, id: &str, line: &str, done: bool, ok: bool) {
-    let _ = app.emit("install-event", json!({ "id": id, "line": line, "done": done, "ok": ok }));
+    let _ = app.emit(
+        "install-event",
+        json!({ "id": id, "line": line, "done": done, "ok": ok }),
+    );
 }
 
 // Install dispatch:
@@ -707,14 +1216,22 @@ fn emit_install(app: &AppHandle, id: &str, line: &str, done: bool, ok: bool) {
 #[tauri::command]
 fn install_harness(app: AppHandle, id: String) -> Result<String, String> {
     let map = read_harnesses_map()?;
-    let row = map.get(&id).ok_or_else(|| format!("unknown harness: {id}"))?;
-    let install = row.get("install").ok_or_else(|| "no install spec".to_string())?;
+    let row = map
+        .get(&id)
+        .ok_or_else(|| format!("unknown harness: {id}"))?;
+    let install = row
+        .get("install")
+        .ok_or_else(|| "no install spec".to_string())?;
     let kind = install.get("kind").and_then(|v| v.as_str()).unwrap_or("");
     match kind {
         "npx" => {
             let args = row.get("args").and_then(|v| v.as_array());
             let pkg = args
-                .and_then(|a| a.iter().filter_map(|v| v.as_str()).find(|s| !s.starts_with('-')))
+                .and_then(|a| {
+                    a.iter()
+                        .filter_map(|v| v.as_str())
+                        .find(|s| !s.starts_with('-'))
+                })
                 .ok_or_else(|| "no npm package in args".to_string())?
                 .to_string();
             let app2 = app.clone();
@@ -744,7 +1261,10 @@ fn install_harness(app: AppHandle, id: String) -> Result<String, String> {
                 .get("docUrl")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| "external install missing docUrl".to_string())?;
-            Command::new("open").arg(url).status().map_err(|e| e.to_string())?;
+            Command::new("open")
+                .arg(url)
+                .status()
+                .map_err(|e| e.to_string())?;
             emit_install(&app, &id, &format!("opened {url}"), true, true);
             Ok(json!({ "ok": true, "kind": "external", "url": url }).to_string())
         }
@@ -781,7 +1301,13 @@ fn install_harness(app: AppHandle, id: String) -> Result<String, String> {
                 let mut child = match spawn_result {
                     Ok(c) => c,
                     Err(e) => {
-                        emit_install(&app_outer, &id_outer, &format!("spawn error: {e}"), true, false);
+                        emit_install(
+                            &app_outer,
+                            &id_outer,
+                            &format!("spawn error: {e}"),
+                            true,
+                            false,
+                        );
                         return;
                     }
                 };
@@ -832,7 +1358,13 @@ fn install_harness(app: AppHandle, id: String) -> Result<String, String> {
                         true,
                         false,
                     ),
-                    Err(e) => emit_install(&app_outer, &id_outer, &format!("wait error: {e}"), true, false),
+                    Err(e) => emit_install(
+                        &app_outer,
+                        &id_outer,
+                        &format!("wait error: {e}"),
+                        true,
+                        false,
+                    ),
                 }
             });
             Ok(json!({ "ok": true, "kind": "script", "url": url }).to_string())
@@ -847,12 +1379,19 @@ fn install_harness(app: AppHandle, id: String) -> Result<String, String> {
 #[tauri::command]
 fn configure_harness(app: AppHandle, id: String) -> Result<String, String> {
     let map = read_harnesses_map()?;
-    let row = map.get(&id).ok_or_else(|| format!("unknown harness: {id}"))?;
-    let cfg = row.get("configure").ok_or_else(|| "no configure spec".to_string())?;
+    let row = map
+        .get(&id)
+        .ok_or_else(|| format!("unknown harness: {id}"))?;
+    let cfg = row
+        .get("configure")
+        .ok_or_else(|| "no configure spec".to_string())?;
     let kind = cfg.get("kind").and_then(|v| v.as_str()).unwrap_or("");
     match kind {
         "oauth" => browser_login(id.clone()).map(|_| {
-            let _ = app.emit("install-event", json!({ "id": id, "line": "browser login launched", "done": true, "ok": true }));
+            let _ = app.emit(
+                "install-event",
+                json!({ "id": id, "line": "browser login launched", "done": true, "ok": true }),
+            );
             json!({ "ok": true, "kind": "oauth" }).to_string()
         }),
         "external" => {
@@ -860,10 +1399,15 @@ fn configure_harness(app: AppHandle, id: String) -> Result<String, String> {
                 .get("docUrl")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| "external configure missing docUrl".to_string())?;
-            Command::new("open").arg(url).status().map_err(|e| e.to_string())?;
+            Command::new("open")
+                .arg(url)
+                .status()
+                .map_err(|e| e.to_string())?;
             Ok(json!({ "ok": true, "kind": "external", "url": url }).to_string())
         }
-        "api-key" => Ok(json!({ "ok": true, "kind": "api-key", "key": cfg.get("key") }).to_string()),
+        "api-key" => {
+            Ok(json!({ "ok": true, "kind": "api-key", "key": cfg.get("key") }).to_string())
+        }
         "model-picker" => {
             // The dedicated React panel drives the whole flow (mode toggle,
             // provider/model picker, API-key save through save_api_key, Ollama
@@ -885,7 +1429,10 @@ fn configure_harness(app: AppHandle, id: String) -> Result<String, String> {
 // and translate to the harness-specific CLI args via apply_<harness>_config.
 
 fn model_config_path(harness: &str) -> PathBuf {
-    REPO_ROOT.join("var").join("state").join(format!("{harness}.config.json"))
+    REPO_ROOT
+        .join("var")
+        .join("state")
+        .join(format!("{harness}.config.json"))
 }
 
 #[tauri::command]
@@ -947,7 +1494,11 @@ fn check_ollama() -> String {
 // `install-event` so the Hermes panel reads the same channel as other installs.
 #[tauri::command]
 fn install_ollama(app: AppHandle, harness_id: String) -> Result<String, String> {
-    let sid = if harness_id.is_empty() { "hermes".to_string() } else { harness_id };
+    let sid = if harness_id.is_empty() {
+        "hermes".to_string()
+    } else {
+        harness_id
+    };
     if command_on_path("brew") {
         let app2 = app.clone();
         let sid2 = sid.clone();
@@ -998,7 +1549,13 @@ fn install_ollama(app: AppHandle, harness_id: String) -> Result<String, String> 
                     if ok {
                         emit_install(&app2, &sid2, "✓ ollama installed", true, true);
                     } else {
-                        emit_install(&app2, &sid2, "brew finished but ollama not on PATH", true, false);
+                        emit_install(
+                            &app2,
+                            &sid2,
+                            "brew finished but ollama not on PATH",
+                            true,
+                            false,
+                        );
                     }
                 }
                 Ok(s) => emit_install(&app2, &sid2, &format!("brew exited with {s}"), true, false),
@@ -1008,8 +1565,17 @@ fn install_ollama(app: AppHandle, harness_id: String) -> Result<String, String> 
         Ok(json!({ "ok": true, "via": "brew" }).to_string())
     } else {
         let url = "https://ollama.com/download";
-        Command::new("open").arg(url).status().map_err(|e| e.to_string())?;
-        emit_install(&app, &sid, &format!("opened {url} (no brew on PATH)"), true, true);
+        Command::new("open")
+            .arg(url)
+            .status()
+            .map_err(|e| e.to_string())?;
+        emit_install(
+            &app,
+            &sid,
+            &format!("opened {url} (no brew on PATH)"),
+            true,
+            true,
+        );
         Ok(json!({ "ok": true, "via": "browser", "url": url }).to_string())
     }
 }
@@ -1021,7 +1587,11 @@ fn pull_ollama_model(app: AppHandle, harness_id: String, model: String) -> Resul
     if model.is_empty() {
         return Err("model is required".into());
     }
-    let sid = if harness_id.is_empty() { "hermes".to_string() } else { harness_id };
+    let sid = if harness_id.is_empty() {
+        "hermes".to_string()
+    } else {
+        harness_id
+    };
     let app2 = app.clone();
     let sid2 = sid.clone();
     let model2 = model.clone();
@@ -1068,8 +1638,16 @@ fn pull_ollama_model(app: AppHandle, harness_id: String, model: String) -> Resul
             let _ = t.join();
         }
         match status {
-            Ok(s) if s.success() => emit_install(&app2, &sid2, &format!("✓ pulled {model2}"), true, true),
-            Ok(s) => emit_install(&app2, &sid2, &format!("ollama pull exited with {s}"), true, false),
+            Ok(s) if s.success() => {
+                emit_install(&app2, &sid2, &format!("✓ pulled {model2}"), true, true)
+            }
+            Ok(s) => emit_install(
+                &app2,
+                &sid2,
+                &format!("ollama pull exited with {s}"),
+                true,
+                false,
+            ),
             Err(e) => emit_install(&app2, &sid2, &format!("wait error: {e}"), true, false),
         }
     });
@@ -1109,7 +1687,14 @@ fn read_files_for_agent(paths: Vec<String>) -> Result<String, String> {
             .file_name()
             .map(|s| s.to_string_lossy().into_owned())
             .unwrap_or_else(|| p.clone());
-        out.push(FileAttachment { name, path: p, text, truncated, bytes: meta.len(), binary });
+        out.push(FileAttachment {
+            name,
+            path: p,
+            text,
+            truncated,
+            bytes: meta.len(),
+            binary,
+        });
     }
     serde_json::to_string(&out).map_err(|e| e.to_string())
 }
@@ -1134,7 +1719,9 @@ pub fn run() {
             if let Some(win) = app.get_webview_window("main") {
                 #[cfg(target_os = "macos")]
                 {
-                    use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial, NSVisualEffectState};
+                    use window_vibrancy::{
+                        apply_vibrancy, NSVisualEffectMaterial, NSVisualEffectState,
+                    };
                     let _ = apply_vibrancy(
                         &win,
                         NSVisualEffectMaterial::HudWindow,
@@ -1178,6 +1765,7 @@ pub fn run() {
             set_bar_width,
             open_workspace,
             start_session,
+            start_session_rust,
             send_turn,
             send_auth,
             send_logout,
