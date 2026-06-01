@@ -418,7 +418,7 @@ class SessionArchive:
         os.makedirs(self.dir, exist_ok=True)
         self.events_path = os.path.join(self.dir, "events.ndjson")
         self.meta_path = os.path.join(self.dir, "meta.json")
-        self.meta = {
+        defaults = {
             "id": sid,
             "harness": harness,
             "expert": expert,
@@ -426,10 +426,20 @@ class SessionArchive:
             "started_at": _iso_now(),
             "ended_at": "",
         }
-        # Don't clobber a pre-existing meta (resumed session id) — only seed
-        # if the file isn't there yet.
-        if not os.path.exists(self.meta_path):
-            self._save_meta()
+        # Load the existing meta (resumed session) so persisted fields like
+        # `acp_sid` survive into the new runner. Without this the in-memory
+        # `self.meta` stays at defaults and the next `_save_meta()` silently
+        # wipes the acp_sid that session/resume needs. Existing keys win;
+        # missing keys are filled from defaults.
+        existing: dict = {}
+        if os.path.exists(self.meta_path):
+            try:
+                with open(self.meta_path, encoding="utf-8") as fh:
+                    existing = json.load(fh) or {}
+            except Exception:
+                existing = {}
+        self.meta = {**defaults, **existing}
+        self._save_meta()
         self._events_fh = open(self.events_path, "a", encoding="utf-8")
 
     def _save_meta(self) -> None:
