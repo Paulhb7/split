@@ -23,12 +23,12 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[], inten
   const engineId = picks[0] || "claude"; // "primary" = the first picked agent
   const primarySt = states[engineId];
   const accent = H[engineId].brand;
-  const canNext = page !== 2 || picks.length > 0;
+  const canNext = page !== 3 || picks.length > 0;
   const toggle = (id: string) => setPicks((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
-  // P2 scripted demo loop (only runs while the demo page is visible)
+  // Scripted demo loop (only runs while the demo page is visible)
   useEffect(() => {
-    if (page !== 1) return;
+    if (page !== 2) return;
     let cancelled = false;
     const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
     (async () => {
@@ -92,17 +92,8 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[], inten
 
         {page === 1 && (
           <div className="stagger">
-            <div className="ob-eyebrow">see it run · 02</div>
-            <h2 className="ob2-h2">Brief an expert. <em>Watch it work.</em></h2>
-            <p className="ob2-lede" style={{ marginBottom: 18 }}>A live taste — @Consultant running on {H[engineId].label}.</p>
-            <Demo engineId={engineId} demo={demo} />
-          </div>
-        )}
-
-        {page === 2 && (
-          <div className="stagger">
-            <div className="ob-eyebrow">choose your agents · 03</div>
-            <h2 className="ob2-h2">You pick <em>agents</em>, not models</h2>
+            <div className="ob-eyebrow">what's an agent · 02</div>
+            <h2 className="ob2-h2">A model with <em>hands</em></h2>
             <div className="amx">
               <div className="amx-diagram" aria-hidden="true">
                 <div className="amx-agent">
@@ -117,22 +108,66 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[], inten
               <p className="amx-note">
                 A <b>model</b> is the brain (GPT-5, Claude, Mistral). An <b>agent</b> wraps it with hands — it runs
                 tools, writes files, drives your Mac. You drive the agent, not the raw model.
-                <span className="amx-i" title="Think engine vs car: a model is the engine, an agent is the whole car (engine + wheels + dashboard). You don't drive an engine. Cloud agents bring their own engine; on-device agents let you drop in a free local one.">ⓘ</span>
+                <span className="amx-i" title="Think engine vs car: a model is the engine, an agent is the whole car (engine + wheels + dashboard). You don't drive an engine.">ⓘ</span>
               </p>
             </div>
-            <div className="ob2-paths">
-              <div className="ob2-path cloud">
-                <div className="ic">☁</div>
-                <h4>Cloud</h4>
-                <p>Use the subscriptions you already pay for — Claude, ChatGPT, Gemini, Copilot. Each agent signs in with its own account. Frontier quality.</p>
-              </div>
-              <div className="ob2-path local">
-                <div className="ic">🖥</div>
-                <h4>On-device</h4>
-                <p>Open-weight brains via OpenCode / Qwen, pointed at Ollama. Zero key, zero cloud, $0 per task — and fully private.</p>
+            <div className="amx-equals" aria-hidden="true">
+              <span className="amx-equals-line" />
+              <span className="amx-equals-label">harness examples</span>
+              <span className="amx-equals-line" />
+            </div>
+            <div className="amx-diagram">
+              <div className="amx-agent harness">
+                <span className="amx-tag">harness</span>
+                {SHOWCASE.slice(0, 5).map((id) => (
+                  <span key={id} className="amx-chip harness-chip" style={vars({ "--brand": H[id].brand })}>
+                    <Logo id={id} size={16} />
+                    {H[id].label}
+                  </span>
+                ))}
+                <span className="amx-chip harness-chip more">+{SHOWCASE.length - 5} more</span>
               </div>
             </div>
-            <div className="ob2-pickhint">Pick the agents you'll use — the ones you have access to. Split shows only these; add more anytime. {picks.length > 0 && <b>{picks.length} selected</b>}</div>
+            <p className="amx-note" style={{ marginTop: 14 }}>
+              In Split, a <b>harness</b> is an agent <em>already configured</em> — its loop, its tools, its
+              sign-in, all packaged. <b>Claude Code</b>, <b>Codex</b>, <b>Gemini</b>, <b>Mistral Vibe</b>,
+              <b> GitHub Copilot</b> are proprietary; <b>OpenCode</b>, <b>OpenClaw</b>, <b>Hermes</b> are
+              open source. They all speak the same protocol (ACP) — you can swap one for another.
+            </p>
+          </div>
+        )}
+
+        {page === 2 && (
+          <div className="stagger">
+            <div className="ob-eyebrow">experts in split · 03</div>
+            <h2 className="ob2-h2">A harness, given an <em>expertise</em></h2>
+            <div className="amx">
+              <div className="amx-diagram" aria-hidden="true">
+                <div className="amx-agent expert">
+                  <span className="amx-tag">expert</span>
+                  <span className="amx-chip model">◉ harness</span>
+                  <span className="amx-plus">+</span>
+                  <span className="amx-chip">🎩 expertise</span>
+                  <span className="amx-chip">✦ skills</span>
+                  <span className="amx-chip">🔧 tools</span>
+                </div>
+              </div>
+              <p className="amx-note">
+                Split takes a <b>harness</b> (Claude Code, Codex…) and layers on an <b>expertise</b>
+                (the persona — what the expert knows and how it thinks), <b>skills</b> (reusable
+                playbooks, open Agent Skills format), and <b>tools</b> (MCP servers it can call).
+                Same harness, different expert.
+              </p>
+            </div>
+            <Demo engineId={engineId} demo={demo} />
+          </div>
+        )}
+
+        {page === 3 && (
+          <div className="stagger">
+            <div className="ob-eyebrow">choose your agents · 04</div>
+            <h2 className="ob2-h2">Pick your <em>agents</em></h2>
+            <div className="ob2-pickhint">The ones you have access to. Split shows only these; add more anytime. {picks.length > 0 && <b>{picks.length} selected</b>}</div>
             <League isSelected={(id) => picks.includes(id)} onPick={toggle} />
             {picks.length > 0 && primarySt && (
               <div className="ob2-primary" style={vars({ "--brand": H[engineId].brand })}>
@@ -167,9 +202,9 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[], inten
           </div>
         )}
 
-        {page === 3 && (
+        {page === 4 && (
           <div className="stagger">
-            <div className="ob-eyebrow">your turn · 04</div>
+            <div className="ob-eyebrow">your turn · 05</div>
             <h2 className="ob2-h2">Brief your first expert</h2>
             <p className="ob2-lede">
               @Wolfgang is a research consultant. Give him a topic, get back a structured answer in the same turn.
@@ -188,9 +223,9 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[], inten
           </div>
         )}
 
-        {page === 4 && (
+        {page === 5 && (
           <div className="stagger">
-            <div className="ob-eyebrow">make it yours · 05</div>
+            <div className="ob-eyebrow">make it yours · 06</div>
             <h2 className="ob2-h2">Build your own expert</h2>
             <p className="ob2-lede">
               @Socrates interviews you and writes a new expert from your answers — no menus, no code, just a Socratic
@@ -212,14 +247,14 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[], inten
 
       <div className="ob2-foot">
         <div className="dots">
-          {[0, 1, 2, 3, 4].map((i) => (
+          {[0, 1, 2, 3, 4, 5].map((i) => (
             <button key={i} className={"dot2" + (i === page ? " on" : "")} onClick={() => setPage(i)} aria-label={`page ${i + 1}`} />
           ))}
         </div>
         <div className="ob2-actions">
           {page > 0 && <button className="btn ghost" onClick={() => setPage((p) => p - 1)}>← back</button>}
-          {page < 4 ? (
-            <button className="btn" disabled={!canNext} onClick={() => setPage((p) => p + 1)}>{page === 2 ? "Continue →" : "Next →"}</button>
+          {page < 5 ? (
+            <button className="btn" disabled={!canNext} onClick={() => setPage((p) => p + 1)}>{page === 3 ? "Continue →" : "Next →"}</button>
           ) : (
             <button className="btn ghost" onClick={() => onEnter(picks)}>Skip → Enter Split</button>
           )}
