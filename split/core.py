@@ -395,6 +395,21 @@ def update_to_vevt(update) -> dict | None:
     if n == "UsageUpdate":
         cost = getattr(update.cost, "amount", None) if update.cost else None
         return {"type": "usage", "used": update.used, "size": update.size, "cost": cost}
+    if n == "AvailableCommandsUpdate":
+        out = []
+        for c in (update.available_commands or []):
+            entry = {"name": c.name, "description": c.description or ""}
+            # `input` wraps an UnstructuredCommandInput with a `.hint` field;
+            # absence means the command takes no arguments.
+            inp = getattr(c, "input", None)
+            hint = None
+            if inp is not None:
+                root = getattr(inp, "root", None) or inp
+                hint = getattr(root, "hint", None)
+            if hint:
+                entry["hint"] = hint
+            out.append(entry)
+        return {"type": "commands", "commands": out}
     return None
 
 

@@ -331,6 +331,16 @@
 .mi-add .mn { color: var(--brand); }
 .mi-plus { display: grid; place-items: center; width: 16px; height: 16px; font-size: 14px; color: var(--brand); }
 
+/* ---- slash command palette (above the focused conversation composer) ---- */
+/* Opens UPWARD — sits just on top of the composer (composer is at the bottom
+   of the conversation). The composer below carries its own border + bg. */
+.slash-menu { background: var(--ink2); border: 1px solid var(--line); border-radius: 13px; padding: 5px; margin-top: 12px; max-height: 240px; overflow: auto; box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35); }
+.slash-item { display: block; width: 100%; text-align: left; padding: 7px 10px; border: 0; background: none; color: var(--text); cursor: pointer; border-radius: 9px; font-family: var(--disp); font-size: 13px; }
+.slash-item:hover { background: rgba(255, 255, 255, 0.06); }
+.slash-name { font-family: var(--mono); font-weight: 600; color: var(--brand); }
+.slash-hint { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-left: 4px; }
+.slash-desc { color: var(--dim); font-size: 12px; margin-left: 6px; }
+
 /* ---- overlay (change default league) + auth modal ---- */
 .overlay { position: absolute; inset: 0; z-index: 60; background: rgba(6, 7, 10, 0.74); backdrop-filter: blur(8px); display: grid; place-items: start center; padding: 24px; overflow: auto; }
 .overlay-card { width: min(860px, 100%); }

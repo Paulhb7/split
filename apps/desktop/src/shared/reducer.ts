@@ -34,6 +34,9 @@ export function applyEvent(s: Session, ev: VEvt): Session {
     case "plan":
       return { ...s, plan: ev.entries };
 
+    case "commands":
+      return { ...s, commands: ev.commands };
+
     case "usage":
       return ev.cost != null ? { ...s, cost: ev.cost } : s;
 

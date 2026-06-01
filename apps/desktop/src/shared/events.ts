@@ -12,6 +12,14 @@ export interface PlanEntry {
   status: string;
 }
 
+// One slash command the agent advertised via `available_commands_update`. The
+// client invokes it by sending `/<name> <args>` as a regular prompt text.
+export interface SlashCommand {
+  name: string;
+  description: string;
+  hint?: string; // expected-input hint (empty/absent = no args)
+}
+
 // One ACP-side option the agent offered us for a permission request.
 export interface PermissionOption {
   id: string;     // option_id we send back via send_permission

@@ -72,7 +72,10 @@ export default function App() {
   const [enabled, setEnabled] = useState<string[]>(loadEnabled);
   const [active, setActiveState] = useState(loadActive);
   const [expertSlug, setExpertSlug] = useState("consultant");
-  const [menu, setMenu] = useState<"engine" | "expert" | null>(null);
+  const [menu, setMenu] = useState<"engine" | "expert" | "slash" | null>(null);
+  // Query after the `/` at the cursor — null when no slash is active. Drives
+  // the slash-command palette in the focused conversation composer.
+  const [slashQuery, setSlashQuery] = useState<string | null>(null);
   const [overlay, setOverlay] = useState(false);
   const [view, setViewState] = useState<"list" | "stage">(() => (localStorage.getItem(LS_VIEW) === "stage" ? "stage" : "list"));
   const setView = (v: "list" | "stage") => {
@@ -304,21 +307,33 @@ export default function App() {
   function handleInputChange(newValue: string, cursorPos: number | null) {
     setValue(newValue);
     const cursor = cursorPos ?? newValue.length;
-    // Walk back from the cursor until whitespace or start; if we hit `@` first,
-    // we're in a mention. The query is the text between the `@` and the cursor.
+    // Walk back from the cursor until whitespace or start; if we hit `@` or `/`
+    // first, we're in a mention / slash command. Slash only activates at the
+    // very start of the input (ACP slash commands are first-token, like in IRC).
     let i = cursor - 1;
     while (i >= 0 && !/\s/.test(newValue[i])) {
       if (newValue[i] === "@") {
         setMentionQuery(newValue.slice(i + 1, cursor));
         setMenu("expert");
+        if (slashQuery !== null) { setSlashQuery(null); }
+        return;
+      }
+      if (newValue[i] === "/" && i === 0) {
+        setSlashQuery(newValue.slice(i + 1, cursor));
+        setMenu("slash");
+        if (mentionQuery !== null) { setMentionQuery(null); }
         return;
       }
       i--;
     }
-    // Cursor is not inside a mention. If a mention session was open, close it.
+    // Cursor is not inside a mention or slash command — close any open menus.
     if (mentionQuery !== null) {
       setMentionQuery(null);
       if (menu === "expert") setMenu(null);
+    }
+    if (slashQuery !== null) {
+      setSlashQuery(null);
+      if (menu === "slash") setMenu(null);
     }
   }
 
@@ -369,7 +384,7 @@ export default function App() {
     }
     if (e.key === "Enter") submit();
     else if (e.key === "Escape") {
-      if (menu) { setMenu(null); setMentionQuery(null); }
+      if (menu) { setMenu(null); setMentionQuery(null); setSlashQuery(null); }
       else if (overlay) setOverlay(false);
       else if (focused) setFocusedId(null);
       else hide();
@@ -532,18 +547,56 @@ export default function App() {
               </details>
             )}
 
-            {focused.status !== "ended" && (
-              <div className="composer" style={{ marginTop: 16, marginBottom: 0 }}>
-                {chips}
-                <input ref={inputRef} value={value} onChange={(e) => handleInputChange(e.target.value, e.target.selectionStart)} onKeyDown={onKey}
-                  placeholder={focused.status === "running" ? `${focused.expertLabel} is working — queue the next…` : `Reply to ${focused.expertLabel}…`} />
-                {focused.status === "running" ? (
-                  <button className="stop" onClick={() => stop(focused.id)}>■</button>
-                ) : (
-                  <button className="run" onClick={reply} title="Send">▶</button>
-                )}
-              </div>
-            )}
+            {focused.status !== "ended" && (() => {
+              // Slash palette — populated from the agent's
+              // `available_commands_update` notifications. Only renders when
+              // the user has typed `/` at the start of the input AND the agent
+              // advertised at least one command. Click → fill input with
+              // `/<name> ` and refocus; Enter on no-match falls through to a
+              // regular send so the user's text isn't trapped.
+              const slashOpen = slashQuery !== null && focused.commands.length > 0;
+              const matches = slashOpen
+                ? focused.commands.filter((c) =>
+                    c.name.toLowerCase().startsWith((slashQuery || "").toLowerCase())
+                  )
+                : [];
+              const pickCmd = (name: string) => {
+                setValue(`/${name} `);
+                setSlashQuery(null);
+                setMenu(null);
+                setTimeout(() => inputRef.current?.focus(), 0);
+              };
+              return (
+                <>
+                  {slashOpen && matches.length > 0 && (
+                    <div className="slash-menu" role="listbox" aria-label="Slash commands">
+                      {matches.map((c) => (
+                        <button
+                          key={c.name}
+                          className="slash-item"
+                          onClick={() => pickCmd(c.name)}
+                          title={c.description}
+                        >
+                          <span className="slash-name">/{c.name}</span>
+                          {c.hint && <span className="slash-hint"> {c.hint}</span>}
+                          {c.description && <span className="slash-desc">— {c.description}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="composer" style={{ marginTop: 16, marginBottom: 0 }}>
+                    {chips}
+                    <input ref={inputRef} value={value} onChange={(e) => handleInputChange(e.target.value, e.target.selectionStart)} onKeyDown={onKey}
+                      placeholder={focused.status === "running" ? `${focused.expertLabel} is working — queue the next…` : `Reply to ${focused.expertLabel}…`} />
+                    {focused.status === "running" ? (
+                      <button className="stop" onClick={() => stop(focused.id)}>■</button>
+                    ) : (
+                      <button className="run" onClick={reply} title="Send">▶</button>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         ) : mode === "teams" ? (
           /* ============ TEAMS (Chief-of-Staff orchestration) ============ */
@@ -643,7 +696,7 @@ function Composer(props: {
   experts: ReturnType<typeof useExperts>;
   expertSlug: string; expertLabel: string; active: string;
   engines: Harness[]; onAddAgent: () => void;
-  menu: "engine" | "expert" | null; setMenu: (m: "engine" | "expert" | null) => void;
+  menu: "engine" | "expert" | "slash" | null; setMenu: (m: "engine" | "expert" | "slash" | null) => void;
   setActive: (s: string) => void;
   value: string; onChange: (v: string, cursor: number | null) => void; onKey: (e: React.KeyboardEvent) => void; onRun: () => void;
   chips: React.ReactNode; inputRef: React.RefObject<HTMLInputElement | null>;

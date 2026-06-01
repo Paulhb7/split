@@ -1,4 +1,4 @@
-import type { AuthMethod, PermissionOption, PlanEntry } from "./events";
+import type { AuthMethod, PermissionOption, PlanEntry, SlashCommand } from "./events";
 
 // "running" = a turn is in flight; "idle" = ready for the next turn;
 // "auth" = blocked on sign-in; "error" = last turn failed; "ended" = process gone.
@@ -47,6 +47,9 @@ export interface Session {
 
   summary: string; // live one-line status (thinking / writing / → tool / done)
   plan: PlanEntry[];
+  // Slash commands advertised by the agent via `available_commands_update`.
+  // Drives the autocomplete palette in the composer; empty = no agent commands.
+  commands: SlashCommand[];
   cost: number | null;
   logs: string[];
   auth: AuthAsk | null;
@@ -93,6 +96,7 @@ export function newSession(
     thoughts: "",
     summary: "briefing…",
     plan: [],
+    commands: [],
     cost: null,
     logs: [],
     auth: null,
