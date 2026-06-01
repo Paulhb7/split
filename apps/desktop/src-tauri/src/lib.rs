@@ -189,7 +189,17 @@ static BAR_WIDTH: LazyLock<Mutex<f64>> = LazyLock::new(|| Mutex::new(680.0));
 fn set_bar_height(window: WebviewWindow, height: f64) {
     let h = height.clamp(48.0, 1400.0); // sane clamp; React already clamps too
     let w = *BAR_WIDTH.lock().unwrap();
-    let _ = window.set_size(LogicalSize::new(w, h));
+    // `set_size` sets the OUTER window size, but `height` is the desired CONTENT
+    // (webview) height measured by the React ResizeObserver. With native
+    // decorations a title bar sits above the webview, so add the outer−inner
+    // delta to keep the content height exact. The delta is 0 when decorations
+    // are off (outer == inner), so this is a no-op for borderless windows.
+    let scale = window.scale_factor().unwrap_or(1.0);
+    let inset = match (window.outer_size(), window.inner_size()) {
+        (Ok(o), Ok(i)) => ((o.height as f64 - i.height as f64) / scale).max(0.0),
+        _ => 0.0,
+    };
+    let _ = window.set_size(LogicalSize::new(w, h + inset));
 }
 
 // Switch the bar's logical width. Updates the shared state so subsequent

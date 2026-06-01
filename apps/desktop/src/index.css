@@ -5,7 +5,10 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  background: transparent;
+  /* Opaque dark base. The window is no longer `transparent` (native decorations
+     + traffic lights), so the .app's translucent gradients now blend over this
+     instead of the OS transparency layer. */
+  background: #0a0b0e;
 }
 
 body {

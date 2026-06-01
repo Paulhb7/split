@@ -25,8 +25,9 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: 18px;
-  border: 1px solid var(--line);
+  /* No CSS border-radius / border: the native window (decorations: true) now
+     owns the frame + rounded corners. A CSS radius here would reveal the opaque
+     window background in the four corners. */
   background:
     radial-gradient(820px 520px at 86% -12%, color-mix(in srgb, var(--brand) 16%, transparent), transparent 60%),
     radial-gradient(720px 620px at -6% 108%, rgba(66, 116, 244, 0.1), transparent 60%),
@@ -62,7 +63,9 @@
 .chrome {
   position: relative; z-index: 10; flex: none;
   display: flex; align-items: center; gap: 10px;
-  height: 46px; padding: 0 12px 0 16px;
+  /* left padding clears the native traffic lights (Overlay titleBarStyle puts
+     them top-left, over this bar). ~70px = 3 lights + margins. */
+  height: 46px; padding: 0 12px 0 78px;
   border-bottom: 1px solid var(--line2);
 }
 .wm { font-weight: 800; letter-spacing: -0.04em; font-size: 16px; display: flex; align-items: baseline; }
