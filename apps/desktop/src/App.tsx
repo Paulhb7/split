@@ -243,7 +243,7 @@ export default function App() {
       return final;
     });
   }
-  function enterSplit(ids: string[]) {
+  function enterSplit(ids: string[], intent?: "test_wolfgang" | "start_recruiter") {
     const list = ids.length ? ids : ["claude"];
     setEnabled(list);
     setActiveState(list[0]);
@@ -251,6 +251,22 @@ export default function App() {
     localStorage.setItem(LS_ACTIVE, list[0]);
     localStorage.setItem(LS_DONE, "1");
     setOnboarded(true);
+    // Page 4/5 CTAs auto-launch a session on the primary agent so the user lands
+    // straight in a running thread (Wolfgang with the EV prompt, or a fresh
+    // Socrates interview). Skip path = no intent, lands on home composer.
+    if (intent === "test_wolfgang") {
+      const slug = "consultant";
+      const prompt = "Research the EV market outlook for 2026";
+      const turn = composeTurn(prompt, []);
+      setExpertSlug(slug);
+      start({ harness: list[0], expertSlug: slug, display: turn.display, wire: turn.wire, files: turn.files }).then(setFocusedId);
+    } else if (intent === "start_recruiter") {
+      const slug = "recruiter";
+      const prompt = "Help me design my first custom expert";
+      const turn = composeTurn(prompt, []);
+      setExpertSlug(slug);
+      start({ harness: list[0], expertSlug: slug, display: turn.display, wire: turn.wire, files: turn.files }).then(setFocusedId);
+    }
   }
 
   function openWorkspaceFolder(sessionId?: string) {
@@ -415,6 +431,7 @@ export default function App() {
             ))}
           </div>
         )}
+        <button className="iconbtn" onClick={() => { localStorage.removeItem(LS_DONE); setOnboarded(false); }} title="Replay onboarding">↻</button>
         <button className="iconbtn" onClick={() => setHistoryOpen(true)} title="Past conversations">📜</button>
         <div className="skin-wrap">
           <button className={"iconbtn" + (skin ? " on" : "")} onClick={() => setSkinMenu((v) => !v)} title="Skin">✿</button>
@@ -443,7 +460,7 @@ export default function App() {
       <div className={"body" + (isTeamsFullscreen ? " fill" : "")}>
         <div ref={measureRef} className={"measure" + (isTeamsFullscreen ? " fill" : "")}>
         {!onboarded ? (
-          /* ============ ONBOARDING (3 animated pages) ============ */
+          /* ============ ONBOARDING (5 pages: concept · demo · pick · @Wolfgang · @Socrates) ============ */
           <Onboarding onEnter={enterSplit} />
         ) : focused ? (
           /* ============ CONVERSATION ============ */

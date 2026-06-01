@@ -85,6 +85,28 @@
 .caret { display: inline-block; width: 2px; height: 1.05em; background: var(--brand); margin-left: 2px; vertical-align: -2px; animation: blink 1s steps(1) infinite; }
 @keyframes blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
 
+/* ---- page 3: primary install + sign-in panel ---- */
+.ob2-primary { margin-top: 16px; border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--line)); border-radius: 12px; padding: 14px; background: linear-gradient(180deg, rgba(18, 21, 28, 0.6), rgba(10, 12, 16, 0.7)); }
+.ob2-primary-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.ob2-primary-id { display: flex; flex-direction: column; gap: 2px; }
+.ob2-primary-id b { font-size: 14px; }
+.ob2-primary-tag { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); }
+.ob2-primary-steps { display: flex; flex-direction: column; gap: 8px; }
+.ob2-step { display: flex; align-items: center; gap: 10px; font-size: 12.5px; }
+.ob2-step.ready { opacity: 0.75; }
+.ob2-step-label { font-family: var(--mono); font-size: 11px; color: var(--dim); min-width: 60px; }
+.ob2-step-ok { color: color-mix(in srgb, var(--brand) 70%, #1fae9b); font-weight: 600; }
+.ob2-step-hint { color: var(--dim2); font-size: 11.5px; }
+.ob2-step-progress { font-family: var(--mono); font-size: 10.5px; color: var(--brand); }
+.ob2-step .btn { padding: 5px 11px; font-size: 12px; }
+
+/* ---- pages 4 + 5: try-it panel (Wolfgang / Socrates) ---- */
+.ob2-tryout { max-width: 560px; border: 1px solid color-mix(in srgb, var(--brand) 26%, var(--line)); border-radius: 16px; padding: 22px; background: linear-gradient(180deg, rgba(18, 21, 28, 0.72), rgba(10, 12, 16, 0.86)); box-shadow: 0 26px 70px rgba(0, 0, 0, 0.45); }
+.ob2-tryout-prompt { display: flex; align-items: center; gap: 9px; padding: 12px 14px; border: 1px solid var(--line2); border-radius: 11px; background: rgba(255, 255, 255, 0.02); margin-bottom: 16px; }
+.ob2-tryout-at { font-weight: 600; font-size: 13px; border: 1px solid var(--line); border-radius: 9px; padding: 5px 9px; background: rgba(255, 255, 255, 0.03); white-space: nowrap; }
+.ob2-tryout-text { font-size: 14px; color: var(--text); }
+.ob2-tryout-hint { font-family: var(--mono); font-size: 11px; color: var(--dim2); margin: 10px 0 0; }
+
 /* ---- footer ---- */
 .ob2-foot { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 0 22px; margin-top: 20px; border-top: 1px solid var(--line2); background: linear-gradient(180deg, transparent, var(--ink) 40%); }
 .dots { display: flex; gap: 8px; }

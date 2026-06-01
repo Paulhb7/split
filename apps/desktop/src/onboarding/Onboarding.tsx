@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { H } from "../shared/harnesses";
 import { Logo, Tile, League, vars } from "../shared/ui";
+import { useHarnessStates } from "../shared/useHarnessStates";
 import "./onboarding.css";
 
 const SHOWCASE = ["claude", "codex", "gemini", "mistral-vibe", "copilot", "opencode", "qwen"];
@@ -10,20 +12,23 @@ const DEMO_ANSWER =
   "EV sales should grow ~24% YoY in 2026, led by China and the EU. Battery packs dip below $90/kWh, and three sub-$25k models reshape demand. Top drivers: policy, charging density, and LFP supply.";
 
 type Phase = "type" | "thinking" | "writing" | "done";
+export type EnterIntent = "test_wolfgang" | "start_recruiter" | undefined;
 
-export default function Onboarding({ onEnter }: { onEnter: (ids: string[]) => void }) {
+export default function Onboarding({ onEnter }: { onEnter: (ids: string[], intent?: EnterIntent) => void }) {
   const [page, setPage] = useState(0);
   const [picks, setPicks] = useState<string[]>([]);
   const [demo, setDemo] = useState<{ typed: string; phase: Phase; answer: string }>({ typed: "", phase: "type", answer: "" });
+  const { states, progress } = useHarnessStates();
 
-  const engineId = picks[0] || "claude";
+  const engineId = picks[0] || "claude"; // "primary" = the first picked agent
+  const primarySt = states[engineId];
   const accent = H[engineId].brand;
-  const canNext = page === 0 || (page === 1 && picks.length > 0);
+  const canNext = page !== 2 || picks.length > 0;
   const toggle = (id: string) => setPicks((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
-  // page-3 scripted demo loop (only runs while the demo page is visible)
+  // P2 scripted demo loop (only runs while the demo page is visible)
   useEffect(() => {
-    if (page !== 2) return;
+    if (page !== 1) return;
     let cancelled = false;
     const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
     (async () => {
@@ -87,7 +92,16 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[]) => vo
 
         {page === 1 && (
           <div className="stagger">
-            <div className="ob-eyebrow">choose your agents · 02</div>
+            <div className="ob-eyebrow">see it run · 02</div>
+            <h2 className="ob2-h2">Brief an expert. <em>Watch it work.</em></h2>
+            <p className="ob2-lede" style={{ marginBottom: 18 }}>A live taste — @Consultant running on {H[engineId].label}.</p>
+            <Demo engineId={engineId} demo={demo} />
+          </div>
+        )}
+
+        {page === 2 && (
+          <div className="stagger">
+            <div className="ob-eyebrow">choose your agents · 03</div>
             <h2 className="ob2-h2">You pick <em>agents</em>, not models</h2>
             <div className="amx">
               <div className="amx-diagram" aria-hidden="true">
@@ -120,34 +134,133 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[]) => vo
             </div>
             <div className="ob2-pickhint">Pick the agents you'll use — the ones you have access to. Split shows only these; add more anytime. {picks.length > 0 && <b>{picks.length} selected</b>}</div>
             <League isSelected={(id) => picks.includes(id)} onPick={toggle} />
+            {picks.length > 0 && primarySt && (
+              <div className="ob2-primary" style={vars({ "--brand": H[engineId].brand })}>
+                <div className="ob2-primary-head">
+                  <Tile id={engineId} size={32} />
+                  <div className="ob2-primary-id">
+                    <b>{H[engineId].label}</b>
+                    <span className="ob2-primary-tag">primary — we install &amp; sign in this one now; others stay lazy</span>
+                  </div>
+                </div>
+                <div className="ob2-primary-steps">
+                  <PrimaryStep
+                    label="install"
+                    state={primarySt.install.state}
+                    kind={primarySt.install.kind}
+                    progress={progress[engineId]}
+                    onAction={() => invoke("install_harness", { id: engineId }).catch(() => {})}
+                    actionLabel={primarySt.install.kind === "external" ? "Get the app" : "Install"}
+                  />
+                  <PrimaryStep
+                    label="sign-in"
+                    state={primarySt.configure.state}
+                    kind={primarySt.configure.kind}
+                    progress={primarySt.configure.kind === "oauth" ? progress[engineId] : undefined}
+                    onAction={() => invoke("configure_harness", { id: engineId }).catch(() => {})}
+                    actionLabel="Sign in"
+                    disabled={primarySt.install.state !== "ready"}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {page === 2 && (
+        {page === 3 && (
           <div className="stagger">
-            <div className="ob-eyebrow">see it run · 03</div>
-            <h2 className="ob2-h2">Brief an expert. <em>Watch it work.</em></h2>
-            <p className="ob2-lede" style={{ marginBottom: 18 }}>A live taste — @Consultant running on {H[engineId].label}.</p>
-            <Demo engineId={engineId} demo={demo} />
+            <div className="ob-eyebrow">your turn · 04</div>
+            <h2 className="ob2-h2">Brief your first expert</h2>
+            <p className="ob2-lede">
+              @Wolfgang is a research consultant. Give him a topic, get back a structured answer in the same turn.
+              He'll run on <b>{H[engineId].label}</b> — the agent you picked first.
+            </p>
+            <div className="ob2-tryout" style={vars({ "--brand": H[engineId].brand })}>
+              <div className="ob2-tryout-prompt">
+                <span className="ob2-tryout-at">@Wolfgang</span>
+                <span className="ob2-tryout-text">{DEMO_PROMPT}</span>
+              </div>
+              <button className="btn" onClick={() => onEnter(picks, "test_wolfgang")}>
+                Run this →
+              </button>
+              <p className="ob2-tryout-hint">opens Split and streams the answer live</p>
+            </div>
+          </div>
+        )}
+
+        {page === 4 && (
+          <div className="stagger">
+            <div className="ob-eyebrow">make it yours · 05</div>
+            <h2 className="ob2-h2">Build your own expert</h2>
+            <p className="ob2-lede">
+              @Socrates interviews you and writes a new expert from your answers — no menus, no code, just a Socratic
+              conversation. Your custom experts live in your private data folder, separate from the shipped ones.
+            </p>
+            <div className="ob2-tryout" style={vars({ "--brand": H[engineId].brand })}>
+              <div className="ob2-tryout-prompt">
+                <span className="ob2-tryout-at">@Socrates</span>
+                <span className="ob2-tryout-text">Help me design my first custom expert</span>
+              </div>
+              <button className="btn" onClick={() => onEnter(picks, "start_recruiter")}>
+                Talk to Socrates →
+              </button>
+              <p className="ob2-tryout-hint">opens Split with a fresh interview session</p>
+            </div>
           </div>
         )}
       </div>
 
       <div className="ob2-foot">
         <div className="dots">
-          {[0, 1, 2].map((i) => (
+          {[0, 1, 2, 3, 4].map((i) => (
             <button key={i} className={"dot2" + (i === page ? " on" : "")} onClick={() => setPage(i)} aria-label={`page ${i + 1}`} />
           ))}
         </div>
         <div className="ob2-actions">
           {page > 0 && <button className="btn ghost" onClick={() => setPage((p) => p - 1)}>← back</button>}
-          {page < 2 ? (
-            <button className="btn" disabled={!canNext} onClick={() => setPage((p) => p + 1)}>{page === 1 ? "Continue →" : "Next →"}</button>
+          {page < 4 ? (
+            <button className="btn" disabled={!canNext} onClick={() => setPage((p) => p + 1)}>{page === 2 ? "Continue →" : "Next →"}</button>
           ) : (
-            <button className="btn" onClick={() => onEnter(picks)}>Enter Split →</button>
+            <button className="btn ghost" onClick={() => onEnter(picks)}>Skip → Enter Split</button>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function PrimaryStep({
+  label,
+  state,
+  kind,
+  progress,
+  onAction,
+  actionLabel,
+  disabled,
+}: {
+  label: string;
+  state: "ready" | "missing" | "external";
+  kind: string;
+  progress?: string;
+  onAction: () => void;
+  actionLabel: string;
+  disabled?: boolean;
+}) {
+  const ready = state === "ready";
+  const noOp = !kind || (label === "sign-in" && kind === "api-key");
+  return (
+    <div className={"ob2-step" + (ready ? " ready" : "")}>
+      <span className="ob2-step-label">{label}</span>
+      {ready ? (
+        <span className="ob2-step-ok">✓ ready</span>
+      ) : noOp ? (
+        <span className="ob2-step-hint">{kind === "api-key" ? "needs an API key — set it later" : "—"}</span>
+      ) : (
+        <button className="btn ghost" disabled={disabled} onClick={onAction}>
+          {actionLabel}
+        </button>
+      )}
+      {progress && !ready && <span className="ob2-step-progress">{progress}</span>}
     </div>
   );
 }

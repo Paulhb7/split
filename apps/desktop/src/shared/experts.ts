@@ -8,7 +8,8 @@ export type ExpertKind =
   | "builder"
   | "finder"
   | "operator"
-  | "creator";
+  | "creator"
+  | "recruiter";
 
 export interface Expert {
   /** Persona name shown in the UI (e.g. "Wolfgang", "Curie"). */
