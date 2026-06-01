@@ -16,12 +16,15 @@ const labelFor = (experts: ExpertMap, slug: string) =>
 // SAME reducer that draws live sessions, so the read-only view is identical
 // to what the user originally saw. User prompts live in the archive as
 // synthetic `{type:"turn", text:...}` records (not part of the VEVT vocab) —
-// they're pushed straight into the thread. Forces `archived:true` + `status:
-// "ended"` at the end so the composer stays hidden.
+// they're pushed straight into the thread. With `live=false` (default) the
+// result is marked archived+ended so the composer stays hidden; with
+// `live=true` the thread is restored but the session is left in `idle`
+// status (no archived flag) so a resumed runner can drive it forward.
 function replayArchive(
   meta: ArchivedSessionMeta,
   ndjson: string,
-  experts: ExpertMap
+  experts: ExpertMap,
+  live: boolean = false,
 ): Session {
   let s = newSession(meta.id, meta.harness, meta.expert, labelFor(experts, meta.expert), "");
   for (const line of ndjson.split("\n")) {
@@ -47,6 +50,9 @@ function replayArchive(
   // Final flush: if the archive ended mid-stream, commit whatever was streaming.
   if (s.answer || s.thoughts) {
     s = applyEvent(s, { type: "status", status: "idle" });
+  }
+  if (live) {
+    return { ...s, status: "idle", summary: "resumed · " + (meta.title || "") };
   }
   return { ...s, status: "ended", archived: true, summary: meta.title || "past conversation" };
 }
@@ -177,6 +183,13 @@ export function useSessions(experts: ExpertMap) {
     invoke("send_auth", { id, methodId });
   }, []);
 
+  // Sign out of the agent for this session. The runner calls ACP `logout`
+  // (gated by agentCapabilities.auth.logout) then re-emits auth_required so
+  // the existing AuthModal flow picks up and re-prompts.
+  const sendLogout = useCallback((id: string) => {
+    invoke("send_logout", { id });
+  }, []);
+
   // Answer a pending permission_request. `optionId = null` denies. `scope`:
   //   "once"          — this call only
   //   "session"       — runner adds tool_id to the in-memory session allowlist
@@ -224,5 +237,38 @@ export function useSessions(experts: ExpertMap) {
     [sessions]
   );
 
-  return { sessions, start, send, sendAuth, sendPermission, stop, remove, cancelQueued, openArchive };
+  // Resume an archived session: replay its thread into a LIVE session (same
+  // id), then spawn a runner with --resume so the agent reconnects to its
+  // prior ACP session (persisted in `var/sessions/<id>/meta.json::acp_sid`).
+  // If the agent doesn't support sessionCapabilities.resume the runner falls
+  // back to new_session — the user sees their thread restored locally either
+  // way, only the agent's memory of the conversation is lost on fallback.
+  const resumeArchive = useCallback(
+    async (meta: ArchivedSessionMeta): Promise<string | null> => {
+      const existing = sessions.find((s) => s.id === meta.id);
+      if (existing && !existing.archived) return existing.id;
+      try {
+        const ndjson = await invoke<string>("read_session_events", { id: meta.id });
+        const s = replayArchive(meta, ndjson, expertsRef.current, true);
+        setSessions((prev) => {
+          const had = prev.some((x) => x.id === s.id);
+          return had ? prev.map((x) => (x.id === s.id ? s : x)) : [...prev, s];
+        });
+        const workspace = localStorage.getItem("split.workspace") || "";
+        await invoke("start_session", {
+          id: meta.id,
+          harness: meta.harness,
+          expert: meta.expert,
+          workspace,
+          resume: true,
+        });
+        return s.id;
+      } catch {
+        return null;
+      }
+    },
+    [sessions]
+  );
+
+  return { sessions, start, send, sendAuth, sendLogout, sendPermission, stop, remove, cancelQueued, openArchive, resumeArchive };
 }

@@ -170,12 +170,25 @@ fn open_workspace(workspace: String, session_id: Option<String>) {
 // <e>` with a piped stdin (turns + auth control) and stream its stdout back as
 // `session-event`s tagged `id`, broadcast to every window so the bar and the
 // dashboard both materialize the session.
+//
+// `resume=Some(true)` adds `--resume`, which makes the runner reconnect to the
+// agent's prior ACP session (read from `var/sessions/<id>/meta.json::acp_sid`)
+// instead of opening a new one. Falls back to new_session if the agent does
+// not advertise `sessionCapabilities.resume` or the resume call fails.
 #[tauri::command]
-fn start_session(app: AppHandle, id: String, harness: String, expert: String, workspace: String) {
+fn start_session(
+    app: AppHandle,
+    id: String,
+    harness: String,
+    expert: String,
+    workspace: String,
+    resume: Option<bool>,
+) {
     let harness = if harness.is_empty() { "claude".to_string() } else { harness };
     let expert = if expert.is_empty() { "consultant".to_string() } else { expert };
+    let resume = resume.unwrap_or(false);
     let python = python_bin();
-    eprintln!("[start_session] {id} ({harness}/{expert}) ws={workspace:?} py={python:?}");
+    eprintln!("[start_session] {id} ({harness}/{expert}) resume={resume} ws={workspace:?} py={python:?}");
     let mut cmd = Command::new(&python);
     cmd.arg("-u")
         .arg("-m")
@@ -183,8 +196,11 @@ fn start_session(app: AppHandle, id: String, harness: String, expert: String, wo
         .arg("--harness")
         .arg(&harness)
         .arg("--expert")
-        .arg(&expert)
-        .current_dir(&*REPO_ROOT)
+        .arg(&expert);
+    if resume {
+        cmd.arg("--resume");
+    }
+    cmd.current_dir(&*REPO_ROOT)
         .env("SPLIT_SID", &id)
         .env("SPLIT_WORKSPACE", &workspace) // empty → runner uses the default root
         .env("SPLIT_PERMISSION_MODE", "prompt") // route every tool ask to the UI
@@ -412,23 +428,43 @@ fn delete_archived_session(id: String) -> Result<(), String> {
     Ok(())
 }
 
-// The expert registry (experts.json), filtering `_`-prefixed comment keys.
+// The expert registry: shipped (`config/experts.json`) merged with user-custom
+// (`<VAR_DIR>/experts/*.json`, one entry per file, slug = filename stem).
+// Shipped wins on slug collision — users can't shadow built-ins. Mirrors the
+// Python contract in `split.core::load_experts` so the desktop picker sees the
+// same roster Recruiter wrote on disk.
 #[tauri::command]
 fn list_experts() -> Result<String, String> {
-    read_json_object("experts.json")
-}
-
-fn read_json_object(name: &str) -> Result<String, String> {
-    let path = REPO_ROOT.join("config").join(name);
-    let raw = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let raw = std::fs::read_to_string(REPO_ROOT.join("config").join("experts.json"))
+        .map_err(|e| e.to_string())?;
     let val: serde_json::Value = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
-    if let serde_json::Value::Object(map) = val {
-        let filtered: serde_json::Map<_, _> =
-            map.into_iter().filter(|(k, _)| !k.starts_with('_')).collect();
-        serde_json::to_string(&filtered).map_err(|e| e.to_string())
-    } else {
-        Ok(raw)
+    let mut merged = match val {
+        serde_json::Value::Object(map) => map
+            .into_iter()
+            .filter(|(k, _)| !k.starts_with('_'))
+            .collect::<serde_json::Map<_, _>>(),
+        _ => return Ok(raw),
+    };
+    let custom_dir = REPO_ROOT.join("var").join("experts");
+    if let Ok(entries) = std::fs::read_dir(&custom_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) != Some("json") {
+                continue;
+            }
+            let slug = match path.file_stem().and_then(|s| s.to_str()) {
+                Some(s) => s.to_string(),
+                None => continue,
+            };
+            if merged.contains_key(&slug) {
+                continue; // shipped wins
+            }
+            let Ok(body) = std::fs::read_to_string(&path) else { continue };
+            let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&body) else { continue };
+            merged.insert(slug, parsed);
+        }
     }
+    serde_json::to_string(&merged).map_err(|e| e.to_string())
 }
 
 // Spawn a harness's login command directly (no Terminal). These CLIs all do

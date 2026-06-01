@@ -62,7 +62,7 @@ function loadActive(): string {
 
 export default function App() {
   const experts = useExperts();
-  const { sessions, start, send, sendAuth, sendPermission, stop, remove, cancelQueued, openArchive } = useSessions(experts);
+  const { sessions, start, send, sendAuth, sendLogout, sendPermission, stop, remove, cancelQueued, openArchive, resumeArchive } = useSessions(experts);
   const teamApi = useMemo(() => ({ start, send, stop }), [start, send, stop]);
   const { project, channels, activeChannel, activeRoster, setActiveChannel, newChannel, stopChannel, removeChannel } = useTeam(teamApi, experts);
   const { pinned, startMove, togglePin, hide } = useWindowChrome();
@@ -442,6 +442,11 @@ export default function App() {
               </div>
               <span className="spacer" />
               <button className="iconbtn" onClick={() => openWorkspaceFolder(focused.id)} title="Open this session's folder">📁</button>
+              {(focused.status === "idle" || focused.status === "running") && !focused.archived && (
+                <button className="iconbtn" style={{ width: "auto", padding: "2px 8px", fontSize: 11 }}
+                        onClick={() => sendLogout(focused.id)}
+                        title={`Sign out of ${H[focused.harness]?.label || focused.harness}`}>sign out</button>
+              )}
               {focused.status === "running" ? (
                 <button className="iconbtn" onClick={() => stop(focused.id)} title="Stop">■</button>
               ) : focused.status !== "ended" ? (
@@ -616,6 +621,13 @@ export default function App() {
               setHistoryOpen(false);
             }
           }}
+          onResume={async (meta) => {
+            const id = await resumeArchive(meta);
+            if (id) {
+              setFocusedId(id);
+              setHistoryOpen(false);
+            }
+          }}
         />
       )}
 
@@ -728,10 +740,12 @@ function HistoryOverlay({
   experts,
   onClose,
   onOpen,
+  onResume,
 }: {
   experts: ReturnType<typeof useExperts>;
   onClose: () => void;
   onOpen: (meta: ArchivedSessionMeta) => void;
+  onResume: (meta: ArchivedSessionMeta) => void;
 }) {
   const [items, setItems] = useState<ArchivedSessionMeta[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -780,6 +794,15 @@ function HistoryOverlay({
                     <div className="sum">{m.title || "(untitled)"}</div>
                   </div>
                   <span className="badge">{when}</span>
+                  <button
+                    className="iconbtn"
+                    style={{ width: "auto", padding: "2px 8px", fontSize: 11 }}
+                    title="Resume — replay thread and reconnect to the agent's prior session"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onResume(m);
+                    }}
+                  >resume</button>
                   <button
                     className="xbtn"
                     title="Delete this archive"

@@ -49,8 +49,13 @@ PERMISSION_MODE = (os.environ.get("SPLIT_PERMISSION_MODE") or "auto-allow").stri
 class Runner:
     """One live ACP session bound to this process's stdout."""
 
-    def __init__(self, sid: str, harness: str, expert: str) -> None:
+    def __init__(self, sid: str, harness: str, expert: str, resume: bool = False) -> None:
         self.sid, self.harness, self.expert = sid, harness, expert
+        # Resume mode: on first open() we try to resume the agent's previous
+        # session (its ACP sessionId, persisted in archive meta) instead of
+        # starting a new one. Falls back to new_session if the agent doesn't
+        # advertise sessionCapabilities.resume or the resume call fails.
+        self._resume_requested = resume
         self.cfg = core.load_harnesses()[harness]
         # The workspace belongs to the EXPERT, not the session. Every session
         # of <expert> (across every harness) lands in the same dir, so the
@@ -207,6 +212,33 @@ class Runner:
         )
         self.auth_methods = init.auth_methods or []
         mcp = core.load_mcp()
+
+        # Resume path: if requested + the agent advertises sessionCapabilities.resume
+        # + we have a previously-persisted ACP session id, call session/resume
+        # instead of session/new. ACP's resume is reconnection-only — it does NOT
+        # replay messages (that's session/load); our React side already has the
+        # thread restored from the local archive, so resume is what we want.
+        prior_acp_sid = self.archive.meta.get("acp_sid") if self._resume_requested else None
+        if prior_acp_sid:
+            caps = getattr(init, "agent_capabilities", None)
+            session_caps = getattr(caps, "session_capabilities", None) if caps else None
+            resume_supported = bool(getattr(session_caps, "resume", None)) if session_caps else False
+            if resume_supported:
+                try:
+                    await self.conn.resume_session(
+                        cwd=self.ws_dir, session_id=prior_acp_sid, mcp_servers=mcp,
+                    )
+                    self.acp_sid = prior_acp_sid
+                    # The persona is already in the agent's prior session history —
+                    # don't inject it again on first turn after resume.
+                    self._persona_injected = True
+                    self.on_log(f"resumed ACP session {prior_acp_sid}")
+                    return
+                except Exception as exc:
+                    self.on_log(f"resume failed ({exc}); falling back to new session")
+            else:
+                self.on_log("agent does not advertise sessionCapabilities.resume; new session")
+
         try:
             sess = await self.conn.new_session(cwd=self.ws_dir, mcp_servers=mcp)
         except Exception as exc:
@@ -216,6 +248,13 @@ class Runner:
             else:
                 raise
         self.acp_sid = sess.session_id
+        # Persist the ACP session id so a future runner spawned with --resume can
+        # reconnect to the same agent-side conversation.
+        try:
+            self.archive.meta["acp_sid"] = self.acp_sid
+            self.archive._save_meta()
+        except Exception:
+            pass
 
     async def run(self, text: str) -> None:
         # Archive the user turn BEFORE running — survives a crash mid-prompt.
@@ -334,12 +373,16 @@ async def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--harness", required=True)
     ap.add_argument("--expert", default="consultant")
+    ap.add_argument("--resume", action="store_true",
+                    help="Reconnect to the persisted ACP session id (read from archive meta) "
+                         "instead of starting a new one; falls back to new_session if the "
+                         "agent doesn't support sessionCapabilities.resume.")
     a = ap.parse_args()
 
     sid = os.environ.get("SPLIT_SID") or a.harness
     os.makedirs(core.WORKSPACE, exist_ok=True)
-    runner = Runner(sid, a.harness, a.expert)
-    runner._emit(type="ready", harness=a.harness, expert=a.expert)
+    runner = Runner(sid, a.harness, a.expert, resume=a.resume)
+    runner._emit(type="ready", harness=a.harness, expert=a.expert, resumed=a.resume)
 
     loop = asyncio.get_event_loop()
     # Long-running ops (turns + auth) must NOT block the stdin reader, otherwise
