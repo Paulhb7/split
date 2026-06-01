@@ -24,3 +24,16 @@ serde_json = "1"
 # Linux Secret Service. Same Rust API, three backends — we get Windows / Linux
 # portability for free even though the rest of the app is macOS-only today.
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
+# Agent Client Protocol — the canonical Rust SDK (maintained by the
+# `agentclientprotocol` org, the same governance that ships the spec). We
+# enable `unstable` to access session/resume + session/close + logout +
+# set_config_option + the rest of the stabilised-but-still-gated methods.
+agent-client-protocol = { version = "0.13", features = ["unstable"] }
+# Async runtime for the per-session task. Tauri 2 already pulls tokio; we
+# pin the features the runner needs (mpsc channels, multi-thread RT, macros).
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+# Split's portable engine — persona projection, session archive, permission
+# rules, harness model config. Same surface as `split/core.py` +
+# `split/permissions.py` so the Rust runner reaches parity with the Python
+# runner. Lives in the workspace as a path crate.
+split-core = { path = "../../../core-rs" }

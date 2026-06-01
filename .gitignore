@@ -18,6 +18,12 @@ archive/
 # desktop build artifacts
 apps/desktop/node_modules/
 apps/desktop/dist/
+
+# Rust build artifacts — the Cargo workspace shares a single root `target/`
+# (one cache across `apps/desktop/src-tauri` + `core-rs`). The nested
+# `apps/desktop/src-tauri/target/` is the legacy non-workspace location and
+# is kept here so pre-workspace clones don't accidentally check it in.
+target/
 apps/desktop/src-tauri/target/
 
 Claude.md

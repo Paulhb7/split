@@ -1,0 +1,16 @@
+# Cargo workspace root.
+#
+# Split's Rust code lives in two crates:
+#   * `core-rs/`                — portable engine. Pure stdlib + serde +
+#                                  chrono. No Tauri, no ACP SDK. Mirrors
+#                                  the surface of `split/core.py` +
+#                                  `split/permissions.py`.
+#   * `apps/desktop/src-tauri/` — the Tauri 2 desktop bar binary that
+#                                  consumes the engine + the ACP SDK.
+#
+# Naming: `core-rs/` (top-level, no jargon) parallels `split/` (Python). A
+# second front (HTTP gateway, headless CLI runner, …) would land as another
+# sibling crate consuming `core-rs`; the engine itself stays untouched.
+[workspace]
+members = ["apps/desktop/src-tauri", "core-rs"]
+resolver = "2"
