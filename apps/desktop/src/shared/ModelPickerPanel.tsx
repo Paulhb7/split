@@ -1,5 +1,5 @@
 // Generic Local/Cloud model picker for any model-agnostic harness (Hermes,
-// OpenCode, eventually Qwen / DeepAgents). The UX is identical across
+// OpenCode, eventually Qwen). The UX is identical across
 // harnesses; what varies is (1) the cloud-provider catalogue (per
 // [[model-picker]] registry, keyed by harnessId) and (2) the harness-specific
 // translation from the saved JSON to spawn-time CLI args + env, which lives

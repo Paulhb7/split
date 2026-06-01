@@ -24,7 +24,6 @@ export const HARNESSES: Harness[] = [
   { id: "qwen", label: "Qwen", vendor: "Alibaba", brand: "#7c5cff", lane: "cloud", tag: "Local or key", blurb: "Qwen3.5 — local via Ollama, or cloud." },
   { id: "opencode", label: "OpenCode", vendor: "open source", brand: "#ff7a59", lane: "local", tag: "100% local", blurb: "75+ providers. Point at Ollama → $0." },
   { id: "hermes", label: "Hermes", vendor: "NousResearch", brand: "#fbbf24", lane: "local", tag: "Model-agnostic", blurb: "19+ providers. Local LLMs first-class, OAuth proxy." },
-  { id: "deepagents", label: "DeepAgents", vendor: "LangChain", brand: "#1fae9b", lane: "local", tag: "Any provider", blurb: "Model-agnostic LangChain agent." },
 ];
 
 export const H: Record<string, Harness> = Object.fromEntries(HARNESSES.map((h) => [h.id, h]));

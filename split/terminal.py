@@ -32,8 +32,7 @@ from .acp_client import ConsoleClient, client_capabilities
 ALIASES = {"vibe": "mistral-vibe", "mistral": "mistral-vibe",
            "claude-code": "claude", "google": "gemini",
            "qwen-code": "qwen", "github-copilot": "copilot",
-           "github-copilot-cli": "copilot", "langchain": "deepagents",
-           "claw": "openclaw"}
+           "github-copilot-cli": "copilot"}
 
 # Terminal front switches harness, but not expert — the @-picker is a roster
 # of brains. We always run the default expert (Wolfgang the consultant).
@@ -240,8 +239,8 @@ async def switch(session, key, agents):
 
 async def main() -> None:
     agents = core.load_harnesses()  # ACP-speak: each harness is an "agent"
-    # The workspace is the agent's PERSISTENT home/memory (like OpenClaw's) — do
-    # NOT wipe it. ensure_expert_workspace only refreshes the projected files
+    # The workspace is the agent's PERSISTENT home/memory — do NOT wipe it.
+    # `ensure_expert_workspace` only refreshes the projected files
     # (mtime-gated for persona, reconciled for skills); anything the agent
     # wrote in the dir survives across runs. Clean slate? `rm -rf var/workspace/<expert>/`.
     os.makedirs(core.WORKSPACE, exist_ok=True)

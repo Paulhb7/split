@@ -45,8 +45,8 @@ EXPERT  =  persona (who it is)  +  skills (what it can do)  +  tools (what it ca
   over the wire.
 
 Config (`experts.json` / `harnesses.json` / `skills/` / `tools.json`) is kept
-**separate from the generated `workspace/`** — the same split OpenClaw uses
-(`~/.openclaw` config vs. the agent's working home).
+**separate from the generated `workspace/`** — portable, version-controlled
+config on one side; the agent's working home on the other.
 
 ---
 
@@ -122,22 +122,15 @@ work. Logos for all configured harnesses ship in
 | `gemini` | Gemini CLI | `npx @google/gemini-cli --acp` | Google login (free tier) or `GEMINI_API_KEY` | ✅ tested working |
 | `qwen` | Qwen Code (Gemini-CLI fork) | `npx @qwen-code/qwen-code --acp --experimental-skills` | `DASHSCOPE_API_KEY` | ⚠️ configured, not working yet |
 | `copilot` | GitHub Copilot CLI | `npx @github/copilot --acp` | Copilot sub (`gh auth login`) or `GH_TOKEN` | ✅ tested working |
-| `deepagents` | DeepAgents (LangChain, model-agnostic) | `npx deepagents-acp` | any provider key (or local) | ⚠️ configured, still to validate |
 | `opencode` | OpenCode (75+ providers) | `./var/bin/opencode acp` | model-agnostic; Ollama for zero-key local | ✅ tested working |
 | `cursor` | Cursor Agent | `./var/bin/dist-package/cursor-agent acp` | `cursor-agent login` or `CURSOR_API_KEY` | ⚙️ external binary |
 | `mistral-vibe` | Mistral Vibe | `./var/bin/vibe-acp` | `MISTRAL_API_KEY` (download binary, below) | ✅ tested working |
-| `openclaw` | OpenClaw Gateway (a **bridge**) | `openclaw acp` | running Gateway + token | 🅿️ reserve² |
 
 Configs live in [`config/harnesses.json`](config/harnesses.json) (versions pinned from the ACP
 registry where one exists).
 
-> ² **Reserve.** *OpenClaw* is a reserve entry: it won't launch until a Gateway
-> is running and authed, and it nests its *whole* runtime — channels, memory,
-> sub-agents — as one agent behind us.
-
 Not in the live registry yet: **Hermes** and **Kimi Code** need configuration,
-**Grok** still needs a test pass, and the LangChain **DeepAgents** path is
-present but not yet validated end to end.
+**Grok** still needs a test pass.
 
 ---
 
@@ -215,7 +208,7 @@ uv sync             # creates .venv from pyproject.toml + uv.lock (deps + dev to
 
 - **[uv](https://docs.astral.sh/uv/)** — the Python toolchain (manages the venv +
   deps from `uv.lock`). `brew install uv`. (Targets Python 3.10+.)
-- **Node** (for `npx`) — launches the Claude/Codex/Gemini/Qwen/Copilot/DeepAgents adapters.
+- **Node** (for `npx`) — launches the Claude/Codex/Gemini/Qwen/Copilot adapters.
 - **Auth** for whichever harness you test (table above). Provider keys saved
   through the desktop UI go in your **OS keychain** (macOS Keychain / Windows
   Credential Manager / Linux Secret Service) under `service="split"`; Rust pulls
@@ -271,8 +264,8 @@ split/                # the Python backend (a package, run via `python -m split.
   acp_client.py       #   the ACP Client protocol on the official SDK (agent-client-protocol)
   auth.py             #   Agent-Auth detection + the per-harness login commands
 
-config/               # the EXPERT SYSTEM (portable, the OpenClaw "config" half)
-  harnesses.json      #   the 10 HARNESSES (brains/runtimes)
+config/               # the EXPERT SYSTEM (portable, version-controlled)
+  harnesses.json      #   the 9 HARNESSES (brains/runtimes)
   experts.json        #   the 12 EXPERTS (render kind + declared skills)
   tools.json          #   the TOOLS (MCP servers, mcpServers shape)
   experts/*.md        #   each expert's persona prompt
@@ -345,7 +338,7 @@ few weeks.
 - **Vibe + MCP:** Vibe advertises `mcpCapabilities.http/sse = false` and keeps
   MCP in its own `~/.vibe/config.toml`; if it rejects servers over ACP the
   backend retries without them and warns.
-- **`var/workspace/` persists** (it's the agent's home, like OpenClaw's); only the
+- **`var/workspace/` persists** (it's the agent's home); only the
   persona/skill projections are overwritten. `rm -rf var/workspace/` for a clean slate.
 - **`var/memory/` is cross-session memory** — `_user/USER.md` (facts about the boss,
   shared by every expert) and `<expert>/MEMORY.md` (each expert's own notes), read

@@ -8,7 +8,7 @@ an expert's persona + skills into a session workspace, and builds the MCP server
 list passed to `session/new`.
 
 Layout — config (portable, version-controlled) is kept separate from generated
-state (the OpenClaw split: `~/.openclaw` config vs. the agent workspace):
+state (config dir vs. the agent's working home):
 
     <repo>/config/   harnesses.json, experts.json, tools.json, experts/, skills/
     <repo>/var/      workspace/ (agent home), bin/ (downloaded harness binaries)

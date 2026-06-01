@@ -202,6 +202,25 @@ fn start_session(app: AppHandle, id: String, harness: String, expert: String, wo
             }
         }
     }
+    // OpenTelemetry passthrough — opt-in via the user's env (per ACP RFD
+    // `agent-telemetry-export`). If they have a local OTLP receiver running
+    // and exported `OTEL_EXPORTER_OTLP_ENDPOINT`, we forward it + tag the
+    // service per harness so agents that implement OTel stream traces
+    // out-of-band instead of via stdio.
+    if let Ok(endpoint) = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT") {
+        if !endpoint.is_empty() {
+            cmd.env("OTEL_EXPORTER_OTLP_ENDPOINT", &endpoint);
+            cmd.env("OTEL_SERVICE_NAME", format!("split-{harness}"));
+            cmd.env("OTEL_RESOURCE_ATTRIBUTES", format!("split.session_id={id},split.expert={expert}"));
+            for k in ["OTEL_EXPORTER_OTLP_HEADERS", "OTEL_EXPORTER_OTLP_PROTOCOL", "OTEL_TRACES_EXPORTER"] {
+                if let Ok(v) = std::env::var(k) {
+                    if !v.is_empty() {
+                        cmd.env(k, v);
+                    }
+                }
+            }
+        }
+    }
     // Hermes's model selection lives in `~/.hermes/config.yaml` and accepts
     // `-m <provider/model> --provider <name>` as CLI overrides, NOT env vars
     // (verified by grepping hermes source: no HERMES_MODEL anywhere). The
@@ -277,6 +296,18 @@ fn send_auth(id: String, method_id: String) -> Result<(), String> {
     s.stdin.flush().map_err(|e| e.to_string())
 }
 
+// Trigger an ACP logout for a session — the runner calls the agent's `logout`
+// method (gated by `agentCapabilities.auth.logout`) then surfaces a fresh
+// auth_required so the UI can re-prompt sign-in.
+#[tauri::command]
+fn send_logout(id: String) -> Result<(), String> {
+    let mut map = SESSIONS.lock().unwrap();
+    let s = map.get_mut(&id).ok_or("no such session")?;
+    let line = format!("{}\n", json!({ "type": "logout" }));
+    s.stdin.write_all(line.as_bytes()).map_err(|e| e.to_string())?;
+    s.stdin.flush().map_err(|e| e.to_string())
+}
+
 // Answer a `permission_request` for a session — the chosen ACP option (None =
 // deny) plus the persistence scope (once / session / always-allow / always-deny).
 // The runner resolves the pending Future and optionally writes a rule.
@@ -297,14 +328,20 @@ fn send_permission(
     s.stdin.flush().map_err(|e| e.to_string())
 }
 
-// Stop one session: dropping its stdin closes the turn channel (Python sees EOF)
-// and we hard-kill the process tree to tear down the agent CLI child too.
+// Stop one session: ask the runner to shut down gracefully (it sends
+// session/cancel + session/close to the agent before dropping the connection),
+// then hard-kill the process tree as a safety net after a short drain window.
 #[tauri::command]
 fn stop_session(id: String) {
-    if let Some(s) = SESSIONS.lock().unwrap().remove(&id) {
+    if let Some(mut s) = SESSIONS.lock().unwrap().remove(&id) {
+        let _ = s.stdin.write_all(b"{\"type\":\"stop\"}\n");
+        let _ = s.stdin.flush();
         let p = s.pid.to_string();
-        let _ = Command::new("pkill").arg("-P").arg(&p).status(); // children (agent CLI)
-        let _ = Command::new("kill").arg("-KILL").arg(&p).status();
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            let _ = Command::new("pkill").arg("-P").arg(&p).status();
+            let _ = Command::new("kill").arg("-KILL").arg(&p).status();
+        });
     }
 }
 
@@ -1107,6 +1144,7 @@ pub fn run() {
             start_session,
             send_turn,
             send_auth,
+            send_logout,
             send_permission,
             stop_session,
             list_sessions,

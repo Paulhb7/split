@@ -1,5 +1,5 @@
 // The generic Local/Cloud model picker — same UX for every model-agnostic
-// harness (Hermes, OpenCode, eventually Qwen, DeepAgents). Each harness gets
+// harness (Hermes, OpenCode, eventually Qwen). Each harness gets
 // its own curated catalogue of cloud providers (different model IDs, auth
 // patterns) but shares the curated Ollama recipe list (the local-LLM choice
 // doesn't care which harness will consume it).

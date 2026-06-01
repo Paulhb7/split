@@ -32,6 +32,9 @@ import uuid
 from typing import Any
 
 import acp
+from acp.meta import AGENT_METHODS
+from acp.schema import LogoutRequest, LogoutResponse
+from acp.utils import request_model_from_dict
 
 from . import core, permissions as P
 from .acp_client import ConsoleClient, client_capabilities
@@ -223,7 +226,7 @@ class Runner:
                 await self.open()
             # First user turn of this session — prepend the persona so the
             # agent has its character + discipline in the conversation history,
-            # even if the harness ignores cwd files (Vibe, OpenClaw).
+            # even if the harness ignores cwd files (Vibe).
             # Subsequent turns send the user's text as-is (the persona stays
             # in the agent's context window from this first exchange).
             wire = text
@@ -264,6 +267,32 @@ class Runner:
                         "name": getattr(m, "name", ""), "description": getattr(m, "description", "")})
         return out
 
+    async def logout(self) -> None:
+        """Call ACP `logout` if the agent declared the capability, then surface
+        an auth_required so the UI can re-prompt sign-in. The SDK exposes the
+        schemas but no typed wrapper yet, so we route via the low-level
+        request helper directly (consistent with how the SDK's own typed
+        wrappers are built — see acp.client.connection)."""
+        if self.conn is None:
+            return
+        try:
+            await request_model_from_dict(
+                self.conn._conn,
+                AGENT_METHODS["logout"],
+                LogoutRequest(field_meta=None),
+                LogoutResponse,
+            )
+            self._emit(type="auth_result", harness=self.harness, ok=True, loggedOut=True)
+            self._emit(
+                type="auth_required", harness=self.harness,
+                methods=self._auth_methods_json(),
+                hasLogin=self.harness in LOGIN_CMD,
+                note=self.cfg.get("auth", ""),
+            )
+        except Exception as exc:
+            self._emit(type="auth_result", harness=self.harness, ok=False,
+                       error=f"logout failed: {exc!s}"[:300])
+
     async def authenticate(self, method_id: str) -> None:
         try:
             if self.conn is None:
@@ -277,6 +306,18 @@ class Runner:
             self._emit(type="auth_result", harness=self.harness, ok=False, error=str(exc)[:300])
 
     async def close(self) -> None:
+        # Graceful: notify the agent that the turn is cancelled (if one is in
+        # flight) and close the session before dropping the stdio connection.
+        # Each step is timeboxed so a hung agent can't block teardown.
+        if self.conn is not None and self.acp_sid is not None:
+            try:
+                await asyncio.wait_for(self.conn.cancel(session_id=self.acp_sid), timeout=0.4)
+            except Exception:
+                pass
+            try:
+                await asyncio.wait_for(self.conn.close_session(session_id=self.acp_sid), timeout=0.4)
+            except Exception:
+                pass
         if self._cm is not None:
             try:
                 await self._cm.__aexit__(None, None, None)
@@ -330,12 +371,21 @@ async def main() -> None:
                 _spawn(runner.authenticate(m["auth"]["methodId"]))
             elif "permission" in m:
                 await runner.handle_permission(m["permission"])
+            elif m.get("type") == "logout":
+                _spawn(runner.logout())
             elif m.get("type") == "stop":
+                # Cancel any in-flight turn instead of waiting on it — the user
+                # wants to shut down now, not after the agent finishes thinking.
+                for t in list(inflight):
+                    t.cancel()
                 break
     finally:
-        # Give in-flight turns a beat to wrap up cleanly, then tear down.
+        # Give cancellations a beat to settle, then tear down.
         if inflight:
-            await asyncio.gather(*inflight, return_exceptions=True)
+            try:
+                await asyncio.wait(inflight, timeout=0.3)
+            except Exception:
+                pass
         await runner.close()
 
 

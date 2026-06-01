@@ -20,7 +20,7 @@ on any machine, in any user's home, with the repo cloned anywhere. The patch is
 idempotent (re-running `install` reconciles to the current `tools.json`).
 
 Why a one-time setup? Most harnesses (Claude, Codex, Gemini, Qwen, Copilot,
-OpenCode, Cursor, DeepAgents) consume skills via `<cwd>/.claude/skills` /
+OpenCode, Cursor) consume skills via `<cwd>/.claude/skills` /
 `<cwd>/.agents/skills` (handled by `core.ensure_expert_workspace`) and MCPs via
 ACP's `mcpServers` (handled by the runner). Vibe respects neither at the ACP
 seam, so we patch its native config once.
@@ -261,7 +261,7 @@ def main(argv: list[str] | None = None) -> int:
     if harness not in _ACTIONS:
         _err(
             f"unknown harness '{harness}'. Available: {', '.join(sorted(_ACTIONS))}\n"
-            f"(Claude, Codex, Gemini, Qwen, Copilot, OpenCode, Cursor, DeepAgents work\n"
+            f"(Claude, Codex, Gemini, Qwen, Copilot, OpenCode, Cursor work\n"
             f" out-of-the-box via per-session cwd projection — no setup needed.)"
         )
         return 1
