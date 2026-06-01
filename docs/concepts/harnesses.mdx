@@ -1,0 +1,34 @@
+---
+title: "Harnesses"
+description: "The brains. Any ACP agent — launched as a command, signed in with its own account."
+---
+
+Each harness is a runtime/brain. ACP calls each one an "agent"; Split launches
+any `command + args`, so even agents the public ACP registry can't express still
+work. Logos for all configured harnesses ship in `apps/desktop/public/logos/`.
+
+| Harness | What it is | Launch | Auth | Status |
+|---|---|---|---|---|
+| `claude` | Claude Agent (claude-acp) | `npx @agentclientprotocol/claude-agent-acp` | `claude login` (Pro/Max) or `ANTHROPIC_API_KEY` | ✅ tested |
+| `codex` | Codex CLI (codex-acp) | `npx @zed-industries/codex-acp` | `codex login` or `OPENAI_API_KEY` | ✅ tested |
+| `gemini` | Gemini CLI | `npx @google/gemini-cli --acp` | Google login (free tier) or `GEMINI_API_KEY` | ✅ tested |
+| `qwen` | Qwen Code (Gemini-CLI fork) | `npx @qwen-code/qwen-code --acp --experimental-skills` | `DASHSCOPE_API_KEY` | ⚠️ not working yet |
+| `copilot` | GitHub Copilot CLI | `npx @github/copilot --acp` | Copilot sub (`gh auth login`) or `GH_TOKEN` | ✅ tested |
+| `opencode` | OpenCode (75+ providers) | `./var/bin/opencode acp` | model-agnostic; Ollama for zero-key local | ✅ tested |
+| `cursor` | Cursor Agent | `./var/bin/dist-package/cursor-agent acp` | `cursor-agent login` or `CURSOR_API_KEY` | ⚙️ external binary |
+| `mistral-vibe` | Mistral Vibe | `./var/bin/vibe-acp` | `MISTRAL_API_KEY` (download binary) | ✅ tested |
+
+Configs live in `config/harnesses.json` (versions pinned from the ACP registry
+where one exists). Display brand/lane/vendor metadata lives in
+`apps/desktop/src/shared/harnesses.ts`.
+
+<Info>
+Not in the live registry yet: **Hermes** and **Kimi Code** need configuration;
+**Grok** still needs a test pass.
+</Info>
+
+## Each harness = its own auth wallet
+
+A harness signs in with its own account. Provider API keys saved through the
+desktop UI go in the **OS keychain** under `service="split"`; CLI-login agents
+use their own browser flow. See [Auth](/concepts/auth).

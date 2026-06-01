@@ -1,0 +1,39 @@
+---
+title: "The wire, in events"
+description: "How the agent's session/update stream is normalized to VEVT events."
+---
+
+The agent's ACP `session/update` stream is normalized to a handful of event
+types the UI renders the same way:
+
+| Event | Meaning |
+|---|---|
+| `say` | Assistant text |
+| `thought` | Reasoning / thinking |
+| `step` | Tool call start / progress (`{title, status}`) |
+| `plan` | Plan entries |
+| `usage` | Tokens + cost (`{used, size, cost}`) |
+| `commands` | Slash-command palette |
+| `status` | `running` / `idle` / `error` |
+| `auth_required` / `auth_result` | Sign-in handshake |
+| `permission_request` | Tool permission prompt |
+
+## Emission
+
+The **native Rust runner** emits these directly via
+`app.emit("session-event", …)` — broadcast (not window-scoped), so parallel
+sessions stream without crossing wires. The retired Python sidecar (when opted
+in) emitted the same vocabulary as `VEVT <json>` lines on stdout.
+
+<Warning>
+`status: idle` is the **turn-finished** signal — there's no separate `done`
+event. The React reducer commits the streamed answer there. The ACP session
+stays open for the next turn (multi-turn, no transcript replay).
+</Warning>
+
+## Archive
+
+Either backend persists per-session archives under
+`var/sessions/<id>/{events.ndjson, meta.json}` (with `acp_sid` for resume) — a
+byte-identical shape, so a session recorded by either backend replays correctly
+through the same React reducer.

@@ -1,0 +1,44 @@
+---
+title: "Platforms"
+description: "macOS + Windows (unsigned)."
+---
+
+macOS is the primary, battle-tested target. **Windows** is supported as a
+cross-platform build: the Rust + Tauri code is platform-portable and is compiled
++ unit-tested on `windows-latest` in CI. The Windows *runtime* is not yet
+exercised end-to-end in CI — treat it as "builds and should run", not "fully
+QA'd". Neither platform ships **code-signed** today.
+
+## What's portable
+
+- **Repo-root resolution** — resolved at runtime (`SPLIT_REPO_ROOT`, else
+  exe-ancestor markers, else `CARGO_MANIFEST_DIR`); not pinned to one machine or OS.
+- **`PATH`** — `:`-joined Unix dirs on macOS/Linux, `;`-joined inherited PATH
+  (+ `%USERPROFILE%\.cargo\bin`) on Windows.
+- **Command portability** — `which`→`where`, `open`→`start`/`xdg-open`, the
+  ⌘J global toggle becomes Ctrl+J off macOS.
+- **Workspace projection** — symlinks on Unix, falls back to copies on Windows
+  (no Developer-Mode requirement).
+- **Secrets** — the `keyring` crate targets Windows Credential Manager / macOS
+  Keychain / Linux Secret Service.
+
+## Windows rough edges (degrade gracefully)
+
+- **Vendored binaries** — `var/bin/opencode`, `var/bin/vibe-acp` are darwin-arm64;
+  the npx-based harnesses work cross-platform, the vendored ones need a Windows build.
+- **Harness installers** — `brew` / `curl | bash` paths are Unix; on Windows they
+  fall through to opening the docs URL.
+- **Window chrome** — vibrancy is macOS-only; the Windows window renders without
+  the blur backdrop.
+
+## Code signing — not done
+
+First launch shows a security prompt:
+
+- **macOS** (Gatekeeper): right-click → **Open**, or
+  `xattr -dr com.apple.quarantine /Applications/Split.app`.
+- **Windows** (SmartScreen): **More info → Run anyway**.
+
+Signing is optional and costs money (Apple Developer ID ≈ $99/yr; a Windows
+Authenticode cert ≈ $200–700/yr), so it's deferred until there's real external
+distribution.

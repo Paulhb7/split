@@ -1,0 +1,38 @@
+---
+title: "Auth"
+description: "Sign-in is the agent's job — ACP Agent Auth, browser login, or an API key."
+---
+
+**Auth = the agent's job (ACP "Agent Auth").** When a harness needs sign-in, the
+runner emits `auth_required` (and stashes the pending prompt). The UI then offers
+three paths:
+
+<Steps>
+  <Step title="ACP authenticate (OAuth)">
+    Run the harness's ACP `authenticate` method directly.
+  </Step>
+  <Step title="Browser login command">
+    Launch that harness's login command — `claude login`, `codex login`, the
+    Google login for Gemini — in Terminal.app.
+  </Step>
+  <Step title="API key">
+    Ask for the configured provider key.
+  </Step>
+</Steps>
+
+On success the runner **re-runs the pending prompt automatically**. Detection and
+the per-harness commands live in the Rust runner.
+
+## Where keys are stored
+
+Provider keys saved through the desktop UI (`save_api_key`) go in the **OS
+keychain** — macOS Keychain / Windows Credential Manager / Linux Secret Service,
+via the `keyring` crate — under `service="split", account=KEY_NAME`. The runner
+pulls them at session spawn and injects them into the agent child's env via
+`McpServerStdio.env`.
+
+<Note>
+A legacy `.env` at the repo root still works as a fallback for keys provisioned
+before the keychain switch — anything exported in your shell is inherited by the
+runner.
+</Note>

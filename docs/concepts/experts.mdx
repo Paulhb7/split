@@ -1,0 +1,33 @@
+---
+title: "Experts"
+description: "The 12 personas, what each does, and what it leans on."
+---
+
+An expert is a *persona + skills + tools*. Pick one with `@` (terminal:
+`@consultant`; desktop: the picker). The **kind** is informational — it tells the
+UI how to render (chat panel vs. a step feed vs. an app preview).
+
+| Expert | Kind | What it does | Leans on |
+|---|---|---|---|
+| **Toscanini** / Chief of Staff | operator | Conducts a team: delegates, tracks work, synthesizes | built-in team orchestration |
+| **Wolfgang** / Consultant | researcher | Web research → a sharp, **cited** briefing, then slides or Word memos | `web-search`, `frontend-slides`, `docx`, `image-search`, `web-deploy` |
+| **Curie** / Scientist | researcher | Literature review, paper search, replication planning | `web-search`, `paper-search`, `docx`, `frontend-slides`, `web-deploy` |
+| **Buffett** / Financier | analyst | Markets, FP&A, personal finance, investor reporting | `market-data`, `dashboard`, `frontend-slides`, `docx`, `web-deploy` |
+| **Cicero** / Lawyer | advisor | Legal guidance, risk reads, contract drafts and clauses | `web-search`, `docx`, `legal-templates` |
+| **Turing** / Data Analyst | analyst | CSV/Excel exploration, models, dashboards, interactive reports | `dashboard`, `ui-ux-pro-max`, `frontend-slides`, `docx`, `web-deploy` |
+| **Tesla** / Engineer | builder | Builds micro-apps and landing pages, ships them to a public URL | `web-deploy`, `image-search`, `ui-ux-pro-max` |
+| **DaVinci** / Designer | creator | Brand identities, UI mockups, static graphics, redesigns | `web-audit`, `image-search`, `graphics`, `ui-ux-pro-max`, `frontend-slides` |
+| **Alfred** / Operator | operator | Drives real macOS apps in the background | `cua-driver` (AX-tree macOS control) |
+| **Bach** / Musician | creator | Generates original tracks from a prompt | `music-gen` |
+| **Homer** / Podcaster | creator | Scripts, voices, scores, and edits podcast episodes | `voice-gen`, `music-gen` |
+| **Kubrick** / Director | creator | Produces short videos: shot list, score, narration | `video-gen`, `music-gen`, `voice-gen` |
+
+## Where they live
+
+- Personas: `config/experts/<slug>.md` — the prompt projected at session start.
+- Registry + render-kinds: `config/experts.json`, keyed by slug, each
+  `{label, kind, skills, blurb}`.
+
+The persona is projected into the workspace's `AGENTS.md` (plus `CLAUDE.md` /
+`GEMINI.md` / `QWEN.md` shims) so any harness running the expert sees the same
+identity. See [The model](/get-started/the-model).

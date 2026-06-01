@@ -1,0 +1,40 @@
+---
+title: "The Rust runner"
+description: "The native ACP session backend, driven by Tauri commands."
+---
+
+The **native Rust runner** (`apps/desktop/src-tauri/src/runner.rs`, on the
+canonical `agent-client-protocol` crate) is the sole session backend. It speaks
+ACP in-process, lets the `.dmg` ship without a Python runtime, and covers every
+capability the old Python sidecar did: auth flow, `session/resume`, logout, the
+permission engine with `DEFAULT_DENY` guards, MCP servers, fs read/write
+callbacks, persona projection, the harness model picker, OTLP env, stderr
+capture.
+
+## Path resolution
+
+`apps/desktop/src-tauri/src/lib.rs` resolves the repo root **at runtime** — no
+machine-specific paths baked in:
+
+1. `$SPLIT_REPO_ROOT`, else
+2. the nearest ancestor of the exe holding `config/harnesses.json` + `Cargo.toml`
+   (the workspace-root marker — covers `tauri dev` and `tauri build`), else
+3. three levels up from `CARGO_MANIFEST_DIR`.
+
+## Tauri commands
+
+Sessions live in one `SESSIONS` map (id → control-channel sender):
+
+| Command | Does |
+|---|---|
+| `start_session(id, harness, expert, workspace, resume?)` | Spawns the runner in a tokio task, projects the workspace, passes provider keys + OTLP env via `McpServerStdio.env`, captures agent stderr |
+| `send_turn(id, text)` | Sends a `Turn` on the session's control channel |
+| `send_auth(id, methodId)` / `send_logout(id)` | `Auth` / `Logout` |
+| `stop_session(id)` | `Stop` → graceful `session/cancel` + `session/close` |
+| `send_permission(id, requestId, optionId, scope)` | Resolves the pending `request_permission` oneshot by request id |
+| `list_sessions` / `list_harnesses` / `list_experts` | Read the JSON configs |
+| `read_files_for_agent` | File drops (~200 KB cap) |
+| `save_api_key` | Allowlisted provider keys → OS keychain |
+
+VEVT events + stderr are **broadcast with `app.emit`** (not `window.emit`), so
+parallel sessions stream without crossing wires.

@@ -1,0 +1,46 @@
+---
+title: "Repo layout"
+description: "Four tracked concerns + one local-only legacy."
+---
+
+The **Rust backend** (`core-rs/`), the **config** (`config/`, portable &
+version-controlled), the **UIs** (`apps/`), and **generated/vendored** state
+(`var/`, gitignored). The retired **Python backend** lives at `split-python/`
+*if* you keep it locally — gitignored, fresh clones don't get it.
+
+```
+core-rs/              # the Rust BACKEND — portable engine (cargo workspace member)
+  src/persona.rs      #   workspace projection (AGENTS.md + cross-vendor shims + skill symlinks)
+  src/archive.rs      #   per-session events.ndjson + meta.json (with acp_sid for resume)
+  src/permissions.rs  #   allow/ask/deny rule engine (DEFAULT_DENY guards + glob match)
+  src/harness_config.rs#  Hermes/OpenCode model-picker translation
+
+config/               # the EXPERT SYSTEM (portable, version-controlled)
+  harnesses.json      #   the HARNESSES (brains/runtimes)
+  experts.json        #   the EXPERTS (render kind + declared skills)
+  tools.json          #   the TOOLS (MCP servers, mcpServers shape)
+  experts/*.md        #   each expert's persona prompt
+  skills/<name>/      #   portable SKILLs, Agent Skills standard (SKILL.md + optional scripts/)
+
+apps/
+  desktop/            # FRONT — the Tauri 2 + React 19 bar  (npm run tauri dev)
+                      #   src-tauri/ depends on `core-rs/` + houses the ACP runner (runner.rs)
+
+var/                  # generated / vendored — gitignored, safe to delete
+  workspace/          #   each session's PERSISTENT home (persona+skill projected in)
+  sessions/           #   per-session archive (events.ndjson + meta.json)
+  memory/             #   cross-session expert memory — survives `rm -rf workspace/`
+    _user/USER.md     #     about the boss; every expert reads this
+    <expert>/MEMORY.md#     this expert's own notes
+  bin/                #   downloaded harness binaries (opencode, vibe-acp, cursor-agent)
+  _retired/           #   parked code (the old web front: server.py + web/)
+
+split-python/         # LOCAL-ONLY (gitignored) — retired Python backend, reference only
+
+Cargo.toml            # workspace root — pulls in apps/desktop/src-tauri + core-rs
+```
+
+<Note>
+`var/workspace/` **persists** — it's the agent's home, kept across runs; only the
+persona/skill projections are overwritten. `rm -rf var/workspace/` for a clean slate.
+</Note>

@@ -1,0 +1,49 @@
+---
+title: "Quickstart"
+description: "Install the toolchain, run the desktop bar, fire your first turn."
+---
+
+## Prerequisites
+
+- **[Rust](https://rustup.rs/)** — the workspace's primary toolchain
+  (`rustup install stable`). Builds the engine (`core-rs/`) and the desktop bar.
+- **Node** (for `npx`) — launches the Claude/Codex/Gemini/Qwen/Copilot adapters
+  and serves Vite during `tauri dev`.
+- **Auth** for whichever harness you test — see [Harnesses](/concepts/harnesses).
+
+## Run the desktop app
+
+<CodeGroup>
+```bash macOS / Linux (Makefile)
+make doctor     # check the toolchain (cargo / node / npm)
+make install    # desktop npm deps (cargo deps come on first build)
+make app        # run the desktop app — native Rust runner
+```
+
+```powershell Windows (no make)
+cd apps/desktop
+npm install
+npm run tauri dev      # run the app in dev (equivalent of `make app`)
+```
+
+```bash Manual
+cd apps/desktop && npm install   # frontend deps (Vite/React + Tauri build glue)
+cargo build --workspace          # warms the Rust deps (core-rs + the desktop crate)
+npm run tauri dev
+```
+</CodeGroup>
+
+## Try the full loop
+
+Pick an expert with `@`, then chain a persona turn, a skill, and a tool:
+
+```
+Research the EV market in 2026 and give me a short briefing   # persona: search + cite
+Now turn that into a slide deck                                # skill: frontend-slides
+@claude use the add tool from the everything MCP to add 17 and 25   # tools (MCP) → 42
+```
+
+<Note>
+First launch of a harness can lag — agent CLIs download on first use via
+`npx -y …@version` / `uvx …`.
+</Note>

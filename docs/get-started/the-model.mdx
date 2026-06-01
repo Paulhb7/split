@@ -1,0 +1,45 @@
+---
+title: "The model"
+description: "EXPERT = persona + skills + tools, run on a HARNESS."
+---
+
+One idea, kept deliberately separate from the runtime:
+
+```
+EXPERT  =  persona (who it is)  +  skills (what it can do)  +  tools (what it can reach)
+            experts/<name>.md       skills/<skill>/SKILL.md      tools.json (MCP)
+                         │
+                         └── all of it runs on a  HARNESS  (the brain/runtime)
+                                                  harnesses.json — claude | codex | gemini | …
+```
+
+## The three parts
+
+<Steps>
+  <Step title="Persona — who it is">
+    Projected into the agent's own instruction file (`AGENTS.md` — the
+    cross-vendor standard — plus `CLAUDE.md` / `GEMINI.md` / `QWEN.md` shims).
+    This is the agent's identity, *not* a skill.
+  </Step>
+  <Step title="Skills — what it can do">
+    The skills an expert declares (`experts.json`) are mounted into the agent's
+    skill location — `.claude/skills/` for Claude, `.agents/skills/` for most
+    harnesses, `.vibe/skills/` for Mistral Vibe. The `SKILL.md` is identical;
+    only the *mount path* differs.
+  </Step>
+  <Step title="Tools — what it can reach">
+    MCP servers from `tools.json`, handed to the agent via ACP's `session/new`
+    (not its native config). ACP is what unifies them — Claude reads `.mcp.json`,
+    Codex reads `~/.codex/config.toml`; we don't care, we pass them over the wire.
+  </Step>
+</Steps>
+
+## Config vs. workspace
+
+Config (`experts.json` / `harnesses.json` / `skills/` / `tools.json`) is kept
+**separate from the generated `workspace/`** — portable, version-controlled
+config on one side; the agent's working home on the other.
+
+<Tip>
+The harness is the only swappable part. Change the brain, keep the expert.
+</Tip>
