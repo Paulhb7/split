@@ -188,16 +188,16 @@ finished (the session stays open for the next turn).
 **Quickstart — the Makefile (macOS / Linux):**
 
 ```bash
-make doctor     # check the toolchain (cargo / node / npm; uv only if you keep split-python/)
+make doctor     # check the toolchain (cargo / node / npm)
 make install    # desktop npm deps (cargo deps come on first build)
-make app        # run the desktop app — Rust runner by default
+make app        # run the desktop app — native Rust runner
 ```
 
 `make build` bundles the native `.app`; `make test` runs the Rust workspace
-tests (`cargo test --workspace`) + vitest; `make` (no target) lists
-everything. The Python-only targets (`make py-cli`, `make py-test`,
-`make py-sync`) are no-ops unless `split-python/` is checked out locally.
-Windows isn't covered — desktop is macOS-only today (see
+tests (`cargo test --workspace`) + vitest; `make` (no target) lists everything.
+The retired Python sidecar is no longer in the Makefile — to compare behaviour,
+run it standalone from inside the gitignored `split-python/` (see *Legacy
+Python* below). Windows isn't covered — desktop is macOS-only today (see
 *Platforms — macOS only, today* below).
 
 Or do it manually:
@@ -294,40 +294,32 @@ var/                  # generated / vendored — gitignored, safe to delete
   bin/                #   downloaded harness binaries (opencode, vibe-acp, cursor-agent)
   _retired/           #   parked code (the old web front: server.py + web/)
 
-split-python/         # LOCAL-ONLY (gitignored) — the legacy Python backend, kept for
-                      #   parity sweeps + nostalgia. Not in the repo. To use:
-                      #     1. keep split-python/ checked out locally,
-                      #     2. cd split-python && uv sync,
-                      #     3. in the app: localStorage.setItem("split.runner", "python")
-                      # Without it, the desktop bar runs purely on Rust.
+split-python/         # LOCAL-ONLY (gitignored) — the retired Python backend, kept for
+                      #   reference + parity sweeps. Not in the repo, and no longer wired
+                      #   into the app. To compare behaviour: cd split-python && uv sync,
+                      #   then run the sidecar standalone (python -m split.terminal / runner).
+                      # The desktop bar runs purely on Rust.
 
 Cargo.toml            # workspace root — pulls in apps/desktop/src-tauri + core-rs
 .gitignore · .env (legacy fallback for keys; new keys go to the OS keychain)
 ```
 
-### Default runtime: Rust
+### Runtime: Rust only
 
 The **native Rust runner** (`apps/desktop/src-tauri/src/runner.rs` on the
-canonical `agent-client-protocol` crate) is the default backend. It speaks
-ACP in-process, lets the `.dmg` ship without a Python runtime, and matches
-Python on every capability (auth flow, session/resume, logout, permission
+canonical `agent-client-protocol` crate) is the sole session backend. It speaks
+ACP in-process, lets the `.dmg` ship without a Python runtime, and covers every
+capability the Python sidecar did (auth flow, session/resume, logout, permission
 engine with `DEFAULT_DENY` guards, MCP servers, fs read/write callbacks,
 persona projection, harness model picker, OTLP env, stderr capture).
 
-The Python sidecar (`python -m split.runner`) remains available as an
-opt-in fallback for parity sweeps. To use it locally:
-
-```bash
-# 1. keep `split-python/` on disk (gitignored)
-cd split-python && uv sync
-
-# 2. opt in from the desktop's DevTools console
-localStorage.setItem("split.runner", "python")
-```
-
-Both backends produce byte-identical `var/sessions/<id>/{events.ndjson,
-meta.json}` archives, so a session started on one and resumed on the other
-replays correctly.
+The retired Python sidecar (`python -m split.runner`) is no longer wired into
+the app — its dispatch and the old `localStorage.setItem("split.runner",
+"python")` opt-in were removed. It lives, reference-only, in the gitignored
+`split-python/` for parity sweeps; run it standalone (`cd split-python && uv
+sync`) if you want to compare. Because it wrote byte-identical
+`var/sessions/<id>/{events.ndjson, meta.json}` archives, sessions it recorded
+still replay correctly through the Rust path.
 
 ---
 
@@ -336,16 +328,16 @@ replays correctly.
 The ACP/Python core is portable, but the app as a whole is currently pinned to
 macOS. Honest blockers if you try Windows/Linux:
 
-- **Python interpreter path** — the Tauri shell (`apps/desktop/src-tauri/src/lib.rs`)
-  resolves the repo root + interpreter at runtime (`SPLIT_REPO_ROOT`/`SPLIT_PYTHON`,
-  else exe-ancestor markers, else `CARGO_MANIFEST_DIR`), so it's no longer pinned to
-  one machine — but its venv fallback is `.venv/bin/python` (Windows is
-  `.venv\Scripts\python.exe`; set `SPLIT_PYTHON` to override).
+- **Repo-root resolution** — the Tauri shell (`apps/desktop/src-tauri/src/lib.rs`)
+  resolves the repo root at runtime (`SPLIT_REPO_ROOT`, else exe-ancestor markers
+  holding `config/harnesses.json` + `Cargo.toml`, else `CARGO_MANIFEST_DIR`), so
+  it's no longer pinned to one machine.
 - **Auth launchers** — `lib.rs` starts browser-based login commands as detached
   subprocesses. That avoids Terminal.app scripting, but the commands and auth
   dotfiles are still tested only on macOS.
-- **Session teardown** — Rust kills the process tree with `pkill`/`kill`
-  (Windows needs `taskkill`).
+- **Session teardown** — the runner shuts a session down gracefully over ACP
+  (session/cancel + session/close); the agent subprocess is owned by the ACP SDK.
+  Any per-OS process-tree cleanup beyond that is still macOS-shaped.
 - **`PATH`** — built with a `:` separator and `/opt/homebrew` entries (Unix).
 - **Binaries** — `var/bin/opencode`, `var/bin/vibe-acp`, the `*.node` addons are
   **darwin-arm64**; you'd need per-platform builds.

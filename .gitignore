@@ -6,13 +6,12 @@ __pycache__/
 *.py[cod]
 .venv/
 
-# The Python backend is no longer the default — Rust took over (see
-# `core-rs/` + `apps/desktop/src-tauri/src/runner.rs`). The folder is kept
-# locally for transition / reference / "ne pas perdre de vue", but the
-# repo no longer tracks it. Fresh clones don't get Python; the desktop app
-# defaults to the native Rust runner. To re-enable Python locally: keep
-# `split-python/` checked-out and set `localStorage.setItem("split.runner",
-# "python")` in DevTools.
+# The Python backend was fully retired — Rust took over (see `core-rs/` +
+# `apps/desktop/src-tauri/src/runner.rs`). This folder is kept locally for
+# reference / parity sweeps only; the repo no longer tracks it and the desktop
+# app no longer wires it in (the Python dispatch + its localStorage opt-in were
+# removed). To compare behaviour, run the Python sidecar standalone from inside
+# `split-python/`.
 split-python/
 
 # secrets
