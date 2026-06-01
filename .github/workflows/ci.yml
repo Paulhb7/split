@@ -2,10 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # `feat/**` is temporary — it lets the cross-platform matrix (incl. the
+    # Windows job) run on feature branches before they reach main. Drop it back
+    # to `[main]` once the Windows pipeline is proven green.
+    branches: [main, "feat/**"]
     paths-ignore: ["**/*.md"]
   pull_request:
     paths-ignore: ["**/*.md"]
+  # Manual "Run workflow" button / `gh workflow run` — only selectable once this
+  # trigger exists on the default branch (main).
+  workflow_dispatch:
 
 permissions:
   contents: read
