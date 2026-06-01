@@ -157,6 +157,26 @@ fn open_external(target: &str) -> std::io::Result<()> {
     cmd.status().map(|_| ())
 }
 
+// Windows spawn shim: `npx`/`uvx`/`npm`/`node`-style launchers are `.cmd`
+// batch shims, and the spawn the ACP SDK does (`Command::new(<name>)`) does NOT
+// honour PATHEXT, so a bare name fails to launch. Rewrite a bare command into
+// `cmd /C <command> <args…>` so the Windows shell resolves it. Path-qualified
+// commands (containing `/` or `\`, e.g. the resolved `./var/bin/...` binaries)
+// and `.exe`s are left untouched.
+#[cfg(target_os = "windows")]
+fn windows_spawn_shim(command: String, args: Vec<String>) -> (String, Vec<String>) {
+    let is_path = command.contains('/') || command.contains('\\');
+    let is_exe = command.to_ascii_lowercase().ends_with(".exe");
+    if is_path || is_exe {
+        return (command, args);
+    }
+    let mut wrapped = Vec::with_capacity(args.len() + 2);
+    wrapped.push("/C".to_string());
+    wrapped.push(command);
+    wrapped.extend(args);
+    ("cmd".to_string(), wrapped)
+}
+
 // Resize the borderless window to a content-fitted height. The React side
 // computes the desired height via a ResizeObserver on the natural content
 // (compact = just the composer row, expanded = thread/stage/teams + composer),
@@ -464,6 +484,14 @@ fn start_session(
     for (k, v) in extra_env {
         agent_env.insert(k, v);
     }
+
+    // On Windows, `npx`/`uvx`/`npm`/… are `.cmd` shims; `Command::new("npx")`
+    // (what the ACP SDK does under the hood) does NOT resolve them via PATHEXT
+    // and fails with "program not found". Route bare command names through
+    // `cmd /C` so Windows performs the resolution. No-op on Unix and for
+    // path-qualified commands (e.g. the `./var/bin/...` binaries).
+    #[cfg(target_os = "windows")]
+    let (command, args) = windows_spawn_shim(command, args);
 
     let handle = runner::start(
         app,
