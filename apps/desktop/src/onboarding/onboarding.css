@@ -22,41 +22,6 @@
 .ob2-seed b { color: var(--text); font-weight: 600; }
 .ob2-seed em { font-style: normal; color: var(--brand); }
 
-/* ---- agents-vs-models explainer + schema ---- */
-.amx { margin: 2px 0 20px; }
-.amx-diagram { display: flex; }
-.amx-agent { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 14px 14px 12px; border: 1px dashed color-mix(in srgb, var(--brand) 42%, var(--line)); border-radius: 14px; position: relative; background: color-mix(in srgb, var(--brand) 6%, transparent); }
-.amx-tag { position: absolute; top: -9px; left: 12px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--brand); background: var(--ink); padding: 0 6px; }
-.amx-chip { font-family: var(--mono); font-size: 12px; color: var(--text); border: 1px solid var(--line); border-radius: 9px; padding: 6px 10px; background: var(--panel); opacity: 0; animation: floatIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.amx-chip.model { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); color: var(--brand); background: color-mix(in srgb, var(--brand) 10%, var(--panel)); }
-.amx-agent > :nth-child(2) { animation-delay: 0.05s; }
-.amx-agent > :nth-child(4) { animation-delay: 0.16s; }
-.amx-agent > :nth-child(5) { animation-delay: 0.23s; }
-.amx-agent > :nth-child(6) { animation-delay: 0.3s; }
-.amx-plus { color: var(--dim2); font-size: 13px; }
-.spin { display: inline-block; animation: spin 3.6s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.amx-note { font-size: 13px; color: var(--dim); line-height: 1.55; margin: 13px 0 0; max-width: 62ch; }
-.amx-note b { color: var(--text); font-weight: 600; }
-.amx-i { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line); font-size: 9px; color: var(--dim); cursor: help; margin-left: 6px; vertical-align: 1px; }
-.amx-i:hover { color: var(--text); border-color: var(--text); }
-
-/* agent → harness connector */
-.amx-equals { display: flex; align-items: center; gap: 12px; margin: 16px 0 12px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim2); }
-.amx-equals-line { flex: 1; height: 1px; background: var(--line); }
-.amx-equals-label { color: var(--dim); }
-
-.amx-agent.harness { border-style: solid; border-color: var(--line); background: color-mix(in srgb, var(--text) 3%, transparent); }
-.amx-agent.harness .amx-tag { color: var(--text); }
-.amx-chip.harness-chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px 5px 6px; border-color: color-mix(in srgb, var(--brand) 35%, var(--line)); color: var(--text); }
-.amx-chip.harness-chip.more { color: var(--dim); padding: 6px 10px; }
-.amx-agent.harness > :nth-child(2) { animation-delay: 0.05s; }
-.amx-agent.harness > :nth-child(3) { animation-delay: 0.1s; }
-.amx-agent.harness > :nth-child(4) { animation-delay: 0.15s; }
-.amx-agent.harness > :nth-child(5) { animation-delay: 0.2s; }
-.amx-agent.harness > :nth-child(6) { animation-delay: 0.25s; }
-.amx-agent.harness > :nth-child(7) { animation-delay: 0.3s; }
-
 /* ---- page 1: constellation ---- */
 .cons { margin-top: 4px; }
 .cons-row.experts { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -68,35 +33,108 @@
 .cons-name { font-size: 11px; color: var(--dim); }
 @keyframes floatIn { from { opacity: 0; transform: translateY(12px) scale(0.9); } to { opacity: 1; transform: none; } }
 
-/* ---- page 2: cloud vs on-device ---- */
-.ob2-paths { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; margin-bottom: 22px; }
-@media (max-width: 620px) { .ob2-paths { grid-template-columns: 1fr; } }
-.ob2-path { padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); position: relative; overflow: hidden; }
-.ob2-path .ic { font-size: 21px; margin-bottom: 7px; }
-.ob2-path h4 { margin: 0 0 6px; font-size: 16px; letter-spacing: -0.02em; }
-.ob2-path p { margin: 0; color: var(--dim); font-size: 12.5px; line-height: 1.5; }
-.ob2-path.cloud { --brand: #d97757; }
-.ob2-path.local { --brand: #1fae9b; }
-.ob2-path::after { content: ""; position: absolute; left: 0; top: 0; height: 3px; width: 100%; background: var(--brand); opacity: 0.6; }
+/* ---- picker (page 2) ---- */
 .ob2-pickhint { font-family: var(--mono); font-size: 11px; color: var(--dim2); margin: 0 0 12px; }
 
-/* ---- page 3: integrated demo ---- */
-.demo { max-width: 600px; border: 1px solid color-mix(in srgb, var(--brand) 26%, var(--line)); border-radius: 16px; overflow: hidden; background: linear-gradient(180deg, rgba(18, 21, 28, 0.72), rgba(10, 12, 16, 0.86)); box-shadow: 0 26px 70px rgba(0, 0, 0, 0.45); }
-.demo-chrome { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line2); }
-.demo-wm { font-weight: 800; letter-spacing: -0.03em; font-size: 14px; display: flex; align-items: baseline; }
-.demo-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); margin-left: 1px; align-self: center; box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 60%, transparent); animation: pulse 1.5s infinite; }
-.demo-spacer { flex: 1; }
-.demo-on { font-family: var(--mono); font-size: 11px; color: var(--dim); display: flex; align-items: center; gap: 6px; }
-.demo-composer { display: flex; align-items: center; gap: 9px; padding: 12px 14px; border-bottom: 1px solid var(--line2); min-height: 46px; }
-.demo-at { font-weight: 600; font-size: 13px; border: 1px solid var(--line); border-radius: 9px; padding: 5px 9px; background: rgba(255, 255, 255, 0.03); white-space: nowrap; }
-.demo-typed { font-size: 14px; color: var(--text); }
-.demo-session { display: flex; gap: 11px; padding: 13px 14px; }
-.demo-meta { flex: 1; min-width: 0; }
-.demo-line { display: flex; align-items: center; gap: 7px; font-size: 13px; }
-.demo-line b { font-weight: 600; }
-.demo-eng { font-family: var(--mono); font-size: 11px; color: var(--dim); }
-.demo-status { font-family: var(--mono); font-size: 11px; color: var(--brand); }
-.demo-answer { margin-top: 7px; font-size: 13px; line-height: 1.55; color: var(--dim); }
+/* ---- @Wolfgang featured starter card (page 3 top) ---- */
+.ob2-wolfgang {
+  display: flex; flex-direction: column; gap: 12px;
+  border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--line));
+  border-radius: 14px; padding: 18px;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--brand) 7%, var(--panel)),
+    color-mix(in srgb, var(--brand) 3%, var(--panel)));
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--brand) 10%, transparent);
+  margin-bottom: 6px;
+}
+.ob2-wolfgang-head { display: flex; align-items: center; gap: 10px; }
+.ob2-wolfgang-head .kind-glyph { width: 20px; height: 20px; color: var(--brand); }
+.ob2-wolfgang-at {
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--line));
+  background: color-mix(in srgb, var(--brand) 8%, transparent);
+  border-radius: 99px; padding: 4px 11px;
+}
+.ob2-wolfgang-prefix {
+  font-family: var(--disp); font-size: 14px; color: var(--dim); font-style: italic;
+}
+.ob2-wolfgang-row { display: flex; gap: 10px; align-items: stretch; }
+.ob2-wolfgang-input {
+  flex: 1; min-width: 0;
+  font-family: var(--disp); font-size: 15px;
+  color: var(--text);
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ob2-wolfgang-input::placeholder { color: var(--dim2); }
+.ob2-wolfgang-input:focus {
+  border-color: color-mix(in srgb, var(--brand) 60%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent);
+}
+.ob2-wolfgang .btn { padding: 8px 18px; font-size: 14px; }
+.ob2-wolfgang-hint {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em;
+  color: var(--dim2); margin: 0;
+}
+
+/* ---- cabinet (page 3) — single-row table: name | role/figure | blurb ---- */
+/* Section headers between super agents and genius agents. The "genius" variant
+   gets a brand-tinted accent to telegraph the different emotional register
+   (flamboyant create vs. sober jobs). */
+.ob-eyebrow-section { margin-top: 22px; margin-bottom: 10px; }
+.ob-eyebrow-section.genius { color: var(--brand); }
+.ob2-cabinet { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 6px; background: var(--panel); }
+
+/* Genius cabinet: warmer, more flamboyant — brand-tinted gradient ground,
+   colored border, hover shifts brighter. Same row structure as super to keep
+   scanning rhythm consistent. */
+.ob2-cabinet-genius {
+  border-color: color-mix(in srgb, var(--brand) 32%, var(--line));
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--brand) 7%, var(--panel)),
+    color-mix(in srgb, var(--brand) 3%, var(--panel)));
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--brand) 10%, transparent);
+}
+.ob2-cabinet-genius .ob2-cabinet-card { border-bottom-color: color-mix(in srgb, var(--brand) 18%, var(--line2)); }
+.ob2-cabinet-genius .ob2-cabinet-card:hover { background: color-mix(in srgb, var(--brand) 14%, transparent); }
+.ob2-cabinet-genius .ob2-cabinet-icon { color: var(--brand); }
+.ob2-cabinet-genius .ob2-cabinet-name { color: var(--text); }
+.ob2-cabinet-genius .ob2-cabinet-role { color: color-mix(in srgb, var(--brand) 70%, var(--dim)); }
+.ob2-cabinet-card { display: grid; grid-template-columns: 160px 130px 1fr; column-gap: 14px; align-items: center; padding: 7px 14px; border: 0; border-bottom: 1px solid var(--line2); background: transparent; cursor: pointer; transition: 0.12s; text-align: left; font: inherit; color: inherit; opacity: 0; animation: tableRowIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.ob2-cabinet-card:last-child { border-bottom: 0; }
+.ob2-cabinet-card:hover { background: color-mix(in srgb, var(--brand) 8%, transparent); }
+.ob2-cabinet-card:nth-child(1) { animation-delay: 0.02s; }
+.ob2-cabinet-card:nth-child(2) { animation-delay: 0.04s; }
+.ob2-cabinet-card:nth-child(3) { animation-delay: 0.06s; }
+.ob2-cabinet-card:nth-child(4) { animation-delay: 0.08s; }
+.ob2-cabinet-card:nth-child(5) { animation-delay: 0.10s; }
+.ob2-cabinet-card:nth-child(6) { animation-delay: 0.12s; }
+.ob2-cabinet-card:nth-child(7) { animation-delay: 0.14s; }
+.ob2-cabinet-card:nth-child(8) { animation-delay: 0.16s; }
+.ob2-cabinet-card:nth-child(9) { animation-delay: 0.18s; }
+.ob2-cabinet-card:nth-child(n+10) { animation-delay: 0.20s; }
+@keyframes tableRowIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+.ob2-cabinet-name { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+.ob2-cabinet-icon { display: inline-flex; color: var(--dim); flex: none; }
+.ob2-cabinet-icon .kind-glyph { width: 16px; height: 16px; }
+.ob2-cabinet-card:hover .ob2-cabinet-icon { color: var(--brand); }
+.ob2-cabinet-role { font-family: var(--mono); font-size: 10.5px; color: var(--dim); letter-spacing: 0.04em; text-transform: lowercase; }
+.ob2-cabinet-blurb { font-size: 11.5px; color: var(--dim); line-height: 1.4; }
+
+/* Socrates "hire" CTA — visually distinct from the cabinet cards */
+.ob2-hire { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border: 1px dashed color-mix(in srgb, var(--brand) 42%, var(--line)); border-radius: 14px; background: color-mix(in srgb, var(--brand) 6%, transparent); cursor: pointer; transition: 0.2s; text-align: left; font: inherit; color: inherit; width: 100%; }
+.ob2-hire:hover { background: color-mix(in srgb, var(--brand) 12%, transparent); border-color: color-mix(in srgb, var(--brand) 60%, var(--line)); transform: translateY(-1px); }
+.ob2-hire-ic { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 36px; height: 36px; border-radius: 10px; background: color-mix(in srgb, var(--brand) 14%, transparent); color: var(--brand); }
+.ob2-hire-ic .kind-glyph { width: 20px; height: 20px; }
+.ob2-hire-body { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.ob2-hire-title { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+.ob2-hire-text { font-size: 12px; color: var(--dim); line-height: 1.5; }
+.ob2-hire-cta { flex: none; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em; padding: 8px 14px; border-radius: 9px; background: var(--brand); color: #fff; }
 .demo-answer.dim { color: var(--dim2); }
 .caret { display: inline-block; width: 2px; height: 1.05em; background: var(--brand); margin-left: 2px; vertical-align: -2px; animation: blink 1s steps(1) infinite; }
 @keyframes blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
