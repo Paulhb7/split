@@ -15,14 +15,16 @@
       {
         "label": "main",
         "title": "Split",
-        "width": 680,
-        "height": 96,
+        "width": 900,
+        "height": 600,
+        "minWidth": 520,
+        "minHeight": 300,
         "transparent": false,
         "decorations": true,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
-        "alwaysOnTop": true,
-        "resizable": false,
+        "alwaysOnTop": false,
+        "resizable": true,
         "visible": true
       }
     ],

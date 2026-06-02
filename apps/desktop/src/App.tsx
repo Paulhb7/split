@@ -59,7 +59,7 @@ export default function App() {
   const { sessions, start, send, sendAuth, sendLogout, sendPermission, stop, remove, cancelQueued, openArchive, resumeArchive } = useSessions(experts);
   const teamApi = useMemo(() => ({ start, send, stop }), [start, send, stop]);
   const { project, channels, activeChannel, activeRoster, setActiveChannel, newChannel, stopChannel, removeChannel } = useTeam(teamApi, experts);
-  const { pinned, startMove, togglePin, hide } = useWindowChrome();
+  const { startMove, hide } = useWindowChrome();
   const lifecycle = useHarnessStates();
 
   const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem(LS_DONE));
@@ -422,7 +422,7 @@ export default function App() {
           </div>
         )}
         <button className="iconbtn" onClick={() => { localStorage.removeItem(LS_DONE); setOnboarded(false); }} title="Replay onboarding">↻</button>
-        <button className="iconbtn" onClick={() => setHistoryOpen(true)} title="Past conversations">📜</button>
+        <button className="iconbtn" onClick={() => setHistoryOpen(true)} title="Past conversations">🕰️</button>
         <div className="skin-wrap">
           <button className={"iconbtn" + (skin ? " on" : "")} onClick={() => setSkinMenu((v) => !v)} title="Skin">✿</button>
           {skinMenu && (
@@ -443,8 +443,6 @@ export default function App() {
             </>
           )}
         </div>
-        <button className={"iconbtn" + (pinned ? " on" : "")} onClick={togglePin} title={pinned ? "Unpin (allow behind)" : "Pin on top"}>{pinned ? "◆" : "◇"}</button>
-        <button className="iconbtn" onClick={hide} title="Hide (⌘J)">—</button>
       </div>
 
       <div className={"body" + (isTeamsFullscreen ? " fill" : "")}>
