@@ -1,0 +1,13 @@
+[package]
+name = "harness-smoke"
+version = "0.1.0"
+description = "Manual smoke test: spawn every harness in config/harnesses.json, do the ACP handshake + a tiny real turn, and report which ones work. Not part of CI (it downloads agent CLIs and needs per-agent auth)."
+authors = ["Paul Barbaste"]
+license = "Apache-2.0"
+edition = "2021"
+
+[dependencies]
+agent-client-protocol = { version = "0.13", features = ["unstable"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync"] }
+serde_json = "1"
+split-core = { path = "../../core-rs" }

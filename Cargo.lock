@@ -1496,6 +1496,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "harness-smoke"
+version = "0.1.0"
+dependencies = [
+ "agent-client-protocol",
+ "serde_json",
+ "split-core",
+ "tokio",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
