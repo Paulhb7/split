@@ -4,6 +4,7 @@ import { getCurrentWebview } from "@tauri-apps/api/webview";
 
 import { HARNESSES, H, brandOf } from "./shared/harnesses";
 import { useExperts, composeTurn, type Attachment } from "./shared/util";
+import { isClassicExpert } from "./shared/experts";
 import { useSessions } from "./shared/useSessions";
 import { useWindowChrome, useAdaptiveHeight, useFullscreen, useBarWidth, useBarHeight } from "./shared/useWindowChrome";
 import { useHarnessStates } from "./shared/useHarnessStates";
@@ -108,7 +109,13 @@ export default function App() {
   const measureRef = useRef<HTMLDivElement>(null);
   const prevStatus = useRef<Record<string, string>>({});
 
-  const focused = sessions.find((s) => s.id === focusedId) ?? null;
+  // Classic UI surfaces (sessions list, stage, chrome counter) hide Teams-owned
+  // sessions — Teams mode owns its own rendering. authSession and anyRunning
+  // stay on the unfiltered list so auth modals + the global running indicator
+  // surface regardless of origin.
+  const classicSessions = useMemo(() => sessions.filter((s) => !s.teamId), [sessions]);
+  const teamSessionsCount = sessions.length - classicSessions.length;
+  const focused = classicSessions.find((s) => s.id === focusedId) ?? null;
   const authSession = sessions.find((s) => s.auth) ?? null;
   const anyRunning = sessions.some((s) => s.status === "running");
   const accent = focused ? brandOf(focused.harness) : brandOf(active);
@@ -124,7 +131,7 @@ export default function App() {
   // while in fullscreen; on exit, `useAdaptiveHeight` re-fits to whatever the
   // body now shows.
   const expanded =
-    !!focused || sessions.length > 0 || mode === "teams" || overlay || !!authSession || !onboarded;
+    !!focused || classicSessions.length > 0 || mode === "teams" || overlay || !!authSession || !onboarded;
   const isTeamsFullscreen = mode === "teams";
   useFullscreen(isTeamsFullscreen);
   // Pre-compute how much extra height the open dropdown needs. The menu is
@@ -135,7 +142,7 @@ export default function App() {
     ? 0
     : menu === "engine"
       ? Math.min(320, enabledHarnesses.length * 56 + 80)
-      : Math.min(320, Object.keys(experts).length * 56 + 16);
+      : Math.min(320, Object.keys(experts).filter(isClassicExpert).length * 56 + 16);
   // The "Your agents" overlay (and any future panel that needs more room) gets
   // a wider + taller bar — caps to a fraction of the user's screen so it
   // doesn't overflow a small display. Teams fullscreen owns its own geometry;
@@ -173,8 +180,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!experts[expertSlug]) {
-      const first = Object.keys(experts)[0];
+    if (!experts[expertSlug] || !isClassicExpert(expertSlug)) {
+      const first = Object.keys(experts).find(isClassicExpert);
       if (first) setExpertSlug(first);
     }
   }, [experts, expertSlug]);
@@ -203,10 +210,12 @@ export default function App() {
     };
   }, []);
 
-  // toast a session that finished while you weren't watching it
+  // toast a session that finished while you weren't watching it — only for
+  // classic-UI sessions; Teams members complete inside the Teams view and
+  // their state changes shouldn't toast the global home.
   useEffect(() => {
     const prev = prevStatus.current;
-    for (const s of sessions) {
+    for (const s of classicSessions) {
       const was = prev[s.id];
       if (was === "running" && s.status !== "running" && s.id !== focusedId) {
         const verb = s.status === "ended" ? "ended" : s.status === "error" ? "errored" : "is ready";
@@ -214,8 +223,8 @@ export default function App() {
       }
       prev[s.id] = s.status;
     }
-    for (const id of Object.keys(prev)) if (!sessions.some((s) => s.id === id)) delete prev[id];
-  }, [sessions, focusedId, pushToast]);
+    for (const id of Object.keys(prev)) if (!classicSessions.some((s) => s.id === id)) delete prev[id];
+  }, [classicSessions, focusedId, pushToast]);
 
   // toggle an agent in/out of the activated set (manage overlay)
   function toggleEnabled(id: string) {
@@ -296,7 +305,7 @@ export default function App() {
     setTimeout(() => inputRef.current?.focus(), 0);
   }
 
-  const expertEntries = useMemo(() => Object.entries(experts), [experts]);
+  const expertEntries = useMemo(() => Object.entries(experts).filter(([slug]) => isClassicExpert(slug)), [experts]);
   const expertLabel = experts[expertSlug]?.label || "Consultant";
 
   // The expert list shown in the dropdown: full when the menu was opened by
@@ -412,7 +421,7 @@ export default function App() {
       {/* chrome */}
       <div className="chrome" onMouseDown={(e) => { if (!(e.target as HTMLElement).closest("button")) startMove(); }}>
         <span className={"wm" + (anyRunning ? " live" : "")}>split<span className="dot" /></span>
-        <span className="chrome-meta">{focused ? `on ${H[focused.harness]?.label || focused.harness}` : sessions.length ? `${sessions.length} session${sessions.length === 1 ? "" : "s"}` : "ready"}</span>
+        <span className="chrome-meta">{focused ? `on ${H[focused.harness]?.label || focused.harness}` : classicSessions.length ? `${classicSessions.length} session${classicSessions.length === 1 ? "" : "s"}` : "ready"}</span>
         <span className="spacer" />
         {onboarded && !focused && (
           <div className="seg" style={{ marginRight: 2 }}>
@@ -508,13 +517,18 @@ export default function App() {
               </div>
             </div>
             {view === "stage" ? (
-              <Stage sessions={sessions} onOpen={setFocusedId} onStop={stop} onClose={remove} />
+              <Stage sessions={classicSessions} onOpen={setFocusedId} onStop={stop} onClose={remove} />
             ) : (
               <div className="sessions">
-                {sessions.length === 0 ? (
+                {classicSessions.length === 0 ? (
                   <div className="empty">No sessions yet — brief an expert above.<br />Its engine's logo shows here while it runs.</div>
                 ) : (
-                  sessions.map((s) => <SessionRow key={s.id} s={s} onOpen={() => setFocusedId(s.id)} onStop={() => stop(s.id)} onClose={() => remove(s.id)} />)
+                  classicSessions.map((s) => <SessionRow key={s.id} s={s} onOpen={() => setFocusedId(s.id)} onStop={() => stop(s.id)} onClose={() => remove(s.id)} />)
+                )}
+                {teamSessionsCount > 0 && (
+                  <button className="teams-pointer" onClick={() => setMode("teams")}>
+                    {teamSessionsCount} team session{teamSessionsCount === 1 ? "" : "s"} running in Teams →
+                  </button>
                 )}
               </div>
             )}

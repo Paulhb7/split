@@ -279,6 +279,11 @@
 .xbtn:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
 .empty { padding: 30px; text-align: center; color: var(--dim2); border: 1px dashed var(--line); border-radius: var(--r); font-family: var(--mono); font-size: 12px; line-height: 1.6; }
 
+/* Discrete pointer at the bottom of the classic sessions list when there are
+   Teams-owned sessions running. Click → switch to Teams mode. */
+.teams-pointer { display: block; width: 100%; padding: 9px 12px; margin-top: 4px; border: 1px dashed var(--line); border-radius: 10px; background: transparent; color: var(--dim); font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; cursor: pointer; text-align: center; transition: 0.15s; }
+.teams-pointer:hover { background: color-mix(in srgb, var(--brand) 6%, transparent); border-color: color-mix(in srgb, var(--brand) 40%, var(--line)); color: var(--text); }
+
 /* ============================ CONVERSATION ============================ */
 .conv { max-width: 820px; margin: 0 auto; padding: 14px 18px 18px; display: flex; flex-direction: column; min-height: 100%; }
 .conv-head { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }

@@ -67,6 +67,9 @@ export interface StartArgs {
   display: string;
   wire: string;
   files?: string[];
+  // Teams channelId — non-empty marks this session as Teams-owned, so the
+  // classic home filters it out (Teams UI owns its rendering).
+  teamId?: string;
 }
 
 // Owns the session list for one window. Subscribes to the broadcast
@@ -157,7 +160,7 @@ export function useSessions(experts: ExpertMap) {
   const start = useCallback(async (a: StartArgs) => {
     const id = uid();
     const files = a.files ?? [];
-    const s = newSession(id, a.harness, a.expertSlug, labelFor(expertsRef.current, a.expertSlug), a.display, files);
+    const s = newSession(id, a.harness, a.expertSlug, labelFor(expertsRef.current, a.expertSlug), a.display, files, a.teamId);
     setSessions((prev) => [...prev, s]);
     const workspace = localStorage.getItem("split.workspace") || ""; // empty → default root
     await invoke("start_session", { id, harness: a.harness, expert: a.expertSlug, workspace });

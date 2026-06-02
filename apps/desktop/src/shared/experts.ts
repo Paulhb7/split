@@ -24,6 +24,13 @@ export interface Expert {
 
 export type ExpertMap = Record<string, Expert>;
 
+// Slugs hidden from the classic single-expert UI surfaces (@-picker, onboarding
+// cabinet). They still exist in the registry — Teams mode picks them up
+// directly. Chief of Staff (Toscanini) is the team conductor; it has no role
+// when there's only one expert in the room.
+export const TEAMS_ONLY = new Set<string>(["chief_of_staff"]);
+export const isClassicExpert = (slug: string) => !TEAMS_ONLY.has(slug);
+
 // Fallback roster if `list_experts` fails (matches experts.json order/defaults).
 export const DEFAULT_EXPERTS: ExpertMap = {
   consultant: { label: "Wolfgang", role: "Consultant", kind: "researcher", blurb: "Web research into ready slides" },
