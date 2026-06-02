@@ -1490,6 +1490,53 @@ fn center_on_screen(window: &WebviewWindow) {
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
+            // Native macOS app menu — mirrors what a "real" macOS app exposes:
+            // App > About/Services/Hide/Quit · Edit > Cut/Copy/Paste/Select-All ·
+            // View > Toggle Full Screen (⌃⌘F, complements the green traffic light)
+            // · Window > Minimize/Zoom/Bring All to Front. Without this menu, Tauri
+            // windows on macOS are missing the standard text-editing shortcuts and
+            // the system fullscreen shortcut goes nowhere.
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::menu::{AboutMetadataBuilder, MenuBuilder, SubmenuBuilder};
+                let app_meta = AboutMetadataBuilder::new()
+                    .name(Some("Split"))
+                    .build();
+                let app_menu = SubmenuBuilder::new(app, "Split")
+                    .about(Some(app_meta))
+                    .separator()
+                    .services()
+                    .separator()
+                    .hide()
+                    .hide_others()
+                    .show_all()
+                    .separator()
+                    .quit()
+                    .build()?;
+                let edit_menu = SubmenuBuilder::new(app, "Edit")
+                    .undo()
+                    .redo()
+                    .separator()
+                    .cut()
+                    .copy()
+                    .paste()
+                    .select_all()
+                    .build()?;
+                let view_menu = SubmenuBuilder::new(app, "View")
+                    .fullscreen()
+                    .build()?;
+                let window_menu = SubmenuBuilder::new(app, "Window")
+                    .minimize()
+                    .maximize()
+                    .separator()
+                    .close_window()
+                    .build()?;
+                let menu = MenuBuilder::new(app)
+                    .items(&[&app_menu, &edit_menu, &view_menu, &window_menu])
+                    .build()?;
+                app.set_menu(menu)?;
+            }
+
             // The single adaptive window: vibrancy + centered on first launch.
             if let Some(win) = app.get_webview_window("main") {
                 #[cfg(target_os = "macos")]
