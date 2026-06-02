@@ -2,7 +2,7 @@
   "_comment": "ACP agent launch configs. Commands/versions come from the ACP registry (registry-main/<id>/agent.json). skill_dir is where THAT agent looks for project skills relative to the session cwd (workspace/) — this is the per-harness 'mounting glue' that differs even though the SKILL.md itself is identical. `install` + `configure` declare how the desktop UI bootstraps each agent (Install/Configure buttons on the harness card).",
 
   "claude": {
-    "name": "Claude Agent (claude-acp)",
+    "name": "Claude Code (claude-acp)",
     "command": "npx",
     "args": ["-y", "@agentclientprotocol/claude-agent-acp@0.37.0"],
     "skill_dir": ".claude/skills",

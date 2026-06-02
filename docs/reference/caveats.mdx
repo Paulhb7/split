@@ -1,0 +1,32 @@
+---
+title: "Honest caveats"
+description: "Known sharp edges and pragmatic shortcuts."
+---
+
+<Warning>
+These are deliberate trade-offs in the current build, not bugs to file.
+</Warning>
+
+- **Persona / roleplay injection** — experts are real prompt personas, not just
+  UI labels. `persona_text()` composes `_discipline.md` + memory +
+  `config/experts/<expert>.md`, writes it into `AGENTS.md` / vendor shims, and
+  the runner also prepends it to the first user turn. This is pragmatic, but it
+  is **not** a standardized ACP system prompt — the model's own instruction stack
+  can still leak through.
+- **`terminal/*` is not implemented** — Split advertises `terminal: false`. Agents
+  that run tools in-process (Claude, Codex) are fine; one needing the client to
+  host a terminal will degrade.
+- **Permissions** — the desktop runs the runner with
+  `SPLIT_PERMISSION_MODE=prompt` and surfaces `permission_request` in the UI. The
+  runner default is still `auto-allow` for bench/CLI usage unless overridden.
+- **Process tree** — `stop_session` does `pkill -P` + `kill -KILL`; deeply nested
+  grandchildren (node workers) may leak. A pgid kill is the fix if it bites.
+- **GUI PATH** — handled by `child_path()` in Rust; if an agent CLI isn't found,
+  check it.
+- **`var/workspace/` persists** — it's the agent's home; only persona/skill
+  projections are overwritten. `rm -rf var/workspace/` for a clean slate.
+- **`var/memory/` is a frozen snapshot** — in-session writes only appear at the
+  next session boot. No auto-extraction yet. See [Memory](/concepts/memory).
+- **Operator UI narration** — Alfred drives real macOS apps via `cua-driver`, but
+  the dedicated screen-driving narration (app rail / live frames) is **not yet
+  wired** into the VEVT vocabulary; today it streams as text/steps like the others.

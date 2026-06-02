@@ -1,0 +1,40 @@
+---
+title: "The desktop app"
+description: "A Tauri 2 + React 19 single-window bar."
+---
+
+`apps/desktop/` is a **Tauri 2 + React 19** single-window app: a floating,
+always-on-top **bar**. One bundle, one window. `src/main.tsx` renders `App.tsx` —
+the orchestration shell that owns input/menu/skin/toast state and routes between
+**onboarding** (first launch), the **home** roster/composer/sessions list, and
+the conversation **stage**.
+
+## Components
+
+| Area | Files |
+|---|---|
+| Home | `home/Composer.tsx`, `home/SessionRow.tsx` |
+| Conversation | `conversation/Conversation.tsx`, `stage/Stage.tsx` |
+| Overlays | `history/HistoryOverlay.tsx`, `auth/AuthModal.tsx` |
+
+## Shared logic (`src/shared/`)
+
+- **`useSessions.ts`** — owns `sessions[]`, subscribes to the broadcast
+  `session-event`, folds events through `reducer.ts`, exposes
+  `start / send / sendAuth / sendLogout / sendPermission / stop / remove`
+  (+ `openArchive` / `resumeArchive`); hydrates via `list_sessions`.
+- **`useToasts.ts`** — transient notifications with self-cleaning timers.
+- **`skins.ts`** — the visual skin registry (`SKINS` + `isSkin`).
+- **`harnesses.ts`** — the engine registry's display metadata (brand color,
+  lane, vendor, tag, blurb), joined by id with `config/harnesses.json`.
+- **`events.ts` / `models.ts`** — the VEVT union + `Session` model.
+- **`experts.ts` / `util.ts`** — `useExperts`, `composeTurn`, drag-drop attachments.
+- **`useWindowChrome.ts`** — window geometry: free move, edge/corner resize,
+  S/M/L presets, pin (always-on-top), geometry persisted to `localStorage`.
+
+## File drops
+
+Dropping a file on the bar → Rust `read_files_for_agent` → a pending attachment
+folded into the next turn's `wire` text (content inline + absolute path), shown
+in the thread as a 📎 chip. `display` (thread) vs `wire` (sent to the agent) are
+split by `composeTurn`.

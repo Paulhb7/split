@@ -1,0 +1,40 @@
+---
+title: "Split"
+description: "Many experts, in parallel, on any agent — over ACP."
+---
+
+Split is a desktop assistant that runs **a roster of experts**, each in its own
+session. You pick an expert — a Consultant, a Lawyer, a Data Analyst, a computer
+**Operator** — give it a task in plain language, and it streams back what it
+does: research and citations, a slide deck, an interactive chart, a built app, a
+driven macOS window. Several can run at once, side by side.
+
+## The bet
+
+**The "brain" is swappable plumbing.** An expert is a *persona + skills + tools*,
+and that bundle should run unchanged on Claude, Codex, Gemini, Mistral, or a
+local model. Split talks to all of them through one wire — the **Agent Client
+Protocol (ACP)** — so the same Consultant can run on your Claude plan today and a
+local Ollama brain tomorrow, no rewrite.
+
+<CardGroup cols={2}>
+  <Card title="The model" icon="diagram-project" href="/get-started/the-model">
+    EXPERT = persona + skills + tools, run on a HARNESS.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/get-started/quickstart">
+    Install, run the desktop bar, fire your first turn.
+  </Card>
+  <Card title="Experts" icon="users" href="/concepts/experts">
+    The 12 personas and what each one leans on.
+  </Card>
+  <Card title="Architecture" icon="cubes" href="/architecture/overview">
+    The portable Rust engine and the native ACP runner.
+  </Card>
+</CardGroup>
+
+## Lineage
+
+This started as `acp-client` — a throwaway bench to prove *"can one client drive
+several agents over ACP, and does a portable `SKILL.md` actually activate inside
+them?"* It does. The bench grew the answer: a real expert roster, a multi-session
+UI, and an auth flow.

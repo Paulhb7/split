@@ -82,7 +82,10 @@ export default function Teams({
       {/* ---- channels sidebar ---- */}
       <div className="tm-side">
         <div className="tm-side-head">
-          <b>{project.name}</b>
+          <div className="tm-side-titles">
+            <b>{project.name}</b>
+            <span className="tm-experimental" title="Teams mode is a spike: agents don't self-stop reliably, turn-cap is mandatory, roster editing is hardcoded.">#experimental</span>
+          </div>
           <span className={"tm-work" + (runningCount ? " on" : "")}>
             <i /> {runningCount ? `${runningCount} conversation${runningCount === 1 ? "" : "s"} en cours` : "idle"}
           </span>

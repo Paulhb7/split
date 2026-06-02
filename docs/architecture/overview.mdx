@@ -1,0 +1,44 @@
+---
+title: "Overview"
+description: "The portable Rust engine, the native ACP runner, and what a session is."
+---
+
+## Portable engine
+
+`core-rs/` is the Rust crate the desktop shell depends on — pure stdlib + serde +
+chrono, no Tauri, no ACP SDK. It resolves the layout (`REPO_ROOT`, `CONFIG_DIR`,
+`VAR_DIR`, `WORKSPACE`, overridable per session via `SPLIT_WORKSPACE`) and exposes
+the engine surface in four modules:
+
+| Module | Responsibility |
+|---|---|
+| `persona` | `ensure_expert_workspace` + cross-vendor shims + skill symlinks |
+| `archive` | per-session `events.ndjson` + `meta.json` (with `acp_sid` for resume) |
+| `permissions` | allow / ask / deny with `DEFAULT_DENY` guards + glob match |
+| `harness_config` | Hermes / OpenCode model-picker translation |
+
+Tested via `cargo test --workspace` (15 unit tests).
+
+## What a session is
+
+<Steps>
+  <Step title="Project the workspace">
+    Spawn the harness inside the **expert's persistent workspace** — projected
+    once, refreshed only when sources change.
+  </Step>
+  <Step title="Mount the tools">
+    Hand the MCP servers from `tools.json` to the agent via `session/new`.
+  </Step>
+  <Step title="Stream back">
+    Relay the agent's `session/update` events as [VEVT events](/concepts/the-wire)
+    the React reducer consumes. The session stays open across turns.
+  </Step>
+</Steps>
+
+## One backend
+
+The desktop bar drives sessions via a single Tauri command, `start_session`,
+running the [native Rust runner](/architecture/rust-runner) in-process on the
+canonical `agent-client-protocol` crate. The retired Python sidecar produced the
+*same* VEVT vocabulary and the *same* archive shape — kept reference-only in the
+gitignored `split-python/`.

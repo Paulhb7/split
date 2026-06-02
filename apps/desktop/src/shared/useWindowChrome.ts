@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -14,19 +14,9 @@ const CHROME_H = 46;            // .chrome's fixed CSS height (see app.css)
 const SLACK = 24;               // bottom gutter so the last line breathes
 
 /** Tiny utility hook around chrome controls that are NOT height-related:
- * pin (always-on-top), hide, drag the borderless window by the chrome bar. */
+ * hide, drag the window by the chrome bar. */
 export function useWindowChrome() {
   const win = getCurrentWindow();
-  const [pinned, setPinned] = useState(true);
-
-  const togglePin = useCallback(() => {
-    setPinned((p) => {
-      const np = !p;
-      win.setAlwaysOnTop(np);
-      return np;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const startMove = useCallback(() => {
     win.startDragging();
@@ -38,7 +28,7 @@ export function useWindowChrome() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { pinned, togglePin, startMove, hide };
+  return { startMove, hide };
 }
 
 /** Auto-fit the Tauri window height to the natural content height.
@@ -139,29 +129,11 @@ export function useBarHeight(height: number | null) {
 
 /** Toggle the Tauri window to native fullscreen (macOS creates a dedicated
  *  Space). Used by the Teams mode, which needs the full canvas to render the
- *  Chief-of-Staff orchestration view comfortably. Exiting fullscreen returns
- *  the window to its pre-fullscreen size, and `useAdaptiveHeight` resumes
- *  fitting it to the body content.
- *
- *  macOS native fullscreen silently rejects the call when the window is
- *  marked non-resizable in tauri.conf.json. We toggle `resizable` around the
- *  fullscreen call: true → enter → false on exit, so the adaptive bar
- *  outside Teams mode keeps its non-resizable contract. */
+ *  Chief-of-Staff orchestration view. The window is resizable globally now,
+ *  so we don't toggle that flag — just the fullscreen state. */
 export function useFullscreen(active: boolean) {
   useEffect(() => {
     const win = getCurrentWindow();
-    (async () => {
-      try {
-        if (active) {
-          await win.setResizable(true);
-          await win.setFullscreen(true);
-        } else {
-          await win.setFullscreen(false);
-          await win.setResizable(false);
-        }
-      } catch {
-        /* ignore — capability not granted, headless test, etc. */
-      }
-    })();
+    win.setFullscreen(active).catch(() => { /* capability not granted, headless test, etc. */ });
   }, [active]);
 }

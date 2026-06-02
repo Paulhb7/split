@@ -6,6 +6,14 @@ __pycache__/
 *.py[cod]
 .venv/
 
+# The Python backend was fully retired — Rust took over (see `core-rs/` +
+# `apps/desktop/src-tauri/src/runner.rs`). This folder is kept locally for
+# reference / parity sweeps only; the repo no longer tracks it and the desktop
+# app no longer wires it in (the Python dispatch + its localStorage opt-in were
+# removed). To compare behaviour, run the Python sidecar standalone from inside
+# `split-python/`.
+split-python/
+
 # secrets
 .env
 
@@ -18,6 +26,12 @@ archive/
 # desktop build artifacts
 apps/desktop/node_modules/
 apps/desktop/dist/
+
+# Rust build artifacts — the Cargo workspace shares a single root `target/`
+# (one cache across `apps/desktop/src-tauri` + `core-rs`). The nested
+# `apps/desktop/src-tauri/target/` is the legacy non-workspace location and
+# is kept here so pre-workspace clones don't accidentally check it in.
+target/
 apps/desktop/src-tauri/target/
 
 Claude.md

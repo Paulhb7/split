@@ -1,0 +1,45 @@
+---
+title: "Skills"
+description: "The Agent Skills standard, declared per-expert, mounted by symlink."
+---
+
+Split follows the open **[Agent Skills](https://agentskills.io) standard**
+(Anthropic-originated, now cross-vendor): a skill is a **folder** — a required
+`SKILL.md` (`name` + `description` frontmatter + instructions) plus optional
+`scripts/`, `references/`, `assets/`. Agents load it by *progressive disclosure*
+(name/description at startup → full `SKILL.md` on a match → bundled scripts on
+demand). The same folder runs unchanged across Claude, Codex, Gemini, OpenCode,
+Cursor, Vibe.
+
+<Note>
+This is the whole portability thesis — and it's a **standard, not a bet**.
+</Note>
+
+## Declared per-expert, mounted once
+
+Skills are declared per-expert in `config/experts.json`
+(`"skills": ["frontend-slides", …]`) and mounted **once** in the expert's
+persistent workspace by `ensure_expert_workspace`, which symlinks each allowed
+skill into every harness skill-dir (`.claude/skills/`, `.agents/skills/`,
+`.vibe/skills/`).
+
+The set is reconciled **idempotently** on every call:
+
+- adding a skill to `experts.json` makes it appear on next launch,
+- removing one unlinks it,
+- a declared skill not yet vendored under `skills/<name>/` is silently skipped —
+  so a persona may name a skill before it exists.
+
+So `experts.json`'s `"skills": [...]` is the **filesystem filter**: the harness's
+catalogue sees exactly the expert's allowed kit, nothing else.
+
+## Vendored skills
+
+Found in `config/skills/`:
+
+- **Research / retrieval:** `web-search`, `paper-search`, `image-search`.
+- **Documents / presentations:** `docx`, `frontend-slides`.
+- **Design / frontend / dashboards:** `ui-ux-pro-max`, `web-audit`, `graphics`, `dashboard`, `web-deploy`.
+- **Finance / legal:** `market-data`, `legal-templates`.
+- **Generation:** `music-gen`, `voice-gen`, `video-gen` — these call fal.ai /
+  ElevenLabs and need `FAL_KEY` / `ELEVENLABS_API_KEY` where applicable.

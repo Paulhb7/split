@@ -1,0 +1,47 @@
+---
+title: "Setup"
+description: "Toolchain, per-agent auth, and the Mistral Vibe binary."
+---
+
+## Prerequisites
+
+- **[Rust](https://rustup.rs/)** (`rustup install stable`) — builds the engine
+  (`core-rs/`) and the desktop bar.
+- **Node** (for `npx`) — launches the Claude/Codex/Gemini/Qwen/Copilot adapters
+  and serves Vite during `tauri dev`.
+- **[uv](https://docs.astral.sh/uv/)** *(optional)* — only if you keep
+  `split-python/` checked out to compare the retired Python backend.
+
+Agent CLIs download on first use via `npx -y …@version` / `uvx …`, so first
+launch of a harness can lag.
+
+## Per-agent auth
+
+Each harness signs in with its own account — `claude login`, `codex login`,
+Google login for Gemini, etc. (see each entry's `auth` note in
+[Harnesses](/concepts/harnesses)). Provider keys saved through the desktop UI go
+in the **OS keychain** under `service="split"`; the runner pulls them at session
+spawn and injects them into the agent's env. See [Auth](/concepts/auth).
+
+## Mistral Vibe binary
+
+Vibe has no npx distribution — download the binary into `var/bin/`:
+
+```bash
+mkdir -p var/bin && cd var/bin
+# macOS arm64 example:
+curl -L -o vibe-acp.zip https://github.com/mistralai/mistral-vibe/releases/download/v2.10.1/vibe-acp-darwin-aarch64-2.10.1.zip
+unzip vibe-acp.zip && chmod +x vibe-acp && cd ../..
+```
+
+## Local / on-device harnesses
+
+OpenCode / Qwen want a local inference server — e.g. Ollama at
+`http://localhost:11434/v1` — for zero-key local runs.
+
+## Preview these docs
+
+```bash
+npm i -g mint        # Mintlify CLI
+cd docs && mint dev   # serves the docs site locally
+```

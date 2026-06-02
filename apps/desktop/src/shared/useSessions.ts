@@ -9,6 +9,10 @@ import { newSession, type QueuedTurn, type Session } from "./models";
 const uid = () =>
   crypto.randomUUID?.() ?? `s-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+// Sessions are driven by the native Rust runner (`core-rs/` +
+// `src-tauri/src/runner.rs`) via the `start_session` Tauri command — it speaks
+// ACP in-process so the `.dmg` ships without a Python runtime.
+
 const labelFor = (experts: ExpertMap, slug: string) =>
   experts[slug]?.label ?? slug.charAt(0).toUpperCase() + slug.slice(1);
 
@@ -63,11 +67,15 @@ export interface StartArgs {
   display: string;
   wire: string;
   files?: string[];
+  // Teams channelId — non-empty marks this session as Teams-owned, so the
+  // classic home filters it out (Teams UI owns its rendering).
+  teamId?: string;
 }
 
 // Owns the session list for one window. Subscribes to the broadcast
-// `session-event` stream, so sessions started in EITHER window materialize here
-// (Rust is the source of truth). Exposes start/send/stop/auth.
+// `session-event` stream, so sessions started in EITHER window materialize
+// here (the Tauri shell's `SESSIONS` map is the source of truth across
+// windows; we mirror it via app-wide events). Exposes start/send/stop/auth.
 export function useSessions(experts: ExpertMap) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const expertsRef = useRef(experts);
@@ -152,7 +160,7 @@ export function useSessions(experts: ExpertMap) {
   const start = useCallback(async (a: StartArgs) => {
     const id = uid();
     const files = a.files ?? [];
-    const s = newSession(id, a.harness, a.expertSlug, labelFor(expertsRef.current, a.expertSlug), a.display, files);
+    const s = newSession(id, a.harness, a.expertSlug, labelFor(expertsRef.current, a.expertSlug), a.display, files, a.teamId);
     setSessions((prev) => [...prev, s]);
     const workspace = localStorage.getItem("split.workspace") || ""; // empty → default root
     await invoke("start_session", { id, harness: a.harness, expert: a.expertSlug, workspace });

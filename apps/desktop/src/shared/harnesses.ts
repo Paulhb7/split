@@ -15,13 +15,13 @@ export interface Harness {
 }
 
 export const HARNESSES: Harness[] = [
-  { id: "claude", label: "Claude", vendor: "Anthropic", brand: "#d97757", lane: "cloud", tag: "Claude Pro/Max", blurb: "Frontier reasoning, on your Claude subscription." },
+  { id: "claude", label: "Claude Code", vendor: "Anthropic", brand: "#d97757", lane: "cloud", tag: "Claude Pro/Max", blurb: "Frontier reasoning, on your Claude subscription." },
   { id: "codex", label: "Codex", vendor: "OpenAI", brand: "#10a37f", lane: "cloud", tag: "ChatGPT sub", blurb: "GPT-5 Codex via your ChatGPT plan." },
-  { id: "gemini", label: "Gemini", vendor: "Google", brand: "#4285f4", lane: "cloud", tag: "Free tier", blurb: "Google login. Generous free tier." },
+  { id: "gemini", label: "Gemini CLI", vendor: "Google", brand: "#4285f4", lane: "cloud", tag: "Free tier", blurb: "Google login. Generous free tier." },
   { id: "mistral-vibe", label: "Mistral Vibe", vendor: "Mistral AI", brand: "#fa520f", lane: "cloud", tag: "API key", blurb: "Mistral's Vibe agent. Open weights, EU." },
-  { id: "copilot", label: "Copilot", vendor: "GitHub", brand: "#a371f7", lane: "cloud", tag: "Copilot sub", blurb: "Your GitHub Copilot subscription." },
-  { id: "cursor", label: "Cursor", vendor: "Cursor", brand: "#cfd2d6", lane: "cloud", tag: "Cursor sub", blurb: "The Cursor agent, your Cursor plan." },
-  { id: "qwen", label: "Qwen", vendor: "Alibaba", brand: "#7c5cff", lane: "cloud", tag: "Local or key", blurb: "Qwen3.5 — local via Ollama, or cloud." },
+  { id: "copilot", label: "GitHub Copilot", vendor: "GitHub", brand: "#a371f7", lane: "cloud", tag: "Copilot sub", blurb: "Your GitHub Copilot subscription." },
+  { id: "cursor", label: "Cursor CLI", vendor: "Cursor", brand: "#cfd2d6", lane: "cloud", tag: "Cursor sub", blurb: "The Cursor agent, your Cursor plan." },
+  { id: "qwen", label: "Qwen Code", vendor: "Alibaba", brand: "#7c5cff", lane: "cloud", tag: "Local or key", blurb: "Qwen3.5 — local via Ollama, or cloud." },
   { id: "opencode", label: "OpenCode", vendor: "open source", brand: "#ff7a59", lane: "local", tag: "100% local", blurb: "75+ providers. Point at Ollama → $0." },
   { id: "hermes", label: "Hermes", vendor: "NousResearch", brand: "#fbbf24", lane: "local", tag: "Model-agnostic", blurb: "19+ providers. Local LLMs first-class, OAuth proxy." },
 ];

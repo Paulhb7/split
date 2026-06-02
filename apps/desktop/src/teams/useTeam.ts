@@ -253,7 +253,7 @@ export function useTeam(api: TeamApi, experts: ExpertMap) {
         if (!runningRef.current.has(channelId)) return "(stopped)";
         let sid = sessionIdsLocal[key];
         if (!sid) {
-          sid = await api.start({ harness, expertSlug: key, display, wire });
+          sid = await api.start({ harness, expertSlug: key, display, wire, teamId: channelId });
           sessionIdsLocal[key] = sid;
           channelSessionsRef.current.get(channelId)?.add(sid);
           updateChannel(channelId, (c) => ({ ...c, sessionIds: { ...c.sessionIds, [key]: sid } }));

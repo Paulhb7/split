@@ -134,51 +134,52 @@ Not in the live registry yet: **Hermes** and **Kimi Code** need configuration,
 
 ---
 
-## What the app actually does (two fronts, one engine)
+## What the app actually does
 
-Both fronts reuse the same engine in [`split/core.py`](split/core.py)
-(`ensure_expert_workspace` / `load_mcp` / `resolve_command` + the registries)
-and the same ACP client. A session = spawn the harness inside the expert's
-**persistent per-expert workspace** (projected once, refreshed only when sources
-change) → mount MCP tools via `session/new` → stream the agent's `session/update`
-events back.
+The desktop bar starts one session per click. The portable engine in
+[`core-rs/`](core-rs/) handles workspace projection, the per-session archive,
+the permission rule engine, and the harness model-picker translation; the
+**native Rust runner** in
+[`apps/desktop/src-tauri/src/runner.rs`](apps/desktop/src-tauri/src/runner.rs)
+drives ACP end-to-end on the canonical `agent-client-protocol` crate. A
+session = spawn the harness inside the expert's **persistent per-expert
+workspace** (projected once, refreshed only when sources change) → mount MCP
+tools via `session/new` → stream the agent's `session/update` events back as
+VEVT events the React reducer consumes.
 
-1. **Terminal** — [`split/terminal.py`](split/terminal.py), run as
-   `python -m split.terminal`. Switch agents live with `@mentions`
-   (`@claude research EVs`), watch text, tool calls, plans, and usage stream in
-   color. The fastest way to test a persona/skill on a new harness.
-2. **Desktop** — [`apps/desktop/`](apps/desktop/), a **Tauri 2 + React 19**
-   single-window app: a floating, always-on-top **bar**. It spawns one
-   [`split/runner.py`](split/runner.py) **per session** (`python -m split.runner`,
-   process-per-session) and parses its `VEVT <json>` stdout line protocol; Rust
-   tracks the live sessions so several stream in parallel without crossing wires.
-   **Drop a file on the bar** to attach it to the next turn (📎 chip in the
-   thread, full content folded into what the agent receives). An onboarding step
-   picks the harness; the auth flow surfaces inline.
+[`apps/desktop/`](apps/desktop/) is a **Tauri 2 + React 19** single-window
+app: a floating, always-on-top **bar**. **Drop a file on the bar** to attach
+it to the next turn (📎 chip in the thread, full content folded into what
+the agent receives). An onboarding step picks the harness; the auth flow
+surfaces inline.
 
-> A third **web front** (a zero-install browser UI over a WebSocket) used to live
-> here; it was retired into `var/_retired/` in favour of the desktop app.
+> Legacy: a third **web front** (zero-install browser UI over a WebSocket)
+> was retired into `var/_retired/`. The Python sidecar (`split.runner`) and
+> terminal front (`split.terminal`) live at [`split-python/`](#repo-layout)
+> *if you keep it on disk* — it's gitignored, opt-in via DevTools.
 
-**Auth = the agent's job (ACP "Agent Auth").** When a harness needs sign-in, the
-front gets `auth_required` and can either run ACP `authenticate` (OAuth), launch
-that harness's browser-based login command (`claude login`, `codex login`, …),
-or ask for the configured API key. Detection + the per-harness commands live in
-[`split/auth.py`](split/auth.py); the desktop drives the same flow from Rust.
+**Auth = the agent's job (ACP "Agent Auth").** When a harness needs sign-in,
+the runner emits `auth_required` and the UI can either run ACP `authenticate`
+(OAuth), launch that harness's browser-based login command (`claude login`,
+`codex login`, …), or ask for the configured API key. Detection + the
+per-harness commands live in the Rust runner.
 
 ---
 
 ## The wire, in events
 
 The agent's `session/update` stream is normalized to a handful of event types
-the UI renders the same way (terminal colors / `VEVT` lines):
+the UI renders the same way:
 
 `say` (assistant text) · `thought` · `step` (tool call start/progress) ·
-`plan` · `usage` (tokens + cost) · `status` (running/idle/error) ·
-`auth_required` / `auth_result`.
+`plan` · `usage` (tokens + cost) · `commands` (slash-command palette) ·
+`status` (running/idle/error) · `auth_required` / `auth_result` ·
+`permission_request`.
 
-The desktop's Rust↔Python contract is one `VEVT <json>` line per event on the
-runner's stdout; everything else on stderr becomes a `.log`. `status: idle`
-means a **turn** finished (the session stays open for the next turn).
+The Rust runner emits these directly via `app.emit("session-event", …)`;
+the legacy Python sidecar (when opted in) emits the same vocabulary as
+`VEVT <json>` lines on stdout. Either way, `status: idle` means a **turn**
+finished (the session stays open for the next turn).
 
 ---
 
@@ -187,34 +188,54 @@ means a **turn** finished (the session stays open for the next turn).
 **Quickstart — the Makefile (macOS / Linux):**
 
 ```bash
-make doctor     # check the toolchain (uv / node / cargo)
-make install    # uv sync (Python) + desktop npm deps, in one shot
-make app        # run the desktop app   (or `make cli` for the terminal front)
+make doctor     # check the toolchain (cargo / node / npm)
+make install    # desktop npm deps (cargo deps come on first build)
+make app        # run the desktop app — native Rust runner
 ```
 
-`make build` bundles the native `.app`; `make test` runs pytest + vitest; `make`
-(no target) lists everything. Windows isn't covered by the Makefile — the
-backend/CLI can run under WSL, but the desktop app is macOS-only today (see
-*Platforms — macOS only, today* below).
+`make build` bundles the native `.app`; `make test` runs the Rust workspace
+tests (`cargo test --workspace`) + vitest; `make` (no target) lists everything.
+The retired Python sidecar is no longer in the Makefile — to compare behaviour,
+run it standalone from inside the gitignored `split-python/` (see *Legacy
+Python* below).
+
+**Windows** (no `make` — it isn't installed by default; the Makefile is just a
+Unix-side convenience wrapper around the npm scripts below). From `apps/desktop/`:
+
+```powershell
+npm install
+npm run tauri dev      # run the app in dev (equivalent of `make app`)
+npm run tauri build    # bundle the .exe / .msi (equivalent of `make build`)
+npm test               # vitest          # cargo test --workspace   (Rust tests)
+```
+
+Prereqs are the same as macOS — Rust (`rustup`) + Node on PATH. macOS is the
+tested target; Windows is the cross-platform build (compiled + unit-tested in
+CI, see *Platforms* below). If you'd rather use the `make` targets on Windows,
+install GNU Make (`winget install ezwinports.make`, scoop, or Git Bash).
 
 Or do it manually:
 
 ```bash
-cd split            # the repo root
-uv sync             # creates .venv from pyproject.toml + uv.lock (deps + dev tools)
+cd apps/desktop && npm install      # frontend deps (Vite/React + Tauri build glue)
+cargo build --workspace             # warms the Rust deps (core-rs + the desktop crate)
 ```
 
 **Prerequisites**
 
-- **[uv](https://docs.astral.sh/uv/)** — the Python toolchain (manages the venv +
-  deps from `uv.lock`). `brew install uv`. (Targets Python 3.10+.)
-- **Node** (for `npx`) — launches the Claude/Codex/Gemini/Qwen/Copilot adapters.
+- **[Rust](https://rustup.rs/)** — the workspace's primary toolchain. `rustup
+  install stable`. Used to build the engine (`core-rs/`) and the desktop bar.
+- **Node** (for `npx`) — launches the Claude/Codex/Gemini/Qwen/Copilot adapters,
+  and serves Vite during `tauri dev`.
 - **Auth** for whichever harness you test (table above). Provider keys saved
   through the desktop UI go in your **OS keychain** (macOS Keychain / Windows
-  Credential Manager / Linux Secret Service) under `service="split"`; Rust pulls
-  them at session spawn and injects them into the runner's env. A legacy `.env`
-  at the repo root still works as a fallback (read by `split.core` via
-  `load_dotenv()`). CLI-login agents use their own login flow.
+  Credential Manager / Linux Secret Service) under `service="split"`; the Rust
+  runner pulls them at session spawn and injects them into the agent's env via
+  the `McpServerStdio` config (no `.env` needed). CLI-login agents use their own
+  login flow.
+- **[uv](https://docs.astral.sh/uv/)** *(optional)* — only needed if you keep
+  `split-python/` checked out locally to compare the retired Python backend.
+  `cd split-python && uv sync` from inside the gitignored folder.
 
 **Mistral Vibe binary** (no npx distribution):
 
@@ -230,15 +251,15 @@ unzip vibe-acp.zip && chmod +x vibe-acp && cd ../..
 ## Run
 
 ```bash
-# 1) Terminal front (split-cli)
-uv run python -m split.terminal             # pick an agent with @
-uv run python -m split.terminal claude      # or start on one
-
-# 2) Desktop app (split-app, Tauri)
+# Desktop app (split-app, Tauri) — Rust runner by default
 cd apps/desktop && npm install && npm run tauri dev
 ```
 
-Try the full loop on either front:
+The legacy terminal front (`python -m split.terminal`) only works if you
+keep `split-python/` checked out locally — see [Legacy Python
+backend](#default-runtime-rust) below.
+
+Try the full loop:
 
 ```
 Research the EV market in 2026 and give me a short briefing   # persona: search + cite
@@ -252,17 +273,18 @@ Now turn that into a slide deck                                 # skill: fronten
 
 ## Repo layout
 
-Four concerns, kept apart: the **engine + fronts** (`split/`), the **config**
-(`config/`, portable & version-controlled), the **UIs** (`apps/`), and
-**generated/vendored** state (`var/`, gitignored).
+Four tracked concerns + one local-only legacy: the **Rust backend**
+(`core-rs/`), the **config** (`config/`, portable & version-controlled), the
+**UIs** (`apps/`), and **generated/vendored** state (`var/`, gitignored).
+The retired **Python backend** lives at `split-python/` *if* you keep it
+locally — it's gitignored, fresh clones don't get it.
 
 ```
-split/                # the Python backend (a package, run via `python -m split.<x>`)
-  core.py             #   the ENGINE: layout, registries, persona+skill projection, mcp, command
-  terminal.py         #   FRONT — the CLI  (python -m split.terminal)        ← "split-cli"
-  runner.py           #   the per-session ACP sidecar the desktop spawns     (python -m split.runner)
-  acp_client.py       #   the ACP Client protocol on the official SDK (agent-client-protocol)
-  auth.py             #   Agent-Auth detection + the per-harness login commands
+core-rs/              # the Rust BACKEND — portable engine (cargo workspace member)
+  src/persona.rs      #   workspace projection (AGENTS.md + cross-vendor shims + skill symlinks)
+  src/archive.rs      #   per-session events.ndjson + meta.json (with acp_sid for resume)
+  src/permissions.rs  #   allow/ask/deny rule engine (DEFAULT_DENY guards + glob match)
+  src/harness_config.rs#  Hermes/OpenCode model-picker translation (CLI args + managed config dir)
 
 config/               # the EXPERT SYSTEM (portable, version-controlled)
   harnesses.json      #   the 9 HARNESSES (brains/runtimes)
@@ -273,46 +295,90 @@ config/               # the EXPERT SYSTEM (portable, version-controlled)
 
 apps/
   desktop/            # FRONT — the Tauri 2 + React 19 bar  (npm run tauri dev) ← "split-app"
+                      #   src-tauri/ depends on `core-rs/` for the portable engine + houses the
+                      #   ACP runner (`runner.rs`) — the default runtime in the shipped .dmg.
 
 var/                  # generated / vendored — gitignored, safe to delete
   workspace/          #   each session's PERSISTENT home (persona+skill projected in;
                       #     the agent's own files kept across runs)
+  sessions/           #   per-session archive (events.ndjson + meta.json), same shape both backends
   memory/             #   cross-session expert memory — survives `rm -rf workspace/`
     _user/USER.md     #     about the boss; every expert reads this
     <expert>/MEMORY.md#     this expert's own notes (Wolfgang's, Cicero's, …)
   bin/                #   downloaded harness binaries (opencode, vibe-acp, cursor-agent)
   _retired/           #   parked code (the old web front: server.py + web/)
 
-pyproject.toml · uv.lock · .gitignore · .env (legacy fallback for keys; new keys go to the OS keychain) · .venv/
+split-python/         # LOCAL-ONLY (gitignored) — the retired Python backend, kept for
+                      #   reference + parity sweeps. Not in the repo, and no longer wired
+                      #   into the app. To compare behaviour: cd split-python && uv sync,
+                      #   then run the sidecar standalone (python -m split.terminal / runner).
+                      # The desktop bar runs purely on Rust.
+
+Cargo.toml            # workspace root — pulls in apps/desktop/src-tauri + core-rs
+.gitignore · .env (legacy fallback for keys; new keys go to the OS keychain)
 ```
+
+### Runtime: Rust only
+
+The **native Rust runner** (`apps/desktop/src-tauri/src/runner.rs` on the
+canonical `agent-client-protocol` crate) is the sole session backend. It speaks
+ACP in-process, lets the `.dmg` ship without a Python runtime, and covers every
+capability the Python sidecar did (auth flow, session/resume, logout, permission
+engine with `DEFAULT_DENY` guards, MCP servers, fs read/write callbacks,
+persona projection, harness model picker, OTLP env, stderr capture).
+
+The retired Python sidecar (`python -m split.runner`) is no longer wired into
+the app — its dispatch and the old `localStorage.setItem("split.runner",
+"python")` opt-in were removed. It lives, reference-only, in the gitignored
+`split-python/` for parity sweeps; run it standalone (`cd split-python && uv
+sync`) if you want to compare. Because it wrote byte-identical
+`var/sessions/<id>/{events.ndjson, meta.json}` archives, sessions it recorded
+still replay correctly through the Rust path.
 
 ---
 
-## Platforms — **macOS only, today**
+## Platforms — **macOS + Windows (unsigned)**
 
-The ACP/Python core is portable, but the app as a whole is currently pinned to
-macOS. Honest blockers if you try Windows/Linux:
+macOS is the primary, battle-tested target. **Windows** is supported as a
+cross-platform build: the Rust + Tauri code is platform-portable and is
+compiled + unit-tested on `windows-latest` in CI. The Windows *runtime* is not
+yet exercised end-to-end in CI, so treat it as "builds and should run" rather
+than "fully QA'd". Neither platform ships **code-signed** today (see below).
 
-- **Python interpreter path** — the Tauri shell (`apps/desktop/src-tauri/src/lib.rs`)
-  resolves the repo root + interpreter at runtime (`SPLIT_REPO_ROOT`/`SPLIT_PYTHON`,
-  else exe-ancestor markers, else `CARGO_MANIFEST_DIR`), so it's no longer pinned to
-  one machine — but its venv fallback is `.venv/bin/python` (Windows is
-  `.venv\Scripts\python.exe`; set `SPLIT_PYTHON` to override).
-- **Auth launchers** — `lib.rs` starts browser-based login commands as detached
-  subprocesses. That avoids Terminal.app scripting, but the commands and auth
-  dotfiles are still tested only on macOS.
-- **Session teardown** — Rust kills the process tree with `pkill`/`kill`
-  (Windows needs `taskkill`).
-- **`PATH`** — built with a `:` separator and `/opt/homebrew` entries (Unix).
-- **Binaries** — `var/bin/opencode`, `var/bin/vibe-acp`, the `*.node` addons are
-  **darwin-arm64**; you'd need per-platform builds.
-- **Window chrome** — `macOSPrivateApi`, vibrancy, `transparent` + borderless
-  render differently (or not at all) off macOS.
+What's portable (and how):
+- **Repo-root resolution** — resolved at runtime (`SPLIT_REPO_ROOT`, else
+  exe-ancestor markers holding `config/harnesses.json` + `Cargo.toml`, else
+  `CARGO_MANIFEST_DIR`); not pinned to one machine or OS.
+- **`PATH`** — per-OS: `:`-joined Unix dirs (`/opt/homebrew`, …) on macOS/Linux,
+  `;`-joined inherited PATH (+ `%USERPROFILE%\.cargo\bin`) on Windows.
+- **Command portability** — `which`→`where`, `open`→`start`/`xdg-open`, the
+  ⌘J global toggle becomes Ctrl+J off macOS.
+- **Workspace projection** — persona/skill projection uses symlinks on Unix and
+  falls back to copies on Windows (no Developer-Mode requirement), via the
+  `symlink` shim in [core-rs/src/persona.rs](core-rs/src/persona.rs).
+- **Secrets** — the `keyring` crate already targets the Windows Credential
+  Manager / macOS Keychain / Linux Secret Service.
 
-The Python package itself uses no `fcntl`/`pty`/`os.fork`/`termios`, so
-`split/` ports cleanly; cross-platform support is an enclosing-shell job
-(relative paths, per-OS auth, `taskkill`, per-platform binaries, CI) — roughly a
-few weeks.
+Remaining Windows rough edges (degrade gracefully, don't block):
+- **Vendored binaries** — `var/bin/opencode`, `var/bin/vibe-acp` are
+  **darwin-arm64**; the npx-based harnesses work cross-platform, the vendored
+  ones need a Windows build.
+- **Harness installers** — the `brew`/`curl | bash` install paths are Unix; on
+  Windows they fall through to opening the docs URL (install the runtime
+  manually).
+- **Window chrome** — vibrancy is macOS-only; the Windows window renders without
+  the blur backdrop.
+
+### Code signing — not done (free, with friction)
+
+Neither build is signed, so first launch shows a security prompt:
+- **macOS** (Gatekeeper): right-click → **Open**, or
+  `xattr -dr com.apple.quarantine /Applications/Split.app`.
+- **Windows** (SmartScreen): **More info → Run anyway**.
+
+Signing is optional and costs money (Apple Developer ID ≈ $99/yr; a Windows
+Authenticode cert ≈ $200–700/yr on a hardware token), so it's deferred until
+there's real external distribution.
 
 ---
 

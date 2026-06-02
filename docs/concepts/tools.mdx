@@ -1,0 +1,32 @@
+---
+title: "Tools"
+description: "MCP servers handed to every agent over ACP — not the harness's native config."
+---
+
+Tools are **MCP servers** declared in `config/tools.json` (the standard
+`mcpServers` shape, with `${VAR}` env expansion). They're fed to every agent via
+ACP's `session/new` — *not* the harness's native MCP config.
+
+This is the point of ACP: Claude reads `.mcp.json`, Codex reads
+`~/.codex/config.toml`, Vibe keeps MCP in `~/.vibe/config.toml`. Split doesn't
+care — it passes the servers over the wire, and each harness mounts them the same
+way.
+
+## Currently vendored
+
+- **`everything`** — the MCP demo server (used by the run-loop example;
+  `mcp__everything__get-sum` adds two numbers).
+- **`ddg-search`** — keyless DuckDuckGo web search via
+  `uvx duckduckgo-mcp-server`, exposing `search` + `fetch_content`.
+
+## How they reach the agent
+
+At session spawn the runner injects provider keys + OTLP env into the agent
+child's environment via the `McpServerStdio.env` carried by the ACP SDK, then
+hands the server list through `session/new`.
+
+<Note>
+**Vibe + MCP:** Vibe advertises `mcpCapabilities.http/sse = false` and keeps MCP
+in its own config. If it rejects servers over ACP, the backend retries without
+them and warns.
+</Note>

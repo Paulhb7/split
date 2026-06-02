@@ -1,0 +1,101 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Split",
+  "description": "Many experts, in parallel, on any agent — over ACP.",
+  "colors": {
+    "primary": "#d97757",
+    "light": "#e8a07f",
+    "dark": "#0a0b0e"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/wordmark-light.svg",
+    "dark": "/logo/wordmark-dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/Paulhb7/split"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get started",
+      "href": "/get-started/introduction"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Get started",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "get-started/introduction",
+              "get-started/the-model",
+              "get-started/quickstart"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Concepts",
+        "groups": [
+          {
+            "group": "The expert system",
+            "pages": [
+              "concepts/experts",
+              "concepts/skills",
+              "concepts/harnesses",
+              "concepts/tools"
+            ]
+          },
+          {
+            "group": "Runtime",
+            "pages": [
+              "concepts/the-wire",
+              "concepts/auth",
+              "concepts/memory"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Architecture",
+        "groups": [
+          {
+            "group": "Engine",
+            "pages": [
+              "architecture/overview",
+              "architecture/rust-runner",
+              "architecture/desktop-app",
+              "architecture/repo-layout"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "Operate",
+            "pages": [
+              "reference/setup",
+              "reference/commands",
+              "reference/platforms",
+              "reference/caveats"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Paulhb7/split"
+    }
+  }
+}

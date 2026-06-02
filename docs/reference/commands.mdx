@@ -1,0 +1,43 @@
+---
+title: "Commands"
+description: "The desktop app, the Rust workspace, and the legacy Python sidecar."
+---
+
+## Desktop app
+
+From `apps/desktop/`:
+
+```bash
+npm install
+npm run tauri dev      # full app: builds Rust + serves Vite on :1420, opens the window
+npm run dev            # Vite frontend only
+npm run build          # tsc typecheck + vite build
+npm run tauri build    # bundle the .app
+npx tauri icon path/to/logo.png   # regenerate the app icon set
+```
+
+On macOS / Linux the Makefile wraps these: `make app`, `make build`, `make test`,
+`make doctor`, `make install`.
+
+## Rust workspace
+
+From the **repo root**:
+
+```bash
+cargo build --workspace            # core-rs + the desktop crate
+cargo test --workspace             # 15 unit tests in core-rs
+cargo clippy --workspace --all-targets -- -D warnings
+cargo fmt --all
+```
+
+## Legacy Python sidecar
+
+Only if `split-python/` is kept locally (gitignored):
+
+```bash
+cd split-python
+uv sync
+SPLIT_REPO_ROOT=$PWD/.. uv run python -m split.terminal claude   # CLI smoke
+```
+
+`/quit` exits the terminal front.

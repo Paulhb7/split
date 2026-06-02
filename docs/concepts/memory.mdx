@@ -1,0 +1,32 @@
+---
+title: "Memory"
+description: "Cross-session expert memory that survives a workspace wipe."
+---
+
+`var/memory/` is **cross-session memory**, separate from the workspace and
+surviving a `rm -rf var/workspace/`:
+
+- **`_user/USER.md`** — facts about the boss, shared by *every* expert.
+- **`<expert>/MEMORY.md`** — each expert's own notes (Wolfgang's, Cicero's, …).
+
+## How it's read
+
+At session start, `core-rs/src/persona.rs::memory_text` reads these files and
+`persona_text` prepends them to the persona. That lands in **both** channels:
+
+- the projected `AGENTS.md` / `CLAUDE.md` / `.vibe/AGENTS.md`, and
+- the runner's first-turn injection.
+
+One helper, two channels — so harnesses that ignore workspace instruction files
+still see the memory.
+
+<Warning>
+**Frozen-snapshot pattern:** writes during a session hit disk immediately but
+only appear in the *next* session's snapshot.
+</Warning>
+
+## Writes are manual today
+
+The agent writes when the boss says "remember X" or when it spots something
+durable. Automatic post-turn extraction is future work for the planned
+`split-memory` MCP server.

@@ -10,17 +10,21 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "macOSPrivateApi": true,
+    "macOSPrivateApi": false,
     "windows": [
       {
         "label": "main",
         "title": "Split",
-        "width": 680,
-        "height": 96,
-        "transparent": true,
-        "decorations": false,
-        "alwaysOnTop": true,
-        "resizable": false,
+        "width": 900,
+        "height": 600,
+        "minWidth": 520,
+        "minHeight": 300,
+        "transparent": false,
+        "decorations": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "alwaysOnTop": false,
+        "resizable": true,
         "visible": true
       }
     ],

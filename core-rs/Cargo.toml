@@ -1,0 +1,14 @@
+[package]
+name = "split-core"
+version = "0.1.0"
+description = "Split's portable Rust engine — persona projection, session archive, permission rules, harness model config. Mirrors the surface of split/core.py + split/permissions.py so the Rust runner reaches parity with the Python runner."
+authors = ["Paul Barbaste"]
+license = "Apache-2.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Date formatting for the persona's "Today is …" header + the archive's
+# ISO-8601 timestamps. `clock` is the only feature we need.
+chrono = { version = "0.4", default-features = false, features = ["clock"] }

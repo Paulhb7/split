@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 32" width="150" height="32">
+  <path d="M9 8h7a4 4 0 0 1 0 8h-3v6" fill="none" stroke="#d97757" stroke-width="2.6" stroke-linecap="round"/>
+  <circle cx="20" cy="22" r="2" fill="#d97757"/>
+  <text x="36" y="22" font-family="DM Sans, Inter, system-ui, sans-serif" font-size="18" font-weight="700" fill="#0a0b0e">Split</text>
+</svg>
