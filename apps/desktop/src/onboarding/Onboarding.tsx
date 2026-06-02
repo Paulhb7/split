@@ -6,6 +6,7 @@ import { useHarnessStates } from "../shared/useHarnessStates";
 import { useExperts } from "../shared/util";
 import { isClassicExpert, type ExpertKind } from "../shared/experts";
 import { SKINS, type Skin } from "../shared/skins";
+import SiriOrb from "../shared/SiriOrb";
 import "./onboarding.css";
 
 // Inline Lucide-style SVG glyphs per expert kind. Single-stroke, currentColor,
@@ -213,6 +214,9 @@ export default function Onboarding({
               <p className="ob2-seed">An <b>agent</b> is a model with hands. An <b>expert</b> is that agent with a craft.</p>
             </div>
             <div className="ob2-hero-visual">
+              <div className="ob2-orb-wrap">
+                <SiriOrb size={200} coreColor={accent} />
+              </div>
               <div className="cons">
                 <div className="cons-row engines">
                   {SHOWCASE.map((id, i) => (

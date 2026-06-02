@@ -15,10 +15,12 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
+    "@types/three": "^0.184.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "three": "^0.184.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

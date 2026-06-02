@@ -147,11 +147,12 @@
 /* ---- body ---- */
 .body { position: relative; z-index: 5; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
 /* `tall` = "fullscreen overlay-style page" (onboarding / cabinet / history /
-   add-agent). Stretches `.measure` to fill the body so child pages can
-   `min-height: 100%` and resolve to the viewport (otherwise it collapses to
-   content height). Not applied in non-fullscreen because the adaptive
-   ResizeObserver watches measure.offsetHeight — if measure stretched to body
-   height there, the window would runaway-grow. */
+   add-agent). Just stretches `.measure` to the body height as a *minimum*
+   (it can grow taller — body's `overflow-y: auto` then scrolls). That gives
+   `.ob2` (also `min-height: 100%`) a real height to resolve against, so its
+   flex children can use `margin: auto` to vertically center. Not applied in
+   non-fullscreen because the adaptive ResizeObserver watches
+   measure.offsetHeight — a stretched measure would runaway-grow the window. */
 .body.tall .measure { min-height: 100%; }
 /* Fullscreen-fill mode (Teams): the inner view owns its own scroll regions,
    so the body+measure must hand it the whole canvas instead of falling back
@@ -283,6 +284,9 @@
 
 /* ============================ HOME ============================ */
 .home { max-width: 880px; margin: 0 auto; padding: 16px 18px 22px; }
+/* Idle-state orb above the composer — only renders when there's no session
+   open. The bar's adaptive height grows to accommodate it (~110px extra). */
+.home-orb { display: flex; justify-content: center; padding: 6px 0 14px; }
 .sec { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); margin: 0 0 11px; display: flex; align-items: center; gap: 10px; }
 .sec::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .sec .muted { color: var(--dim2); letter-spacing: 0.05em; text-transform: none; font-size: 10px; }
@@ -659,6 +663,142 @@
 .app.theme-tokyo .menu { background: #1a1b2e; }
 .app.theme-tokyo .overlay, .app.theme-tokyo .modal-bg { background: rgba(14, 15, 29, 0.55); }
 .app.theme-tokyo .am { background: #1a1b2e; }
+
+/* ============================ THEME · GATSBY ===============================
+   Art Deco — champagne gold over emerald velvet. Geometric, opulent, jazz era.
+   Black ink hidden inside the green, gold accents. Per-harness brand still
+   wins on tiles/chips so vendor colors survive. */
+.app.theme-gatsby {
+  --ink: #0a1f1a;
+  --ink2: #122d24;
+  --panel: rgba(18, 45, 36, 0.62);
+  --panel2: rgba(24, 60, 50, 0.78);
+  --line: rgba(212, 175, 55, 0.20);
+  --line2: rgba(212, 175, 55, 0.08);
+  --text: #f4ead5;
+  --dim: #a39370;
+  --dim2: #6a5d40;
+  --brand: #d4af37;
+  --good: #4ab87a;
+  --warn: #e5c452;
+  --bad: #c44d4d;
+  --disp: "Playfair Display", "Cinzel", Georgia, serif;
+  background:
+    radial-gradient(820px 520px at 86% -12%, rgba(212, 175, 55, 0.18), transparent 60%),
+    radial-gradient(720px 620px at -6% 108%, rgba(74, 184, 122, 0.12), transparent 60%),
+    radial-gradient(560px 460px at 50% 46%, rgba(212, 175, 55, 0.06), transparent 70%),
+    linear-gradient(180deg, #0c2520 0%, #061511 100%);
+}
+.app.theme-gatsby::before { opacity: 0.18; }
+.app.theme-gatsby::after { opacity: 0.05; }
+.app.theme-gatsby .seg button.on { color: #0a1f1a; background: var(--brand); }
+.app.theme-gatsby .btn { color: #0a1f1a; box-shadow: 0 8px 28px color-mix(in srgb, var(--brand) 35%, transparent); }
+.app.theme-gatsby .run { color: #0a1f1a; }
+.app.theme-gatsby .stop { background: rgba(196, 77, 77, 0.10); border-color: rgba(196, 77, 77, 0.45); color: var(--bad); }
+.app.theme-gatsby .stream-md a,
+.app.theme-gatsby .turn .text a { color: var(--brand); }
+.app.theme-gatsby .stream-md code,
+.app.theme-gatsby .turn .text code { background: rgba(212, 175, 55, 0.10); color: var(--brand); }
+.app.theme-gatsby .stream-md pre,
+.app.theme-gatsby .turn .text pre { background: rgba(10, 31, 26, 0.7); border: 1px solid var(--line); }
+.app.theme-gatsby .menu { background: #122d24; border-color: rgba(212, 175, 55, 0.30); }
+.app.theme-gatsby .mi:hover, .app.theme-gatsby .mi.sel { background: rgba(212, 175, 55, 0.10); }
+.app.theme-gatsby .overlay, .app.theme-gatsby .modal-bg { background: rgba(6, 21, 17, 0.62); }
+.app.theme-gatsby .am { background: #122d24; }
+.app.theme-gatsby .toast { background: #122d24; }
+.app.theme-gatsby .drop { background: rgba(18, 45, 36, 0.86); }
+.app.theme-gatsby .logs-pre { background: rgba(212, 175, 55, 0.06); color: var(--text); }
+.app.theme-gatsby .xbtn:hover { background: rgba(212, 175, 55, 0.10); }
+
+/* ============================ THEME · TITANIC ==============================
+   North Atlantic navy, brass fittings, white linen. Edwardian dining room
+   meets deep open ocean. Calm, formal, weighty. */
+.app.theme-titanic {
+  --ink: #061a30;
+  --ink2: #0d2745;
+  --panel: rgba(13, 39, 69, 0.62);
+  --panel2: rgba(20, 50, 85, 0.78);
+  --line: rgba(200, 156, 74, 0.20);
+  --line2: rgba(200, 156, 74, 0.08);
+  --text: #f4ead5;
+  --dim: #94a8c0;
+  --dim2: #5a6e85;
+  --brand: #c89c4a;
+  --good: #7eb088;
+  --warn: #e5b452;
+  --bad: #b95850;
+  --disp: "Playfair Display", "EB Garamond", Georgia, serif;
+  background:
+    radial-gradient(820px 520px at 86% -12%, rgba(200, 156, 74, 0.14), transparent 60%),
+    radial-gradient(720px 620px at -6% 108%, rgba(70, 110, 160, 0.18), transparent 60%),
+    radial-gradient(560px 460px at 50% 46%, rgba(255, 255, 255, 0.03), transparent 70%),
+    linear-gradient(180deg, #0a2540 0%, #050f1c 100%);
+}
+.app.theme-titanic::before { opacity: 0.20; }
+.app.theme-titanic::after { opacity: 0.04; }
+.app.theme-titanic .seg button.on { color: #061a30; background: var(--brand); }
+.app.theme-titanic .btn { color: #061a30; box-shadow: 0 8px 28px color-mix(in srgb, var(--brand) 32%, transparent); }
+.app.theme-titanic .run { color: #061a30; }
+.app.theme-titanic .stop { background: rgba(185, 88, 80, 0.12); border-color: rgba(185, 88, 80, 0.45); color: var(--bad); }
+.app.theme-titanic .stream-md a,
+.app.theme-titanic .turn .text a { color: var(--brand); }
+.app.theme-titanic .stream-md code,
+.app.theme-titanic .turn .text code { background: rgba(200, 156, 74, 0.10); color: var(--brand); }
+.app.theme-titanic .stream-md pre,
+.app.theme-titanic .turn .text pre { background: rgba(6, 26, 48, 0.7); border: 1px solid var(--line); }
+.app.theme-titanic .menu { background: #0d2745; border-color: rgba(200, 156, 74, 0.30); }
+.app.theme-titanic .mi:hover, .app.theme-titanic .mi.sel { background: rgba(200, 156, 74, 0.10); }
+.app.theme-titanic .overlay, .app.theme-titanic .modal-bg { background: rgba(5, 15, 28, 0.62); }
+.app.theme-titanic .am { background: #0d2745; }
+.app.theme-titanic .toast { background: #0d2745; }
+.app.theme-titanic .drop { background: rgba(13, 39, 69, 0.86); }
+.app.theme-titanic .logs-pre { background: rgba(200, 156, 74, 0.06); color: var(--text); }
+.app.theme-titanic .xbtn:hover { background: rgba(200, 156, 74, 0.10); }
+
+/* ============================ THEME · GHIBLI ===============================
+   Light pastoral — cream paper, sage pasture, dew sky. Calm, dewy, warm.
+   Soft round display font echoes the studio's hand-lettered title cards. */
+.app.theme-ghibli {
+  --ink: #2c3024;
+  --ink2: #f5f1e2;
+  --panel: rgba(232, 228, 212, 0.70);
+  --panel2: rgba(220, 215, 195, 0.85);
+  --line: rgba(75, 90, 60, 0.18);
+  --line2: rgba(75, 90, 60, 0.08);
+  --text: #2c3024;
+  --dim: #6a7159;
+  --dim2: #98a187;
+  --brand: #6ba2c5;
+  --good: #7ba87c;
+  --warn: #d4a55a;
+  --bad: #b8554a;
+  --disp: "Quicksand", "Bricolage Grotesque", system-ui, sans-serif;
+  background:
+    radial-gradient(820px 520px at 86% -12%, rgba(107, 162, 197, 0.20), transparent 60%),
+    radial-gradient(720px 620px at -6% 108%, rgba(123, 168, 124, 0.18), transparent 60%),
+    radial-gradient(560px 460px at 50% 46%, rgba(212, 165, 90, 0.08), transparent 70%),
+    linear-gradient(180deg, #f5f1e2 0%, #ece6d2 100%);
+}
+.app.theme-ghibli::before { opacity: 0.30; }
+.app.theme-ghibli::after { opacity: 0.07; mix-blend-mode: multiply; }
+.app.theme-ghibli .seg button.on { color: #fff; background: var(--brand); }
+.app.theme-ghibli .btn { color: #fff; box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 28%, transparent); }
+.app.theme-ghibli .run { color: #fff; }
+.app.theme-ghibli .stop { background: rgba(184, 85, 74, 0.10); border-color: rgba(184, 85, 74, 0.40); color: var(--bad); }
+.app.theme-ghibli .stream-md a,
+.app.theme-ghibli .turn .text a { color: var(--brand); }
+.app.theme-ghibli .stream-md code,
+.app.theme-ghibli .turn .text code { background: rgba(75, 90, 60, 0.08); }
+.app.theme-ghibli .stream-md pre,
+.app.theme-ghibli .turn .text pre { background: rgba(75, 90, 60, 0.06); border: 1px solid var(--line); }
+.app.theme-ghibli .menu { background: #f5f1e2; box-shadow: 0 12px 32px rgba(44, 48, 36, 0.12); }
+.app.theme-ghibli .mi:hover, .app.theme-ghibli .mi.sel { background: rgba(75, 90, 60, 0.08); }
+.app.theme-ghibli .overlay, .app.theme-ghibli .modal-bg { background: rgba(44, 48, 36, 0.28); }
+.app.theme-ghibli .am { background: #f5f1e2; }
+.app.theme-ghibli .toast { background: #f5f1e2; box-shadow: 0 10px 30px rgba(44, 48, 36, 0.12); }
+.app.theme-ghibli .drop { background: rgba(232, 228, 212, 0.92); }
+.app.theme-ghibli .logs-pre { background: rgba(75, 90, 60, 0.06); color: var(--text); }
+.app.theme-ghibli .xbtn:hover { background: rgba(75, 90, 60, 0.08); }
 
 /* ============================ skin picker (chrome popover) ============== */
 .skin-wrap { position: relative; }

@@ -224,6 +224,37 @@ export const EXPERT_CONTENT: Record<string, ExpertContent> = {
     ],
   },
 
+  // ---- GENIUS, the sky, live ----
+  astronomer: {
+    tagline: "She reads the sky live — what's overhead tonight, what just dropped from Mars, what JWST saw this morning.",
+    useCases: [
+      {
+        hook: "for tonight's sky",
+        prompt: "What's worth watching in the Paris sky tonight? Planets visible, ISS passes, moon phase, any deep-sky targets a 70mm scope can handle. Give me an hour-by-hour viewing plan.",
+      },
+      {
+        hook: "for a mission update",
+        prompt: "Brief me on what Perseverance has done this past month on Mars — drives, samples cached, instruments fired, latest images. With sources.",
+      },
+      {
+        hook: "for a curious mind",
+        prompt: "I want to understand exoplanet detection methods. Build me a 10-slide deck — transit, radial velocity, direct imaging, microlensing — with one real example each from the literature.",
+      },
+      {
+        hook: "for a kid's project",
+        prompt: "My 9-year-old wants to make a poster about Jupiter's moons. Pull the best photos from the NASA / ESA archives, write a 1-page kid-friendly explainer for each of the Galilean moons.",
+      },
+    ],
+    deliverables: [
+      "Tonight's sky map (deployed URL, location-aware, updates daily)",
+      "Mission briefs with annotated photos (Mars, JWST, Hubble, ISS, …)",
+      "ISS / spacecraft pass timelines (live tracker page)",
+      "Exoplanet / discovery write-ups, sourced",
+      "Educational explainer decks (Sagan-voiced, sourced)",
+      "Astronomy event calendar for the year, .ics importable",
+    ],
+  },
+
   // ---- GENIUS, music ----
   musician: {
     tagline: "He composes what plays in your head — but actually playable.",

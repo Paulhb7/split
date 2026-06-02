@@ -2,20 +2,20 @@
    Now sized for fullscreen — was 880px (overlay-era). The lede + headlines
    still cap themselves (60ch / clamp font sizes) so prose doesn't stretch. */
 .ob2 { max-width: 1200px; margin: 0 auto; padding: 32px 36px 0; display: flex; flex-direction: column; min-height: 100%; }
-/* `.ob2-page` is a flex column with `justify-content: safe center` so short
-   pages (slides 0/1 — hero; slide 2 — picker when no agent armed) center
-   vertically inside the fullscreen viewport. `safe center` falls back to
-   `start` when content exceeds the viewport so slide 3 (long cabinet list)
-   keeps scrolling normally from the top instead of clipping content off the
-   top edge with no way to scroll up. */
-.ob2-page { flex: 1; display: flex; flex-direction: column; justify-content: safe center; animation: pageIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+/* `.ob2-page` is a flex column. Slides that want vertical centering (the
+   .ob2-hero on slides 0/1) get `margin: auto 0` on the hero itself —
+   margin-auto on a flex child pushes it to the cross-axis center reliably
+   and doesn't break overflow scroll the way `justify-content: center` does.
+   Long slides (3 — cabinet list) just stack from the top naturally. */
+.ob2-page { flex: 1; display: flex; flex-direction: column; min-height: 0; animation: pageIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
 /* ---- hero split layout (slides 0 + 1): text left, visual right ----
-   Natural-height grid centered by the parent's `justify-content`. Drops back
-   to a single column on narrow screens. */
-.ob2-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+   `margin: auto 0` vertically centers it inside `.ob2-page`. Drops back to
+   a single column on narrow screens. */
+.ob2-hero { margin: auto 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: center; }
 .ob2-hero-text { display: flex; flex-direction: column; min-width: 0; }
-.ob2-hero-visual { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.ob2-hero-visual { display: flex; flex-direction: column; justify-content: center; align-items: center; min-width: 0; gap: 24px; }
+.ob2-orb-wrap { display: flex; align-items: center; justify-content: center; flex: none; }
 @media (max-width: 960px) {
   .ob2-hero { grid-template-columns: 1fr; gap: 28px; align-items: start; }
 }

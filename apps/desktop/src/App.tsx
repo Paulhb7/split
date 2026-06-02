@@ -21,6 +21,7 @@ import Stage from "./stage/Stage";
 import Teams from "./teams/Teams";
 import { useTeam } from "./teams/useTeam";
 import Cabinet from "./cabinet/Cabinet";
+import SiriOrb from "./shared/SiriOrb";
 import "./app.css";
 
 const LS_DONE = "split.onboarded";
@@ -491,6 +492,11 @@ export default function App() {
         ) : (
           /* ============ HOME ============ */
           <div className="home">
+            {!expanded && (
+              <div className="home-orb">
+                <SiriOrb size={96} coreColor={accent} />
+              </div>
+            )}
             <Composer
               experts={experts} expertSlug={expertSlug} expertLabel={expertLabel} active={active}
               engines={enabledHarnesses} onAddAgent={() => setOverlay(true)}
