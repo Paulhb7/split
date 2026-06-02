@@ -6,7 +6,7 @@ import { HARNESSES, H, brandOf } from "./shared/harnesses";
 import { useExperts, composeTurn, type Attachment } from "./shared/util";
 import { isClassicExpert } from "./shared/experts";
 import { useSessions } from "./shared/useSessions";
-import { useWindowChrome, useAdaptiveHeight, useFullscreen, useBarWidth, useBarHeight } from "./shared/useWindowChrome";
+import { useWindowChrome, useAdaptiveHeight, useFullscreen, useBarWidth } from "./shared/useWindowChrome";
 import { useHarnessStates } from "./shared/useHarnessStates";
 import { useToasts } from "./shared/useToasts";
 import { SKINS, isSkin, DEFAULT_SKIN, type Skin } from "./shared/skins";
@@ -20,6 +20,7 @@ import Onboarding from "./onboarding/Onboarding";
 import Stage from "./stage/Stage";
 import Teams from "./teams/Teams";
 import { useTeam } from "./teams/useTeam";
+import Cabinet from "./cabinet/Cabinet";
 import "./app.css";
 
 const LS_DONE = "split.onboarded";
@@ -96,6 +97,13 @@ export default function App() {
   };
   const [skinMenu, setSkinMenu] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  // Cabinet overlay state:
+  //   - false       = closed
+  //   - true        = open on the full grid view (chrome button)
+  //   - <slug>      = open directly on that expert's detail page (future:
+  //                   from @ chip or focused conversation header)
+  // Closes via ✕ / Esc / clicking a use case (which also launches a session).
+  const [cabinet, setCabinet] = useState<boolean | string>(false);
   const [value, setValue] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -121,19 +129,14 @@ export default function App() {
   const accent = focused ? brandOf(focused.harness) : brandOf(active);
   const enabledHarnesses = HARNESSES.filter((h) => enabled.includes(h.id));
 
-  // Adaptive bar: ResizeObserver fits the window to the natural body content.
-  // The "minimal" state is achieved by rendering less body (just the composer
-  // when truly idle — see the home branch below), not by forcing a sub-content
-  // window height.
-  //
-  // Teams mode is the one exception — it goes native fullscreen so the Chief
-  // of Staff orchestration view has the canvas it needs. Auto-fit is paused
-  // while in fullscreen; on exit, `useAdaptiveHeight` re-fits to whatever the
-  // body now shows.
-  const expanded =
-    !!focused || classicSessions.length > 0 || mode === "teams" || overlay || !!authSession || !onboarded;
-  const isTeamsFullscreen = mode === "teams";
-  useFullscreen(isTeamsFullscreen);
+  // Two geometries, full stop: a 680px-wide adaptive bar (height fits content)
+  // for the home/composer/conversation flow, and native macOS fullscreen for
+  // any "serious" surface — Teams orchestration, onboarding, Add Agent,
+  // Cabinet, History. Fullscreen pauses the adaptive fit so the OS owns the
+  // window; on exit the ResizeObserver re-fits whatever the body now shows.
+  const expanded = !!focused || classicSessions.length > 0 || !!authSession;
+  const isFullscreen = mode === "teams" || overlay || !!cabinet || historyOpen || !onboarded;
+  useFullscreen(isFullscreen);
   // Pre-compute how much extra height the open dropdown needs. The menu is
   // `position: absolute` so it doesn't contribute to `measureRef`'s natural
   // offsetHeight; we reserve room manually so the window grows tall enough
@@ -143,35 +146,20 @@ export default function App() {
     : menu === "engine"
       ? Math.min(320, enabledHarnesses.length * 56 + 80)
       : Math.min(320, Object.keys(experts).filter(isClassicExpert).length * 56 + 16);
-  // The "Your agents" overlay (and any future panel that needs more room) gets
-  // a wider + taller bar — caps to a fraction of the user's screen so it
-  // doesn't overflow a small display. Teams fullscreen owns its own geometry;
-  // don't fight it. The overlay content lives OUTSIDE `measureRef` (rendered
-  // after it in the JSX), so `useAdaptiveHeight` can't see it — disable
-  // adaptive fit and force an explicit tall height for the duration.
-  const wideOverlay = overlay && !isTeamsFullscreen;
-  const screenW = typeof window !== "undefined" ? window.screen?.width ?? 1440 : 1440;
-  const screenH = typeof window !== "undefined" ? window.screen?.height ?? 900 : 900;
-  const wideWidth = Math.min(1200, Math.floor(screenW * 0.7));
-  const tallHeight = Math.min(1100, Math.floor(screenH * 0.85));
   useAdaptiveHeight({
     measureRef,
-    disabled: isTeamsFullscreen || wideOverlay,
+    disabled: isFullscreen,
     menuExtra,
     extraDeps: [
       menu,
-      overlay,
       expanded,
       focused?.thread.length ?? 0,
       focused?.answer.length ?? 0,
       focused?.logs.length ?? 0,
       view,
-      mode,
-      onboarded,
     ],
   });
-  useBarWidth(wideOverlay ? wideWidth : 680);
-  useBarHeight(wideOverlay ? tallHeight : null);
+  useBarWidth(680);
 
   // arm an engine for the next session (persisted)
   const setActive = (id: string) => {
@@ -406,6 +394,7 @@ export default function App() {
     if (e.key === "Enter") submit();
     else if (e.key === "Escape") {
       if (menu) { setMenu(null); setMentionQuery(null); setSlashQuery(null); }
+      else if (cabinet) setCabinet(false);
       else if (overlay) setOverlay(false);
       else if (focused) setFocusedId(null);
       else hide();
@@ -426,7 +415,10 @@ export default function App() {
 
       {/* chrome */}
       <div className="chrome" onMouseDown={(e) => { if (!(e.target as HTMLElement).closest("button")) startMove(); }}>
-        <span className={"wm" + (anyRunning ? " live" : "")}>split<span className="dot" /></span>
+        <span className={"wm" + (anyRunning ? " live" : "")}>
+          <span className="orb" aria-hidden="true" />
+          <span className="wm-name">split</span>
+        </span>
         <span className="chrome-meta">{focused ? `on ${H[focused.harness]?.label || focused.harness}` : classicSessions.length ? `${classicSessions.length} session${classicSessions.length === 1 ? "" : "s"}` : "ready"}</span>
         <span className="spacer" />
         {onboarded && !focused && (
@@ -437,6 +429,7 @@ export default function App() {
           </div>
         )}
         <button className="iconbtn" onClick={() => { localStorage.removeItem(LS_DONE); setOnboarded(false); }} title="Replay onboarding">↻</button>
+        <button className="iconbtn" onClick={() => setCabinet(true)} title="Browse cabinet — use cases & examples per expert">☷</button>
         <button className="iconbtn" onClick={() => setHistoryOpen(true)} title="Past conversations">🕰️</button>
         <div className="skin-wrap">
           <button className={"iconbtn" + (skin ? " on" : "")} onClick={() => setSkinMenu((v) => !v)} title="Skin">✿</button>
@@ -460,11 +453,11 @@ export default function App() {
         </div>
       </div>
 
-      <div className={"body" + (isTeamsFullscreen ? " fill" : "")}>
-        <div ref={measureRef} className={"measure" + (isTeamsFullscreen ? " fill" : "")}>
+      <div className={"body" + (mode === "teams" ? " fill" : isFullscreen ? " tall" : "")}>
+        <div ref={measureRef} className={"measure" + (mode === "teams" ? " fill" : isFullscreen ? " tall" : "")}>
         {!onboarded ? (
           /* ============ ONBOARDING (5 pages: concept · demo · pick · @Wolfgang · @Socrates) ============ */
-          <Onboarding onEnter={enterSplit} />
+          <Onboarding onEnter={enterSplit} skin={skin} onPickSkin={pickSkin} />
         ) : focused ? (
           /* ============ CONVERSATION ============ */
           <Conversation
@@ -547,14 +540,35 @@ export default function App() {
       {overlay && (
         <div className="overlay" onClick={() => setOverlay(false)}>
           <div className="overlay-card" onClick={(e) => e.stopPropagation()}>
-            <div className="league-head" style={{ marginBottom: 8 }}>
-              <h2 style={{ fontSize: 30 }}>Your <em>agents</em></h2>
+            <div className="overlay-head">
+              <div>
+                <div className="ob-eyebrow">your roster</div>
+                <h2 className="ob2-h2">Your <em>agents</em></h2>
+              </div>
               <button className="btn ghost" onClick={() => setOverlay(false)}>done</button>
             </div>
-            <div className="ob2-pickhint">Toggle the agents you want — only these appear in your roster &amp; menus. Add or remove anytime.</div>
+            <p className="ob2-lede" style={{ marginBottom: 22 }}>
+              Toggle the agents you want — only these appear in your roster &amp; menus.
+              Install &amp; sign-in state shows on each card; expand a card to manage.
+            </p>
             <League isSelected={(id) => enabled.includes(id)} onPick={toggleEnabled} lifecycle={lifecycle} />
           </div>
         </div>
+      )}
+
+      {cabinet && (
+        <Cabinet
+          experts={experts}
+          initialSlug={typeof cabinet === "string" ? cabinet : null}
+          onClose={() => setCabinet(false)}
+          onLaunch={(slug, prompt) => {
+            setCabinet(false);
+            setExpertSlug(slug);
+            if (!prompt) return;
+            const turn = composeTurn(prompt, []);
+            start({ harness: active, expertSlug: slug, display: turn.display, wire: turn.wire, files: turn.files }).then(setFocusedId);
+          }}
+        />
       )}
 
       {historyOpen && (

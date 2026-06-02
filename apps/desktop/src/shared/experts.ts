@@ -8,8 +8,10 @@ export type ExpertKind =
   | "builder"
   | "finder"
   | "operator"
+  | "organizer"
   | "creator"
-  | "recruiter";
+  | "recruiter"
+  | "coach";
 
 export interface Expert {
   /** Primary user-facing name. For 'super' agents = the job title
@@ -25,11 +27,12 @@ export interface Expert {
    * lineage even when the label is the role. Unused for genius agents (their
    * label IS the figure). */
   figure?: string;
-  /** Two-bucket split that drives roster UX:
+  /** Three-bucket split that drives roster UX:
    * - 'super'  = jobs (productivity over existing tasks, sober aesthetic)
-   * - 'genius' = creators (deliverables only a genius could make, flamboyant)
+   * - 'genius' = creators / unique figures (frontier outputs, flamboyant)
+   * - 'coach'  = personal mentors (diet, learning, sport, cooking, …)
    * Defaults to 'super' on legacy data. */
-  category?: "super" | "genius";
+  category?: "super" | "genius" | "coach";
   kind: ExpertKind;
   blurb: string;
 }
@@ -45,13 +48,13 @@ export const isClassicExpert = (slug: string) => !TEAMS_ONLY.has(slug);
 
 // Fallback roster if `list_experts` fails (matches experts.json order/defaults).
 export const DEFAULT_EXPERTS: ExpertMap = {
-  consultant: { label: "Consultant", figure: "Wolfgang", category: "super", kind: "researcher", blurb: "Web research into ready slides" },
-  scientist: { label: "Scientist", figure: "Curie", category: "super", kind: "researcher", blurb: "Bridges fields to find new ideas, maps the state of the art" },
-  lawyer: { label: "Lawyer", figure: "Cicero", category: "super", kind: "advisor", blurb: "Legal guidance, risk & clauses" },
-  data_analyst: { label: "Analyst", figure: "Turing", category: "super", kind: "analyst", blurb: "CSV analysis, charts & dashboards" },
-  engineer: { label: "Engineer", figure: "Tesla", category: "super", kind: "builder", blurb: "Builds micro-apps & landing pages, ships them to a public URL" },
-  operator: { label: "Operator", figure: "Alfred", category: "super", kind: "operator", blurb: "Drives your apps with your logins — books, fills forms, runs admin" },
+  consultant: { label: "Consultant", category: "super", kind: "researcher", blurb: "Web research into ready slides" },
+  scientist: { label: "Scientist", category: "super", kind: "researcher", blurb: "Bridges fields to find new ideas, maps the state of the art" },
+  lawyer: { label: "Lawyer", category: "super", kind: "advisor", blurb: "Legal guidance, risk & clauses" },
+  data_analyst: { label: "Data Analyst", category: "super", kind: "analyst", blurb: "CSV analysis, charts & dashboards" },
+  engineer: { label: "Engineer", category: "super", kind: "builder", blurb: "Builds micro-apps & landing pages, ships them to a public URL" },
   designer: { label: "DaVinci", category: "genius", kind: "creator", blurb: "Builds entire visual universes — worlds, brand identities, scene direction" },
-  musician: { label: "Bach", category: "genius", kind: "creator", blurb: "Composes original music — songs, scores, soundtracks" },
+  musician: { label: "Wolfgang", category: "genius", kind: "creator", blurb: "Composes original music — songs, scores, soundtracks" },
   director: { label: "Kubrick", category: "genius", kind: "creator", blurb: "Directs short films — visual + score + voice, in one piece" },
+  operator: { label: "Alfred", role: "Majordome", category: "genius", kind: "operator", blurb: "Your majordome — drives your apps with your logins, books, runs admin" },
 };

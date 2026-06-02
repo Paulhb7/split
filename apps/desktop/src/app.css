@@ -68,12 +68,63 @@
   height: 46px; padding: 0 12px 0 78px;
   border-bottom: 1px solid var(--line2);
 }
-.wm { font-weight: 800; letter-spacing: -0.04em; font-size: 16px; display: flex; align-items: baseline; }
-.wm .dot {
-  width: 7px; height: 7px; border-radius: 50%; background: var(--brand); margin-left: 1px; align-self: center;
-  transition: box-shadow 0.3s;
+.wm { font-weight: 800; letter-spacing: -0.04em; font-size: 16px; display: flex; align-items: center; gap: 9px; }
+.wm-name { line-height: 1; }
+/* Siri-style orb in the chrome. Reactive to --brand (shifts color with the
+   active engine), breathes always, pulses harder when a session is running.
+   Built from layered gradients — radial body + conic swirl + glossy highlight
+   — all transform/opacity animated so it's GPU-friendly. */
+.wm .orb {
+  width: 24px; height: 24px; border-radius: 50%;
+  position: relative; flex: none;
+  background:
+    radial-gradient(circle at 28% 26%,
+      color-mix(in srgb, var(--brand) 55%, white) 0%,
+      color-mix(in srgb, var(--brand) 85%, transparent) 38%,
+      var(--brand) 62%,
+      color-mix(in srgb, var(--brand) 75%, black) 100%);
+  box-shadow:
+    0 0 8px color-mix(in srgb, var(--brand) 55%, transparent),
+    0 0 18px color-mix(in srgb, var(--brand) 26%, transparent),
+    inset 0 -3px 6px color-mix(in srgb, var(--brand) 90%, black);
+  animation: orbBreathe 4.5s ease-in-out infinite;
+  transition: box-shadow 0.4s;
 }
-.wm.live .dot { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 60%, transparent); animation: pulse 1.5s infinite; }
+.wm .orb::before {
+  /* swirling inner haze — gives the "alive" feel without rotating the whole orb */
+  content: ''; position: absolute; inset: 10%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    transparent,
+    color-mix(in srgb, var(--brand) 45%, transparent) 28%,
+    transparent 52%,
+    color-mix(in srgb, var(--brand) 28%, transparent) 74%,
+    transparent);
+  filter: blur(3px);
+  mix-blend-mode: screen;
+  animation: orbSwirl 6s linear infinite;
+  pointer-events: none;
+}
+.wm .orb::after {
+  /* glossy specular highlight, top-left */
+  content: ''; position: absolute;
+  top: 14%; left: 22%; width: 30%; height: 22%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.72), transparent 70%);
+  border-radius: 50%;
+  filter: blur(1.5px);
+  pointer-events: none;
+}
+.wm.live .orb {
+  animation: orbBreatheLive 1.7s ease-in-out infinite;
+  box-shadow:
+    0 0 12px color-mix(in srgb, var(--brand) 75%, transparent),
+    0 0 26px color-mix(in srgb, var(--brand) 42%, transparent),
+    inset 0 -3px 6px color-mix(in srgb, var(--brand) 90%, black);
+}
+.wm.live .orb::before { animation-duration: 2.6s; }
+@keyframes orbBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+@keyframes orbBreatheLive { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
+@keyframes orbSwirl { to { transform: rotate(360deg); } }
 .chrome-meta { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); letter-spacing: 0.04em; }
 .spacer { flex: 1; }
 
@@ -95,6 +146,13 @@
 
 /* ---- body ---- */
 .body { position: relative; z-index: 5; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+/* `tall` = "fullscreen overlay-style page" (onboarding / cabinet / history /
+   add-agent). Stretches `.measure` to fill the body so child pages can
+   `min-height: 100%` and resolve to the viewport (otherwise it collapses to
+   content height). Not applied in non-fullscreen because the adaptive
+   ResizeObserver watches measure.offsetHeight — if measure stretched to body
+   height there, the window would runaway-grow. */
+.body.tall .measure { min-height: 100%; }
 /* Fullscreen-fill mode (Teams): the inner view owns its own scroll regions,
    so the body+measure must hand it the whole canvas instead of falling back
    to intrinsic content height. Adaptive sizing is paused in this mode. */
@@ -338,6 +396,12 @@
 .mi-add { margin-top: 4px; border-top: 1px solid var(--line2); border-radius: 0 0 9px 9px; color: var(--brand); }
 .mi-add .mn { color: var(--brand); }
 .mi-plus { display: grid; place-items: center; width: 16px; height: 16px; font-size: 14px; color: var(--brand); }
+/* Section headers inside the expert dropdown — sober label for super, brand-
+   tinted for genius, mirrors the onboarding cabinet split. */
+.mi-section { padding: 10px 10px 4px; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim2); }
+.mi-section.genius { color: var(--brand); }
+.mi-section.coach { color: var(--good); }
+.mi-section + .mi-section { margin-top: 6px; border-top: 1px solid var(--line2); }
 
 /* ---- slash command palette (above the focused conversation composer) ---- */
 /* Opens UPWARD — sits just on top of the composer (composer is at the bottom
@@ -350,8 +414,10 @@
 .slash-desc { color: var(--dim); font-size: 12px; margin-left: 6px; }
 
 /* ---- overlay (change default league) + auth modal ---- */
-.overlay { position: absolute; inset: 0; z-index: 60; background: rgba(6, 7, 10, 0.74); backdrop-filter: blur(8px); display: grid; place-items: start center; padding: 24px; overflow: auto; }
-.overlay-card { width: min(860px, 100%); }
+.overlay { position: absolute; inset: 0; z-index: 60; background: rgba(6, 7, 10, 0.74); backdrop-filter: blur(8px); display: grid; place-items: start center; padding: 32px 36px 36px; overflow: auto; }
+.overlay-card { width: min(1200px, 100%); }
+.overlay-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.overlay-head .ob2-h2 { margin: 4px 0 0; }
 .modal-bg { position: absolute; inset: 0; z-index: 70; background: rgba(6, 7, 10, 0.74); backdrop-filter: blur(8px); display: grid; place-items: center; padding: 24px; }
 .am { width: min(400px, 100%); background: var(--ink2); border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--line)); border-radius: var(--r); padding: 26px 24px; text-align: center; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6); animation: rise 0.35s both; }
 .am .am-logo { margin: 0 auto 13px; display: block; }
@@ -534,7 +600,18 @@
 }
 .app.theme-cyberpunk::after { opacity: 0.045; }
 .app.theme-cyberpunk .wm { letter-spacing: -0.03em; }
-.app.theme-cyberpunk .wm .dot { background: var(--good); box-shadow: 0 0 8px var(--good); }
+.app.theme-cyberpunk .wm .orb {
+  background:
+    radial-gradient(circle at 28% 26%,
+      color-mix(in srgb, var(--good) 55%, white) 0%,
+      color-mix(in srgb, var(--good) 85%, transparent) 38%,
+      var(--good) 62%,
+      color-mix(in srgb, var(--good) 75%, black) 100%);
+  box-shadow:
+    0 0 10px color-mix(in srgb, var(--good) 70%, transparent),
+    0 0 22px color-mix(in srgb, var(--good) 35%, transparent),
+    inset 0 -3px 6px color-mix(in srgb, var(--good) 90%, black);
+}
 .app.theme-cyberpunk .seg button.on { color: #07070d; background: var(--brand); box-shadow: 0 0 14px color-mix(in srgb, var(--brand) 50%, transparent); }
 .app.theme-cyberpunk .btn { color: #07070d; box-shadow: 0 0 22px color-mix(in srgb, var(--brand) 55%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--brand) 70%, transparent); }
 .app.theme-cyberpunk .run { color: #07070d; box-shadow: 0 0 18px color-mix(in srgb, var(--brand) 50%, transparent); }

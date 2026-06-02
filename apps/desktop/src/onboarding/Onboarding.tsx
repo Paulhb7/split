@@ -5,6 +5,7 @@ import { Tile, League, vars } from "../shared/ui";
 import { useHarnessStates } from "../shared/useHarnessStates";
 import { useExperts } from "../shared/util";
 import { isClassicExpert, type ExpertKind } from "../shared/experts";
+import { SKINS, type Skin } from "../shared/skins";
 import "./onboarding.css";
 
 // Inline Lucide-style SVG glyphs per expert kind. Single-stroke, currentColor,
@@ -53,6 +54,16 @@ const KIND_GLYPH: Record<ExpertKind, ReactNode> = {
       <path d="M9 13v2" />
     </>
   ),
+  organizer: (
+    <>
+      <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <path d="M12 11h4" />
+      <path d="M12 16h4" />
+      <path d="M8 11h.01" />
+      <path d="M8 16h.01" />
+    </>
+  ),
   finder: (
     <>
       <circle cx="11" cy="11" r="8" />
@@ -73,6 +84,14 @@ const KIND_GLYPH: Record<ExpertKind, ReactNode> = {
       <path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0Z" />
       <path d="M22 10v6" />
       <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+    </>
+  ),
+  coach: (
+    <>
+      <path d="M7 20h10" />
+      <path d="M10 20c5.5-2.5.8-6.4 3-10" />
+      <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" />
+      <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" />
     </>
   ),
 };
@@ -97,15 +116,17 @@ function KindIcon({ kind }: { kind: ExpertKind }) {
 }
 
 // Cabinet display order: think → process → advise → build → operate → find →
-// create. Creators last, recruiter handled separately via the "hire" CTA.
+// create → coach. Recruiter handled separately via the "hire" CTA.
 const KIND_ORDER: ExpertKind[] = [
   "researcher",
   "analyst",
   "advisor",
   "builder",
+  "organizer",
   "operator",
   "finder",
   "creator",
+  "coach",
   "recruiter",
 ];
 
@@ -114,7 +135,15 @@ const EXPERTS = ["Consultant", "Scientist", "Engineer", "Analyst", "Lawyer", "Fi
 
 export type EnterIntent = "test_wolfgang" | "start_recruiter" | undefined;
 
-export default function Onboarding({ onEnter }: { onEnter: (ids: string[], intent?: EnterIntent, expertSlug?: string, prompt?: string) => void }) {
+export default function Onboarding({
+  onEnter,
+  skin,
+  onPickSkin,
+}: {
+  onEnter: (ids: string[], intent?: EnterIntent, expertSlug?: string, prompt?: string) => void;
+  skin: Skin;
+  onPickSkin: (s: Skin) => void;
+}) {
   const [page, setPage] = useState(0);
   const [picks, setPicks] = useState<string[]>([]);
   const [wolfgangTopic, setWolfgangTopic] = useState("");
@@ -124,36 +153,47 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[], inten
   const engineId = picks[0] || "claude"; // "primary" = the first picked agent
   const primarySt = states[engineId];
   const accent = H[engineId].brand;
-  // Page 1 = picker; can't advance until at least one agent is selected.
-  const canNext = page !== 1 || picks.length > 0;
+  // 4 pages: theme (0) · welcome (1) · pick (2) · brief (3).
+  // Page 2 = picker; can't advance until at least one agent is selected.
+  const canNext = page !== 2 || picks.length > 0;
   const toggle = (id: string) => setPicks((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
   return (
     <div className="ob2" style={vars({ "--brand": accent })}>
       <div className="ob2-page" key={page}>
         {page === 0 && (
-          <div className="stagger">
-            <div className="ob-eyebrow">welcome to your cabinet · 01</div>
-            <h1 className="ob2-h1">Many experts.<br />Powered by <em>any</em> agent.</h1>
-            <p className="ob2-lede">
-              <b>Split</b> is an <b>agentic super-app</b> that runs <b>experts</b> — Consultant, Scientist, Engineer… —
-              in parallel to research, build and operate your Mac. Each expert is driven by the <b>agent of your
-              choice</b>: Codex, Gemini, Claude, Mistral Vibe and more.
-            </p>
-            <p className="ob2-seed">An <b>agent</b> is a model with hands — it doesn't just answer, it <em>acts</em>.</p>
-            <div className="cons">
-              <div className="cons-row experts">
-                {EXPERTS.map((e, i) => (
-                  <span key={e} className="cons-expert" style={{ animationDelay: `${0.15 + i * 0.05}s` }}>@{e}</span>
-                ))}
-              </div>
-              <div className="cons-link">powered by</div>
-              <div className="cons-row engines">
-                {SHOWCASE.map((id, i) => (
-                  <span key={id} className="cons-engine" style={vars({ animationDelay: `${0.35 + i * 0.05}s`, "--brand": H[id].brand })}>
-                    <Tile id={id} size={42} />
-                    <span className="cons-name">{H[id].label}</span>
-                  </span>
+          <div className="ob2-hero">
+            <div className="ob2-hero-text stagger">
+              <div className="ob-eyebrow">first, the room · 00</div>
+              <h1 className="ob2-h1">Pick your <em>skin</em>.</h1>
+              <p className="ob2-lede">
+                Split is a place you'll come back to often. Choose how it should feel —
+                you can switch any time from the chrome bar.
+              </p>
+              <p className="ob2-seed">Live preview — it applies as you click.</p>
+            </div>
+            <div className="ob2-hero-visual">
+              <div className="ob2-skins">
+                {SKINS.map((s) => (
+                  <button
+                    key={s.id || "classic"}
+                    className={"ob2-skin" + (skin === s.id ? " on" : "")}
+                    onClick={() => onPickSkin(s.id)}
+                    type="button"
+                  >
+                    <span
+                      className="ob2-skin-sw"
+                      style={{
+                        background: `linear-gradient(135deg, ${s.sw[0]} 0%, ${s.sw[0]} 50%, ${s.sw[1]} 50%, ${s.sw[1]} 100%)`,
+                        boxShadow: `inset 0 0 0 2px ${s.sw[2]}`,
+                      }}
+                    />
+                    <span className="ob2-skin-meta">
+                      <b>{s.label}</b>
+                      <small>{s.hint}</small>
+                    </span>
+                    {skin === s.id && <span className="ob2-skin-tick">●</span>}
+                  </button>
                 ))}
               </div>
             </div>
@@ -161,6 +201,39 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[], inten
         )}
 
         {page === 1 && (
+          <div className="ob2-hero">
+            <div className="ob2-hero-text stagger">
+              <div className="ob-eyebrow">welcome to your cabinet · 01</div>
+              <h1 className="ob2-h1">Any AI agent.<br />Now a <em>genius</em>.</h1>
+              <p className="ob2-lede">
+                Bring <b>Claude</b>, <b>Codex</b>, <b>Gemini</b>, <b>Mistral Vibe</b> — whatever AI you use.
+                <b> Split</b> wraps it in an <b>expert persona</b>: Wolfgang the consultant, Marie the scientist,
+                Picasso the creator… so it doesn't just chat — it <em>specializes, acts and ships</em>.
+              </p>
+              <p className="ob2-seed">An <b>agent</b> is a model with hands. An <b>expert</b> is that agent with a craft.</p>
+            </div>
+            <div className="ob2-hero-visual">
+              <div className="cons">
+                <div className="cons-row engines">
+                  {SHOWCASE.map((id, i) => (
+                    <span key={id} className="cons-engine" style={vars({ animationDelay: `${0.15 + i * 0.05}s`, "--brand": H[id].brand })}>
+                      <Tile id={id} size={42} />
+                      <span className="cons-name">{H[id].label}</span>
+                    </span>
+                  ))}
+                </div>
+                <div className="cons-link">wrapped, becomes</div>
+                <div className="cons-row experts">
+                  {EXPERTS.map((e, i) => (
+                    <span key={e} className="cons-expert" style={{ animationDelay: `${0.4 + i * 0.05}s` }}>@{e}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {page === 2 && (
           <div className="stagger">
             <div className="ob-eyebrow">pick your agents · 02</div>
             <h2 className="ob2-h2">Pick your <em>agents</em></h2>
@@ -199,7 +272,7 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[], inten
           </div>
         )}
 
-        {page === 2 && (
+        {page === 3 && (
           <div className="stagger">
             <div className="ob-eyebrow">meet your cabinet · 03</div>
             <h2 className="ob2-h2">Brief your first <em>expert</em></h2>
@@ -243,6 +316,7 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[], inten
                 .sort(([, a], [, b]) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
               const supers = cabinet.filter(([, e]) => (e.category ?? "super") === "super");
               const genii = cabinet.filter(([, e]) => e.category === "genius");
+              const coaches = cabinet.filter(([, e]) => e.category === "coach");
               return (
                 <>
                   {supers.length > 0 && (
@@ -287,6 +361,27 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[], inten
                       </div>
                     </>
                   )}
+                  {coaches.length > 0 && (
+                    <>
+                      <div className="ob-eyebrow ob-eyebrow-section coach">coaches · grow with them, day after day</div>
+                      <div className="ob2-cabinet ob2-cabinet-coach">
+                        {coaches.map(([slug, exp]) => (
+                          <button
+                            key={slug}
+                            className="ob2-cabinet-card"
+                            onClick={() => onEnter(picks, undefined, slug)}
+                          >
+                            <span className="ob2-cabinet-name">
+                              <span className="ob2-cabinet-icon"><KindIcon kind={exp.kind} /></span>
+                              @{exp.label}
+                            </span>
+                            <span className="ob2-cabinet-role">coach</span>
+                            <span className="ob2-cabinet-blurb">{exp.blurb}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </>
               );
             })()}
@@ -309,14 +404,14 @@ export default function Onboarding({ onEnter }: { onEnter: (ids: string[], inten
 
       <div className="ob2-foot">
         <div className="dots">
-          {[0, 1, 2].map((i) => (
+          {[0, 1, 2, 3].map((i) => (
             <button key={i} className={"dot2" + (i === page ? " on" : "")} onClick={() => setPage(i)} aria-label={`page ${i + 1}`} />
           ))}
         </div>
         <div className="ob2-actions">
           {page > 0 && <button className="btn ghost" onClick={() => setPage((p) => p - 1)}>← back</button>}
-          {page < 2 ? (
-            <button className="btn" disabled={!canNext} onClick={() => setPage((p) => p + 1)}>{page === 1 ? "Continue →" : "Next →"}</button>
+          {page < 3 ? (
+            <button className="btn" disabled={!canNext} onClick={() => setPage((p) => p + 1)}>{page === 2 ? "Continue →" : "Next →"}</button>
           ) : (
             <button className="btn" onClick={() => onEnter(picks)}>Enter Split →</button>
           )}

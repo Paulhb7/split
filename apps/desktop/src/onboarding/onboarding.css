@@ -1,6 +1,47 @@
-/* Three animated onboarding pages. Lives inside .app (inherits its tokens). */
-.ob2 { max-width: 880px; margin: 0 auto; padding: 26px 30px 0; display: flex; flex-direction: column; min-height: 100%; }
-.ob2-page { flex: 1; animation: pageIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+/* Three animated onboarding pages. Lives inside .app (inherits its tokens).
+   Now sized for fullscreen — was 880px (overlay-era). The lede + headlines
+   still cap themselves (60ch / clamp font sizes) so prose doesn't stretch. */
+.ob2 { max-width: 1200px; margin: 0 auto; padding: 32px 36px 0; display: flex; flex-direction: column; min-height: 100%; }
+/* `.ob2-page` is a flex column with `justify-content: safe center` so short
+   pages (slides 0/1 — hero; slide 2 — picker when no agent armed) center
+   vertically inside the fullscreen viewport. `safe center` falls back to
+   `start` when content exceeds the viewport so slide 3 (long cabinet list)
+   keeps scrolling normally from the top instead of clipping content off the
+   top edge with no way to scroll up. */
+.ob2-page { flex: 1; display: flex; flex-direction: column; justify-content: safe center; animation: pageIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* ---- hero split layout (slides 0 + 1): text left, visual right ----
+   Natural-height grid centered by the parent's `justify-content`. Drops back
+   to a single column on narrow screens. */
+.ob2-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+.ob2-hero-text { display: flex; flex-direction: column; min-width: 0; }
+.ob2-hero-visual { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+@media (max-width: 960px) {
+  .ob2-hero { grid-template-columns: 1fr; gap: 28px; align-items: start; }
+}
+
+/* ---- page 0: theme picker ---- */
+.ob2-skins { display: flex; flex-direction: column; gap: 10px; }
+.ob2-skin {
+  display: flex; align-items: center; gap: 14px;
+  border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 16px; background: var(--panel);
+  cursor: pointer; transition: 0.15s; text-align: left;
+  font: inherit; color: inherit; width: 100%;
+  position: relative;
+}
+.ob2-skin:hover { border-color: color-mix(in srgb, var(--brand) 35%, var(--line)); transform: translateY(-1px); }
+.ob2-skin.on {
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 8%, var(--panel));
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 14%, transparent);
+}
+.ob2-skin-sw { flex: none; width: 38px; height: 38px; border-radius: 10px; }
+.ob2-skin-meta { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.ob2-skin-meta b { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+.ob2-skin-meta small { font-size: 11.5px; color: var(--dim); line-height: 1.45; }
+.ob2-skin-tick { flex: none; font-size: 14px; color: var(--brand); }
+
 
 @keyframes pageIn { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
 
@@ -105,6 +146,21 @@
 .ob2-cabinet-genius .ob2-cabinet-icon { color: var(--brand); }
 .ob2-cabinet-genius .ob2-cabinet-name { color: var(--text); }
 .ob2-cabinet-genius .ob2-cabinet-role { color: color-mix(in srgb, var(--brand) 70%, var(--dim)); }
+
+/* Coach cabinet: soft green ground, growth/cultivation register. Mirrors
+   genius structurally but in --good (green) instead of --brand. */
+.ob-eyebrow-section.coach { color: var(--good); }
+.ob2-cabinet-coach {
+  border-color: color-mix(in srgb, var(--good) 32%, var(--line));
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--good) 7%, var(--panel)),
+    color-mix(in srgb, var(--good) 3%, var(--panel)));
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--good) 10%, transparent);
+}
+.ob2-cabinet-coach .ob2-cabinet-card { border-bottom-color: color-mix(in srgb, var(--good) 18%, var(--line2)); }
+.ob2-cabinet-coach .ob2-cabinet-card:hover { background: color-mix(in srgb, var(--good) 14%, transparent); }
+.ob2-cabinet-coach .ob2-cabinet-icon { color: var(--good); }
+.ob2-cabinet-coach .ob2-cabinet-role { color: color-mix(in srgb, var(--good) 70%, var(--dim)); }
 .ob2-cabinet-card { display: grid; grid-template-columns: 160px 130px 1fr; column-gap: 14px; align-items: center; padding: 7px 14px; border: 0; border-bottom: 1px solid var(--line2); background: transparent; cursor: pointer; transition: 0.12s; text-align: left; font: inherit; color: inherit; opacity: 0; animation: tableRowIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .ob2-cabinet-card:last-child { border-bottom: 0; }
 .ob2-cabinet-card:hover { background: color-mix(in srgb, var(--brand) 8%, transparent); }
