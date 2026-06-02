@@ -290,7 +290,7 @@
 .turn .role { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim2); }
 .turn.user .role { color: var(--brand); }
 .turn .text { font-size: 14px; line-height: 1.6; user-select: text; overflow-wrap: anywhere; word-break: break-word; }
-.turn.user .text { color: #d9dae0; }
+.turn.user .text { color: var(--text); }
 .turn.thought .role { color: var(--dim2); }
 .turn.thought .text { font-style: italic; color: var(--dim); border-left: 2px solid var(--line); padding-left: 10px; font-size: 13px; }
 .turn.thought .text code { font-style: normal; }
@@ -364,6 +364,67 @@
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 45%, transparent); } 50% { box-shadow: 0 0 0 6px transparent; } }
 
+/* ============================ THEME · BRIGHT ============================
+   The default light skin — clean SaaS daylight: white/blue-tinted surfaces,
+   indigo accent, near-black text. Per-harness brand colors (Claude copper,
+   Codex green, …) still win on tiles/chips by inline override, so the system
+   chrome is blue but harness identity is preserved.
+   ====================================================================== */
+.app.theme-bright {
+  --ink: #ffffff;
+  --ink2: #f5f7fa;
+  --panel: rgba(255, 255, 255, 0.82);
+  --panel2: rgba(245, 247, 250, 0.92);
+  --line: rgba(23, 26, 38, 0.10);
+  --line2: rgba(23, 26, 38, 0.05);
+  --text: #17171a;
+  --dim: #5e616b;
+  --dim2: #9095a0;
+  --brand: #0053fd;
+  --good: #16a36a;
+  --warn: #b8860b;
+  --bad: #d63d3d;
+  background:
+    radial-gradient(820px 520px at 86% -12%, rgba(0, 83, 253, 0.07), transparent 60%),
+    radial-gradient(720px 620px at -6% 108%, rgba(0, 83, 253, 0.05), transparent 60%),
+    linear-gradient(180deg, #f8faff, #f1f4fb);
+}
+.app.theme-bright::before { opacity: 0.4; }
+.app.theme-bright::after { opacity: 0.05; mix-blend-mode: multiply; }
+.app.theme-bright .seg button.on { color: #fff; }
+.app.theme-bright .btn { color: #fff; box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 24%, transparent); }
+.app.theme-bright .run { color: #fff; }
+.app.theme-bright .stop { background: rgba(214, 61, 61, 0.10); border-color: rgba(214, 61, 61, 0.40); color: var(--bad); }
+.app.theme-bright .stream-md a,
+.app.theme-bright .turn .text a { color: var(--brand); }
+.app.theme-bright .stream-md code,
+.app.theme-bright .turn .text code { background: rgba(23, 26, 38, 0.07); }
+.app.theme-bright .stream-md pre,
+.app.theme-bright .turn .text pre { background: rgba(23, 26, 38, 0.05); }
+.app.theme-bright .menu { background: #ffffff; box-shadow: 0 12px 32px rgba(23, 26, 38, 0.12); }
+.app.theme-bright .mi:hover, .app.theme-bright .mi.sel { background: rgba(23, 26, 38, 0.06); }
+.app.theme-bright .overlay, .app.theme-bright .modal-bg { background: rgba(23, 26, 38, 0.28); }
+.app.theme-bright .am { background: #ffffff; }
+.app.theme-bright .toast { background: #ffffff; box-shadow: 0 10px 30px rgba(23, 26, 38, 0.12); }
+.app.theme-bright .drop { background: rgba(241, 244, 251, 0.92); }
+.app.theme-bright .logs-pre { background: rgba(23, 26, 38, 0.05); color: var(--ink); }
+.app.theme-bright .xbtn:hover { background: rgba(23, 26, 38, 0.06); }
+/* Onboarding mockup cards — re-skin from dark-default to white elevated cards. */
+.app.theme-bright .demo,
+.app.theme-bright .ob2-tryout {
+  background: linear-gradient(180deg, #ffffff, #fafbfd);
+  box-shadow: 0 16px 40px rgba(23, 26, 38, 0.10);
+}
+.app.theme-bright .ob2-primary {
+  background: linear-gradient(180deg, #ffffff, #f5f7fa);
+}
+.app.theme-bright .demo-at,
+.app.theme-bright .ob2-tryout-prompt,
+.app.theme-bright .ob2-tryout-at {
+  background: rgba(23, 26, 38, 0.04);
+  border-color: rgba(23, 26, 38, 0.10);
+}
+
 /* ============================ THEME · SALON ============================
    Warm, serif, lobby-pastel skin. Re-skins the chrome via CSS vars; the
    per-harness brand tints injected inline on cards/chips/tiles still win,
@@ -379,14 +440,14 @@
   --text: #3a2421;
   --dim: #8a6960;
   --dim2: #b39588;
-  --brand: #c95a7a;
-  --good: #7fa66a;
+  --brand: #d97a8c;
+  --good: #9bb088;
   --warn: #d4a847;
   --bad: #8b1e3f;
   --disp: "Playfair Display", "Bricolage Grotesque", Georgia, serif;
   background:
-    radial-gradient(820px 520px at 86% -12%, rgba(201, 90, 122, 0.22), transparent 60%),
-    radial-gradient(720px 620px at -6% 108%, rgba(127, 166, 106, 0.18), transparent 60%),
+    radial-gradient(820px 520px at 86% -12%, rgba(217, 122, 140, 0.22), transparent 60%),
+    radial-gradient(720px 620px at -6% 108%, rgba(155, 176, 136, 0.18), transparent 60%),
     radial-gradient(560px 460px at 50% 46%, rgba(212, 168, 71, 0.10), transparent 70%),
     linear-gradient(180deg, #f5ecd9, #ecd9c0);
 }
@@ -413,6 +474,27 @@
 .app.theme-pastel .drop { background: rgba(245, 236, 217, 0.86); }
 .app.theme-pastel .logs-pre { background: rgba(94, 58, 60, 0.06); color: var(--ink); }
 .app.theme-pastel .xbtn:hover { background: rgba(94, 58, 60, 0.08); }
+/* Onboarding mockup cards — re-skin from dark-default to cream so the demo
+   shows what Split actually looks like in this theme, not a stranded dark card. */
+.app.theme-pastel .demo,
+.app.theme-pastel .ob2-tryout {
+  background: linear-gradient(180deg, rgba(248, 226, 203, 0.92), rgba(244, 215, 187, 0.96));
+  box-shadow: 0 26px 70px rgba(94, 58, 60, 0.18);
+}
+.app.theme-pastel .ob2-primary {
+  background: linear-gradient(180deg, rgba(248, 226, 203, 0.78), rgba(244, 215, 187, 0.88));
+}
+.app.theme-pastel .demo-at,
+.app.theme-pastel .ob2-tryout-prompt,
+.app.theme-pastel .ob2-tryout-at {
+  background: rgba(94, 58, 60, 0.05);
+  border-color: rgba(94, 58, 60, 0.18);
+}
+/* Tags pinned on the dashed/solid container borders. Base color is var(--brand)
+   on var(--ink); the harness variant overrides to var(--text), which collides
+   with --ink in this theme (both #3a2421). Re-route to the cream ink2 so the
+   "HARNESS" label is readable. */
+.app.theme-pastel .amx-agent.harness .amx-tag { color: var(--ink2); }
 
 /* ============================ THEME · NIGHT CITY ============================
    Neon-noir. Magenta + cyan on bluish black, geometric display, a faint

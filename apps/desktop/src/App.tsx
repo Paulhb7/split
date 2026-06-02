@@ -8,7 +8,7 @@ import { useSessions } from "./shared/useSessions";
 import { useWindowChrome, useAdaptiveHeight, useFullscreen, useBarWidth, useBarHeight } from "./shared/useWindowChrome";
 import { useHarnessStates } from "./shared/useHarnessStates";
 import { useToasts } from "./shared/useToasts";
-import { SKINS, isSkin, type Skin } from "./shared/skins";
+import { SKINS, isSkin, DEFAULT_SKIN, type Skin } from "./shared/skins";
 import { League, vars } from "./shared/ui";
 import { Composer } from "./home/Composer";
 import { SessionRow } from "./home/SessionRow";
@@ -86,7 +86,7 @@ export default function App() {
   };
   const [skin, setSkinState] = useState<Skin>(() => {
     const raw = localStorage.getItem(LS_SKIN);
-    return isSkin(raw) ? raw : "";
+    return raw === null ? DEFAULT_SKIN : isSkin(raw) ? raw : DEFAULT_SKIN;
   });
   const pickSkin = (s: Skin) => {
     setSkinState(s);
