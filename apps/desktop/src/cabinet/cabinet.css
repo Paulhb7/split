@@ -139,6 +139,78 @@
   font-style: italic;
 }
 
+/* Rich brief examples: tabs + panel. Used when use cases carry a preview
+   (real deck iframe or styled placeholder). The legacy `.cab-usecases`
+   stacked-cards layout stays in place for experts without previews. */
+.cab-tabs { display: flex; flex-direction: column; gap: 14px; }
+.cab-tabstrip {
+  display: flex; gap: 2px;
+  border-bottom: 1px solid var(--line);
+}
+.cab-tab {
+  flex: 1;
+  padding: 10px 12px;
+  background: transparent; border: 0; border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--dim2);
+  transition: color 0.15s, border-color 0.15s;
+}
+.cab-tab:hover { color: var(--text); }
+.cab-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+
+.cab-panel { display: flex; flex-direction: column; gap: 14px; }
+.cab-panel-prompt {
+  padding: 12px 16px;
+  border-left: 3px solid var(--brand);
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--brand) 6%, var(--panel));
+  font-size: 14px; line-height: 1.45; color: var(--text);
+  font-style: italic;
+}
+.cab-panel-stage {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--panel);
+}
+.cab-panel-stage iframe {
+  display: block; width: 100%; height: 420px; border: 0;
+  background: #06070b;
+}
+.cab-panel-stage figcaption {
+  padding: 8px 14px;
+  font-family: var(--mono); font-size: 10.5px; color: var(--dim);
+  letter-spacing: 0.04em; text-transform: lowercase;
+  border-top: 1px solid var(--line2);
+}
+.cab-panel-placeholder {
+  padding: 36px 24px;
+  border: 1px dashed color-mix(in srgb, var(--brand) 30%, var(--line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--brand) 3%, var(--panel));
+  text-align: center;
+}
+.cab-panel-placeholder-kicker {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--brand);
+  margin-bottom: 8px;
+}
+.cab-panel-placeholder-body {
+  font-size: 13.5px; color: var(--dim); line-height: 1.5;
+}
+.cab-panel-cta {
+  align-self: flex-start;
+  padding: 10px 18px;
+  border: 0; border-radius: 8px;
+  background: var(--brand); color: #1a0808;
+  font: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.cab-panel-cta:hover { opacity: 0.92; transform: translateY(-1px); }
+
 .cab-deliverables {
   margin: 0; padding: 0 0 0 18px;
   font-size: 13.5px; line-height: 1.55; color: var(--dim);

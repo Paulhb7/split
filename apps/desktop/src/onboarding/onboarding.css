@@ -217,6 +217,49 @@
 .ob2-tryout-text { font-size: 14px; color: var(--text); }
 .ob2-tryout-hint { font-family: var(--mono); font-size: 11px; color: var(--dim2); margin: 10px 0 0; }
 
+/* ---- page 3: fiche overlay (Cabinet's DetailPane shown over the cards) ---- */
+.ob2-fiche-overlay {
+  position: fixed; inset: 0;
+  background: rgba(7, 7, 10, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 50;
+  display: flex; align-items: stretch; justify-content: center;
+  padding: 36px 36px 24px;
+  animation: ficheIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  overflow: auto;
+}
+.ob2-fiche-shell {
+  width: 100%; max-width: 980px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: flex; flex-direction: column;
+  min-height: 0;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+.ob2-fiche-back {
+  align-self: flex-start;
+  margin: 16px 20px 0;
+  background: transparent; border: 1px solid var(--line); color: var(--text);
+  padding: 6px 12px; border-radius: 8px;
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.ob2-fiche-back:hover { border-color: color-mix(in srgb, var(--brand) 50%, var(--line)); background: color-mix(in srgb, var(--brand) 6%, transparent); }
+/* The DetailPane already brings its own padding; collapse the outer ones
+   so the back button doesn't get a duplicate margin. */
+.ob2-fiche-shell .cab-detail {
+  flex: 1; min-height: 0; overflow: auto;
+  padding: 18px 30px 30px;
+}
+@keyframes ficheIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ---- footer ---- */
 .ob2-foot { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 22px 0 26px; margin-top: 28px; }
 .dots { display: flex; gap: 8px; }

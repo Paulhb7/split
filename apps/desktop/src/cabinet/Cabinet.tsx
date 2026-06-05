@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { type ExpertMap, isClassicExpert, type ExpertKind } from "../shared/experts";
-import { EXPERT_CONTENT } from "../shared/expertContent";
+import { EXPERT_CONTENT, type UseCase } from "../shared/expertContent";
 import "./cabinet.css";
 
 // Cabinet overlay — two views inside one shell:
@@ -181,8 +181,11 @@ export default function Cabinet({ experts, initialSlug = null, onClose, onLaunch
 // Detail pane: identity → tagline → use cases → deliverables → example.
 // Renders a "coming soon" stub when the slug has no curated entry yet, so we
 // can ship the cabinet shell before all experts are written up.
+//
+// Exported so onboarding page 3 can render the same fiche in an overlay
+// when the user clicks an expert card during the picker flow.
 // --------------------------------------------------------------------------
-function DetailPane({
+export function DetailPane({
   slug,
   experts,
   onLaunch,
@@ -221,15 +224,30 @@ function DetailPane({
 
           <section className="cab-section-block">
             <h2>Brief examples</h2>
-            <p className="cab-section-hint">Click any of these — Split opens with the brief running on your primary agent.</p>
-            <div className="cab-usecases">
-              {content.useCases.map((uc, i) => (
-                <button key={i} className="cab-usecase" onClick={() => onLaunch(slug, uc.prompt)}>
-                  <span className="cab-usecase-hook">{uc.hook}</span>
-                  <span className="cab-usecase-prompt">"{uc.prompt}"</span>
-                </button>
-              ))}
-            </div>
+            {content.useCases.some((uc) => uc.preview) ? (
+              // Rich mode: at least one use case carries a preview artifact
+              // (real deck or styled placeholder). Render tabs + panels so
+              // the user can see the actual deliverable before launching.
+              <UseCaseTabs
+                useCases={content.useCases}
+                expertLabel={expert.label}
+                onLaunch={(prompt) => onLaunch(slug, prompt)}
+              />
+            ) : (
+              // Legacy mode: card grid, kept for experts that don't have
+              // previews wired yet (designer, curie, tesla…).
+              <>
+                <p className="cab-section-hint">Click any of these — Split opens with the brief running on your primary agent.</p>
+                <div className="cab-usecases">
+                  {content.useCases.map((uc, i) => (
+                    <button key={i} className="cab-usecase" onClick={() => onLaunch(slug, uc.prompt)}>
+                      <span className="cab-usecase-hook">{uc.hook}</span>
+                      <span className="cab-usecase-prompt">"{uc.prompt}"</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </section>
 
           <section className="cab-section-block">
@@ -273,5 +291,69 @@ function DetailPane({
         </div>
       )}
     </main>
+  );
+}
+
+// --------------------------------------------------------------------------
+// UseCaseTabs: tabs across the top + an active panel below showing the
+// prompt that will be sent, a preview of the artifact, and a launch CTA.
+// Used only when at least one use case carries a `preview` field; falls
+// back to the legacy card grid in DetailPane when none do.
+// --------------------------------------------------------------------------
+function UseCaseTabs({
+  useCases,
+  expertLabel,
+  onLaunch,
+}: {
+  useCases: UseCase[];
+  expertLabel: string;
+  onLaunch: (prompt: string) => void;
+}) {
+  const [active, setActive] = useState(0);
+  const uc = useCases[active] ?? useCases[0];
+  if (!uc) return null;
+  return (
+    <div className="cab-tabs">
+      <div className="cab-tabstrip" role="tablist">
+        {useCases.map((u, i) => (
+          <button
+            key={i}
+            role="tab"
+            aria-selected={i === active}
+            className={"cab-tab" + (i === active ? " active" : "")}
+            onClick={() => setActive(i)}
+          >
+            {u.hook}
+          </button>
+        ))}
+      </div>
+      <div className="cab-panel" role="tabpanel">
+        <div className="cab-panel-prompt">"{uc.prompt}"</div>
+        {uc.preview?.kind === "deck" && (
+          <figure className="cab-panel-stage">
+            <iframe
+              src={uc.preview.path}
+              title={uc.preview.title}
+              loading="lazy"
+              sandbox="allow-scripts allow-same-origin"
+            />
+            <figcaption>
+              {uc.preview.title} · {uc.preview.slides} slides
+            </figcaption>
+          </figure>
+        )}
+        {uc.preview?.kind === "placeholder" && (
+          <div className="cab-panel-placeholder">
+            <div className="cab-panel-placeholder-kicker">Preview coming</div>
+            <div className="cab-panel-placeholder-body">
+              {uc.preview.note ?? "Real artifact coming soon."}
+            </div>
+          </div>
+        )}
+        <button className="cab-panel-cta" onClick={() => onLaunch(uc.prompt)}>
+          → Brief @{expertLabel} with this prompt
+        </button>
+      </div>
+    </div>
   );
 }

@@ -7,6 +7,8 @@ import { useExperts } from "../shared/util";
 import { isClassicExpert, type ExpertKind } from "../shared/experts";
 import { SKINS, type Skin } from "../shared/skins";
 import SiriOrb from "../shared/SiriOrb";
+import { DetailPane } from "../cabinet/Cabinet";
+import "../cabinet/cabinet.css";
 import "./onboarding.css";
 
 // Inline Lucide-style SVG glyphs per expert kind. Single-stroke, currentColor,
@@ -148,6 +150,11 @@ export default function Onboarding({
   const [page, setPage] = useState(0);
   const [picks, setPicks] = useState<string[]>([]);
   const [wolfgangTopic, setWolfgangTopic] = useState("");
+  // Selected expert whose fiche is open as an overlay over the cabinet on
+  // page 3. null = no overlay; clicking a card sets it; the back button
+  // and the launch CTA clear it. Letting users browse fiches in onboarding
+  // — see the real artifact before committing — is a Big Sell moment.
+  const [ficheSlug, setFicheSlug] = useState<string | null>(null);
   const { states, progress } = useHarnessStates();
   const experts = useExperts();
 
@@ -316,7 +323,7 @@ export default function Onboarding({
             )}
             {(() => {
               const cabinet = Object.entries(experts)
-                .filter(([slug]) => slug !== "recruiter" && slug !== "consultant" && isClassicExpert(slug))
+                .filter(([slug]) => slug !== "genius_socrates" && slug !== "consultant" && isClassicExpert(slug))
                 .sort(([, a], [, b]) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
               const supers = cabinet.filter(([, e]) => (e.category ?? "super") === "super");
               const genii = cabinet.filter(([, e]) => e.category === "genius");
@@ -331,7 +338,7 @@ export default function Onboarding({
                           <button
                             key={slug}
                             className="ob2-cabinet-card"
-                            onClick={() => onEnter(picks, undefined, slug)}
+                            onClick={() => setFicheSlug(slug)}
                           >
                             <span className="ob2-cabinet-name">
                               <span className="ob2-cabinet-icon"><KindIcon kind={exp.kind} /></span>
@@ -352,7 +359,7 @@ export default function Onboarding({
                           <button
                             key={slug}
                             className="ob2-cabinet-card"
-                            onClick={() => onEnter(picks, undefined, slug)}
+                            onClick={() => setFicheSlug(slug)}
                           >
                             <span className="ob2-cabinet-name">
                               <span className="ob2-cabinet-icon"><KindIcon kind={exp.kind} /></span>
@@ -373,7 +380,7 @@ export default function Onboarding({
                           <button
                             key={slug}
                             className="ob2-cabinet-card"
-                            onClick={() => onEnter(picks, undefined, slug)}
+                            onClick={() => setFicheSlug(slug)}
                           >
                             <span className="ob2-cabinet-name">
                               <span className="ob2-cabinet-icon"><KindIcon kind={exp.kind} /></span>
@@ -389,11 +396,11 @@ export default function Onboarding({
                 </>
               );
             })()}
-            {experts.recruiter && (
+            {experts.genius_socrates && (
               <button className="ob2-hire" onClick={() => onEnter(picks, "start_recruiter")}>
                 <span className="ob2-hire-ic"><KindIcon kind="recruiter" /></span>
                 <span className="ob2-hire-body">
-                  <span className="ob2-hire-title">Don't see what you need? Hire @{experts.recruiter.label}.</span>
+                  <span className="ob2-hire-title">Don't see what you need? Hire @{experts.genius_socrates.label}.</span>
                   <span className="ob2-hire-text">
                     He runs a Socratic interview and drafts a brand-new expert from your answers — no menus, no
                     code. Custom experts live in your private data folder, alongside the shipped ones.
@@ -401,6 +408,33 @@ export default function Onboarding({
                 </span>
                 <span className="ob2-hire-cta">Hire him →</span>
               </button>
+            )}
+            {/* Fiche overlay — opens over the cabinet when a card is clicked.
+                Same DetailPane the Cabinet route uses, so use cases / tabs /
+                preview / deliverables stay defined in one place. Launching
+                from here calls `onEnter` to leave onboarding with the picked
+                expert + prompt the user clicked. */}
+            {ficheSlug && (
+              <div className="ob2-fiche-overlay" role="dialog" aria-modal="true">
+                <div className="ob2-fiche-shell">
+                  <button
+                    className="ob2-fiche-back"
+                    onClick={() => setFicheSlug(null)}
+                    aria-label="Back to cabinet"
+                    title="Back to cabinet"
+                  >
+                    ← all experts
+                  </button>
+                  <DetailPane
+                    slug={ficheSlug}
+                    experts={experts}
+                    onLaunch={(slug, prompt) => {
+                      setFicheSlug(null);
+                      onEnter(picks, undefined, slug, prompt || undefined);
+                    }}
+                  />
+                </div>
+              </div>
             )}
           </div>
         )}
