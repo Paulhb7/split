@@ -7,6 +7,7 @@ name = "acp-desktop"
 version = "0.1.0"
 dependencies = [
  "agent-client-protocol",
+ "base64 0.22.1",
  "keyring",
  "serde",
  "serde_json",

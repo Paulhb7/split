@@ -11,10 +11,10 @@ import { activityOf, type Session } from "../shared/models";
 import type { Channel, Project, TeamMember } from "./useTeam";
 import "./teams.css";
 
-const CHIEF = "chief_of_staff";
+const CHIEF = "toscanini";
 
 const ACCENT: Record<string, string> = {
-  chief_of_staff: "#eaf0f7", engineer: "#a3e635", scientist: "#4cc9f0",
+  toscanini: "#eaf0f7", engineer: "#a3e635", scientist: "#4cc9f0",
   consultant: "#f5b14c", analyst: "#fb7185", researcher: "#c084fc",
 };
 const accentOf = (key: string, harness: string) => ACCENT[key] || brandOf(harness);

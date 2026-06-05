@@ -40,20 +40,51 @@ export function Composer(props: {
         <div className="menu">
           {expertEntries.length === 0 ? (
             <div className="mi mi-empty">No expert matches that name. Type a different prefix or press Esc.</div>
-          ) : (
-            expertEntries.map(([slug, x]) => {
-              // Show "Consultant · researcher" so users learn who's who.
-              const role = (x as { role?: string }).role ?? slug.replace(/_/g, " ");
+          ) : (() => {
+            // Split into super / genius buckets so the dropdown mirrors the
+            // onboarding cabinet's mental model (jobs you know vs. genius
+            // outputs only Split unlocks). Empty buckets are skipped, so when
+            // the user types `@cur` and only super matches survive, the genius
+            // header doesn't render an orphan label.
+            const supers = expertEntries.filter(([slug]) => (experts[slug]?.category ?? "super") === "super");
+            const genii = expertEntries.filter(([slug]) => experts[slug]?.category === "genius");
+            const coaches = expertEntries.filter(([slug]) => experts[slug]?.category === "coach");
+            const renderRow = ([slug, x]: typeof expertEntries[number]) => {
+              const figure = (x as { figure?: string; role?: string }).figure
+                ?? (x as { role?: string }).role
+                ?? slug.replace(/_/g, " ");
               return (
                 <button key={slug} className={"mi" + (slug === expertSlug ? " sel" : "")} onClick={() => onPickExpert(slug)}>
                   <span />
-                  <span className="mn">@{x.label} <span className="mn-role">{role}</span></span>
+                  <span className="mn">@{x.label} <span className="mn-role">{figure}</span></span>
                   <span className="mk">{x.kind}</span>
                   <span className="mb">{x.blurb}</span>
                 </button>
               );
-            })
-          )}
+            };
+            return (
+              <>
+                {supers.length > 0 && (
+                  <>
+                    <div className="mi-section">super agents</div>
+                    {supers.map(renderRow)}
+                  </>
+                )}
+                {genii.length > 0 && (
+                  <>
+                    <div className="mi-section genius">genius agents</div>
+                    {genii.map(renderRow)}
+                  </>
+                )}
+                {coaches.length > 0 && (
+                  <>
+                    <div className="mi-section coach">coaches</div>
+                    {coaches.map(renderRow)}
+                  </>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
       <button className="pick" onClick={() => setMenu(menu === "engine" ? null : "engine")} title="Engine">

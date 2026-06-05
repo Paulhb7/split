@@ -226,6 +226,11 @@ export function useSessions(experts: ExpertMap) {
     [update]
   );
 
+  const pickArtifact = useCallback(
+    (id: string, rel: string) => update(id, (s) => ({ ...s, activeArtifact: rel })),
+    [update]
+  );
+
   // Open a past conversation from `var/sessions/<id>/`. If a live session with
   // the same id is already in the list, focus it (don't materialize a stale
   // archived copy on top). Returns the id to focus, or null on failure.
@@ -278,5 +283,5 @@ export function useSessions(experts: ExpertMap) {
     [sessions]
   );
 
-  return { sessions, start, send, sendAuth, sendLogout, sendPermission, stop, remove, cancelQueued, openArchive, resumeArchive };
+  return { sessions, start, send, sendAuth, sendLogout, sendPermission, stop, remove, cancelQueued, pickArtifact, openArchive, resumeArchive };
 }

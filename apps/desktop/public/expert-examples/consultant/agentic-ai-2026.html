@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IA agentique — Brief 2026</title>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500&f[]=satoshi@900,700,500,400&f[]=jetbrains-mono@500,400&display=swap">
+<style>
+:root{
+  --bg-0:#0a0c12;
+  --bg-1:#11141d;
+  --bg-2:#181c28;
+  --ink-0:#f4f1ea;
+  --ink-1:#c4c0b6;
+  --ink-2:#7f7a70;
+  --line:rgba(244,241,234,.10);
+  --line-strong:rgba(244,241,234,.22);
+  --coral:#ff6a5b;
+  --coral-soft:rgba(255,106,91,.16);
+  --amber:#f4c66b;
+  --sea:#6ad5c4;
+  --violet:#a48bff;
+  --stage-bg:#06070b;
+  --slide-bg:var(--bg-0);
+  --font-display:'Clash Display',sans-serif;
+  --font-body:'Satoshi',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--stage-bg);font-family:var(--font-body);color:var(--ink-0)}
+
+/* viewport-base */
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:var(--stage-bg)}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:var(--slide-bg)}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;display:block;visibility:hidden;opacity:0;pointer-events:none;background:var(--slide-bg)}
+.slide.active,.slide.visible{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+img,video,canvas,svg{max-width:100%;max-height:100%}
+
+/* atmosphere */
+.slide::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+   radial-gradient(1200px 600px at 85% -10%, rgba(255,106,91,.10), transparent 60%),
+   radial-gradient(900px 600px at -10% 110%, rgba(106,213,196,.08), transparent 60%),
+   linear-gradient(180deg, rgba(255,255,255,.015), transparent 30%);
+}
+.grid-bg::after{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.4;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(ellipse at center, black 30%, transparent 75%);
+}
+
+/* chrome */
+.chrome{position:absolute;left:64px;right:64px;top:48px;display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:18px;color:var(--ink-2);letter-spacing:.04em;z-index:5}
+.chrome .brand{color:var(--ink-1)}
+.chrome .brand b{color:var(--coral);font-family:var(--font-display);font-weight:600;letter-spacing:-.01em}
+.chrome .page{color:var(--ink-2)}
+.footnote{position:absolute;left:64px;right:64px;bottom:40px;font-family:var(--font-mono);font-size:16px;color:var(--ink-2);display:flex;justify-content:space-between;align-items:center;z-index:5}
+.footnote .made{opacity:.7}
+
+/* layout */
+.pad{position:absolute;inset:120px 80px 90px 80px;z-index:2}
+.kicker{font-family:var(--font-mono);font-size:18px;letter-spacing:.18em;text-transform:uppercase;color:var(--coral);margin-bottom:28px}
+h1.title{font-family:var(--font-display);font-weight:600;font-size:120px;line-height:.96;letter-spacing:-.025em;color:var(--ink-0)}
+h2.title{font-family:var(--font-display);font-weight:600;font-size:80px;line-height:1;letter-spacing:-.02em;color:var(--ink-0);margin-bottom:18px}
+h2.title em{font-style:normal;color:var(--coral)}
+.lede{font-family:var(--font-body);font-weight:500;font-size:30px;line-height:1.35;color:var(--ink-1);max-width:1500px}
+
+/* cover */
+.cover .pad{inset:0;padding:0;display:flex;flex-direction:column;justify-content:space-between}
+.cover-top{padding:84px 80px 0}
+.cover-mid{padding:0 80px;display:flex;flex-direction:column;justify-content:center;flex:1}
+.cover-meta{padding:0 80px 90px;display:flex;justify-content:space-between;align-items:flex-end;color:var(--ink-2);font-family:var(--font-mono);font-size:18px;letter-spacing:.04em}
+.cover-meta .stack{display:flex;flex-direction:column;gap:8px}
+.cover-meta .stack b{color:var(--ink-1);font-weight:500;letter-spacing:.02em}
+.cover-eyebrow{font-family:var(--font-mono);font-size:20px;letter-spacing:.22em;text-transform:uppercase;color:var(--coral)}
+.cover-title{font-family:var(--font-display);font-weight:600;font-size:200px;line-height:.9;letter-spacing:-.035em;color:var(--ink-0);margin-top:30px}
+.cover-title em{font-style:normal;color:var(--coral)}
+.cover-sub{margin-top:38px;font-family:var(--font-body);font-weight:500;font-size:34px;line-height:1.32;color:var(--ink-1);max-width:1400px}
+
+.orb{position:absolute;right:-160px;top:-160px;width:720px;height:720px;border-radius:50%;background:radial-gradient(circle at 35% 35%, rgba(255,106,91,.55), rgba(255,106,91,.10) 50%, transparent 70%);filter:blur(8px);z-index:1}
+.orb.b{right:auto;left:-220px;top:auto;bottom:-220px;width:620px;height:620px;background:radial-gradient(circle at 50% 50%, rgba(106,213,196,.35), transparent 65%)}
+
+/* assumed slide */
+.assumed-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:32px;margin-top:50px}
+.assumed-card{background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));border:1px solid var(--line);border-radius:18px;padding:34px 36px}
+.assumed-card .lbl{font-family:var(--font-mono);font-size:16px;letter-spacing:.16em;text-transform:uppercase;color:var(--coral);margin-bottom:14px}
+.assumed-card .val{font-family:var(--font-body);font-size:26px;font-weight:500;color:var(--ink-0);line-height:1.35}
+.assumed-card .val small{display:block;margin-top:10px;font-size:20px;font-weight:400;color:var(--ink-2)}
+
+/* KPI grid */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:46px}
+.kpi{background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.01));border:1px solid var(--line);border-radius:20px;padding:36px 36px 34px;position:relative;overflow:hidden}
+.kpi.k-coral::after{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--coral)}
+.kpi.k-sea::after{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--sea)}
+.kpi.k-amber::after{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--amber)}
+.kpi.k-violet::after{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--violet)}
+.kpi .tag{font-family:var(--font-mono);font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);margin-bottom:14px}
+.kpi .num{font-family:var(--font-display);font-weight:600;font-size:82px;line-height:.95;letter-spacing:-.025em;color:var(--ink-0)}
+.kpi .num small{font-size:38px;color:var(--ink-1);font-weight:500;margin-left:6px}
+.kpi .lbl{font-family:var(--font-body);font-weight:500;font-size:22px;line-height:1.3;color:var(--ink-1);margin-top:14px}
+.kpi .src{font-family:var(--font-mono);font-size:14px;color:var(--ink-2);margin-top:14px;letter-spacing:.04em}
+
+/* model table */
+.tbl{margin-top:38px;border-radius:18px;overflow:hidden;border:1px solid var(--line)}
+.tbl-row{display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr;align-items:start;padding:24px 30px;gap:24px;border-bottom:1px solid var(--line)}
+.tbl-row:last-child{border-bottom:none}
+.tbl-row.head{background:rgba(255,255,255,.04);font-family:var(--font-mono);font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+.tbl-row .col{font-family:var(--font-body);font-size:22px;color:var(--ink-0);line-height:1.35}
+.tbl-row .col b{font-family:var(--font-display);font-weight:600;font-size:26px;letter-spacing:-.01em}
+.tbl-row .col small{display:block;font-family:var(--font-mono);font-size:14px;color:var(--ink-2);margin-top:6px;letter-spacing:.04em}
+.tbl-row .col .pill{display:inline-block;font-family:var(--font-mono);font-size:13px;background:var(--coral-soft);color:var(--coral);padding:3px 10px;border-radius:999px;letter-spacing:.04em;margin-top:8px}
+
+/* bench bar */
+.bench{margin-top:42px;display:flex;flex-direction:column;gap:22px}
+.bench-row{display:grid;grid-template-columns:280px 1fr 120px;align-items:center;gap:24px}
+.bench-row .name{font-family:var(--font-display);font-weight:600;font-size:30px;color:var(--ink-0)}
+.bench-row .name small{display:block;font-family:var(--font-mono);font-size:14px;color:var(--ink-2);letter-spacing:.06em;margin-top:4px}
+.bar{height:34px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;position:relative;overflow:hidden}
+.bar .fill{position:absolute;left:0;top:0;bottom:0;border-radius:7px}
+.bar .fill.c1{background:linear-gradient(90deg, var(--coral), #ff8a5c)}
+.bar .fill.c2{background:linear-gradient(90deg, var(--sea), #93e6d6)}
+.bar .fill.c3{background:linear-gradient(90deg, var(--amber), #f0d99a)}
+.bar .fill.c4{background:linear-gradient(90deg, var(--violet), #c8b6ff)}
+.bar .fill.dim{background:rgba(255,255,255,.18)}
+.bench-row .pct{font-family:var(--font-display);font-weight:600;font-size:38px;color:var(--ink-0);text-align:right}
+.bench-foot{margin-top:24px;font-family:var(--font-mono);font-size:15px;color:var(--ink-2);letter-spacing:.04em}
+.bench-foot b{color:var(--coral);font-weight:500}
+
+/* vendors 2x2 */
+.q4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:28px;margin-top:36px;height:740px}
+.qcard{background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.01));border:1px solid var(--line);border-radius:20px;padding:36px 38px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.qcard .qh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}
+.qcard .qn{font-family:var(--font-display);font-weight:600;font-size:36px;letter-spacing:-.01em;color:var(--ink-0)}
+.qcard .qtag{font-family:var(--font-mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+.qcard .qbig{font-family:var(--font-display);font-weight:600;font-size:64px;line-height:1;letter-spacing:-.02em;color:var(--coral);margin-bottom:10px}
+.qcard .qbig.sea{color:var(--sea)}
+.qcard .qbig.amber{color:var(--amber)}
+.qcard .qbig.violet{color:var(--violet)}
+.qcard .qsub{font-family:var(--font-body);font-size:21px;color:var(--ink-1);line-height:1.4;margin-bottom:14px}
+.qcard ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.qcard ul li{font-family:var(--font-body);font-size:18px;color:var(--ink-1);line-height:1.4;padding-left:18px;position:relative}
+.qcard ul li::before{content:'›';position:absolute;left:0;color:var(--coral);font-family:var(--font-mono)}
+.qcard .qsrc{margin-top:auto;padding-top:14px;font-family:var(--font-mono);font-size:13px;color:var(--ink-2);letter-spacing:.04em}
+
+/* protocols */
+.proto-row{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:42px}
+.proto{background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.01));border:1px solid var(--line);border-radius:20px;padding:38px;position:relative;overflow:hidden;min-height:530px;display:flex;flex-direction:column}
+.proto .pcode{font-family:var(--font-mono);font-size:18px;letter-spacing:.18em;color:var(--coral);margin-bottom:12px}
+.proto .pname{font-family:var(--font-display);font-weight:600;font-size:44px;letter-spacing:-.015em;color:var(--ink-0);line-height:1}
+.proto .ptag{font-family:var(--font-body);font-size:22px;color:var(--ink-1);margin-top:14px;line-height:1.35}
+.proto ul{list-style:none;padding:0;margin:24px 0 0;display:flex;flex-direction:column;gap:10px}
+.proto ul li{font-family:var(--font-body);font-size:18px;color:var(--ink-1);line-height:1.42;padding-left:18px;position:relative}
+.proto ul li::before{content:'•';position:absolute;left:0;color:var(--coral)}
+.proto ul li b{color:var(--ink-0);font-weight:600}
+.proto .pfoot{margin-top:auto;padding-top:18px;font-family:var(--font-mono);font-size:13px;color:var(--ink-2);letter-spacing:.06em}
+
+/* incidents log */
+.log{margin-top:34px;display:flex;flex-direction:column;gap:14px}
+.log-row{display:grid;grid-template-columns:170px 1fr 240px;align-items:start;gap:24px;padding:20px 24px;background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:14px}
+.log-row .when{font-family:var(--font-mono);font-size:15px;letter-spacing:.06em;color:var(--coral)}
+.log-row .what b{display:block;font-family:var(--font-display);font-weight:600;font-size:24px;color:var(--ink-0);letter-spacing:-.005em;margin-bottom:6px}
+.log-row .what{font-family:var(--font-body);font-size:18px;color:var(--ink-1);line-height:1.4}
+.log-row .who{font-family:var(--font-mono);font-size:13px;color:var(--ink-2);text-align:right;letter-spacing:.04em}
+.log-foot{margin-top:24px;font-family:var(--font-mono);font-size:16px;color:var(--ink-2);letter-spacing:.04em;text-align:center}
+.log-foot b{color:var(--coral);font-weight:500}
+
+/* contrarian — big stat */
+.stat-hero{display:grid;grid-template-columns:1.1fr 1fr;gap:60px;margin-top:34px;align-items:start}
+.stat-num{font-family:var(--font-display);font-weight:600;font-size:340px;line-height:.85;letter-spacing:-.04em;color:var(--coral)}
+.stat-num small{font-size:120px;color:var(--ink-1);letter-spacing:-.02em}
+.stat-side{padding-top:38px;display:flex;flex-direction:column;gap:24px}
+.stat-side .head{font-family:var(--font-display);font-weight:600;font-size:42px;letter-spacing:-.015em;color:var(--ink-0);line-height:1.1}
+.stat-side .body{font-family:var(--font-body);font-size:22px;color:var(--ink-1);line-height:1.5}
+.stat-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:8px}
+.stat-mini > div{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.stat-mini > div b{display:block;font-family:var(--font-display);font-weight:600;font-size:38px;color:var(--ink-0);letter-spacing:-.01em}
+.stat-mini > div small{font-family:var(--font-mono);font-size:13px;color:var(--ink-2);letter-spacing:.04em;display:block;margin-top:4px;line-height:1.3}
+
+/* regulation timeline */
+.tline{margin-top:48px;position:relative}
+.tline::before{content:'';position:absolute;left:0;right:0;top:36px;height:2px;background:linear-gradient(90deg, rgba(255,106,91,.4) 0%, var(--coral) 50%, var(--coral) 70%, var(--coral-soft) 100%)}
+.tnodes{display:grid;grid-template-columns:repeat(5,1fr);gap:24px;position:relative}
+.tnode{padding-top:64px;position:relative}
+.tnode::before{content:'';position:absolute;left:50%;top:30px;width:14px;height:14px;border-radius:50%;background:var(--coral);transform:translateX(-50%);box-shadow:0 0 0 4px rgba(255,106,91,.18)}
+.tnode.past::before{background:var(--ink-2);box-shadow:0 0 0 4px rgba(127,122,112,.12)}
+.tnode .tdate{font-family:var(--font-mono);font-size:16px;letter-spacing:.08em;color:var(--coral);text-align:center;margin-bottom:12px;display:block}
+.tnode.past .tdate{color:var(--ink-2)}
+.tnode .twhat{font-family:var(--font-display);font-weight:600;font-size:22px;line-height:1.15;letter-spacing:-.005em;color:var(--ink-0);text-align:center;margin-bottom:10px}
+.tnode .tdetail{font-family:var(--font-body);font-size:16px;color:var(--ink-1);line-height:1.4;text-align:center}
+.reg-foot{margin-top:54px;background:linear-gradient(180deg, rgba(255,106,91,.10), rgba(255,106,91,.02));border:1px solid rgba(255,106,91,.28);border-radius:16px;padding:26px 32px;font-family:var(--font-body);font-size:22px;color:var(--ink-0);line-height:1.45}
+.reg-foot b{color:var(--coral);font-weight:600}
+
+/* sources */
+.sources{display:grid;grid-template-columns:repeat(2,1fr);gap:20px 36px;margin-top:38px;max-height:780px;overflow:hidden}
+.src-row{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:10px 0;border-bottom:1px dashed var(--line);align-items:baseline}
+.src-row .n{font-family:var(--font-mono);font-size:14px;color:var(--coral);min-width:36px}
+.src-row .t{font-family:var(--font-body);font-size:17px;color:var(--ink-0);line-height:1.35}
+.src-row .t small{display:block;font-family:var(--font-mono);font-size:13px;color:var(--ink-2);margin-top:3px;letter-spacing:.02em;word-break:break-all}
+
+/* deck chrome */
+.deck-controls{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:1000;display:flex;gap:14px;align-items:center;background:rgba(10,12,18,.7);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-family:var(--font-mono);color:var(--ink-1);font-size:14px;letter-spacing:.06em}
+.deck-controls button{background:none;border:none;color:var(--ink-1);cursor:pointer;font-family:var(--font-mono);font-size:14px;padding:4px 8px;border-radius:6px}
+.deck-controls button:hover{color:var(--coral);background:rgba(255,106,91,.08)}
+.deck-controls .pg{color:var(--coral);min-width:60px;text-align:center}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s var(--ease), transform .7s var(--ease)}
+.slide.visible .reveal{opacity:1;transform:translateY(0)}
+.slide.visible .reveal:nth-child(1){transition-delay:.05s}
+.slide.visible .reveal:nth-child(2){transition-delay:.12s}
+.slide.visible .reveal:nth-child(3){transition-delay:.19s}
+.slide.visible .reveal:nth-child(4){transition-delay:.26s}
+.slide.visible .reveal:nth-child(5){transition-delay:.33s}
+.slide.visible .reveal:nth-child(6){transition-delay:.40s}
+.slide.visible .reveal:nth-child(7){transition-delay:.47s}
+.slide.visible .reveal:nth-child(8){transition-delay:.54s}
+
+@media print{
+  html,body{width:1920px;height:auto;overflow:visible;background:#fff}
+  .deck-viewport{position:static;overflow:visible;background:#fff}
+  .deck-stage{position:static;width:auto;height:auto;transform:none !important;background:none}
+  .slide{position:relative;display:block !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;width:1920px;height:1080px;break-after:page;page-break-after:always}
+  .slide:last-child{break-after:auto;page-break-after:auto}
+  .deck-controls{display:none !important}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.2s !important}
+}
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+<!-- 1. COVER -->
+<section class="slide cover active">
+  <div class="orb"></div>
+  <div class="orb b"></div>
+  <div class="pad">
+    <div class="cover-top">
+      <div class="cover-eyebrow">Brief · Split · 2026‑06‑05</div>
+    </div>
+    <div class="cover-mid">
+      <div class="cover-title reveal">L'IA<br>agentique<br><em>en 2026.</em></div>
+      <div class="cover-sub reveal">Où en est-on vraiment&nbsp;? Marché, modèles, protocoles, déploiements, incidents, réglementation. Onze slides, chiffres datés, sources visibles.</div>
+    </div>
+    <div class="cover-meta">
+      <div class="stack reveal">
+        <span>Préparé par</span>
+        <b>Consultant — Split</b>
+      </div>
+      <div class="stack reveal" style="text-align:right">
+        <span>Date</span>
+        <b>5 juin 2026</b>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. WHAT I ASSUMED -->
+<section class="slide">
+  <div class="chrome"><div class="brand"><b>Split</b> · IA agentique 2026</div><div class="page">02 · 11</div></div>
+  <div class="pad">
+    <div class="kicker reveal">Slide 1 · Override hook</div>
+    <h2 class="title reveal">Ce que <em>j'ai supposé.</em></h2>
+    <p class="lede reveal">Redirige sur n'importe quelle case si je me suis trompé. La v2 suit le redirect.</p>
+    <div class="assumed-grid">
+      <div class="assumed-card reveal">
+        <div class="lbl">Audience</div>
+        <div class="val">Pair pro chez un opérateur tech ou strat tech d'entreprise.<small>Vocabulaire assumé&nbsp;: agents, MCP, SWE‑bench, ARR.</small></div>
+      </div>
+      <div class="assumed-card reveal">
+        <div class="lbl">Scope</div>
+        <div class="val">Janvier 2026 → début juin 2026, focus entreprise + frontière modèles.<small>Volontairement hors&nbsp;: agents grand public, agents code IDE (sujets en soi).</small></div>
+      </div>
+      <div class="assumed-card reveal">
+        <div class="lbl">Géographie</div>
+        <div class="val">US + UE en priorité, Chine côté modèles seulement.<small>Mentions ponctuelles d'Asie via OSWorld + DeepSeek.</small></div>
+      </div>
+      <div class="assumed-card reveal">
+        <div class="lbl">Sources</div>
+        <div class="val">Gartner, McKinsey, IDC, Forrester, communiqués vendeurs, communiqués UE.<small>Citations visibles sur chaque slide. Liste complète sur slide&nbsp;11.</small></div>
+      </div>
+    </div>
+  </div>
+  <div class="footnote"><div>Override hook&nbsp;— corrige une case et je rejoue tout</div><div class="made">Made with Split · split.app</div></div>
+</section>
+
+<!-- 3. MARKET — KPIs -->
+<section class="slide grid-bg">
+  <div class="chrome"><div class="brand"><b>Split</b> · IA agentique 2026</div><div class="page">03 · 11</div></div>
+  <div class="pad">
+    <div class="kicker reveal">Marché · taille &amp; rythme</div>
+    <h2 class="title reveal">Le marché s'est <em>réveillé en 12 mois.</em></h2>
+    <p class="lede reveal">De &lt;5&nbsp;% à 40&nbsp;% des apps entreprise. De 28&nbsp;M d'agents actifs à 2,2&nbsp;Md d'ici 2030. Mais l'écart pilote→prod reste brutal.</p>
+    <div class="kpi-grid">
+      <div class="kpi k-coral reveal">
+        <div class="tag">Gartner · 08/2025</div>
+        <div class="num">40<small>%</small></div>
+        <div class="lbl">d'apps entreprise embarqueront un agent task‑specific d'ici fin 2026 (vs &lt;5&nbsp;% en 2025).</div>
+        <div class="src">gartner.com · communiqué 26/08/2025</div>
+      </div>
+      <div class="kpi k-sea reveal">
+        <div class="tag">IDC · 2026</div>
+        <div class="num">2,2<small>Md</small></div>
+        <div class="lbl">d'agents actifs visés en 2030 — de 28&nbsp;M en 2025. Tâches exécutées&nbsp;: CAGR 524&nbsp;%, 415&nbsp;Tn à fin de décennie.</div>
+        <div class="src">IDC via joget.com · 2026</div>
+      </div>
+      <div class="kpi k-amber reveal">
+        <div class="tag">Gartner · 03/2026</div>
+        <div class="num">10,8<small>Md $</small></div>
+        <div class="lbl">marché agentic AI 2026 (vs 7,6&nbsp;Md $ 2025). CAGR 44–46&nbsp;% jusqu'en 2030.</div>
+        <div class="src">Gartner, agrégé via firstpagesage.com</div>
+      </div>
+      <div class="kpi k-violet reveal">
+        <div class="tag">McKinsey · 2026</div>
+        <div class="num">2,6–4,4<small>Tn $</small></div>
+        <div class="lbl">valeur annuelle potentielle des agents IA tous cas d'usage confondus. ROI 5,8× à 14 mois post‑prod.</div>
+        <div class="src">McKinsey, "State of AI trust 2026"</div>
+      </div>
+      <div class="kpi k-coral reveal">
+        <div class="tag">IDC · CIO 2026</div>
+        <div class="num">68<small>%</small></div>
+        <div class="lbl">de CIO placent les agents dans leur top‑3 d'investissements stratégiques pour 2026.</div>
+        <div class="src">IDC CIO Survey 2026</div>
+      </div>
+      <div class="kpi k-sea reveal">
+        <div class="tag">IDC · 2025</div>
+        <div class="num">17<small>%</small></div>
+        <div class="lbl">seulement des organisations ont déployé un agent — 60&nbsp;% s'y engagent sous deux ans. L'écart est la story.</div>
+        <div class="src">IDC, déploiement vs ambition</div>
+      </div>
+    </div>
+  </div>
+  <div class="footnote"><div>Sources&nbsp;: Gartner · IDC · McKinsey — agrégation, voir slide 11</div><div class="made">Made with Split · split.app</div></div>
+</section>
+
+<!-- 4. FRONTIER MODELS TABLE -->
+<section class="slide">
+  <div class="chrome"><div class="brand"><b>Split</b> · IA agentique 2026</div><div class="page">04 · 11</div></div>
+  <div class="pad">
+    <div class="kicker reveal">Modèles frontière · avril 2026</div>
+    <h2 class="title reveal">Trois flagships en <em>trois semaines.</em></h2>
+    <p class="lede reveal">OpenAI, Anthropic, Google ont tous re‑shippé en avril 2026. Aucun ne gagne sur tous les axes&nbsp;: l'arbitrage est désormais explicite par cas d'usage.</p>
+    <div class="tbl">
+      <div class="tbl-row head">
+        <div class="col">Modèle &amp; date</div>
+        <div class="col">Lane gagnante</div>
+        <div class="col">Bench notable</div>
+        <div class="col">Prix (input&nbsp;/&nbsp;output)</div>
+      </div>
+      <div class="tbl-row reveal">
+        <div class="col"><b>Claude Opus 4.7</b><small>Anthropic · 16 avril 2026</small></div>
+        <div class="col">Software engineering, orchestration outils, vision étendue<span class="pill">+13&nbsp;pts SWE‑bench</span></div>
+        <div class="col">SWE‑bench Pro&nbsp;64,3&nbsp;% (vs 53,4&nbsp;%)<small>OSWorld 78&nbsp;% · CursorBench 70&nbsp;%</small></div>
+        <div class="col">5&nbsp;$ / 25&nbsp;$<small>par million de tokens</small></div>
+      </div>
+      <div class="tbl-row reveal">
+        <div class="col"><b>GPT‑5.5</b><small>OpenAI · 23 avril 2026</small></div>
+        <div class="col">Computer use natif, workflows agentiques, recherche &amp; terminal<span class="pill">1er base model depuis GPT‑4.5</span></div>
+        <div class="col">OSWorld 75&nbsp;% (Operator natif intégré)<small>SOTA agentic web tasks</small></div>
+        <div class="col">~13&nbsp;$ / ~25&nbsp;$<small>équivalent Opus 4.7</small></div>
+      </div>
+      <div class="tbl-row reveal">
+        <div class="col"><b>Gemini 3.1 Pro</b><small>Google · avril 2026</small></div>
+        <div class="col">Prix, vitesse, multimodal — long contexte, ingestion vidéo<span class="pill">&lt;½ prix d'Opus 4.7</span></div>
+        <div class="col">Top sur LMArena multimodal<small>1M tokens contexte</small></div>
+        <div class="col">2&nbsp;$ / 12&nbsp;$<small>par million de tokens</small></div>
+      </div>
+    </div>
+    <p class="bench-foot reveal" style="margin-top:32px"><b>Implication&nbsp;:</b> les architectures multi‑modèles deviennent la norme. Router par tâche → Opus pour le code, GPT‑5.5 pour driver l'OS, Gemini pour le batch volumineux.</p>
+  </div>
+  <div class="footnote"><div>Sources&nbsp;: anthropic.com 16/04/2026 · datacamp benchmarks · mindstudio.ai comparatif</div><div class="made">Made with Split · split.app</div></div>
+</section>
+
+<!-- 5. COMPUTER USE -->
+<section class="slide grid-bg">
+  <div class="chrome"><div class="brand"><b>Split</b> · IA agentique 2026</div><div class="page">05 · 11</div></div>
+  <div class="pad">
+    <div class="kicker reveal">Computer use · OSWorld benchmark</div>
+    <h2 class="title reveal">L'agent pilote l'OS — <em>presque comme un humain.</em></h2>
+    <p class="lede reveal">OSWorld&nbsp;: vraies apps, vrai bureau, vrais clics. Le baseline humain est à 72–84&nbsp;%. La frontière l'atteint en 18 mois.</p>
+    <div class="bench">
+      <div class="bench-row reveal">
+        <div class="name">Claude Opus 4.7<small>Anthropic · avr. 2026</small></div>
+        <div class="bar"><div class="fill c1" style="width:78%"></div></div>
+        <div class="pct">78,0&nbsp;%</div>
+      </div>
+      <div class="bench-row reveal">
+        <div class="name">GPT‑5.5 (Operator natif)<small>OpenAI · avr. 2026</small></div>
+        <div class="bar"><div class="fill c2" style="width:75%"></div></div>
+        <div class="pct">75,0&nbsp;%</div>
+      </div>
+      <div class="bench-row reveal">
+        <div class="name">Claude Opus 4.6<small>déc. 2025</small></div>
+        <div class="bar"><div class="fill c3" style="width:72.7%"></div></div>
+        <div class="pct">72,7&nbsp;%</div>
+      </div>
+      <div class="bench-row reveal">
+        <div class="name">Operator v1 (Jan&nbsp;2025)<small>OpenAI · launch</small></div>
+        <div class="bar"><div class="fill dim" style="width:38%"></div></div>
+        <div class="pct">38,0&nbsp;%</div>
+      </div>
+      <div class="bench-row reveal">
+        <div class="name">Anthropic Computer Use v1<small>oct. 2024 · launch</small></div>
+        <div class="bar"><div class="fill dim" style="width:22%"></div></div>
+        <div class="pct">22,0&nbsp;%</div>
+      </div>
+    </div>
+    <p class="bench-foot reveal"><b>Lecture&nbsp;:</b> +56&nbsp;points en 18 mois sur le même bench. Le baseline humain (~72–84&nbsp;%) est franchi — la fiabilité reste l'obstacle, pas la capacité.</p>
+  </div>
+  <div class="footnote"><div>Source&nbsp;: OSWorld benchmark via coasty.ai · benchlm.ai · données mai 2026</div><div class="made">Made with Split · split.app</div></div>
+</section>
+
+<!-- 6. VENDORS 2x2 -->
+<section class="slide">
+  <div class="chrome"><div class="brand"><b>Split</b> · IA agentique 2026</div><div class="page">06 · 11</div></div>
+  <div class="pad">
+    <div class="kicker reveal">Vendeurs entreprise · plateformes</div>
+    <h2 class="title reveal">Quatre plateformes en <em>vraie monétisation.</em></h2>
+    <div class="q4">
+      <div class="qcard reveal">
+        <div class="qh"><div class="qn">Salesforce — Agentforce</div><div class="qtag">CRM&nbsp;/&nbsp;Workflow</div></div>
+        <div class="qbig">1,2&nbsp;Md $ ARR</div>
+        <div class="qsub">Agentforce ARR au Q1 FY27 (avril 2026), +205&nbsp;% YoY. Combo Data 360&nbsp;: 3,4&nbsp;Md $.</div>
+        <ul>
+          <li>18 500 deals Agentforce signés depuis lancement, 9 500 payants</li>
+          <li>Plus rapide croissance produit de l'histoire Salesforce</li>
+          <li>Q4 FY26&nbsp;: 800&nbsp;M $ ARR, +169&nbsp;% YoY, 29 000 deals</li>
+        </ul>
+        <div class="qsrc">investor.salesforce.com · communiqué Q1 FY27 27/05/2026</div>
+      </div>
+      <div class="qcard reveal">
+        <div class="qh"><div class="qn">Microsoft — Copilot Studio + Agent 365</div><div class="qtag">Build &amp; Govern</div></div>
+        <div class="qbig sea">Build 2026</div>
+        <div class="qsub">«&nbsp;Computer‑using agents&nbsp;» en GA dans Copilot Studio. Agent 365&nbsp;: control plane unifié pour visibilité, permissions, audit.</div>
+        <ul>
+          <li>Embedded dans Windows 11 + Microsoft 365</li>
+          <li>Real‑time voice + agents workflows en GA mai 2026</li>
+          <li>Stratégie&nbsp;: l'agent comme nouveau «&nbsp;Office user&nbsp;»</li>
+        </ul>
+        <div class="qsrc">microsoft.com/copilot/blog · mai 2026 release notes</div>
+      </div>
+      <div class="qcard reveal">
+        <div class="qh"><div class="qn">Anthropic — Claude API + Agent SDK</div><div class="qtag">Frontier model</div></div>
+        <div class="qbig amber">Opus 4.7 SOTA</div>
+        <div class="qsub">Finance Agent eval&nbsp;: SOTA. +14&nbsp;pts sur workflows multi‑étapes. Memory file‑system, xhigh effort, task budgets.</div>
+        <ul>
+          <li>Agent SDK adopté massivement par tier‑1 (Block, Cursor, Replit)</li>
+          <li>MCP donné à la Linux Foundation (déc. 2025)</li>
+          <li>Computer use 98,5&nbsp;% acuité visuelle (vs 54,5&nbsp;% en 4.6)</li>
+        </ul>
+        <div class="qsrc">anthropic.com/news/claude-opus-4-7 · 16/04/2026</div>
+      </div>
+      <div class="qcard reveal">
+        <div class="qh"><div class="qn">OpenAI — GPT‑5.5 + Agents platform</div><div class="qtag">Computer use natif</div></div>
+        <div class="qbig violet">Operator&nbsp;→ GA</div>
+        <div class="qsub">Computer use intégré au modèle de base. Premier full‑retrain depuis GPT‑4.5. Co‑fondateur Linux/AAIF avec Anthropic.</div>
+        <ul>
+          <li>Adoption MCP officielle (mars 2025)</li>
+          <li>SOTA agentic browser tasks, terminal automation</li>
+          <li>Operator critiqué pour son «&nbsp;permission spam&nbsp;» (UX gap)</li>
+        </ul>
+        <div class="qsrc">OpenAI blog 23/04/2026 · coasty.ai operator review</div>
+      </div>
+    </div>
+  </div>
+  <div class="footnote"><div>Sources&nbsp;: communiqués vendeurs (avr.–mai 2026) — voir slide 11</div><div class="made">Made with Split · split.app</div></div>
+</section>
+
+<!-- 7. PROTOCOLS -->
+<section class="slide">
+  <div class="chrome"><div class="brand"><b>Split</b> · IA agentique 2026</div><div class="page">07 · 11</div></div>
+  <div class="pad">
+    <div class="kicker reveal">Protocoles · l'infrastructure se standardise</div>
+    <h2 class="title reveal">MCP, A2A, ACP — <em>la stack en trois couches.</em></h2>
+    <p class="lede reveal">Pas une guerre de standards. Trois couches complémentaires, donation à la Linux Foundation actée en déc. 2025, 190 organisations membres en mai 2026.</p>
+    <div class="proto-row">
+      <div class="proto reveal">
+        <div class="pcode">Layer · Tool ↔ Agent</div>
+        <div class="pname">MCP</div>
+        <div class="ptag">De facto standard pour brancher agents aux outils, données, services.</div>
+        <ul>
+          <li><b>97&nbsp;M téléchargements SDK</b>&nbsp;/&nbsp;mois</li>
+          <li><b>10 000+ serveurs MCP</b> actifs</li>
+          <li>Adopté par OpenAI (mars 2025), Google DeepMind, embarqué dans Windows 11 + Copilot</li>
+          <li>Donné par Anthropic à la Linux Foundation (AAIF) en décembre 2025</li>
+        </ul>
+        <div class="pfoot">Origine&nbsp;: Anthropic, nov. 2024</div>
+      </div>
+      <div class="proto reveal">
+        <div class="pcode">Layer · Agent ↔ Agent</div>
+        <div class="pname">A2A</div>
+        <div class="ptag">Coordination entre agents de vendeurs différents ou d'organisations différentes.</div>
+        <ul>
+          <li>Push entreprise via <b>Salesforce, SAP, ServiceNow</b></li>
+          <li>Gagne du terrain sur les workflows cross‑silo</li>
+          <li>Complémentaire à MCP — pas un remplaçant</li>
+          <li>Recommandation enterprise 2026&nbsp;: MCP pour les outils, A2A pour les hand‑offs</li>
+        </ul>
+        <div class="pfoot">Origine&nbsp;: Google, avr. 2025</div>
+      </div>
+      <div class="proto reveal">
+        <div class="pcode">Layer · Client ↔ Agent</div>
+        <div class="pname">ACP</div>
+        <div class="ptag">Protocole client‑agent — l'IDE ou l'app drive l'agent à travers une session stable.</div>
+        <ul>
+          <li>Co‑lead par <b>JetBrains + Zed</b></li>
+          <li>Session lifecycle stabilisé, RFD v2 en cours</li>
+          <li>Registry agents officielle</li>
+          <li>Orchestre workflows multi‑agent (utilisé par Split pour piloter Claude, Codex, Gemini, OpenCode, Vibe)</li>
+        </ul>
+        <div class="pfoot">Origine&nbsp;: Zed, 2025 · standard multi‑vendor 2026</div>
+      </div>
+    </div>
+  </div>
+  <div class="footnote"><div>Sources&nbsp;: optinampout.com guide 2026 · zylos.ai convergence · neosalpha.com</div><div class="made">Made with Split · split.app</div></div>
+</section>
+
+<!-- 8. INCIDENTS -->
+<section class="slide">
+  <div class="chrome"><div class="brand"><b>Split</b> · IA agentique 2026</div><div class="page">08 · 11</div></div>
+  <div class="pad">
+    <div class="kicker reveal">Incidents · ce que l'autonomie a cassé</div>
+    <h2 class="title reveal">50+ incidents publics en <em>cinq mois.</em></h2>
+    <p class="lede reveal">L'amplification autonome est le risque dominant&nbsp;: une mauvaise permission, une hallucination ou une prompt injection devient un incident enterprise en quelques secondes.</p>
+    <div class="log">
+      <div class="log-row reveal">
+        <div class="when">Janv. 2026</div>
+        <div class="what"><b>Air Canada — 1 247 passagers re‑bookés</b>Agent autonome de rebooking pendant une tempête à Toronto&nbsp;: les passagers réaffectés sur de mauvais vols. Manuel d'escalade non déclenché.</div>
+        <div class="who">CallSphere · disasters report</div>
+      </div>
+      <div class="log-row reveal">
+        <div class="when">Févr. 2026</div>
+        <div class="what"><b>Meta — fuite interne de données sensibles</b>Agent IA en production hallucine des permissions et expose des données internes à des employés non habilités. Aucun attaquant externe.</div>
+        <div class="who">Levelact · security crisis 2026</div>
+      </div>
+      <div class="log-row reveal">
+        <div class="when">Avr. 2026</div>
+        <div class="what"><b>EchoLeak / Vercel — prompt injection</b>Vague d'attaques par injection cachée dans contenu web. Agents lisant les pages exfiltrent secrets ou exécutent actions non sollicitées.</div>
+        <div class="who">Foresiet · 6 AI security incidents</div>
+      </div>
+      <div class="log-row reveal">
+        <div class="when">H1 2026</div>
+        <div class="what"><b>Cascade de tool‑misuse — budgets à 6 chiffres</b>Agents qui chainent appels API sans guardrail&nbsp;: facture cloud, appels payants, scraping. Plusieurs cas publics &gt;100 k$.</div>
+        <div class="who">Digital Applied retrospective</div>
+      </div>
+      <div class="log-row reveal">
+        <div class="when">H1 2026</div>
+        <div class="what"><b>Décisions biaisées en justice</b>Au moins 3 actions judiciaires aux US contre des décisions de scoring, crédit ou recrutement prises par des agents — biais entraîné non audité.</div>
+        <div class="who">OWASP AI risk reports</div>
+      </div>
+    </div>
+    <p class="log-foot reveal"><b>65&nbsp;%</b> des répondants enterprise citent la <b>sécurité</b> comme le premier frein au scaling agentique — devant la régulation et les limites techniques.</p>
+  </div>
+  <div class="footnote"><div>Sources&nbsp;: CallSphere · Levelact · Foresiet · McKinsey trust 2026</div><div class="made">Made with Split · split.app</div></div>
+</section>
+
+<!-- 9. CONTRARIAN -->
+<section class="slide grid-bg">
+  <div class="chrome"><div class="brand"><b>Split</b> · IA agentique 2026</div><div class="page">09 · 11</div></div>
+  <div class="pad">
+    <div class="kicker reveal">Contrarian · la réalité opérationnelle</div>
+    <h2 class="title reveal">L'écart pilote → prod <em>n'a pas bougé.</em></h2>
+    <div class="stat-hero">
+      <div class="stat-num reveal">88<small>&nbsp;%</small></div>
+      <div class="stat-side">
+        <div class="head reveal">des pilots agents ne passent jamais en production. (IDC, 2026)</div>
+        <div class="body reveal">McKinsey, MIT, Forrester, S&amp;P Global et Gartner racontent la même histoire&nbsp;: la marche pilote→prod n'a pas bougé en 18 mois. Les agents ne sont pas le problème — le data engineering, la gouvernance, et l'absence de propriétaire le sont.</div>
+        <div class="stat-mini reveal">
+          <div><b>40&nbsp;%</b><small>Projets agentic annulés d'ici 2027 (Gartner)</small></div>
+          <div><b>95&nbsp;%</b><small>Pilots zéro impact P&amp;L (MIT)</small></div>
+          <div><b>22&nbsp;%</b><small>Déploiements ROI négatif à 12 mois (Forrester)</small></div>
+        </div>
+        <div class="body reveal" style="margin-top:8px"><b style="color:var(--coral)">Ce qui marche&nbsp;:</b> les orgas avec un <b style="color:var(--ink-0)">agent owner nommé</b> ont 2,7× plus de chances de passer en prod. 80&nbsp;% du travail réel est data, intégration et mesure — pas modèle.</div>
+      </div>
+    </div>
+  </div>
+  <div class="footnote"><div>Sources&nbsp;: Gartner H2 2025 · MIT GenAI 2025 · Forrester · S&amp;P Global · IBM</div><div class="made">Made with Split · split.app</div></div>
+</section>
+
+<!-- 10. REGULATION -->
+<section class="slide">
+  <div class="chrome"><div class="brand"><b>Split</b> · IA agentique 2026</div><div class="page">10 · 11</div></div>
+  <div class="pad">
+    <div class="kicker reveal">Régulation · l'EU AI Act passe en application</div>
+    <h2 class="title reveal">2 août 2026 — <em>l'enforcement démarre.</em></h2>
+    <p class="lede reveal">La Commission acquiert ses pouvoirs d'enforcement sur les modèles GPAI. Les agents «&nbsp;high‑risk&nbsp;» entrent dans l'obligation conformité. Agreement de simplification mai 2026.</p>
+    <div class="tline">
+      <div class="tnodes">
+        <div class="tnode past reveal">
+          <span class="tdate">02/08/2025</span>
+          <div class="twhat">GPAI rules entrent en vigueur</div>
+          <div class="tdetail">Obligations transparence GPAI publiées, période de mise en conformité ouverte.</div>
+        </div>
+        <div class="tnode reveal">
+          <span class="tdate">07/05/2026</span>
+          <div class="twhat">Accord simplification UE</div>
+          <div class="tdetail">Conseil + Parlement allègent textes&nbsp;: sandboxes reportés à 2027, transparence des contenus IA ramenée à 3 mois.</div>
+        </div>
+        <div class="tnode reveal">
+          <span class="tdate">02/08/2026</span>
+          <div class="twhat">Enforcement Commission</div>
+          <div class="tdetail">Pouvoirs d'enforcement actifs sur GPAI&nbsp;: contrôles, amendes. Modèles &gt;10²⁵ FLOPs sous régime «&nbsp;systemic risk&nbsp;».</div>
+        </div>
+        <div class="tnode reveal">
+          <span class="tdate">02/12/2026</span>
+          <div class="twhat">Transparence contenus IA</div>
+          <div class="tdetail">Labels obligatoires sur les outputs générés par IA. S'applique aux agents conversationnels et générateurs.</div>
+        </div>
+        <div class="tnode reveal">
+          <span class="tdate">02/08/2027</span>
+          <div class="twhat">Sandboxes nationaux</div>
+          <div class="tdetail">Autorités nationales doivent avoir établi sandboxes. Échéance high‑risk full enforcement.</div>
+        </div>
+      </div>
+    </div>
+    <div class="reg-foot reveal"><b>À retenir&nbsp;:</b> tout agent UE classé high‑risk (santé, RH, scoring, justice, infrastructure) tombe sous obligations strictes dès août 2026. Tout agent qui interagit avec un humain ou génère du contenu doit déclarer sa nature. Les contrats vendeur doivent intégrer dès maintenant les clauses GPAI &amp; high‑risk.</div>
+  </div>
+  <div class="footnote"><div>Sources&nbsp;: digital-strategy.ec.europa.eu · consilium.europa.eu (07/05/2026) · secureprivacy.ai</div><div class="made">Made with Split · split.app</div></div>
+</section>
+
+<!-- 11. SOURCES -->
+<section class="slide">
+  <div class="chrome"><div class="brand"><b>Split</b> · IA agentique 2026</div><div class="page">11 · 11</div></div>
+  <div class="pad">
+    <div class="kicker reveal">Sources · vérifiables, datées</div>
+    <h2 class="title reveal">Tout est cité, <em>rien n'est inventé.</em></h2>
+    <div class="sources">
+      <div class="src-row reveal"><div class="n">01</div><div class="t">Gartner — 40&nbsp;% d'apps entreprise embarqueront des agents d'ici 2026<small>gartner.com/en/newsroom/press-releases/2025-08-26 · 26/08/2025</small></div></div>
+      <div class="src-row reveal"><div class="n">02</div><div class="t">Gartner — Coding agents enter new phase of expansion (2026)<small>gartner.com/en/newsroom/press-releases/2026-05-20 · 20/05/2026</small></div></div>
+      <div class="src-row reveal"><div class="n">03</div><div class="t">McKinsey — State of AI trust in 2026&nbsp;: shifting to the agentic era<small>mckinsey.com/capabilities/tech-and-ai/our-insights/tech-forward · 2026</small></div></div>
+      <div class="src-row reveal"><div class="n">04</div><div class="t">IDC / FirstPageSage — Agentic AI Adoption Statistics 2026<small>firstpagesage.com/reports/agentic-ai-adoption-statistics · 2026</small></div></div>
+      <div class="src-row reveal"><div class="n">05</div><div class="t">Anthropic — Introducing Claude Opus 4.7<small>anthropic.com/news/claude-opus-4-7 · 16/04/2026</small></div></div>
+      <div class="src-row reveal"><div class="n">06</div><div class="t">DataCamp — Claude Opus 4.7 vs GPT‑5.5 benchmarks<small>datacamp.com/blog/gpt-5-5-vs-claude-opus-4-7 · avril 2026</small></div></div>
+      <div class="src-row reveal"><div class="n">07</div><div class="t">MindStudio — GPT‑5.5 vs Opus 4.7 vs Gemini 3.1 Pro for builders<small>mindstudio.ai/blog/gpt-5-5-review-developers-builders · 2026</small></div></div>
+      <div class="src-row reveal"><div class="n">08</div><div class="t">Coasty — OSWorld 2026 benchmark results<small>coasty.ai/blog/osworld-benchmark-2026-results-ai-computer-use · 05/2026</small></div></div>
+      <div class="src-row reveal"><div class="n">09</div><div class="t">Salesforce — Q1 FY27 results (Agentforce 1,2&nbsp;Md $ ARR)<small>investor.salesforce.com/news/news-details/2026 · 27/05/2026</small></div></div>
+      <div class="src-row reveal"><div class="n">10</div><div class="t">Microsoft — Copilot Studio May 2026 update + Build 2026<small>microsoft.com/en-us/microsoft-copilot/blog/copilot-studio · 05/2026</small></div></div>
+      <div class="src-row reveal"><div class="n">11</div><div class="t">OptinAmpOut — MCP vs A2A vs ACP 2026 guide<small>optinampout.com/blogs/mcp-vs-a2a-vs-acp-agent-protocols-2026</small></div></div>
+      <div class="src-row reveal"><div class="n">12</div><div class="t">Zylos Research — Agent interoperability protocols 2026<small>zylos.ai/research/2026-03-26-agent-interoperability-protocols-mcp-a2a-acp</small></div></div>
+      <div class="src-row reveal"><div class="n">13</div><div class="t">CallSphere — 10 biggest agentic AI disasters of early 2026<small>callsphere.ai/blog/ai-agent-failures-biggest-agentic-ai-disasters-early-2026</small></div></div>
+      <div class="src-row reveal"><div class="n">14</div><div class="t">Levelact — The Autonomous AI Agent Security Crisis of 2026<small>levelact.com/autonomous-ai-agent-security-crisis-2026</small></div></div>
+      <div class="src-row reveal"><div class="n">15</div><div class="t">Foresiet — 6 AI security incidents, attack path analysis<small>foresiet.com/blog/ai-security-incidents-attack-paths-april-2026</small></div></div>
+      <div class="src-row reveal"><div class="n">16</div><div class="t">Composio — Why AI agent pilots fail (2025 report, 2026 roadmap)<small>composio.dev/blog/why-ai-agent-pilots-fail-2026-integration-roadmap</small></div></div>
+      <div class="src-row reveal"><div class="n">17</div><div class="t">Company of Agents — AI agent ROI in 2026 / 40&nbsp;% failure<small>companyofagents.ai/blog/en/ai-agent-roi-failure-2026-guide</small></div></div>
+      <div class="src-row reveal"><div class="n">18</div><div class="t">EU — AI Act framework, navigation FAQ<small>digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai</small></div></div>
+      <div class="src-row reveal"><div class="n">19</div><div class="t">Council of the EU — Simplification agreement (07/05/2026)<small>consilium.europa.eu/en/press/press-releases/2026/05/07</small></div></div>
+      <div class="src-row reveal"><div class="n">20</div><div class="t">Secure Privacy — EU AI Act 2026 compliance for enterprises<small>secureprivacy.ai/blog/eu-ai-act-2026-compliance</small></div></div>
+    </div>
+  </div>
+  <div class="footnote"><div>Brief Consultant — Split · 5 juin 2026 · 11 slides</div><div class="made">Made with Split · split.app</div></div>
+</section>
+
+</main>
+</div>
+
+<div class="deck-controls">
+  <button id="prev" aria-label="Précédent">‹</button>
+  <span class="pg" id="pg">01 / 11</span>
+  <button id="next" aria-label="Suivant">›</button>
+</div>
+
+<script>
+class Deck {
+  constructor(){
+    this.slides = [...document.querySelectorAll('.slide')];
+    this.i = 0;
+    this.stage = document.getElementById('deckStage');
+    this.pg = document.getElementById('pg');
+    this.scale();
+    window.addEventListener('resize', () => this.scale());
+    document.addEventListener('keydown', e => {
+      if(['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); this.go(this.i+1); }
+      if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); this.go(this.i-1); }
+      if(e.key==='Home'){ e.preventDefault(); this.go(0); }
+      if(e.key==='End'){ e.preventDefault(); this.go(this.slides.length-1); }
+    });
+    document.getElementById('prev').addEventListener('click', () => this.go(this.i-1));
+    document.getElementById('next').addEventListener('click', () => this.go(this.i+1));
+    let sx = 0;
+    document.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, {passive:true});
+    document.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - sx;
+      if(Math.abs(dx)>60){ this.go(this.i + (dx<0?1:-1)); }
+    }, {passive:true});
+    this.show(0);
+  }
+  scale(){
+    const f = Math.min(window.innerWidth/1920, window.innerHeight/1080);
+    const x = (window.innerWidth - 1920*f)/2;
+    const y = (window.innerHeight - 1080*f)/2;
+    this.stage.style.transform = `translate(${x}px, ${y}px) scale(${f})`;
+  }
+  go(n){ this.show(Math.max(0, Math.min(n, this.slides.length-1))); }
+  show(n){
+    this.i = n;
+    this.slides.forEach((s,i) => {
+      s.classList.toggle('active', i===n);
+      s.classList.toggle('visible', i===n);
+    });
+    this.pg.textContent = String(n+1).padStart(2,'0') + ' / ' + String(this.slides.length).padStart(2,'0');
+  }
+}
+new Deck();
+</script>
+</body>
+</html>

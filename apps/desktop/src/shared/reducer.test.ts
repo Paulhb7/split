@@ -77,4 +77,20 @@ describe("applyEvent", () => {
     expect(s.status).toBe("error");
     expect(s.summary).toContain("boom");
   });
+
+  it("collects artifacts and tracks the latest as active", () => {
+    let s = base();
+    s = applyEvent(s, { type: "artifact", rel: "essay.md", path: "/ws/essay.md", op: "created", size: 120, mtime: 1 });
+    s = applyEvent(s, { type: "artifact", rel: "notes.md", path: "/ws/notes.md", op: "created", size: 80, mtime: 2 });
+    expect(s.artifacts.map((a) => a.rel)).toEqual(["essay.md", "notes.md"]);
+    expect(s.activeArtifact).toBe("notes.md");
+    // Modification keeps single entry, refreshes ordering, becomes active again.
+    s = applyEvent(s, { type: "artifact", rel: "essay.md", path: "/ws/essay.md", op: "modified", size: 140, mtime: 3 });
+    expect(s.artifacts.map((a) => a.rel)).toEqual(["notes.md", "essay.md"]);
+    expect(s.activeArtifact).toBe("essay.md");
+    // Deletion drops the entry, falls back to the last remaining one.
+    s = applyEvent(s, { type: "artifact", rel: "essay.md", path: "/ws/essay.md", op: "deleted", size: 0, mtime: 4 });
+    expect(s.artifacts.map((a) => a.rel)).toEqual(["notes.md"]);
+    expect(s.activeArtifact).toBe("notes.md");
+  });
 });

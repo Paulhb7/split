@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 
 // Adaptive bar window — fits its height to the natural content height, like the
@@ -96,9 +97,18 @@ export function useAdaptiveHeight(opts: {
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(measureEl);
+    // Also re-fit on OS-driven window resizes (exiting native fullscreen, the
+    // green traffic light, a manual edge-drag). The ResizeObserver above watches
+    // the content; this watches the WINDOW. Without it, exiting fullscreen
+    // leaves the window at the fullscreen size because nothing changed inside.
+    const unlistenPromise = listen("geom-changed", () => {
+      lastHeightRef.current = -1;
+      fit();
+    });
     return () => {
       ro.disconnect();
       cancelAnimationFrame(raf);
+      unlistenPromise.then((un) => un()).catch(() => { /* ignore */ });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disabled, menuExtra, ...(opts.extraDeps ?? [])]);

@@ -37,3 +37,5 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"
 # `split/permissions.py` so the Rust runner reaches parity with the Python
 # runner. Lives in the workspace as a path crate.
 split-core = { path = "../../../core-rs" }
+# Inline image / PDF artifact bytes for the React viewer as data URLs.
+base64 = "0.22"

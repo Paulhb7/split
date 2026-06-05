@@ -123,6 +123,28 @@ fn persona_text(repo_root: &Path, var_dir: &Path, expert: &str) -> String {
          (\"latest\", \"this week\", \"past 30 days\") over hard-coded years.\n\n"
     );
 
+    // Workspace boundary + format preference. Two rules in one block because
+    // they share the same motivation: make the deliverable visible AND
+    // useful inside Split's in-app viewer.
+    //   (1) cwd-only — files outside the workspace are invisible to the
+    //       snapshot/diff and never reach the artifact strip.
+    //   (2) prefer .md — Split renders markdown inline and offers an edit
+    //       + PDF-export flow on it; .docx becomes a "Binary file" card
+    //       that only opens in Word.
+    let workspace_rule = "**Deliverables stay in your workspace.** Every file you produce \
+        — documents, code, images, exports — must be written inside the current working \
+        directory. Do NOT write to `~/Desktop`, `~/Documents`, `~/Downloads`, or any \
+        absolute path outside cwd. If the boss says \"put it on the Desktop\" or names a \
+        path outside cwd, save it under cwd anyway and tell them the local path in your \
+        reply. Split watches cwd to surface what you produce — files outside it are \
+        invisible to the app.\n\n\
+        **For text deliverables (briefs, essays, notes, reports, plans, drafts) default \
+        to Markdown (`.md`).** Split renders markdown inline in the viewer; the boss can \
+        edit it in-app and export to PDF in one click. Only reach for `.docx`/`.pptx`/\
+        `.xlsx` when the boss explicitly asks for that format (template requirement, \
+        track-changes, Excel formulas, etc.) — those open in Word/Excel and can't be \
+        previewed inside Split.\n\n";
+
     let preamble =
         read_if_exists(&repo_root.join("config/experts/_discipline.md")).unwrap_or_default();
     let memory = memory_text(var_dir, expert);
@@ -133,7 +155,7 @@ fn persona_text(repo_root: &Path, var_dir: &Path, expert: &str) -> String {
     )
     .unwrap_or_default();
 
-    format!("{date_header}{preamble}{memory}{persona}")
+    format!("{date_header}{workspace_rule}{preamble}{memory}{persona}")
 }
 
 /// "What you remember" section — projected into every persona at session

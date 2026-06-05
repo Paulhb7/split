@@ -153,6 +153,21 @@ it to the next turn (📎 chip in the thread, full content folded into what
 the agent receives). An onboarding step picks the harness; the auth flow
 surfaces inline.
 
+**Edit the agent's deliverables in-app.** Files the agent produces in its
+workspace (`var/workspace/<expert>/…`) surface as 📦 chips under the thread.
+Clicking one opens a split view: the conversation stays on the left, the
+artifact fills the right. **`.md` and `.html` artifacts (slides, briefs,
+docs) open straight into a WYSIWYG editor** — TipTap with a sticky toolbar
+(headings, lists, quotes, code, link), a bubble menu on selection, and
+markdown round-trip so what's on disk stays a real `.md`. HTML artifacts
+become `contentEditable` in a sandboxed iframe so titles / bullets / text
+leaves are click-to-edit; Save extracts the mutated DOM and writes it
+back. ⌘S saves, the divider between rail and viewer is **draggable** (and
+remembered). Other text types (code, JSON, CSV…) keep a preview → ✎ →
+textarea toggle. CSV renders as a table, PDFs inline, images inline, the
+rest falls back to "open with default app". Anything visually rendered
+prints to PDF via the OS print sheet (`⎙`).
+
 > Legacy: a third **web front** (zero-install browser UI over a WebSocket)
 > was retired into `var/_retired/`. The Python sidecar (`split.runner`) and
 > terminal front (`split.terminal`) live at [`split-python/`](#repo-layout)

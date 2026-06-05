@@ -6,6 +6,7 @@ import { H } from "../shared/harnesses";
 import { useExperts } from "../shared/util";
 import { Tile } from "../shared/ui";
 import type { Session } from "../shared/models";
+import { ArtifactStrip } from "./ArtifactViewer";
 
 type PermissionScope = "once" | "session" | "always-allow" | "always-deny";
 
@@ -33,11 +34,12 @@ export function Conversation(props: {
   onKey: (e: React.KeyboardEvent) => void;
   onReply: () => void;
   onPickCommand: (name: string) => void;
+  onPickArtifact: (id: string, rel: string) => void;
 }) {
   const {
     session: focused, experts, value, inputRef, slashQuery, chips,
     onBack, onOpenWorkspace, onLogout, onStop, onClose, onAuth, onPermission,
-    onCancelQueued, onInputChange, onKey, onReply, onPickCommand,
+    onCancelQueued, onInputChange, onKey, onReply, onPickCommand, onPickArtifact,
   } = props;
 
   const threadRef = useRef<HTMLDivElement>(null);
@@ -133,6 +135,12 @@ export function Conversation(props: {
         })()}
         {focused.queued && <div className="thinking">⏳ queued · {focused.queued.display || "(file)"} <button className="xbtn" onClick={() => onCancelQueued(focused.id)}>✕</button></div>}
       </div>
+
+      <ArtifactStrip
+        artifacts={focused.artifacts}
+        activeArtifact={focused.activeArtifact}
+        onPick={(rel) => onPickArtifact(focused.id, rel)}
+      />
 
       {focused.logs.length > 0 && (
         <details className="logs" open={focused.status === "running"}>

@@ -1,4 +1,4 @@
-import type { AuthMethod, PermissionOption, PlanEntry, SlashCommand } from "./events";
+import type { Artifact, AuthMethod, PermissionOption, PlanEntry, SlashCommand } from "./events";
 
 // "running" = a turn is in flight; "idle" = ready for the next turn;
 // "auth" = blocked on sign-in; "error" = last turn failed; "ended" = process gone.
@@ -64,6 +64,13 @@ export interface Session {
   // app boot won't have it (we accept that team sessions are dead after a
   // restart and the user closes them from classic UI).
   teamId?: string;
+  // Files the agent produced in its workspace during this session — detected
+  // by the Rust runner's snapshot/diff at each `status:idle`. Upserted by
+  // `rel`; entries with op:"deleted" are removed (not kept as tombstones).
+  // `activeArtifact` is the `rel` of the file the viewer should show; reset
+  // by the reducer whenever a new artifact arrives.
+  artifacts: Artifact[];
+  activeArtifact: string | null;
 }
 
 // What a session is doing *right now* — derived purely from status + summary
@@ -110,5 +117,7 @@ export function newSession(
     pendingPermission: null,
     queued: null,
     teamId,
+    artifacts: [],
+    activeArtifact: null,
   };
 }

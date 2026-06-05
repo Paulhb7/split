@@ -189,6 +189,14 @@ static BAR_WIDTH: LazyLock<Mutex<f64>> = LazyLock::new(|| Mutex::new(680.0));
 fn set_bar_height(window: WebviewWindow, height: f64) {
     let h = height.clamp(48.0, 1400.0); // sane clamp; React already clamps too
     let w = *BAR_WIDTH.lock().unwrap();
+    // While the OS owns the window (native fullscreen via ⌃⌘F or the green
+    // traffic light), `set_size` resizes the WEBVIEW but leaves the window at
+    // fullscreen — webview ends up 680-wide inside a 1512-wide window and the
+    // rest paints as black. Skip the call; the next fit after fullscreen exit
+    // will reapply the right size.
+    if window.is_fullscreen().unwrap_or(false) {
+        return;
+    }
     // `set_size` sets the OUTER window size, but `height` is the desired CONTENT
     // (webview) height measured by the React ResizeObserver. With native
     // decorations a title bar sits above the webview, so add the outer−inner
@@ -209,11 +217,146 @@ fn set_bar_height(window: WebviewWindow, height: f64) {
 fn set_bar_width(window: WebviewWindow, width: f64) {
     let w = width.clamp(400.0, 2200.0);
     *BAR_WIDTH.lock().unwrap() = w;
+    // Same fullscreen guard as `set_bar_height` — don't fight macOS while it
+    // owns the window. BAR_WIDTH still updates so the next fit after exit
+    // honours the latest target width.
+    if window.is_fullscreen().unwrap_or(false) {
+        return;
+    }
     let scale = window.scale_factor().unwrap_or(1.0);
     if let Ok(sz) = window.outer_size() {
         let h_logical = (sz.height as f64) / scale;
         let _ = window.set_size(LogicalSize::new(w, h_logical));
     }
+}
+
+// --- artifact viewer ---------------------------------------------------------
+// The expert workspace snapshot/diff in `runner.rs` emits `artifact` VEVT
+// events; React keeps the list in `Session.artifacts` and asks the viewer to
+// load file contents on demand via these two commands.
+
+/// Max bytes we'll inline into the React viewer in one shot. Anything
+/// larger gets `kind: "binary"` so the UI shows the metadata card with an
+/// "open in default app" fallback. 8 MB is generous for code/text/markdown
+/// and big-enough for most generated images; for true media the user opens
+/// externally anyway.
+const ARTIFACT_INLINE_CAP: u64 = 8 * 1024 * 1024;
+
+fn detect_mime(path: &std::path::Path) -> &'static str {
+    let ext = path
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|s| s.to_ascii_lowercase())
+        .unwrap_or_default();
+    match ext.as_str() {
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "svg" => "image/svg+xml",
+        "pdf" => "application/pdf",
+        _ => "application/octet-stream",
+    }
+}
+
+fn classify_artifact(path: &std::path::Path) -> &'static str {
+    let ext = path
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|s| s.to_ascii_lowercase())
+        .unwrap_or_default();
+    match ext.as_str() {
+        "png" | "jpg" | "jpeg" | "gif" | "webp" | "svg" => "image",
+        "pdf" => "pdf",
+        // Text-like: rendered as markdown if `.md`, as a code block
+        // otherwise (the React viewer picks based on extension).
+        "md" | "markdown" | "txt" | "log" | "rs" | "ts" | "tsx" | "js" | "jsx" | "py" | "go"
+        | "c" | "cpp" | "h" | "hpp" | "java" | "kt" | "swift" | "rb" | "php" | "sh" | "bash"
+        | "zsh" | "fish" | "json" | "yaml" | "yml" | "toml" | "ini" | "cfg" | "conf" | "env"
+        | "html" | "htm" | "xml" | "css" | "scss" | "sass" | "csv" | "tsv" | "sql" => "text",
+        _ => "binary",
+    }
+}
+
+#[tauri::command]
+fn read_artifact(path: String) -> Result<String, String> {
+    let p = std::path::PathBuf::from(&path);
+    let meta = std::fs::metadata(&p).map_err(|e| e.to_string())?;
+    if !meta.is_file() {
+        return Err("not a file".into());
+    }
+    let size = meta.len();
+    let kind = classify_artifact(&p);
+    if size > ARTIFACT_INLINE_CAP {
+        return Ok(json!({
+            "kind": "binary",
+            "size": size,
+            "mime": detect_mime(&p),
+            "tooLarge": true,
+        })
+        .to_string());
+    }
+    match kind {
+        "text" => {
+            let bytes = std::fs::read(&p).map_err(|e| e.to_string())?;
+            // Best-effort UTF-8: lossy fallback so we never refuse to render
+            // a file just because it has a stray non-UTF-8 byte (logs etc.).
+            let text = String::from_utf8(bytes.clone())
+                .unwrap_or_else(|_| String::from_utf8_lossy(&bytes).into_owned());
+            Ok(json!({
+                "kind": "text",
+                "size": size,
+                "content": text,
+            })
+            .to_string())
+        }
+        "image" | "pdf" => {
+            use base64::Engine as _;
+            let bytes = std::fs::read(&p).map_err(|e| e.to_string())?;
+            let mime = detect_mime(&p);
+            let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+            Ok(json!({
+                "kind": kind,
+                "size": size,
+                "mime": mime,
+                "content": format!("data:{mime};base64,{b64}"),
+            })
+            .to_string())
+        }
+        _ => Ok(json!({
+            "kind": "binary",
+            "size": size,
+            "mime": detect_mime(&p),
+        })
+        .to_string()),
+    }
+}
+
+/// Reveal one artifact in the OS file manager / default app.
+#[tauri::command]
+fn reveal_artifact(path: String) {
+    let _ = open_external(&path);
+}
+
+/// Overwrite an artifact's contents from the in-app editor. Used for the
+/// pencil-edit flow on text-class artifacts (.md, .html, code, csv…). We
+/// reject non-existent targets so the editor can't be used to drop files
+/// outside the workspace through user typing; the file must already be
+/// known to Split (i.e. emitted as an artifact). Size cap matches the
+/// inline-read cap so a giant paste can't blow up the disk.
+#[tauri::command]
+fn write_artifact(path: String, content: String) -> Result<(), String> {
+    let p = std::path::PathBuf::from(&path);
+    if !p.is_file() {
+        return Err("artifact does not exist".into());
+    }
+    if content.len() as u64 > ARTIFACT_INLINE_CAP {
+        return Err(format!(
+            "content exceeds {} MB cap",
+            ARTIFACT_INLINE_CAP / 1024 / 1024
+        ));
+    }
+    std::fs::write(&p, content).map_err(|e| e.to_string())
 }
 
 // Reveal the workspace folder (or one session's subfolder) in Finder. `workspace`
@@ -1553,6 +1696,24 @@ pub fn run() {
                 }
                 center_on_screen(&win);
                 let _ = win.set_focus();
+                // Tell React when the window size changes via the OS (native
+                // fullscreen toggle, green traffic light, manual edge-drag) so
+                // it can re-fit the adaptive height. Without this signal, exiting
+                // native fullscreen leaves the window at whatever size macOS
+                // restored to — usually fine, but if React entered artMode
+                // (1180 wide) while fullscreen was suppressing resizes, the
+                // window stays wider than intended on exit. The `geom-changed`
+                // event invalidates React's lastHeightRef and triggers a fresh
+                // fit on the next frame.
+                let win_for_event = win.clone();
+                win.on_window_event(move |event| {
+                    if let tauri::WindowEvent::Resized(_) = event {
+                        // Fire on every resize; the React side dedupes via its
+                        // own lastHeightRef. The event is cheap; the alternative
+                        // is polling is_fullscreen() which is racy.
+                        let _ = win_for_event.emit("geom-changed", ());
+                    }
+                });
             }
 
             #[cfg(desktop)]
@@ -1611,7 +1772,10 @@ pub fn run() {
             check_ollama,
             install_ollama,
             pull_ollama_model,
-            save_model_config
+            save_model_config,
+            read_artifact,
+            reveal_artifact,
+            write_artifact
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

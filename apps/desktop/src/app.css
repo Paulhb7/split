@@ -68,12 +68,11 @@
   height: 46px; padding: 0 12px 0 78px;
   border-bottom: 1px solid var(--line2);
 }
-.wm { font-weight: 800; letter-spacing: -0.04em; font-size: 16px; display: flex; align-items: baseline; }
-.wm .dot {
-  width: 7px; height: 7px; border-radius: 50%; background: var(--brand); margin-left: 1px; align-self: center;
-  transition: box-shadow 0.3s;
-}
-.wm.live .dot { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 60%, transparent); animation: pulse 1.5s infinite; }
+.wm { font-weight: 800; letter-spacing: -0.04em; font-size: 16px; display: flex; align-items: center; gap: 9px; }
+.wm-name { line-height: 1; }
+/* The chrome mark uses the Three.js <SiriOrb> directly — owns its own
+   canvas + colors via props, so no CSS body needed here. The wm layout
+   keeps the flex/gap so the orb + "split" wordmark stay aligned. */
 .chrome-meta { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); letter-spacing: 0.04em; }
 .spacer { flex: 1; }
 
@@ -95,6 +94,14 @@
 
 /* ---- body ---- */
 .body { position: relative; z-index: 5; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+/* `tall` = "fullscreen overlay-style page" (onboarding / cabinet / history /
+   add-agent). Just stretches `.measure` to the body height as a *minimum*
+   (it can grow taller — body's `overflow-y: auto` then scrolls). That gives
+   `.ob2` (also `min-height: 100%`) a real height to resolve against, so its
+   flex children can use `margin: auto` to vertically center. Not applied in
+   non-fullscreen because the adaptive ResizeObserver watches
+   measure.offsetHeight — a stretched measure would runaway-grow the window. */
+.body.tall .measure { min-height: 100%; }
 /* Fullscreen-fill mode (Teams): the inner view owns its own scroll regions,
    so the body+measure must hand it the whole canvas instead of falling back
    to intrinsic content height. Adaptive sizing is paused in this mode. */
@@ -225,6 +232,9 @@
 
 /* ============================ HOME ============================ */
 .home { max-width: 880px; margin: 0 auto; padding: 16px 18px 22px; }
+/* Idle-state orb above the composer — only renders when there's no session
+   open. The bar's adaptive height grows to accommodate it (~110px extra). */
+.home-orb { display: flex; justify-content: center; padding: 6px 0 14px; }
 .sec { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); margin: 0 0 11px; display: flex; align-items: center; gap: 10px; }
 .sec::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .sec .muted { color: var(--dim2); letter-spacing: 0.05em; text-transform: none; font-size: 10px; }
@@ -338,6 +348,12 @@
 .mi-add { margin-top: 4px; border-top: 1px solid var(--line2); border-radius: 0 0 9px 9px; color: var(--brand); }
 .mi-add .mn { color: var(--brand); }
 .mi-plus { display: grid; place-items: center; width: 16px; height: 16px; font-size: 14px; color: var(--brand); }
+/* Section headers inside the expert dropdown — sober label for super, brand-
+   tinted for genius, mirrors the onboarding cabinet split. */
+.mi-section { padding: 10px 10px 4px; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim2); }
+.mi-section.genius { color: var(--brand); }
+.mi-section.coach { color: var(--good); }
+.mi-section + .mi-section { margin-top: 6px; border-top: 1px solid var(--line2); }
 
 /* ---- slash command palette (above the focused conversation composer) ---- */
 /* Opens UPWARD — sits just on top of the composer (composer is at the bottom
@@ -350,8 +366,10 @@
 .slash-desc { color: var(--dim); font-size: 12px; margin-left: 6px; }
 
 /* ---- overlay (change default league) + auth modal ---- */
-.overlay { position: absolute; inset: 0; z-index: 60; background: rgba(6, 7, 10, 0.74); backdrop-filter: blur(8px); display: grid; place-items: start center; padding: 24px; overflow: auto; }
-.overlay-card { width: min(860px, 100%); }
+.overlay { position: absolute; inset: 0; z-index: 60; background: rgba(6, 7, 10, 0.74); backdrop-filter: blur(8px); display: grid; place-items: start center; padding: 32px 36px 36px; overflow: auto; }
+.overlay-card { width: min(1200px, 100%); }
+.overlay-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.overlay-head .ob2-h2 { margin: 4px 0 0; }
 .modal-bg { position: absolute; inset: 0; z-index: 70; background: rgba(6, 7, 10, 0.74); backdrop-filter: blur(8px); display: grid; place-items: center; padding: 24px; }
 .am { width: min(400px, 100%); background: var(--ink2); border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--line)); border-radius: var(--r); padding: 26px 24px; text-align: center; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6); animation: rise 0.35s both; }
 .am .am-logo { margin: 0 auto 13px; display: block; }
@@ -534,7 +552,6 @@
 }
 .app.theme-cyberpunk::after { opacity: 0.045; }
 .app.theme-cyberpunk .wm { letter-spacing: -0.03em; }
-.app.theme-cyberpunk .wm .dot { background: var(--good); box-shadow: 0 0 8px var(--good); }
 .app.theme-cyberpunk .seg button.on { color: #07070d; background: var(--brand); box-shadow: 0 0 14px color-mix(in srgb, var(--brand) 50%, transparent); }
 .app.theme-cyberpunk .btn { color: #07070d; box-shadow: 0 0 22px color-mix(in srgb, var(--brand) 55%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--brand) 70%, transparent); }
 .app.theme-cyberpunk .run { color: #07070d; box-shadow: 0 0 18px color-mix(in srgb, var(--brand) 50%, transparent); }
@@ -583,6 +600,149 @@
 .app.theme-tokyo .overlay, .app.theme-tokyo .modal-bg { background: rgba(14, 15, 29, 0.55); }
 .app.theme-tokyo .am { background: #1a1b2e; }
 
+/* ============================ THEME · GATSBY ===============================
+   Art Deco — champagne gold on lacquered black. Cinzel Decorative for the
+   display, geometric flourish, all the opulence with none of the green.
+   Per-harness brand still wins on tiles/chips so vendor colors survive. */
+.app.theme-gatsby {
+  --ink: #0a0a0a;
+  --ink2: #1a1a1a;
+  --panel: rgba(26, 26, 26, 0.62);
+  --panel2: rgba(40, 40, 40, 0.78);
+  --line: rgba(212, 175, 55, 0.22);
+  --line2: rgba(212, 175, 55, 0.10);
+  --text: #f4ead5;
+  --dim: #a39370;
+  --dim2: #6a5d40;
+  --brand: #d4af37;
+  --good: #88c98a;
+  --warn: #e5c452;
+  --bad: #c44d4d;
+  --disp: "Cinzel Decorative", "Playfair Display", Georgia, serif;
+  background:
+    radial-gradient(820px 520px at 86% -12%, rgba(212, 175, 55, 0.22), transparent 60%),
+    radial-gradient(720px 620px at -6% 108%, rgba(212, 175, 55, 0.10), transparent 60%),
+    radial-gradient(560px 460px at 50% 46%, rgba(212, 175, 55, 0.05), transparent 70%),
+    linear-gradient(180deg, #0a0a0a 0%, #050505 100%);
+}
+.app.theme-gatsby::before { opacity: 0.16; }
+.app.theme-gatsby::after { opacity: 0.05; }
+.app.theme-gatsby .ob2-h1,
+.app.theme-gatsby .ob2-h2,
+.app.theme-gatsby .ob h1,
+.app.theme-gatsby h1,
+.app.theme-gatsby h2 { letter-spacing: 0.02em; font-weight: 700; }
+.app.theme-gatsby .wm { letter-spacing: 0.04em; font-weight: 700; }
+.app.theme-gatsby .seg button.on { color: #0a0a0a; background: var(--brand); }
+.app.theme-gatsby .btn { color: #0a0a0a; box-shadow: 0 8px 28px color-mix(in srgb, var(--brand) 35%, transparent); }
+.app.theme-gatsby .run { color: #0a0a0a; }
+.app.theme-gatsby .stop { background: rgba(196, 77, 77, 0.10); border-color: rgba(196, 77, 77, 0.45); color: var(--bad); }
+.app.theme-gatsby .stream-md a,
+.app.theme-gatsby .turn .text a { color: var(--brand); }
+.app.theme-gatsby .stream-md code,
+.app.theme-gatsby .turn .text code { background: rgba(212, 175, 55, 0.10); color: var(--brand); }
+.app.theme-gatsby .stream-md pre,
+.app.theme-gatsby .turn .text pre { background: rgba(10, 10, 10, 0.78); border: 1px solid var(--line); }
+.app.theme-gatsby .menu { background: #1a1a1a; border-color: rgba(212, 175, 55, 0.32); }
+.app.theme-gatsby .mi:hover, .app.theme-gatsby .mi.sel { background: rgba(212, 175, 55, 0.10); }
+.app.theme-gatsby .overlay, .app.theme-gatsby .modal-bg { background: rgba(0, 0, 0, 0.70); }
+.app.theme-gatsby .am { background: #1a1a1a; }
+.app.theme-gatsby .toast { background: #1a1a1a; }
+.app.theme-gatsby .drop { background: rgba(26, 26, 26, 0.92); }
+.app.theme-gatsby .logs-pre { background: rgba(212, 175, 55, 0.06); color: var(--text); }
+.app.theme-gatsby .xbtn:hover { background: rgba(212, 175, 55, 0.10); }
+
+/* ============================ THEME · TITANIC ==============================
+   North Atlantic navy, brass fittings, white linen. Edwardian dining room
+   meets deep open ocean. Calm, formal, weighty. */
+.app.theme-titanic {
+  --ink: #061a30;
+  --ink2: #0d2745;
+  --panel: rgba(13, 39, 69, 0.62);
+  --panel2: rgba(20, 50, 85, 0.78);
+  --line: rgba(200, 156, 74, 0.20);
+  --line2: rgba(200, 156, 74, 0.08);
+  --text: #f4ead5;
+  --dim: #94a8c0;
+  --dim2: #5a6e85;
+  --brand: #c89c4a;
+  --good: #7eb088;
+  --warn: #e5b452;
+  --bad: #b95850;
+  --disp: "Playfair Display", "EB Garamond", Georgia, serif;
+  background:
+    radial-gradient(820px 520px at 86% -12%, rgba(200, 156, 74, 0.14), transparent 60%),
+    radial-gradient(720px 620px at -6% 108%, rgba(70, 110, 160, 0.18), transparent 60%),
+    radial-gradient(560px 460px at 50% 46%, rgba(255, 255, 255, 0.03), transparent 70%),
+    linear-gradient(180deg, #0a2540 0%, #050f1c 100%);
+}
+.app.theme-titanic::before { opacity: 0.20; }
+.app.theme-titanic::after { opacity: 0.04; }
+.app.theme-titanic .seg button.on { color: #061a30; background: var(--brand); }
+.app.theme-titanic .btn { color: #061a30; box-shadow: 0 8px 28px color-mix(in srgb, var(--brand) 32%, transparent); }
+.app.theme-titanic .run { color: #061a30; }
+.app.theme-titanic .stop { background: rgba(185, 88, 80, 0.12); border-color: rgba(185, 88, 80, 0.45); color: var(--bad); }
+.app.theme-titanic .stream-md a,
+.app.theme-titanic .turn .text a { color: var(--brand); }
+.app.theme-titanic .stream-md code,
+.app.theme-titanic .turn .text code { background: rgba(200, 156, 74, 0.10); color: var(--brand); }
+.app.theme-titanic .stream-md pre,
+.app.theme-titanic .turn .text pre { background: rgba(6, 26, 48, 0.7); border: 1px solid var(--line); }
+.app.theme-titanic .menu { background: #0d2745; border-color: rgba(200, 156, 74, 0.30); }
+.app.theme-titanic .mi:hover, .app.theme-titanic .mi.sel { background: rgba(200, 156, 74, 0.10); }
+.app.theme-titanic .overlay, .app.theme-titanic .modal-bg { background: rgba(5, 15, 28, 0.62); }
+.app.theme-titanic .am { background: #0d2745; }
+.app.theme-titanic .toast { background: #0d2745; }
+.app.theme-titanic .drop { background: rgba(13, 39, 69, 0.86); }
+.app.theme-titanic .logs-pre { background: rgba(200, 156, 74, 0.06); color: var(--text); }
+.app.theme-titanic .xbtn:hover { background: rgba(200, 156, 74, 0.10); }
+
+/* ============================ THEME · GHIBLI ===============================
+   Light pastoral — endless sky, sage pasture, watercolor cloud. Cleanly
+   different from Baroque (which is warm cream salon): Ghibli reads outdoor
+   and dewy where Baroque reads indoor and serif. */
+.app.theme-ghibli {
+  --ink: #1f2b35;
+  --ink2: #eaf0f5;
+  --panel: rgba(234, 240, 245, 0.72);
+  --panel2: rgba(220, 232, 240, 0.85);
+  --line: rgba(70, 100, 130, 0.18);
+  --line2: rgba(70, 100, 130, 0.08);
+  --text: #1f2b35;
+  --dim: #5a6c80;
+  --dim2: #8a99ad;
+  --brand: #4a8fb3;
+  --good: #7ba87c;
+  --warn: #d4a55a;
+  --bad: #b8554a;
+  --disp: "Quicksand", "Bricolage Grotesque", system-ui, sans-serif;
+  background:
+    radial-gradient(820px 520px at 86% -12%, rgba(74, 143, 179, 0.22), transparent 60%),
+    radial-gradient(720px 620px at -6% 108%, rgba(123, 168, 124, 0.20), transparent 60%),
+    radial-gradient(560px 460px at 50% 46%, rgba(255, 255, 255, 0.30), transparent 70%),
+    linear-gradient(180deg, #eaf0f5 0%, #d9e6ee 100%);
+}
+.app.theme-ghibli::before { opacity: 0.26; }
+.app.theme-ghibli::after { opacity: 0.06; mix-blend-mode: multiply; }
+.app.theme-ghibli .seg button.on { color: #fff; background: var(--brand); }
+.app.theme-ghibli .btn { color: #fff; box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 32%, transparent); }
+.app.theme-ghibli .run { color: #fff; }
+.app.theme-ghibli .stop { background: rgba(184, 85, 74, 0.10); border-color: rgba(184, 85, 74, 0.40); color: var(--bad); }
+.app.theme-ghibli .stream-md a,
+.app.theme-ghibli .turn .text a { color: var(--brand); }
+.app.theme-ghibli .stream-md code,
+.app.theme-ghibli .turn .text code { background: rgba(70, 100, 130, 0.10); }
+.app.theme-ghibli .stream-md pre,
+.app.theme-ghibli .turn .text pre { background: rgba(70, 100, 130, 0.07); border: 1px solid var(--line); }
+.app.theme-ghibli .menu { background: #eaf0f5; box-shadow: 0 12px 32px rgba(31, 43, 53, 0.14); }
+.app.theme-ghibli .mi:hover, .app.theme-ghibli .mi.sel { background: rgba(70, 100, 130, 0.08); }
+.app.theme-ghibli .overlay, .app.theme-ghibli .modal-bg { background: rgba(31, 43, 53, 0.30); }
+.app.theme-ghibli .am { background: #eaf0f5; }
+.app.theme-ghibli .toast { background: #eaf0f5; box-shadow: 0 10px 30px rgba(31, 43, 53, 0.14); }
+.app.theme-ghibli .drop { background: rgba(234, 240, 245, 0.94); }
+.app.theme-ghibli .logs-pre { background: rgba(70, 100, 130, 0.06); color: var(--text); }
+.app.theme-ghibli .xbtn:hover { background: rgba(70, 100, 130, 0.08); }
+
 /* ============================ skin picker (chrome popover) ============== */
 .skin-wrap { position: relative; }
 .skin-scrim { position: fixed; inset: 0; z-index: 39; }
@@ -605,3 +765,294 @@
 .skin-meta b { font-size: 13px; font-weight: 700; display: block; }
 .skin-meta small { display: block; font-family: var(--mono); font-size: 9.5px; color: var(--dim2); margin-top: 2px; }
 .skin-tick { color: var(--brand); font-size: 9px; flex: none; }
+
+/* ============================ ARTIFACTS ================================= */
+/* The split layout activates whenever the focused session has at least one
+   deliverable (Session.artifacts.length > 0). Conversation becomes a left
+   rail, ArtifactViewer fills the rest. Body/measure are switched to `fill`
+   mode in App.tsx so the window owns its own scroll regions. */
+.art-split {
+  display: flex; flex-direction: row;
+  height: 100%; width: 100%;
+  min-height: 0; min-width: 0;
+  gap: 0;
+}
+.art-split-conv {
+  flex: 0 0 var(--rail-w, 460px);
+  min-width: 0; max-width: none;
+  min-height: 0; overflow-y: auto;
+}
+/* Vertical divider, user-draggable. The hit area is 8px so it's easy to
+   grab; the visible line is 1px sitting in the middle. On hover/active
+   the whole strip washes with brand so the affordance is unmistakable. */
+.art-split-handle {
+  flex: 0 0 8px;
+  position: relative;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s;
+  z-index: 1;
+}
+.art-split-handle::before {
+  content: "";
+  position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: 1px;
+  background: var(--line);
+  transform: translateX(-0.5px);
+  pointer-events: none;
+}
+.art-split-handle:hover,
+.art-split-handle:active {
+  background: color-mix(in srgb, var(--brand) 18%, transparent);
+}
+.art-split-handle:hover::before,
+.art-split-handle:active::before {
+  background: var(--brand);
+}
+.art-split-view {
+  flex: 1; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column;
+  background: var(--ink2);
+}
+/* In split mode the conv loses its centered max-width and gets a tighter
+   horizontal padding so it doesn't waste rail width on margins. */
+.art-split .conv { max-width: none; margin: 0; padding: 14px 14px 14px; }
+
+/* Per-session chips strip — one per deliverable, the active one highlighted.
+   Sits between the thread and the composer; clicking pilots the viewer. */
+.art-strip {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: 14px 0 6px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+.art-chip {
+  font-family: var(--mono); font-size: 11px;
+  padding: 5px 9px; border-radius: 8px;
+  background: transparent; border: 1px solid var(--line);
+  color: var(--dim); cursor: pointer;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  transition: 0.15s;
+}
+.art-chip:hover { color: var(--text); border-color: var(--text); }
+.art-chip.active {
+  color: var(--brand); border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+}
+
+/* ArtifactViewer pane (right side of the split). */
+.art-pane { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.art-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.art-title { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; }
+.art-rel { font-weight: 700; font-size: 13.5px; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.art-meta { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); flex: none; }
+.art-body { flex: 1; min-height: 0; overflow: auto; padding: 16px 18px; }
+
+/* Renderers */
+.art-pre {
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
+  white-space: pre-wrap; word-break: break-word;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px 14px; border-radius: 10px; margin: 0;
+}
+.art-md { font-size: 14.5px; line-height: 1.7; user-select: text; }
+.art-md p { margin: 0 0 10px; }
+.art-md h1, .art-md h2, .art-md h3 { font-weight: 700; letter-spacing: -0.01em; margin: 16px 0 8px; }
+.art-md ul, .art-md ol { margin: 0 0 10px; padding-left: 22px; }
+.art-md code { font-family: var(--mono); font-size: 12.5px; background: rgba(255, 255, 255, 0.08); padding: 1px 5px; border-radius: 5px; }
+.art-md pre { background: rgba(255, 255, 255, 0.05); padding: 12px 14px; border-radius: 10px; overflow-x: auto; }
+.art-md pre code { background: transparent; padding: 0; }
+.art-md a { color: var(--brand); }
+.art-img { max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 8px; }
+.art-iframe { width: 100%; height: 100%; min-height: 480px; border: 0; background: #fff; border-radius: 6px; }
+.art-csv-wrap { overflow: auto; }
+.art-csv { border-collapse: collapse; font-size: 12.5px; font-family: var(--mono); }
+.art-csv th, .art-csv td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; }
+.art-csv th { background: rgba(255, 255, 255, 0.04); font-weight: 700; }
+.art-fallback {
+  font-family: var(--mono); font-size: 12px; color: var(--dim);
+  padding: 24px; text-align: center;
+  border: 1px dashed var(--line); border-radius: 12px;
+}
+.art-fallback-title { font-size: 13px; color: var(--text); margin-bottom: 4px; }
+.art-fallback-meta { font-size: 11px; color: var(--dim2); }
+
+/* Raw-source editor — text-class artifacts only. Monospaced so structure
+   (markdown lists, indented code, HTML tags) stays readable. Fills the body
+   so the user has real room to work. */
+.art-edit {
+  width: 100%; height: 100%; min-height: 320px;
+  font-family: var(--mono); font-size: 13px; line-height: 1.55;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px;
+  resize: none; outline: none;
+  tab-size: 2; -moz-tab-size: 2;
+}
+.art-edit:focus { border-color: var(--brand); }
+
+/* TipTap-based markdown editor (.md artifacts in edit mode).
+   Three layers: `.md-shell` is the flex column wrapping everything in the
+   artifact body; `.md-tb` is the sticky top toolbar; `.md-scroll` is the
+   scrolling document area; `.md-doc` is the ProseMirror surface itself —
+   centered, generous, no border, so the user feels like they're editing a
+   document, not filling a form field. */
+.md-shell {
+  display: flex; flex-direction: column;
+  height: 100%; min-height: 0;
+  /* Pull the editor flush to the art-body edges so the toolbar can span
+     the full width without inheriting art-body's padding. */
+  margin: -16px -18px;
+}
+.md-scroll {
+  flex: 1; min-height: 0; overflow: auto;
+  padding: 28px 24px 60px;
+}
+.md-doc {
+  outline: none;
+  max-width: 760px; margin: 0 auto;
+  font-size: 15.5px; line-height: 1.75;
+  cursor: text;
+  caret-color: var(--brand);
+}
+/* Document-grade typography overrides on top of .art-md. The edit surface
+   gets more air than the read surface — bigger headings, more vertical
+   rhythm — so it feels like a writing canvas. */
+.md-doc h1 { font-size: 2em; margin: 0.8em 0 0.4em; letter-spacing: -0.02em; }
+.md-doc h2 { font-size: 1.5em; margin: 1em 0 0.4em; letter-spacing: -0.015em; }
+.md-doc h3 { font-size: 1.2em; margin: 1em 0 0.3em; }
+.md-doc p { margin: 0 0 0.9em; }
+.md-doc ul, .md-doc ol { margin: 0 0 0.9em; padding-left: 1.4em; }
+.md-doc li > p { margin: 0; }
+.md-doc blockquote {
+  margin: 1em 0; padding: 0.1em 0 0.1em 14px;
+  border-left: 3px solid var(--brand);
+  color: var(--dim);
+  font-style: italic;
+}
+.md-doc hr {
+  border: 0; border-top: 1px solid var(--line);
+  margin: 1.6em 0;
+}
+.md-doc pre {
+  background: rgba(255, 255, 255, 0.04);
+  padding: 14px 16px; border-radius: 10px;
+  overflow-x: auto; margin: 1em 0;
+}
+.md-doc p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--dim2);
+  float: left; height: 0; pointer-events: none;
+}
+/* Show placeholder on any empty paragraph at the very start of selection,
+   not just the first one in the doc — gives a hint after a fresh new line. */
+.md-doc .is-empty::before {
+  color: var(--dim2);
+}
+
+/* Top toolbar — sticky so it stays put while you scroll a long document.
+   Translucent backdrop so the document feels primary, the chrome secondary. */
+.md-tb {
+  position: sticky; top: 0; z-index: 2;
+  display: flex; align-items: center; gap: 4px;
+  padding: 8px 14px;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.md-tb-group { display: flex; align-items: center; gap: 2px; }
+.md-tb-sep {
+  width: 1px; height: 18px;
+  background: var(--line);
+  margin: 0 6px;
+}
+.md-tb-spacer { flex: 1; }
+.md-tb-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 28px; height: 28px; padding: 0 7px;
+  font: inherit; font-size: 13px;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.md-tb-btn:hover:not(:disabled) {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+.md-tb-btn.on {
+  color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+}
+.md-tb-btn:disabled { opacity: 0.35; cursor: default; }
+.md-tb-mono {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: -0.02em;
+}
+
+/* Bubble menu on text selection. Pill shape, floats above the selection. */
+.md-bubble {
+  display: flex; align-items: center; gap: 2px;
+  padding: 4px;
+  background: color-mix(in srgb, var(--bg) 96%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+.md-bubble-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 28px; height: 26px; padding: 0 8px;
+  font: inherit; font-size: 12.5px;
+  color: var(--dim);
+  background: transparent;
+  border: 0; border-radius: 999px;
+  cursor: pointer;
+}
+.md-bubble-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
+.md-bubble-btn.on { color: var(--brand); background: color-mix(in srgb, var(--brand) 16%, transparent); }
+
+/* PDF export = browser print dialog. We hide everything outside the artifact
+   body and reset the body to a clean, paginating flow so the print preview
+   (and the resulting PDF) shows ONLY the deliverable — no app chrome, no
+   conversation rail, no chips. macOS surfaces "Save as PDF" right in the
+   print sheet, so this is the whole export pipeline. */
+@media print {
+  /* Hide everything by default. */
+  body * { visibility: hidden !important; }
+  /* Reveal only the target artifact body and its descendants. */
+  .art-print-target,
+  .art-print-target * { visibility: visible !important; }
+  /* Pull the target out of its scroll container and let it flow naturally
+     across printed pages. Drop dark backgrounds — paper is white. */
+  .art-print-target {
+    position: absolute !important;
+    inset: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  /* Force readable colors regardless of skin (some skins use light-on-dark). */
+  .art-print-target * { color: #000 !important; background: transparent !important; }
+  .art-print-target a { color: #04457a !important; text-decoration: underline; }
+  .art-print-target pre,
+  .art-print-target code { background: #f4f4f4 !important; }
+  .art-print-target img { max-width: 100%; }
+  .art-print-target iframe { width: 100%; border: 0; min-height: 800px; }
+  /* No page margin override — let the OS print dialog ("Margins" dropdown)
+     handle it; default macOS margins look reasonable for a deliverable. */
+}

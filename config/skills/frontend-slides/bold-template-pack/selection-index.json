@@ -782,27 +782,28 @@
     {
       "slug": "split-default",
       "name": "Split Default",
-      "tagline": "Dark glass with a single coral accent — Geist sans, Geist Mono chrome, Instrument Serif italics for emphasis. The Split house style.",
+      "tagline": "Dark cosmic atmosphere with two signature orbs on the cover, four-color accent palette anchored by coral, Clash Display × Satoshi × JetBrains Mono. The Split house style.",
       "mood": [
-        "terminal-premium",
+        "dark-cosmic",
+        "atmospheric",
+        "tech-editorial",
         "considered",
-        "restrained",
-        "dark-glass",
-        "modernist"
+        "confident"
       ],
       "tone": [
-        "confident",
-        "precise",
-        "quietly-bold",
-        "tech-editorial"
+        "sharp",
+        "plain",
+        "data-dense",
+        "quietly-authoritative"
       ],
       "formality": "medium-high",
       "density": "medium-high",
       "scheme": "dark",
-      "best_for": "Anything shipped from a Split expert by default — Consultant briefings, Financier pitches, Scientist talks, internal product decks, investor or board updates that want to read as terminal-premium / Linear-adjacent rather than corporate or playful. Equally good for product-launch decks, design reviews, engineering postmortems, and any deck wanting one strict coral accent on a dark surface.",
-      "avoid_for": "Decks that need warmth, multi-color storytelling, or a cultural / editorial / playful voice — the void + single-coral palette is intentionally austere and slightly machine-like.",
+      "best_for": "The default for anything shipped from a Split expert — Consultant briefings, Financier pitches, Scientist talks, internal product decks, investor or board updates that want to read as Linear-changelog / Vercel-docs / Stripe-Press adjacent. Also: product-launch decks, design reviews, engineering postmortems, retros, year-in-review decks. Carries 4-6 KPIs, 5-7 bar rows, or 4 vendor cards per slide comfortably. Palette variants in design.md cover builder/launch (lime-magenta), editorial (amber-violet), and ops/infra (sea-coral) re-skins of the same orb-and-gradient grammar.",
+      "avoid_for": "Light decks (the system is dark-only), playful/illustrated decks (no images, no icons, no cartoons), high-formality corporate decks that need to read as conservative-bank — the orbs and atmospheric gradients are deliberately cosmic, not boardroom-neutral.",
       "preview_md": "bold-template-pack/templates/split-default/preview.md",
-      "design_md": "bold-template-pack/templates/split-default/design.md"
+      "design_md": "bold-template-pack/templates/split-default/design.md",
+      "reference_html": "bold-template-pack/templates/split-default/reference.html"
     },
     {
       "slug": "stencil-tablet",
