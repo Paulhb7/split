@@ -83,6 +83,19 @@ export function applyEvent(s: Session, ev: VEvt): Session {
         ? { ...s, auth: null, summary: "signed in…" }
         : { ...s, status: "error", auth: null, summary: "sign-in failed · " + (ev.error || "") };
 
+    case "artifact": {
+      const others = s.artifacts.filter((a) => a.rel !== ev.rel);
+      if (ev.op === "deleted") {
+        // Drop the entry and clear the viewer if it was the active one.
+        const active = s.activeArtifact === ev.rel ? (others[others.length - 1]?.rel ?? null) : s.activeArtifact;
+        return { ...s, artifacts: others, activeArtifact: active };
+      }
+      const entry = { rel: ev.rel, path: ev.path, op: ev.op, size: ev.size, mtime: ev.mtime };
+      // Newest at the end so the viewer's default selection ("last touched")
+      // matches what just came in.
+      return { ...s, artifacts: [...others, entry], activeArtifact: ev.rel };
+    }
+
     case "permission_request":
       // The runner is blocked awaiting a decision — surface it on the session
       // so the focused-session UI shows the PermissionPrompt. Latest ask wins

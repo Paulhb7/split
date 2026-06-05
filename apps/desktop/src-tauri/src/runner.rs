@@ -31,10 +31,11 @@
 //! permission UI is only surfaced when `SPLIT_PERMISSION_MODE=prompt`.
 //! The Rust runner uses `prompt` mode by default (matching Tauri spawn).
 
-use std::collections::HashMap;
-use std::path::PathBuf;
+use std::collections::{BTreeMap, HashMap};
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, LazyLock, Mutex};
+use std::time::UNIX_EPOCH;
 
 use agent_client_protocol::{
     schema::{
@@ -323,6 +324,286 @@ fn auth_methods_to_json(methods: &[agent_client_protocol::schema::AuthMethod]) -
         .collect()
 }
 
+/// One entry in the workspace snapshot used for artifact diffing.
+#[derive(Clone, Copy)]
+struct FileStamp {
+    size: u64,
+    mtime: u64,
+}
+
+/// Paths (relative path components) we never surface as artifacts —
+/// projected personas, skill symlinks, agent caches, language tooling
+/// noise. Anything starting with `.` is also skipped (covers `.git`,
+/// `.venv`, `.DS_Store`, `.claude/`, `.agents/`, `.vibe/`, …). This list
+/// is intentionally short — the goal is "is this a deliverable or
+/// plumbing?", not a complete `.gitignore`.
+const ARTIFACT_IGNORE_NAMES: &[&str] = &[
+    // Personas projected by ensure_expert_workspace
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    "QWEN.md",
+    // Per-expert memory — separate concept from a deliverable
+    "MEMORY.md",
+    // Build / runtime cruft
+    "node_modules",
+    "__pycache__",
+    "target",
+    "dist",
+    "build",
+];
+
+/// Walk `root` recursively, returning a relative-path → (size, mtime) map.
+/// Symlinks are not followed (the projected skill links would explode the
+/// scan and pull in non-deliverable content). Errors are silently skipped
+/// so a half-readable workspace never crashes the runner.
+fn snapshot_workspace(root: &Path) -> BTreeMap<String, FileStamp> {
+    let mut out = BTreeMap::new();
+    if !root.exists() {
+        return out;
+    }
+    walk_into(root, root, &mut out);
+    out
+}
+
+fn walk_into(root: &Path, dir: &Path, out: &mut BTreeMap<String, FileStamp>) {
+    let entries = match std::fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return,
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        let name_s = name.to_string_lossy();
+        if name_s.starts_with('.') {
+            continue;
+        }
+        if ARTIFACT_IGNORE_NAMES.iter().any(|n| *n == name_s) {
+            continue;
+        }
+        let meta = match entry.metadata() {
+            Ok(m) => m,
+            Err(_) => continue,
+        };
+        // Don't follow symlinks — skill directories are projected as
+        // symlinks and re-walking them would pull in tens of MB of
+        // content that's not an expert deliverable.
+        if meta.file_type().is_symlink() {
+            continue;
+        }
+        let path = entry.path();
+        if meta.is_dir() {
+            walk_into(root, &path, out);
+        } else if meta.is_file() {
+            let rel = match path.strip_prefix(root) {
+                Ok(p) => p.to_string_lossy().replace('\\', "/"),
+                Err(_) => continue,
+            };
+            let size = meta.len();
+            let mtime = meta
+                .modified()
+                .ok()
+                .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
+            out.insert(rel, FileStamp { size, mtime });
+        }
+    }
+}
+
+/// Pull file paths the agent referenced in its turn-final answer — markdown
+/// link targets `[label](target)`, and bare absolute paths starting with `/`
+/// or `~/`. Resolves each candidate to an absolute path and returns the
+/// ones that point at an existing regular file. Used as a safety net when
+/// the agent writes outside the workspace despite the persona rule —
+/// classic case: "I saved it to ~/Desktop/foo.docx".
+fn scan_referenced_paths(text: &str, workspace: &Path) -> Vec<PathBuf> {
+    let mut out: Vec<PathBuf> = Vec::new();
+    let mut seen: std::collections::HashSet<PathBuf> = std::collections::HashSet::new();
+
+    let mut push = |candidate: &str, acc: &mut Vec<PathBuf>| {
+        let trimmed = candidate.trim().trim_end_matches([',', '.', ';', ')', ']', '"', '\'']);
+        if trimmed.is_empty() {
+            return;
+        }
+        // Skip URLs and anchors.
+        if trimmed.starts_with("http://")
+            || trimmed.starts_with("https://")
+            || trimmed.starts_with("mailto:")
+            || trimmed.starts_with('#')
+        {
+            return;
+        }
+        // Resolve ~ and relative paths against the workspace.
+        let resolved: PathBuf = if let Some(rest) = trimmed.strip_prefix("~/") {
+            match std::env::var("HOME") {
+                Ok(home) => PathBuf::from(home).join(rest),
+                Err(_) => return,
+            }
+        } else if trimmed.starts_with('/') {
+            PathBuf::from(trimmed)
+        } else {
+            workspace.join(trimmed)
+        };
+        if !resolved.is_file() {
+            return;
+        }
+        let canonical = resolved.canonicalize().unwrap_or(resolved);
+        if seen.insert(canonical.clone()) {
+            acc.push(canonical);
+        }
+    };
+
+    // Markdown link targets: `](target)` — scan forward for ')' or whitespace.
+    let bytes = text.as_bytes();
+    let mut i = 0;
+    while i + 1 < bytes.len() {
+        if bytes[i] == b']' && bytes[i + 1] == b'(' {
+            let start = i + 2;
+            let mut j = start;
+            let mut depth = 1;
+            while j < bytes.len() {
+                match bytes[j] {
+                    b'(' => depth += 1,
+                    b')' => {
+                        depth -= 1;
+                        if depth == 0 {
+                            break;
+                        }
+                    }
+                    b'\n' => break,
+                    _ => {}
+                }
+                j += 1;
+            }
+            if j > start {
+                if let Ok(s) = std::str::from_utf8(&bytes[start..j]) {
+                    // Strip an optional `"title"` suffix per CommonMark.
+                    let target = s.split_whitespace().next().unwrap_or(s);
+                    push(target, &mut out);
+                }
+            }
+            i = j + 1;
+            continue;
+        }
+        i += 1;
+    }
+
+    // Bare absolute paths starting with `/` or `~/` mentioned in prose
+    // (covers "I saved it to ~/Desktop/foo.docx" with no markdown link).
+    for token in text.split(|c: char| c.is_whitespace() || c == '`') {
+        if token.starts_with('/') || token.starts_with("~/") {
+            push(token, &mut out);
+        }
+    }
+    out
+}
+
+/// Stamp a single referenced file (path is absolute), insert/update it in
+/// the snapshot, and emit a synthetic `artifact` VEVT. The `rel` we surface
+/// is the path relative to workspace when applicable, else the file name —
+/// good enough for display, and unique enough to key by.
+fn emit_referenced_artifact(
+    app: &AppHandle,
+    id: &str,
+    archive: &SessionArchive,
+    workspace: &Path,
+    path: &Path,
+    snapshot: &mut BTreeMap<String, FileStamp>,
+) {
+    let meta = match std::fs::metadata(path) {
+        Ok(m) => m,
+        Err(_) => return,
+    };
+    let size = meta.len();
+    let mtime = meta
+        .modified()
+        .ok()
+        .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let rel = match path.strip_prefix(workspace) {
+        Ok(r) => r.to_string_lossy().replace('\\', "/"),
+        Err(_) => path
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| path.to_string_lossy().to_string()),
+    };
+    let op = match snapshot.get(&rel) {
+        None => "created",
+        Some(p) if p.size != size || p.mtime != mtime => "modified",
+        _ => return,
+    };
+    snapshot.insert(rel.clone(), FileStamp { size, mtime });
+    emit_vevt(
+        app,
+        id,
+        json!({
+            "type": "artifact",
+            "rel": rel,
+            "path": path.to_string_lossy(),
+            "op": op,
+            "size": size,
+            "mtime": mtime,
+        }),
+        Some(archive),
+    );
+}
+
+/// Diff `prev` (last snapshot) against `next` (current scan) and emit one
+/// VEVT `artifact` event per change. `root` is needed to materialize the
+/// absolute `path` field the UI uses for `shell.open`.
+fn emit_artifact_diff(
+    app: &AppHandle,
+    id: &str,
+    archive: &SessionArchive,
+    root: &Path,
+    prev: &BTreeMap<String, FileStamp>,
+    next: &BTreeMap<String, FileStamp>,
+) {
+    // created / modified
+    for (rel, stamp) in next.iter() {
+        let op = match prev.get(rel) {
+            None => "created",
+            Some(p) if p.size != stamp.size || p.mtime != stamp.mtime => "modified",
+            _ => continue,
+        };
+        let abs = root.join(rel);
+        emit_vevt(
+            app,
+            id,
+            json!({
+                "type": "artifact",
+                "rel": rel,
+                "path": abs.to_string_lossy(),
+                "op": op,
+                "size": stamp.size,
+                "mtime": stamp.mtime,
+            }),
+            Some(archive),
+        );
+    }
+    // deleted
+    for (rel, _) in prev.iter() {
+        if next.contains_key(rel) {
+            continue;
+        }
+        let abs = root.join(rel);
+        emit_vevt(
+            app,
+            id,
+            json!({
+                "type": "artifact",
+                "rel": rel,
+                "path": abs.to_string_lossy(),
+                "op": "deleted",
+                "size": 0,
+                "mtime": 0,
+            }),
+            Some(archive),
+        );
+    }
+}
+
 /// Spawn a per-session task on Tauri's tokio runtime. Returns immediately
 /// with a handle whose `tx` accepts control inputs. The task exits when:
 ///   * the channel is closed (sender dropped),
@@ -391,6 +672,14 @@ pub fn start(
             PathBuf::from(&workspace)
         };
 
+        // Per-turn buffer of the agent's `say` text — drained at idle so
+        // we can scan for file paths the agent referenced (markdown links,
+        // bare absolute paths) and surface them as synthetic artifacts even
+        // when they live outside the workspace. Shared with the
+        // notification handler.
+        let say_buf: Arc<Mutex<String>> = Arc::new(Mutex::new(String::new()));
+        let say_buf_for_notif = say_buf.clone();
+
         // Captured by handler closures.
         let app_for_notif = app.clone();
         let id_for_notif = id.clone();
@@ -420,6 +709,14 @@ pub fn start(
             .builder()
             .on_receive_notification(
                 async move |notification: SessionNotification, _cx| {
+                    // Capture agent message chunks for the end-of-turn path
+                    // scan. Append BEFORE forwarding so a downstream error
+                    // can't leave the buffer half-drained.
+                    if let SessionUpdate::AgentMessageChunk(chunk) = &notification.update {
+                        if let ContentBlock::Text(t) = &chunk.content {
+                            say_buf_for_notif.lock().unwrap().push_str(&t.text);
+                        }
+                    }
                     if let Some(payload) = update_to_vevt(&notification.update) {
                         emit_vevt(
                             &app_for_notif,
@@ -642,6 +939,13 @@ pub fn start(
                 let mut persona_injected =
                     resume_requested && Some(session_id_str) == archive_for_loop.acp_sid();
 
+                // ── artifact snapshot ────────────────────────────────────
+                // Capture the workspace state BEFORE the first turn so any
+                // files the agent writes (via ACP fs/write_text_file, bash,
+                // tool calls, anything) show up in the diff. Re-walked +
+                // diffed inside `run_one_turn` on every status:idle.
+                let mut artifact_snapshot = snapshot_workspace(&cwd);
+
                 // ── main control loop ────────────────────────────────────
                 // If a turn was stashed during the auth flow, replay it now.
                 if let Some(text) = pending_turn.take() {
@@ -654,6 +958,9 @@ pub fn start(
                         &app_for_loop,
                         &id_for_loop,
                         &archive_for_loop,
+                        &cwd,
+                        &mut artifact_snapshot,
+                        &say_buf,
                     )
                     .await;
                 }
@@ -670,6 +977,9 @@ pub fn start(
                                 &app_for_loop,
                                 &id_for_loop,
                                 &archive_for_loop,
+                                &cwd,
+                                &mut artifact_snapshot,
+                                &say_buf,
                             )
                             .await;
                         }
@@ -895,8 +1205,14 @@ async fn run_one_turn(
     app: &AppHandle,
     id: &str,
     archive: &SessionArchive,
+    workspace: &Path,
+    snapshot: &mut BTreeMap<String, FileStamp>,
+    say_buf: &Arc<Mutex<String>>,
 ) -> bool {
     archive.write_turn(&text);
+    // Fresh buffer for this turn — anything left over from a cancelled or
+    // errored previous turn is irrelevant to what's being said now.
+    say_buf.lock().unwrap().clear();
     emit_vevt(
         app,
         id,
@@ -919,6 +1235,20 @@ async fn run_one_turn(
         .await;
     match resp {
         Ok(r) => {
+            // Diff the workspace just before flipping the session to idle so
+            // the React reducer (which commits the streamed answer on idle)
+            // has the artifact list already in place.
+            let next = snapshot_workspace(workspace);
+            emit_artifact_diff(app, id, archive, workspace, snapshot, &next);
+            *snapshot = next;
+            // Safety net: agents sometimes write outside cwd despite the
+            // persona rule ("I saved it to ~/Desktop/foo.docx"). Scan the
+            // turn's final answer for referenced paths and surface any that
+            // exist as synthetic artifacts.
+            let say_text = std::mem::take(&mut *say_buf.lock().unwrap());
+            for path in scan_referenced_paths(&say_text, workspace) {
+                emit_referenced_artifact(app, id, archive, workspace, &path, snapshot);
+            }
             emit_vevt(
                 app,
                 id,

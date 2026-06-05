@@ -27,6 +27,18 @@ export interface PermissionOption {
   kind: string;   // raw kind hint: "allow_once" / "allow_always" / "reject_*" / ...
 }
 
+// One file the expert produced (or modified / deleted) during a turn —
+// detected by snapshot-diffing the expert workspace between idle marks.
+// `path` is absolute (for `shell.open`-style use); `rel` is relative to the
+// expert workspace root (for display). The reducer keys by `rel`.
+export interface Artifact {
+  rel: string;
+  path: string;
+  op: "created" | "modified" | "deleted";
+  size: number;
+  mtime: number; // unix epoch seconds
+}
+
 export type VEvt =
   | { type: "ready"; harness: string; expert: string }
   | { type: "say"; text: string }
@@ -39,7 +51,9 @@ export type VEvt =
   | { type: "auth_required"; harness: string; methods: AuthMethod[]; hasLogin: boolean; note: string }
   | { type: "auth_result"; harness: string; ok: boolean; error?: string; loggedOut?: boolean }
   | { type: "permission_request"; id: string; toolId: string; expert: string;
-      toolCall: Record<string, unknown>; options: PermissionOption[] };
+      toolCall: Record<string, unknown>; options: PermissionOption[] }
+  | { type: "artifact"; rel: string; path: string; op: "created" | "modified" | "deleted";
+      size: number; mtime: number };
 
 // One stdout/stderr line from a session, tagged by Rust with its id. Exactly one
 // of vevt / log / exit is meaningful per event.
