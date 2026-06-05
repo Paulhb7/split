@@ -18,7 +18,7 @@ import type { ExpertMap } from "../shared/experts";
 import type { StartArgs } from "../shared/useSessions";
 import type { QueuedTurn } from "../shared/models";
 
-const CHIEF = "chief_of_staff";
+const CHIEF = "toscanini";
 const ROSTER_KEYS = [CHIEF, "engineer", "scientist"] as const;
 const ROLE: Record<string, string> = {
   engineer: "build / implementation",
@@ -56,7 +56,7 @@ export interface Channel {
 export interface Project {
   id: string;
   name: string;
-  rosterKeys: string[]; // ["chief_of_staff", "engineer", "scientist"]
+  rosterKeys: string[]; // ["toscanini", "engineer", "scientist"]
   channels: Channel[];
   activeChannelId: string | null;
 }

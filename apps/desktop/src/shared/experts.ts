@@ -41,20 +41,24 @@ export type ExpertMap = Record<string, Expert>;
 
 // Slugs hidden from the classic single-expert UI surfaces (@-picker, onboarding
 // cabinet). They still exist in the registry — Teams mode picks them up
-// directly. Chief of Staff (Toscanini) is the team conductor; it has no role
+// directly. Toscanini (Chief of Staff) is the team conductor; it has no role
 // when there's only one expert in the room.
-export const TEAMS_ONLY = new Set<string>(["chief_of_staff"]);
+export const TEAMS_ONLY = new Set<string>(["toscanini"]);
 export const isClassicExpert = (slug: string) => !TEAMS_ONLY.has(slug);
 
 // Fallback roster if `list_experts` fails (matches experts.json order/defaults).
+// Slug convention: supers stay unprefixed (`consultant`, `scientist`, `toscanini`),
+// genius agents carry the `genius_` prefix (`genius_davinci`, `genius_wolfgang`,
+// `genius_alfred`), coaches the `coach_` prefix. The `category` field stays
+// authoritative for programmatic checks; the prefix is for visual grouping.
 export const DEFAULT_EXPERTS: ExpertMap = {
   consultant: { label: "Consultant", category: "super", kind: "researcher", blurb: "Web research into ready slides" },
   scientist: { label: "Scientist", category: "super", kind: "researcher", blurb: "Bridges fields to find new ideas, maps the state of the art" },
   lawyer: { label: "Lawyer", category: "super", kind: "advisor", blurb: "Legal guidance, risk & clauses" },
   data_analyst: { label: "Data Analyst", category: "super", kind: "analyst", blurb: "CSV analysis, charts & dashboards" },
   engineer: { label: "Engineer", category: "super", kind: "builder", blurb: "Builds micro-apps & landing pages, ships them to a public URL" },
-  designer: { label: "DaVinci", category: "genius", kind: "creator", blurb: "Builds entire visual universes — worlds, brand identities, scene direction" },
-  musician: { label: "Wolfgang", category: "genius", kind: "creator", blurb: "Composes original music — songs, scores, soundtracks" },
-  director: { label: "Kubrick", category: "genius", kind: "creator", blurb: "Directs short films — visual + score + voice, in one piece" },
-  operator: { label: "Alfred", role: "Majordome", category: "genius", kind: "operator", blurb: "Your majordome — drives your apps with your logins, books, runs admin" },
+  genius_davinci: { label: "DaVinci", category: "genius", kind: "creator", blurb: "Builds entire visual universes — worlds, brand identities, scene direction" },
+  genius_wolfgang: { label: "Wolfgang", category: "genius", kind: "creator", blurb: "Composes original music — songs, scores, soundtracks" },
+  genius_kubrick: { label: "Kubrick", category: "genius", kind: "creator", blurb: "Directs short films — visual + score + voice, in one piece" },
+  genius_alfred: { label: "Alfred", role: "Majordome", category: "genius", kind: "operator", blurb: "Your majordome — drives your apps with your logins, books, runs admin" },
 };
