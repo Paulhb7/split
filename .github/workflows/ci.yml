@@ -26,8 +26,6 @@ concurrency:
 #                        desktop crate (Tauri) on macOS + Windows — the only
 #                        genuinely platform-specific check, and the only place
 #                        we pay the macOS/Windows premium.
-# The retired Python backend isn't in CI (it lives in the gitignored
-# `split-python/`; fresh clones don't have it).
 jobs:
   gate:
     name: Gate (frontend + engine) — ubuntu
