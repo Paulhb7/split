@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Split · Reliefs — proposition fonds 3D par thème</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Cinzel+Decorative:wght@700&family=Albert+Sans:ital,wght@0,300..800;1,400&family=Spline+Sans+Mono:wght@300..500&family=Marcellus&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Chakra+Petch:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Klee+One:wght@400;600&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Michroma&family=Italiana&family=Special+Elite&family=Lora:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  /* ───────────────────────────── page · atelier ───────────────────────────── */
+  :root {
+    --paper: #0f0e0c;
+    --paper2: #14120f;
+    --ink: #ece4d6;
+    --dim: #978d7c;
+    --copper: #d97757;
+    --hairline: rgba(236, 228, 214, 0.12);
+    --mono: "Spline Sans Mono", ui-monospace, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Albert Sans", sans-serif;
+    font-weight: 340;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  /* grain + vignette du fond de page */
+  body::before {
+    content: "";
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(1200px 700px at 50% -10%, rgba(217, 119, 87, 0.07), transparent 60%),
+      radial-gradient(900px 600px at 100% 110%, rgba(217, 119, 87, 0.04), transparent 60%);
+  }
+  body::after {
+    content: "";
+    position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .wrap { position: relative; z-index: 1; max-width: 1060px; margin: 0 auto; padding: 64px 28px 90px; }
+
+  /* ───────────────────────────── header ───────────────────────────── */
+  header { margin-bottom: 56px; animation: rise 0.8s 0.05s cubic-bezier(.22,1,.36,1) backwards; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em;
+    color: var(--copper); text-transform: uppercase; font-weight: 500;
+  }
+  h1 {
+    font-family: "Fraunces", serif; font-weight: 350; font-style: italic;
+    font-size: clamp(54px, 9vw, 96px); line-height: 1; letter-spacing: -0.02em;
+    margin: 10px 0 18px; font-variation-settings: "opsz" 144;
+  }
+  h1 .tick { color: var(--copper); font-style: normal; }
+  .lede { max-width: 60ch; color: #b8ab97; font-size: 16.5px; }
+  .lede b { color: var(--ink); font-weight: 560; }
+
+  .controls {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--hairline);
+  }
+  .switch { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+  .switch input { position: absolute; opacity: 0; }
+  .knob {
+    width: 46px; height: 26px; border-radius: 999px; position: relative; flex: none;
+    background: #262019; border: 1px solid var(--hairline);
+    transition: background 0.35s, border-color 0.35s;
+  }
+  .knob::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+    border-radius: 50%; background: #8d8275;
+    transition: transform 0.35s cubic-bezier(.22,1,.36,1), background 0.35s;
+  }
+  .switch input:checked + .knob { background: rgba(217, 119, 87, 0.28); border-color: rgba(217, 119, 87, 0.6); }
+  .switch input:checked + .knob::after { transform: translateX(20px); background: var(--copper); }
+  .switch span { font-family: var(--mono); font-size: 12.5px; color: var(--dim); letter-spacing: 0.04em; color:#a89c8a; }
+  .hint { font-family: var(--mono); font-size: 11.5px; color: #6d6354; letter-spacing: 0.03em; }
+
+  /* ───────────────────────────── grille de cartes ───────────────────────────── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: 34px 30px; }
+  .card { animation: rise 0.8s cubic-bezier(.22,1,.36,1) backwards; }
+  .card:nth-child(1) { animation-delay: 0.12s; } .card:nth-child(2) { animation-delay: 0.20s; }
+  .card:nth-child(3) { animation-delay: 0.28s; } .card:nth-child(4) { animation-delay: 0.36s; }
+  .card:nth-child(5) { animation-delay: 0.44s; } .card:nth-child(6) { animation-delay: 0.52s; }
+  .card:nth-child(7) { animation-delay: 0.60s; } .card:nth-child(8) { animation-delay: 0.68s; }
+  .card:nth-child(9) { animation-delay: 0.76s; } .card:nth-child(10) { animation-delay: 0.84s; }
+  .card:nth-child(11) { animation-delay: 0.92s; } .card:nth-child(12) { animation-delay: 1.00s; }
+  .card-head .new {
+    color: var(--copper); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    border: 1px solid rgba(217, 119, 87, 0.45); border-radius: 999px; padding: 2px 8px;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(22px); } }
+
+  .card-head {
+    display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px;
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+  }
+  .card-head .num { color: var(--copper); font-weight: 500; }
+  .card-head .theme { color: var(--ink); text-transform: uppercase; letter-spacing: 0.18em; font-weight: 500; }
+  .card-head .rule { flex: 1; height: 1px; background: var(--hairline); align-self: center; }
+
+  .caption { margin-top: 14px; }
+  .caption .shape-name {
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 420;
+    font-size: 21px; letter-spacing: -0.01em;
+  }
+  .caption .why { color: #a39784; font-size: 14px; margin-top: 3px; }
+  .caption .spec {
+    font-family: var(--mono); font-size: 11px; color: #6d6354;
+    margin-top: 9px; letter-spacing: 0.05em;
+  }
+
+  /* ───────────────────────────── fenêtre mock ───────────────────────────── */
+  .win {
+    position: relative; height: 295px; border-radius: 18px; overflow: hidden;
+    border: 1px solid var(--wline, rgba(255,255,255,0.12));
+    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255,255,255,0.06);
+    isolation: isolate;
+  }
+  /* grain interne des fenêtres */
+  .win::after {
+    content: ""; position: absolute; inset: 0; z-index: 6; pointer-events: none; opacity: 0.045;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .shape {
+    position: absolute; z-index: 1; pointer-events: none;
+    opacity: var(--a, 0.12);
+    transition: opacity 0.45s ease;
+    animation: drift 11s ease-in-out infinite alternate;
+  }
+  @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-9px); } }
+  .win:hover .shape { opacity: calc(var(--a, 0.12) * 1.9); }
+
+  .ui { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; padding: 14px 16px 14px; transition: opacity 0.45s ease; }
+  .chrome { display: flex; align-items: center; gap: 7px; }
+  .chrome i { width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; opacity: 0.85; }
+  .chrome i:nth-child(2) { background: #febc2e; } .chrome i:nth-child(3) { background: #28c840; }
+  .chrome .skin-chip {
+    margin-left: auto; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--wbrand); border: 1px solid var(--wline);
+    border-radius: 999px; padding: 3px 9px; background: var(--wpanel);
+  }
+  .wm {
+    text-align: center; margin: 16px 0 4px; font-size: 27px; letter-spacing: 0.02em;
+    color: var(--wtext); font-family: var(--wdisp, "Fraunces", serif); font-weight: 600;
+  }
+  .wm small { display: block; font-family: var(--mono); font-weight: 400; font-size: 9.5px; letter-spacing: 0.3em; color: var(--wdim); margin-top: 5px; text-transform: uppercase; }
+  .rows { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .row {
+    display: flex; align-items: center; gap: 11px; padding: 9px 13px;
+    background: var(--wpanel); border: 1px solid var(--wline); border-radius: 12px;
+    backdrop-filter: blur(8px);
+  }
+  .row .ava {
+    width: 26px; height: 26px; border-radius: 9px; flex: none;
+    background: linear-gradient(135deg, var(--wbrand), color-mix(in srgb, var(--wbrand) 55%, transparent));
+    display: grid; place-items: center; font-size: 12px; color: var(--wink, #0a0a0a); font-weight: 700; font-family: "Albert Sans", sans-serif;
+  }
+  .row b { font-size: 13.5px; font-weight: 600; color: var(--wtext); display: block; line-height: 1.25; }
+  .row small { font-size: 11px; color: var(--wdim); font-family: var(--mono); }
+  .row .st { margin-left: auto; width: 7px; height: 7px; border-radius: 50%; background: var(--wgood, #5fc06d); box-shadow: 0 0 8px var(--wgood, #5fc06d); }
+  .composer {
+    margin-top: auto; display: flex; align-items: center; gap: 10px;
+    background: var(--wpanel); border: 1px solid var(--wline); border-radius: 13px;
+    padding: 11px 14px; color: var(--wdim); font-size: 13px; backdrop-filter: blur(8px);
+  }
+  .composer kbd {
+    margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--wdim);
+    border: 1px solid var(--wline); border-radius: 5px; padding: 2px 6px;
+  }
+
+  /* mode inspection — révèle les formes, estompe l'UI */
+  body:has(#reveal:checked) .shape { opacity: 0.96; animation-play-state: paused; }
+  body:has(#reveal:checked) .ui { opacity: 0.22; }
+
+  /* ───────────────────────────── thèmes (pile background réelle) ───────────────────────────── */
+  .theme-bright {
+    --wtext: #1b2330; --wdim: #6b7689; --wbrand: #0053fd; --wink: #ffffff;
+    --wline: rgba(27, 35, 48, 0.12); --wpanel: rgba(255, 255, 255, 0.74);
+    --wgood: #2aa84f; --wdisp: "Bricolage Grotesque", sans-serif;
+    background:
+      radial-gradient(620px 420px at 86% -10%, rgba(0, 83, 253, 0.10), transparent 60%),
+      radial-gradient(560px 460px at -6% 108%, rgba(0, 83, 253, 0.05), transparent 60%),
+      linear-gradient(180deg, #f8faff 0%, #eef2f8 100%);
+  }
+  .theme-classic {
+    --wtext: #e9e7e2; --wdim: #9097a8; --wbrand: #d97757; --wink: #0a0b0e;
+    --wline: rgba(217, 119, 87, 0.22); --wpanel: rgba(28, 31, 40, 0.66);
+    --wdisp: "Bricolage Grotesque", sans-serif;
+    background:
+      radial-gradient(620px 420px at 86% -12%, rgba(217, 119, 87, 0.14), transparent 60%),
+      radial-gradient(520px 460px at -6% 108%, rgba(217, 119, 87, 0.06), transparent 60%),
+      linear-gradient(180deg, #14161c 0%, #0a0b0e 100%);
+  }
+  .theme-gatsby {
+    --wtext: #f4ead5; --wdim: #a39370; --wbrand: #d4af37; --wink: #0a0a0a;
+    --wline: rgba(212, 175, 55, 0.22); --wpanel: rgba(26, 26, 26, 0.62);
+    --wdisp: "Cinzel Decorative", serif;
+    background:
+      radial-gradient(620px 420px at 86% -12%, rgba(212, 175, 55, 0.22), transparent 60%),
+      radial-gradient(520px 420px at -6% 108%, rgba(212, 175, 55, 0.10), transparent 60%),
+      linear-gradient(180deg, #0a0a0a 0%, #050505 100%);
+  }
+  .theme-titanic {
+    --wtext: #ecdfc8; --wdim: #93a4b8; --wbrand: #c89c4a; --wink: #0a2540;
+    --wline: rgba(200, 156, 74, 0.28); --wpanel: rgba(13, 39, 69, 0.62);
+    --wdisp: "Marcellus", serif;
+    background:
+      radial-gradient(620px 420px at 80% -14%, rgba(200, 156, 74, 0.18), transparent 60%),
+      radial-gradient(560px 460px at -8% 110%, rgba(74, 116, 158, 0.16), transparent 62%),
+      linear-gradient(180deg, #0d2b4d 0%, #071c33 100%);
+  }
+  .theme-pastel {
+    --wtext: #4a322e; --wdim: #8a6a60; --wbrand: #d97a8c; --wink: #fbf2e2;
+    --wline: rgba(94, 58, 60, 0.20); --wpanel: rgba(251, 242, 226, 0.66);
+    --wgood: #7da06b; --wdisp: "Cormorant Garamond", serif;
+    background:
+      radial-gradient(620px 420px at 84% -10%, rgba(217, 122, 140, 0.20), transparent 60%),
+      radial-gradient(560px 460px at -6% 108%, rgba(202, 156, 110, 0.22), transparent 62%),
+      linear-gradient(180deg, #f5e8d3 0%, #ecd9c0 100%);
+  }
+  .theme-cyberpunk {
+    --wtext: #f4eaff; --wdim: #b39cd0; --wbrand: #ff3df2; --wink: #07070d;
+    --wline: rgba(0, 255, 209, 0.20); --wpanel: rgba(20, 18, 38, 0.62);
+    --wgood: #00ffd1; --wdisp: "Chakra Petch", sans-serif;
+    background:
+      radial-gradient(620px 420px at 86% -10%, rgba(255, 61, 242, 0.22), transparent 60%),
+      radial-gradient(520px 460px at -6% 108%, rgba(0, 255, 209, 0.16), transparent 60%),
+      linear-gradient(180deg, #0a0816 0%, #050410 100%);
+  }
+  .theme-cyberpunk::before {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.5;
+    background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 3px);
+    -webkit-mask: linear-gradient(180deg, transparent, #000 18%, #000 82%, transparent);
+    mask: linear-gradient(180deg, transparent, #000 18%, #000 82%, transparent);
+  }
+  .theme-tokyo {
+    --wtext: #c0caf5; --wdim: #7e8bb7; --wbrand: #bb9af7; --wink: #0e0f1d;
+    --wline: rgba(187, 154, 247, 0.18); --wpanel: rgba(36, 40, 59, 0.62);
+    --wgood: #9ece6a; --wdisp: "Zen Kaku Gothic New", sans-serif;
+    background:
+      radial-gradient(620px 420px at 86% -12%, rgba(187, 154, 247, 0.18), transparent 60%),
+      radial-gradient(520px 460px at -6% 108%, rgba(125, 207, 255, 0.12), transparent 60%),
+      linear-gradient(180deg, #14152a 0%, #0c0d1c 100%);
+  }
+  .theme-ghibli {
+    --wtext: #2e4a5a; --wdim: #6c8898; --wbrand: #4a8fb3; --wink: #ffffff;
+    --wline: rgba(74, 143, 179, 0.26); --wpanel: rgba(255, 255, 255, 0.58);
+    --wgood: #6aa86f; --wdisp: "Klee One", cursive;
+    background:
+      radial-gradient(620px 420px at 12% -14%, rgba(255, 244, 214, 0.65), transparent 58%),
+      radial-gradient(620px 380px at 90% 112%, rgba(146, 184, 152, 0.30), transparent 60%),
+      linear-gradient(180deg, #eef5f9 0%, #dcebf3 100%);
+  }
+
+  .theme-cosmos {
+    --wtext: #e6e9f7; --wdim: #8a90b8; --wbrand: #8e7bff; --wink: #070912;
+    --wline: rgba(142, 123, 255, 0.22); --wpanel: rgba(22, 25, 48, 0.62);
+    --wgood: #5ce0c8; --wdisp: "Michroma", sans-serif;
+    background:
+      radial-gradient(620px 420px at 80% -12%, rgba(142, 123, 255, 0.20), transparent 60%),
+      radial-gradient(560px 460px at -8% 110%, rgba(92, 224, 200, 0.10), transparent 62%),
+      radial-gradient(700px 500px at 50% 50%, rgba(60, 50, 130, 0.12), transparent 70%),
+      linear-gradient(180deg, #0b0e1d 0%, #05060e 100%);
+  }
+
+  .theme-parisian {
+    --wtext: #f3e6ce; --wdim: #b09a7c; --wbrand: #d4a574; --wink: #1d1428;
+    --wline: rgba(212, 165, 116, 0.24); --wpanel: rgba(40, 26, 50, 0.66);
+    --wgood: #a8c08a; --wdisp: "Italiana", serif;
+    background:
+      radial-gradient(620px 420px at 86% -14%, rgba(247, 187, 132, 0.22), transparent 60%),
+      radial-gradient(560px 460px at -6% 110%, rgba(122, 70, 110, 0.28), transparent 60%),
+      radial-gradient(700px 500px at 50% 112%, rgba(212, 132, 95, 0.18), transparent 70%),
+      linear-gradient(180deg, #1d1428 0%, #3a1e3a 38%, #6e3a52 68%, #b06054 100%);
+  }
+
+  .theme-noir {
+    --wtext: #f0f0f0; --wdim: #8f8f8f; --wbrand: #ffffff; --wink: #0a0a0a;
+    --wline: rgba(255, 255, 255, 0.20); --wpanel: rgba(14, 14, 14, 0.72);
+    --wgood: #f0f0f0; --wdisp: "Special Elite", serif;
+    background:
+      radial-gradient(640px 460px at 18% -12%, rgba(255, 255, 255, 0.10), transparent 60%),
+      radial-gradient(560px 460px at 108% 112%, rgba(255, 255, 255, 0.04), transparent 62%),
+      linear-gradient(180deg, #181818 0%, #0a0a0a 100%);
+  }
+
+  .theme-minuit {
+    --wtext: #cfc6b2; --wdim: #79705c; --wbrand: #c9924e; --wink: #0b0905;
+    --wline: rgba(201, 146, 78, 0.15); --wpanel: rgba(16, 13, 9, 0.74);
+    --wgood: #87976a; --wdisp: "Lora", serif;
+    background:
+      radial-gradient(540px 380px at 78% 108%, rgba(201, 146, 78, 0.10), transparent 62%),
+      radial-gradient(620px 420px at 12% -12%, rgba(60, 70, 110, 0.14), transparent 60%),
+      linear-gradient(180deg, #0a0b12 0%, #060509 100%);
+  }
+
+  /* voix typographiques par thème */
+  .theme-titanic   .wm { letter-spacing: 0.14em; text-transform: uppercase; font-size: 23px; font-weight: 400; }
+  .theme-pastel    .wm { font-size: 33px; font-style: italic; font-weight: 600; }
+  .theme-cyberpunk .wm { letter-spacing: 0.08em; text-transform: uppercase; font-size: 24px; font-weight: 600; }
+  .theme-tokyo     .wm { font-weight: 700; letter-spacing: 0.04em; }
+  .theme-ghibli    .wm { font-weight: 600; font-size: 28px; }
+  .theme-cosmos    .wm { font-size: 19px; letter-spacing: 0.24em; text-transform: uppercase; font-weight: 400; }
+  .theme-parisian  .wm { font-size: 38px; letter-spacing: 0.06em; font-weight: 400; }
+  .theme-noir      .wm { font-size: 30px; letter-spacing: 0.03em; font-weight: 400; }
+  .theme-minuit    .wm { font-size: 30px; font-style: italic; font-weight: 500; }
+
+  /* positionnement des formes */
+  .theme-bright   .shape { top: -8px; right: -6px; width: 250px; --a: 0.55; animation-duration: 12s; }
+  .theme-classic  .shape { bottom: -8px; right: 4px; width: 235px; --a: 0.13; }
+  .theme-gatsby   .shape { top: -18px; right: -18px; width: 250px; --a: 0.14; }
+  .theme-titanic  .shape { bottom: 0; left: 0; width: 100%; --a: 0.20; animation-duration: 13s; }
+  .theme-pastel   .shape { bottom: -26px; left: 2px; height: 290px; --a: 0.45; animation-duration: 14s; }
+  .theme-cyberpunk .shape { bottom: -8px; right: -6px; width: 290px; --a: 0.20; }
+  .theme-tokyo    .shape { bottom: 0; left: 0; width: 100%; --a: 0.32; animation: none; }
+  .theme-ghibli   .shape { top: 12px; left: 14px; width: 240px; --a: 0.68; animation-duration: 13s; }
+  .theme-ghibli   .shape.b2 { top: 8px; left: 8px; width: 280px; --a: 0.70; animation-duration: 13s; }
+  .theme-cosmos   .shape { top: 2px; right: -14px; width: 290px; --a: 0.24; animation-duration: 12s; }
+  .theme-parisian .shape { bottom: 0; left: 0; width: 100%; --a: 0.52; animation-duration: 14s; }
+  .theme-parisian .beacon { animation: par-pulse 4.5s ease-in-out infinite; }
+  @keyframes par-pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+  .theme-noir     .shape { top: 0; left: 0; width: 100%; height: 100%; --a: 0.5; animation: none; }
+  .theme-noir     .smoke { animation: noir-smoke 7s ease-in-out infinite alternate; transform-origin: 90px 228px; }
+  @keyframes noir-smoke { from { transform: skewX(0deg); } to { transform: skewX(-3deg); } }
+  .theme-minuit   .shape { top: 0; left: 0; width: 100%; height: 100%; --a: 0.55; animation-duration: 18s; }
+
+  /* ───────────────────────────── section fontes ───────────────────────────── */
+  .fonts { margin-top: 76px; animation: rise 0.8s 0.55s cubic-bezier(.22,1,.36,1) backwards; }
+  .fonts h2 { font-family: "Fraunces", serif; font-style: italic; font-weight: 420; font-size: 26px; margin-bottom: 8px; }
+  .fonts-note { color: #a39784; font-size: 14.5px; max-width: 68ch; margin-bottom: 22px; }
+  .fonts-note b { color: var(--ink); font-weight: 560; }
+  .frow {
+    display: grid; grid-template-columns: 175px 1fr 1.15fr; gap: 10px 24px; align-items: center;
+    padding: 17px 4px; border-top: 1px solid var(--hairline);
+  }
+  .frow:last-of-type { border-bottom: 1px solid var(--hairline); }
+  @media (max-width: 720px) { .frow { grid-template-columns: 1fr; gap: 6px; } }
+  .spec-type { font-size: 31px; line-height: 1.1; white-space: nowrap; }
+  .fmeta { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; }
+  .fmeta .ftheme { color: var(--ink); text-transform: uppercase; letter-spacing: 0.18em; font-size: 10.5px; display: block; margin-bottom: 5px; }
+  .fmeta .from { color: #6d6354; }
+  .fmeta .to { color: var(--copper); }
+  .fwhy { color: #a39784; font-size: 13.5px; }
+
+  /* ───────────────────────────── note d'implémentation ───────────────────────────── */
+  .impl {
+    margin-top: 70px; border: 1px solid var(--hairline); border-radius: 18px;
+    background: var(--paper2); padding: 30px 32px;
+    animation: rise 0.8s 0.6s cubic-bezier(.22,1,.36,1) backwards;
+  }
+  .impl h2 { font-family: "Fraunces", serif; font-style: italic; font-weight: 420; font-size: 26px; margin-bottom: 14px; }
+  .impl .cols { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; align-items: start; }
+  @media (max-width: 760px) { .impl .cols { grid-template-columns: 1fr; } }
+  .impl pre {
+    font-family: var(--mono); font-size: 12px; line-height: 1.7; color: #c9bda8;
+    background: #0a0908; border: 1px solid var(--hairline); border-radius: 12px;
+    padding: 18px 20px; overflow-x: auto;
+  }
+  .impl pre .c { color: #6d6354; } .impl pre .k { color: var(--copper); } .impl pre .s { color: #9fbe8a; }
+  .impl ul { list-style: none; display: flex; flex-direction: column; gap: 11px; font-size: 14.5px; color: #b8ab97; }
+  .impl li { padding-left: 20px; position: relative; }
+  .impl li::before { content: "—"; position: absolute; left: 0; color: var(--copper); }
+  .impl li b { color: var(--ink); font-weight: 560; }
+
+  footer { margin-top: 46px; font-family: var(--mono); font-size: 11px; color: #5c5346; letter-spacing: 0.06em; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Split · proposition — fonds 3D par thème</div>
+    <h1>Reliefs<span class="tick">.</span></h1>
+    <p class="lede">Une <b>forme pré-rendue par skin</b>, posée en tête de la pile <b><code>background</code></b> du thème —
+    WebP alpha, zéro WebGL, zéro DOM. Subtile en usage (α 6–20 % sur les thèmes sombres,
+    tonale sur les clairs), elle donne à chaque thème un objet signature sans gêner la lecture.</p>
+    <div class="controls">
+      <label class="switch">
+        <input type="checkbox" id="reveal" />
+        <span class="knob"></span>
+        <span>Mode inspection — révéler les formes</span>
+      </label>
+      <span class="hint">· ou survoler une fenêtre</span>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- ════════════════ 01 · BRIGHT — bulles de verre ════════════════ -->
+    <div class="card">
+      <div class="card-head"><span class="num">01</span><span class="theme">Bright</span><span class="rule"></span></div>
+      <div class="win theme-bright">
+        <svg class="shape" viewBox="0 0 300 260" fill="none">
+          <defs>
+            <radialGradient id="w-orb" cx="0.35" cy="0.28" r="0.95">
+              <stop offset="0" stop-color="#ffffff"/>
+              <stop offset="0.6" stop-color="#eaf0ff"/>
+              <stop offset="0.92" stop-color="#c4d4fb"/>
+              <stop offset="1" stop-color="#9fb9f7"/>
+            </radialGradient>
+            <filter id="w-soft"><feGaussianBlur stdDeviation="1.2"/></filter>
+            <filter id="w-shadow"><feGaussianBlur stdDeviation="7"/></filter>
+          </defs>
+          <!-- ombres portées -->
+          <ellipse cx="196" cy="170" rx="46" ry="10" fill="#5d7bc4" opacity="0.30" filter="url(#w-shadow)"/>
+          <ellipse cx="106" cy="200" rx="24" ry="6" fill="#5d7bc4" opacity="0.25" filter="url(#w-shadow)"/>
+          <ellipse cx="247" cy="220" rx="15" ry="4" fill="#5d7bc4" opacity="0.22" filter="url(#w-shadow)"/>
+          <!-- sphères de verre -->
+          <circle cx="196" cy="96" r="60" fill="url(#w-orb)" stroke="rgba(0,83,253,0.20)"/>
+          <circle cx="106" cy="158" r="32" fill="url(#w-orb)" stroke="rgba(0,83,253,0.18)"/>
+          <circle cx="247" cy="192" r="19" fill="url(#w-orb)" stroke="rgba(0,83,253,0.16)"/>
+          <!-- réfraction indigo au bas de la grande -->
+          <path d="M157 142 Q 200 164 252 117" stroke="rgba(0,83,253,0.32)" stroke-width="3" filter="url(#w-soft)"/>
+          <!-- reflets -->
+          <ellipse cx="176" cy="68" rx="18" ry="10" fill="#fff" opacity="0.95" filter="url(#w-soft)" transform="rotate(-24 176 68)"/>
+          <ellipse cx="96" cy="144" rx="9" ry="5" fill="#fff" opacity="0.95" filter="url(#w-soft)" transform="rotate(-24 96 144)"/>
+          <ellipse cx="242" cy="184" rx="5" ry="3" fill="#fff" opacity="0.95" filter="url(#w-soft)" transform="rotate(-24 242 184)"/>
+        </svg>
+        <div class="ui">
+          <div class="chrome"><i></i><i></i><i></i><span class="skin-chip">Bright</span></div>
+          <div class="wm">Split<small>One bar · every expert</small></div>
+          <div class="rows">
+            <div class="row"><span class="ava">C</span><div><b>Consultant</b><small>Claude · idle</small></div><span class="st"></span></div>
+            <div class="row"><span class="ava">K</span><div><b>Coach</b><small>Copilot · running</small></div><span class="st"></span></div>
+          </div>
+          <div class="composer">Demande à ton expert…<kbd>@ expert</kbd></div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="shape-name">Bulles de verre, lumière indigo</div>
+        <div class="why">Glassmorphism discret — trois sphères, ombres douces, une réfraction indigo. La sobriété SaaS garde sa lumière.</div>
+        <div class="spec">bright-orbs.webp · 250 px · haut-droit · α 0.55 (tonal clair) · dérive 12 s</div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 02 · CLASSIC — le roi et le pion ════════════════ -->
+    <div class="card">
+      <div class="card-head"><span class="num">02</span><span class="theme">Classic</span><span class="rule"></span></div>
+      <div class="win theme-classic">
+        <svg class="shape" viewBox="0 0 300 240" fill="none">
+          <defs>
+            <linearGradient id="c-cu" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#f2ab85"/><stop offset="0.45" stop-color="#d97757"/><stop offset="1" stop-color="#6e3018"/>
+            </linearGradient>
+            <radialGradient id="c-sph" cx="0.35" cy="0.3" r="1">
+              <stop offset="0" stop-color="#f6b894"/><stop offset="0.6" stop-color="#d97757"/><stop offset="1" stop-color="#7e3a22"/>
+            </radialGradient>
+            <filter id="c-blur"><feGaussianBlur stdDeviation="2"/></filter>
+            <filter id="c-shadow"><feGaussianBlur stdDeviation="8"/></filter>
+          </defs>
+          <!-- ombres portées -->
+          <ellipse cx="135" cy="219" rx="58" ry="9" fill="#000000" opacity="0.5" filter="url(#c-shadow)"/>
+          <ellipse cx="225" cy="219" rx="34" ry="7" fill="#000000" opacity="0.45" filter="url(#c-shadow)"/>
+          <!-- le roi -->
+          <g fill="url(#c-cu)">
+            <rect x="130" y="22" width="8" height="24" rx="2"/>
+            <rect x="122" y="30" width="24" height="8" rx="2"/>
+            <ellipse cx="134" cy="52" rx="9" ry="5"/>
+            <path d="M120,56 C124,64 126,74 127,84 L141,84 C142,74 144,64 148,56 Z"/>
+            <ellipse cx="134" cy="86" rx="13" ry="4.5"/>
+            <ellipse cx="134" cy="94" rx="10" ry="3.5"/>
+            <path d="M127,96 C 125,124 120,152 112,176 L156,176 C 148,152 143,124 141,96 Z"/>
+            <ellipse cx="134" cy="178" rx="24" ry="7"/>
+            <path d="M106,182 L162,182 L168,206 L100,206 Z"/>
+            <ellipse cx="134" cy="206" rx="34" ry="9"/>
+          </g>
+          <path d="M126,60 C 124,100 118,150 112,176" stroke="#ffd2bb" stroke-width="3" opacity="0.5" filter="url(#c-blur)"/>
+          <!-- le pion -->
+          <g fill="url(#c-cu)">
+            <circle cx="225" cy="142" r="15" fill="url(#c-sph)"/>
+            <ellipse cx="225" cy="158" rx="12" ry="4"/>
+            <path d="M219,160 C 217,176 213,190 208,200 L242,200 C 237,190 233,176 231,160 Z"/>
+            <ellipse cx="225" cy="202" rx="20" ry="6"/>
+            <path d="M209,204 L241,204 L245,216 L205,216 Z"/>
+            <ellipse cx="225" cy="216" rx="24" ry="7"/>
+          </g>
+          <ellipse cx="219" cy="136" rx="4" ry="3" fill="#ffd9c4" opacity="0.8" filter="url(#c-blur)"/>
+        </svg>
+        <div class="ui">
+          <div class="chrome"><i></i><i></i><i></i><span class="skin-chip">Classic</span></div>
+          <div class="wm">Split<small>One bar · every expert</small></div>
+          <div class="rows">
+            <div class="row"><span class="ava">C</span><div><b>Consultant</b><small>Claude · idle</small></div><span class="st"></span></div>
+            <div class="row"><span class="ava">A</span><div><b>Operator</b><small>Claude · running</small></div><span class="st"></span></div>
+          </div>
+          <div class="composer">Demande à ton expert…<kbd>@ expert</kbd></div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="shape-name">Le roi et le pion, cuivre tourné</div>
+        <div class="why">Un roster d'experts, une partie — deux pièces au tour, l'accent copper devient stratégie. Toujours à peine là.</div>
+        <div class="spec">classic-chess.webp · 235 px · coin bas-droit · α 0.13 · dérive 11 s</div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 03 · GATSBY — éventail Art Deco ════════════════ -->
+    <div class="card">
+      <div class="card-head"><span class="num">03</span><span class="theme">Gatsby</span><span class="rule"></span></div>
+      <div class="win theme-gatsby">
+        <svg class="shape" viewBox="0 0 300 300" fill="none">
+          <defs>
+            <linearGradient id="g-ray1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#f9e9a8"/><stop offset="1" stop-color="#a8842a"/>
+            </linearGradient>
+            <linearGradient id="g-ray2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#8a6d1f"/><stop offset="1" stop-color="#d4af37"/>
+            </linearGradient>
+            <radialGradient id="g-hub"><stop offset="0" stop-color="#fdf3c0"/><stop offset="1" stop-color="#b18d2c"/></radialGradient>
+          </defs>
+          <g transform="translate(312,-12)">
+            <path d="M0 0 L-15 252 L15 252 Z" fill="url(#g-ray1)"/>
+            <path d="M0 0 L-15 252 L15 252 Z" fill="url(#g-ray2)" transform="rotate(11.25)"/>
+            <path d="M0 0 L-15 252 L15 252 Z" fill="url(#g-ray1)" transform="rotate(22.5)"/>
+            <path d="M0 0 L-15 252 L15 252 Z" fill="url(#g-ray2)" transform="rotate(33.75)"/>
+            <path d="M0 0 L-15 252 L15 252 Z" fill="url(#g-ray1)" transform="rotate(45)"/>
+            <path d="M0 0 L-15 252 L15 252 Z" fill="url(#g-ray2)" transform="rotate(56.25)"/>
+            <path d="M0 0 L-15 252 L15 252 Z" fill="url(#g-ray1)" transform="rotate(67.5)"/>
+            <path d="M0 0 L-15 252 L15 252 Z" fill="url(#g-ray2)" transform="rotate(78.75)"/>
+            <path d="M0 0 L-15 252 L15 252 Z" fill="url(#g-ray1)" transform="rotate(90)"/>
+            <circle r="118" stroke="#d4af37" stroke-width="2.5" opacity="0.85"/>
+            <circle r="96"  stroke="#d4af37" stroke-width="1.5" opacity="0.5"/>
+            <circle r="74"  stroke="#f4e4a8" stroke-width="1"   opacity="0.35"/>
+            <circle r="34" fill="url(#g-hub)"/>
+            <circle r="34" stroke="#8a6d1f" stroke-width="1.5"/>
+          </g>
+        </svg>
+        <div class="ui">
+          <div class="chrome"><i></i><i></i><i></i><span class="skin-chip">Gatsby</span></div>
+          <div class="wm">Split<small>One bar · every expert</small></div>
+          <div class="rows">
+            <div class="row"><span class="ava">C</span><div><b>Consultant</b><small>Claude · idle</small></div><span class="st"></span></div>
+            <div class="row"><span class="ava">R</span><div><b>Recruiter</b><small>Codex · running</small></div><span class="st"></span></div>
+          </div>
+          <div class="composer">Demande à ton expert…<kbd>@ expert</kbd></div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="shape-name">Éventail soleil, laiton étagé</div>
+        <div class="why">Le motif déco par excellence — il prolonge le Cinzel et occupe le coin sans toucher au texte.</div>
+        <div class="spec">gatsby-sunburst.webp · 250 px · coin haut-droit · α 0.14 · dérive 11 s</div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 04 · TITANIC — paquebot quatre cheminées ════════════════ -->
+    <div class="card">
+      <div class="card-head"><span class="num">04</span><span class="theme">Titanic</span><span class="rule"></span></div>
+      <div class="win theme-titanic">
+        <svg class="shape" viewBox="0 0 460 190" fill="none" preserveAspectRatio="xMidYMax slice">
+          <defs>
+            <linearGradient id="t-hull" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#16344f"/><stop offset="1" stop-color="#06121f"/>
+            </linearGradient>
+            <linearGradient id="t-fun" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#e8c478"/><stop offset="0.55" stop-color="#c89c4a"/><stop offset="1" stop-color="#7a5c1e"/>
+            </linearGradient>
+            <filter id="t-soft"><feGaussianBlur stdDeviation="4"/></filter>
+            <filter id="t-sh" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#020c16" flood-opacity="0.6"/>
+            </filter>
+          </defs>
+          <!-- lune de laiton -->
+          <circle cx="52" cy="38" r="13" fill="#c89c4a" opacity="0.55" filter="url(#t-soft)"/>
+          <circle cx="52" cy="38" r="12" fill="#e8c478" opacity="0.5"/>
+          <!-- fumée au vent -->
+          <g fill="#93a4b8" filter="url(#t-soft)">
+            <ellipse cx="178" cy="34" rx="14" ry="7" opacity="0.35"/>
+            <ellipse cx="144" cy="26" rx="18" ry="8" opacity="0.28"/>
+            <ellipse cx="104" cy="20" rx="24" ry="9" opacity="0.20"/>
+            <ellipse cx="224" cy="38" rx="12" ry="6" opacity="0.30"/>
+            <ellipse cx="268" cy="42" rx="11" ry="5" opacity="0.28"/>
+          </g>
+          <g filter="url(#t-sh)">
+            <!-- mâts + haubans -->
+            <line x1="158" y1="98" x2="151" y2="32" stroke="#c89c4a" stroke-width="1.6" opacity="0.85"/>
+            <line x1="362" y1="100" x2="356" y2="44" stroke="#c89c4a" stroke-width="1.6" opacity="0.85"/>
+            <line x1="151" y1="32" x2="414" y2="110" stroke="#c89c4a" stroke-width="0.7" opacity="0.4"/>
+            <line x1="151" y1="32" x2="70" y2="116" stroke="#c89c4a" stroke-width="0.7" opacity="0.4"/>
+            <!-- cheminées inclinées vers l'arrière -->
+            <g transform="skewX(7)">
+              <rect x="172" y="48" width="17" height="48" fill="url(#t-fun)"/>
+              <rect x="172" y="48" width="17" height="8" fill="#0b1623"/>
+              <rect x="216" y="48" width="17" height="48" fill="url(#t-fun)"/>
+              <rect x="216" y="48" width="17" height="8" fill="#0b1623"/>
+              <rect x="260" y="48" width="17" height="48" fill="url(#t-fun)"/>
+              <rect x="260" y="48" width="17" height="8" fill="#0b1623"/>
+              <rect x="304" y="48" width="17" height="48" fill="url(#t-fun)"/>
+              <rect x="304" y="48" width="17" height="8" fill="#0b1623"/>
+            </g>
+            <!-- superstructure, passerelle vers la proue -->
+            <rect x="150" y="96" width="212" height="15" rx="2" fill="#ecdfc8"/>
+            <rect x="166" y="84" width="178" height="12" rx="2" fill="#e3d3b6"/>
+            <rect x="300" y="74" width="46" height="10" rx="2" fill="#ecdfc8"/>
+            <!-- coque, proue à droite -->
+            <path d="M58 112 L408 105 L420 112 L411 150 L74 150 C 63 138 56 124 58 112 Z" fill="url(#t-hull)"/>
+            <line x1="58" y1="112" x2="408" y2="105" stroke="#c89c4a" stroke-width="2"/>
+            <!-- hublots -->
+            <g fill="#c89c4a" opacity="0.75">
+              <circle cx="96" cy="129" r="1.8"/><circle cx="121" cy="129" r="1.8"/><circle cx="146" cy="129" r="1.8"/>
+              <circle cx="171" cy="129" r="1.8"/><circle cx="196" cy="129" r="1.8"/><circle cx="221" cy="129" r="1.8"/>
+              <circle cx="246" cy="128" r="1.8"/><circle cx="271" cy="128" r="1.8"/><circle cx="296" cy="128" r="1.8"/>
+              <circle cx="321" cy="127" r="1.8"/><circle cx="346" cy="127" r="1.8"/><circle cx="371" cy="127" r="1.8"/>
+            </g>
+          </g>
+          <!-- houle -->
+          <g stroke="#4a749e" stroke-linecap="round" fill="none" stroke-width="1.6">
+            <path d="M0 156 Q 30 150 60 156 T 120 156 T 180 156 T 240 156 T 300 156 T 360 156 T 420 156 T 460 156" opacity="0.5"/>
+            <path d="M0 168 Q 40 162 80 168 T 160 168 T 240 168 T 320 168 T 400 168 T 460 168" opacity="0.35"/>
+            <path d="M20 180 Q 60 175 100 180 T 180 180 T 260 180 T 340 180 T 420 180" opacity="0.22"/>
+          </g>
+          <!-- écume à l'étrave -->
+          <path d="M411 150 Q 424 155 436 150 Q 446 147 456 152" stroke="#ecdfc8" stroke-width="2" opacity="0.5" fill="none"/>
+        </svg>
+        <div class="ui">
+          <div class="chrome"><i></i><i></i><i></i><span class="skin-chip">Titanic</span></div>
+          <div class="wm">Split<small>One bar · every expert</small></div>
+          <div class="rows">
+            <div class="row"><span class="ava">C</span><div><b>Consultant</b><small>Claude · idle</small></div><span class="st"></span></div>
+            <div class="row"><span class="ava">A</span><div><b>Analyst</b><small>Gemini · running</small></div><span class="st"></span></div>
+          </div>
+          <div class="composer">Demande à ton expert…<kbd>@ expert</kbd></div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="shape-name">Paquebot en route, quatre cheminées</div>
+        <div class="why">Profil gravé au liseré laiton — fumée au vent, houle en traits, écume à l'étrave. La dérive lente fait la houle.</div>
+        <div class="spec">titanic-liner.webp · pleine largeur, ancré bas · α 0.20 · dérive 13 s</div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 05 · BAROQUE — colonne cannelée ════════════════ -->
+    <div class="card">
+      <div class="card-head"><span class="num">05</span><span class="theme">Baroque</span><span class="rule"></span></div>
+      <div class="win theme-pastel">
+        <svg class="shape" viewBox="0 0 200 340" fill="none">
+          <defs>
+            <linearGradient id="b-flute" gradientUnits="userSpaceOnUse" x1="58" y1="0" x2="72" y2="0" spreadMethod="repeat">
+              <stop offset="0" stop-color="#f6e7d2"/><stop offset="0.45" stop-color="#c8a285"/>
+              <stop offset="0.58" stop-color="#eedbc2"/><stop offset="1" stop-color="#f6e7d2"/>
+            </linearGradient>
+            <linearGradient id="b-round" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#5a3c2d" stop-opacity="0.38"/>
+              <stop offset="0.2" stop-color="#5a3c2d" stop-opacity="0"/>
+              <stop offset="0.5" stop-color="#fff" stop-opacity="0.30"/>
+              <stop offset="0.8" stop-color="#5a3c2d" stop-opacity="0"/>
+              <stop offset="1" stop-color="#5a3c2d" stop-opacity="0.38"/>
+            </linearGradient>
+            <linearGradient id="b-cap" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#cfa98a"/><stop offset="0.5" stop-color="#f8ecd9"/><stop offset="1" stop-color="#c39d7e"/>
+            </linearGradient>
+            <filter id="b-sh" x="-30%" y="-10%" width="160%" height="130%">
+              <feDropShadow dx="7" dy="10" stdDeviation="9" flood-color="#5e3a3c" flood-opacity="0.28"/>
+            </filter>
+          </defs>
+          <g filter="url(#b-sh)">
+            <rect x="40" y="22" width="120" height="15" rx="3" fill="url(#b-cap)"/>
+            <path d="M46 37 L154 37 L146 56 L54 56 Z" fill="url(#b-cap)"/>
+            <rect x="54" y="56" width="92" height="9" rx="2" fill="#d9b996"/>
+            <rect x="58" y="65" width="84" height="275" fill="url(#b-flute)"/>
+            <rect x="58" y="65" width="84" height="275" fill="url(#b-round)"/>
+          </g>
+        </svg>
+        <div class="ui">
+          <div class="chrome"><i></i><i></i><i></i><span class="skin-chip">Baroque</span></div>
+          <div class="wm">Split<small>One bar · every expert</small></div>
+          <div class="rows">
+            <div class="row"><span class="ava">C</span><div><b>Consultant</b><small>Claude · idle</small></div><span class="st"></span></div>
+            <div class="row"><span class="ava">W</span><div><b>Writer</b><small>Mistral · running</small></div><span class="st"></span></div>
+          </div>
+          <div class="composer">Demande à ton expert…<kbd>@ expert</kbd></div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="shape-name">Colonne cannelée, marbre crème</div>
+        <div class="why">Lumière de salon sur la pierre — tonale sur fond clair, elle peut monter en opacité sans crier.</div>
+        <div class="spec">baroque-column.webp · 200 × 340 · bord gauche, cropée bas · α 0.45 · dérive 14 s</div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 06 · NIGHT CITY — soleil synthwave ════════════════ -->
+    <div class="card">
+      <div class="card-head"><span class="num">06</span><span class="theme">Night City</span><span class="rule"></span></div>
+      <div class="win theme-cyberpunk">
+        <svg class="shape" viewBox="0 0 320 300" fill="none">
+          <defs>
+            <linearGradient id="n-sun" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffd000"/><stop offset="0.55" stop-color="#ff7a5c"/><stop offset="1" stop-color="#ff3df2"/>
+            </linearGradient>
+            <filter id="n-glow" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="7" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <mask id="n-louvres">
+              <circle cx="160" cy="160" r="100" fill="#fff"/>
+              <rect x="50" y="118" width="220" height="4"  fill="#000"/>
+              <rect x="50" y="136" width="220" height="6"  fill="#000"/>
+              <rect x="50" y="156" width="220" height="8"  fill="#000"/>
+              <rect x="50" y="178" width="220" height="10" fill="#000"/>
+              <rect x="50" y="202" width="220" height="60" fill="#000"/>
+            </mask>
+          </defs>
+          <!-- soleil persienné, posé sur l'horizon -->
+          <g filter="url(#n-glow)">
+            <circle cx="160" cy="160" r="100" fill="url(#n-sun)" mask="url(#n-louvres)"/>
+          </g>
+          <!-- grille fuyante, devant le soleil -->
+          <g stroke="#00ffd1" stroke-width="1">
+            <line x1="160" y1="196" x2="-40" y2="300" opacity="0.22"/>
+            <line x1="160" y1="196" x2="40"  y2="300" opacity="0.26"/>
+            <line x1="160" y1="196" x2="110" y2="300" opacity="0.3"/>
+            <line x1="160" y1="196" x2="160" y2="300" opacity="0.3"/>
+            <line x1="160" y1="196" x2="210" y2="300" opacity="0.3"/>
+            <line x1="160" y1="196" x2="280" y2="300" opacity="0.26"/>
+            <line x1="160" y1="196" x2="360" y2="300" opacity="0.22"/>
+            <line x1="0" y1="204" x2="320" y2="204" opacity="0.18"/>
+            <line x1="0" y1="216" x2="320" y2="216" opacity="0.24"/>
+            <line x1="0" y1="234" x2="320" y2="234" opacity="0.3"/>
+            <line x1="0" y1="260" x2="320" y2="260" opacity="0.36"/>
+            <line x1="0" y1="294" x2="320" y2="294" opacity="0.4"/>
+          </g>
+          <!-- reflet sous l'horizon -->
+          <g filter="url(#n-glow)" opacity="0.35">
+            <rect x="120" y="208" width="80" height="3" fill="#ff3df2"/>
+            <rect x="132" y="222" width="56" height="2.5" fill="#ff3df2"/>
+            <rect x="142" y="240" width="36" height="2" fill="#ff3df2"/>
+          </g>
+        </svg>
+        <div class="ui">
+          <div class="chrome"><i></i><i></i><i></i><span class="skin-chip">Night City</span></div>
+          <div class="wm">Split<small>One bar · every expert</small></div>
+          <div class="rows">
+            <div class="row"><span class="ava">C</span><div><b>Consultant</b><small>Claude · idle</small></div><span class="st"></span></div>
+            <div class="row"><span class="ava">H</span><div><b>Hacker</b><small>Qwen · running</small></div><span class="st"></span></div>
+          </div>
+          <div class="composer">Demande à ton expert…<kbd>@ expert</kbd></div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="shape-name">Soleil synthwave, persiennes néon</div>
+        <div class="why">L'icône outrun — or fondu vers magenta, lamelles qui s'élargissent vers l'horizon, la grille passe devant, reflet sous la ligne.</div>
+        <div class="spec">nightcity-sun.webp · 290 px · bas-droit · α 0.20 · dérive 11 s</div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 07 · TOKYO NIGHT — Fuji + torii ════════════════ -->
+    <div class="card">
+      <div class="card-head"><span class="num">07</span><span class="theme">Tokyo Night</span><span class="rule"></span></div>
+      <div class="win theme-tokyo">
+        <svg class="shape" viewBox="0 0 460 240" fill="none" preserveAspectRatio="xMidYMax slice">
+          <defs>
+            <filter id="k-moon" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="6" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="k-mist" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="9"/></filter>
+            <filter id="k-soft"><feGaussianBlur stdDeviation="1.5"/></filter>
+            <linearGradient id="k-tor" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#ff9bb0"/><stop offset="0.5" stop-color="#f7768e"/><stop offset="1" stop-color="#a34457"/>
+            </linearGradient>
+          </defs>
+          <!-- étoiles -->
+          <g fill="#c0caf5">
+            <circle cx="60" cy="36" r="1.4" opacity="0.7"/>
+            <circle cx="124" cy="62" r="1.1" opacity="0.5"/>
+            <circle cx="214" cy="30" r="1.3" opacity="0.6"/>
+            <circle cx="262" cy="72" r="1"   opacity="0.45"/>
+            <circle cx="332" cy="26" r="1.2" opacity="0.55"/>
+            <circle cx="430" cy="84" r="1.1" opacity="0.5"/>
+            <circle cx="34"  cy="98" r="1"   opacity="0.4"/>
+          </g>
+          <!-- lune -->
+          <circle cx="392" cy="48" r="17" fill="#bb9af7" opacity="0.9" filter="url(#k-moon)"/>
+          <!-- fuji low-poly, versant lunaire à droite -->
+          <polygon points="256,114 60,240 150,240"  fill="#191c36"/>
+          <polygon points="256,114 286,112 240,240 150,240" fill="#222547"/>
+          <polygon points="286,112 314,110 320,240 240,240" fill="#2b3058"/>
+          <polygon points="314,110 342,106 400,240 320,240" fill="#353c6e"/>
+          <polygon points="342,106 460,178 460,240 400,240" fill="#424a85"/>
+          <path d="M300 42 L342 106" stroke="#9aa6e0" stroke-width="1" opacity="0.5"/>
+          <!-- calotte de neige -->
+          <polygon points="300,42 256,114 272,100 286,112 300,96 314,110 328,100 342,106" fill="#c9d3f5"/>
+          <polygon points="300,42 256,114 272,100" fill="#9fb0e8"/>
+          <polygon points="300,42 286,112 300,96" fill="#b4c2f0"/>
+          <!-- brume de base -->
+          <ellipse cx="270" cy="232" rx="190" ry="18" fill="#0e0f1d" opacity="0.55" filter="url(#k-mist)"/>
+          <ellipse cx="390" cy="238" rx="140" ry="14" fill="#0e0f1d" opacity="0.4" filter="url(#k-mist)"/>
+          <!-- torii en premier plan -->
+          <g>
+            <ellipse cx="81" cy="238" rx="16" ry="4" fill="#06070f" opacity="0.6" filter="url(#k-soft)"/>
+            <ellipse cx="161" cy="238" rx="16" ry="4" fill="#06070f" opacity="0.6" filter="url(#k-soft)"/>
+            <!-- piliers, léger fruit vers l'intérieur -->
+            <path d="M70,240 L78,128 L92,128 L88,240 Z" fill="url(#k-tor)"/>
+            <path d="M172,240 L164,128 L150,128 L154,240 Z" fill="url(#k-tor)"/>
+            <!-- nuki (traverse basse) -->
+            <rect x="56" y="146" width="130" height="10" fill="url(#k-tor)"/>
+            <!-- gakuzuka (montant central) -->
+            <rect x="116" y="116" width="9" height="30" fill="url(#k-tor)"/>
+            <!-- shimaki + kasagi (linteau courbe) -->
+            <rect x="52" y="104" width="138" height="11" fill="#c45a6e"/>
+            <path d="M44,100 Q121,84 198,100 L198,110 Q121,94 44,110 Z" fill="url(#k-tor)"/>
+            <path d="M44,100 Q121,84 198,100" stroke="#7e3344" stroke-width="3" fill="none"/>
+            <!-- lanterne sous la traverse -->
+            <line x1="121" y1="156" x2="121" y2="166" stroke="#e0af68" stroke-width="1.5" opacity="0.8"/>
+            <circle cx="121" cy="172" r="6" fill="#e0af68" filter="url(#k-moon)" opacity="0.9"/>
+          </g>
+        </svg>
+        <div class="ui">
+          <div class="chrome"><i></i><i></i><i></i><span class="skin-chip">Tokyo Night</span></div>
+          <div class="wm">Split<small>One bar · every expert</small></div>
+          <div class="rows">
+            <div class="row"><span class="ava">C</span><div><b>Consultant</b><small>Claude · idle</small></div><span class="st"></span></div>
+            <div class="row"><span class="ava">D</span><div><b>Dev</b><small>OpenCode · running</small></div><span class="st"></span></div>
+          </div>
+          <div class="composer">Demande à ton expert…<kbd>@ expert</kbd></div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="shape-name">Fuji low-poly, torii et lanterne</div>
+        <div class="why">Le torii rose cadre la scène en premier plan (le rose du thème), lanterne ambrée sous la traverse, facettes indigo vers la lune, étoiles éparses.</div>
+        <div class="spec">tokyo-fuji-torii.webp · pleine largeur, ancré bas · α 0.32 · statique (pas de dérive)</div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 08 · SAINT-EX — cumulus, biplan et B-612 ════════════════ -->
+    <div class="card">
+      <div class="card-head"><span class="num">08</span><span class="theme">Saint-Ex</span><span class="new">renommage</span><span class="rule"></span></div>
+      <div class="win theme-ghibli">
+        <svg class="shape b2" viewBox="0 0 340 260" fill="none">
+          <defs>
+            <radialGradient id="h2-puff" cx="0.4" cy="0.3" r="0.9">
+              <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e9f2f8"/>
+            </radialGradient>
+            <linearGradient id="h2-fus" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#f6e2b4"/><stop offset="1" stop-color="#d9b06c"/>
+            </linearGradient>
+            <linearGradient id="h2-wing" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#f7ead2"/><stop offset="1" stop-color="#d4b184"/>
+            </linearGradient>
+            <filter id="h2-soft" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="9" stdDeviation="9" flood-color="#8fb4cc" flood-opacity="0.38"/>
+            </filter>
+            <filter id="h2-blur"><feGaussianBlur stdDeviation="1.2"/></filter>
+            <filter id="h2-prop"><feGaussianBlur stdDeviation="2"/></filter>
+            <radialGradient id="p2-pl" cx="0.35" cy="0.3" r="1">
+              <stop offset="0" stop-color="#f9eed2"/><stop offset="0.7" stop-color="#ecd9ad"/><stop offset="1" stop-color="#cfb284"/>
+            </radialGradient>
+          </defs>
+          <!-- étoiles pâles -->
+          <g fill="#6c8898">
+            <circle cx="140" cy="24" r="1.2" opacity="0.55"/>
+            <circle cx="36" cy="128" r="1" opacity="0.45"/>
+            <circle cx="118" cy="104" r="1" opacity="0.4"/>
+          </g>
+          <!-- B-612 dans le ciel : prince, rose sous globe, volcan -->
+          <g transform="translate(-90,-5) scale(0.7)" filter="url(#h2-soft)">
+            <circle cx="228" cy="92" r="52" fill="url(#p2-pl)"/>
+            <ellipse cx="240" cy="75" rx="7" ry="4" fill="#e6d3a4" opacity="0.85"/>
+            <ellipse cx="210" cy="100" rx="5" ry="3" fill="#e6d3a4" opacity="0.8"/>
+            <path d="M188,51 L196,36 L204,51 Z" fill="#c9a76f"/>
+            <path d="M196,33 q -2,-5 2,-8 q 4,-3 1,-8" stroke="#9fb3c4" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M201,17 q 5,-4 10,0" stroke="#e0c060" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="206" cy="20" r="3.8" fill="#3d5a6c"/>
+            <path d="M206,27 C 198,25 191,19 184,21 C 180,22 177,19 173,20" stroke="#e0c060" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M201,27 L211,27 L215,43 L198,43 Z" fill="#3d5a6c"/>
+            <line x1="204" y1="43" x2="204" y2="46" stroke="#3d5a6c" stroke-width="2"/>
+            <line x1="210" y1="43" x2="211" y2="46" stroke="#3d5a6c" stroke-width="2"/>
+            <line x1="252" y1="46" x2="252" y2="37" stroke="#6a9a5b" stroke-width="1.5"/>
+            <circle cx="252" cy="34" r="2.2" fill="#c84b5f"/>
+            <circle cx="249.5" cy="36" r="1.8" fill="#c84b5f"/>
+            <circle cx="254.5" cy="36" r="1.8" fill="#c84b5f"/>
+            <ellipse cx="252" cy="36" rx="8" ry="10" fill="#ffffff" fill-opacity="0.16" stroke="#bcd6e6" stroke-width="1.2"/>
+            <path d="M247,29 q 2,-3 5,-3" stroke="#ffffff" stroke-width="1.2" fill="none" opacity="0.8"/>
+          </g>
+          <!-- biplan, en montée vers la droite -->
+          <g transform="translate(225,74) rotate(-8)">
+            <!-- traînées -->
+            <line x1="-78" y1="-2" x2="-60" y2="-2" stroke="#bcd6e6" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+            <line x1="-72" y1="7"  x2="-58" y2="7"  stroke="#bcd6e6" stroke-width="2"   stroke-linecap="round" opacity="0.55"/>
+            <!-- empennage -->
+            <path d="M-50,0 C-55,-9 -53,-16 -46,-20 L-37,-4 Z" fill="#e8c890"/>
+            <rect x="-58" y="-3" width="20" height="4.5" rx="2.2" fill="#f4dca6"/>
+            <!-- écharpe au vent -->
+            <path d="M-4,-9 C -14,-17 -22,-12 -33,-19" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+            <path d="M-4,-9 C -12,-13 -18,-9 -25,-12" stroke="#eef6fb" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.8"/>
+            <!-- fuselage -->
+            <path d="M-52,2 C -20,-8 16,-10 38,-4 C 44,-2 44,4 38,6 C 10,12 -24,10 -52,6 Z" fill="url(#h2-fus)"/>
+            <!-- cockpit -->
+            <path d="M-8,-6 a 7 5 0 0 1 12 0 Z" fill="#41525e"/>
+            <line x1="5" y1="-7" x2="8" y2="-3" stroke="#cfe0ec" stroke-width="1.6"/>
+            <!-- aile basse -->
+            <rect x="-16" y="5" width="46" height="6" rx="3" fill="url(#h2-wing)" transform="rotate(-2)"/>
+            <!-- train -->
+            <line x1="4" y1="9" x2="1" y2="19" stroke="#8a6f52" stroke-width="2"/>
+            <circle cx="9" cy="21" r="4" fill="#5a4a3a" opacity="0.8"/>
+            <circle cx="0" cy="21" r="4.5" fill="#4a3a30"/>
+            <!-- aile haute -->
+            <rect x="-22" y="-27" width="56" height="6.5" rx="3.2" fill="url(#h2-wing)" transform="rotate(-2)"/>
+            <!-- mâts + hauban -->
+            <line x1="-7" y1="-20" x2="-9" y2="7" stroke="#8a6f52" stroke-width="1.6"/>
+            <line x1="20" y1="-21" x2="18" y2="6" stroke="#8a6f52" stroke-width="1.6"/>
+            <line x1="-7" y1="-20" x2="18" y2="6" stroke="#8a6f52" stroke-width="0.7" opacity="0.5"/>
+            <!-- capot + hélice -->
+            <circle cx="40" cy="1" r="7" fill="#4a8fb3"/>
+            <ellipse cx="50" cy="1" rx="3" ry="15" fill="#cfe0ec" opacity="0.55" filter="url(#h2-prop)"/>
+            <circle cx="47" cy="1" r="2.2" fill="#2e4a5a"/>
+          </g>
+          <!-- cumulus -->
+          <g filter="url(#h2-soft)">
+            <g filter="url(#h2-blur)">
+              <circle cx="110" cy="170" r="46" fill="url(#h2-puff)"/>
+              <circle cx="64"  cy="184" r="32" fill="url(#h2-puff)"/>
+              <circle cx="160" cy="174" r="38" fill="url(#h2-puff)"/>
+              <circle cx="196" cy="192" r="24" fill="url(#h2-puff)"/>
+              <circle cx="88"  cy="148" r="28" fill="url(#h2-puff)"/>
+              <circle cx="140" cy="142" r="26" fill="url(#h2-puff)"/>
+              <ellipse cx="130" cy="198" rx="84" ry="22" fill="url(#h2-puff)"/>
+            </g>
+            <ellipse cx="130" cy="208" rx="68" ry="11" fill="#b9d2e3" opacity="0.5" filter="url(#h2-blur)"/>
+          </g>
+        </svg>
+        <div class="ui">
+          <div class="chrome"><i></i><i></i><i></i><span class="skin-chip">Saint-Ex</span></div>
+          <div class="wm">Split<small>One bar · every expert</small></div>
+          <div class="rows">
+            <div class="row"><span class="ava">C</span><div><b>Consultant</b><small>Claude · idle</small></div><span class="st"></span></div>
+            <div class="row"><span class="ava">G</span><div><b>Guide</b><small>Gemini · running</small></div><span class="st"></span></div>
+          </div>
+          <div class="composer">Demande à ton expert…<kbd>@ expert</kbd></div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="shape-name">Le biplan sous B-612</div>
+        <div class="why">Le pilote et le conte réunis — le biplan jaune beurre file sous la petite planète : le prince y guette, écharpe d'or au vent, la rose sous son globe, le volcan fume. Silhouettes génériques, pas les aquarelles du livre.</div>
+        <div class="spec">skins.ts : id reste « ghibli » (picks persistés), label → « Saint-Ex » · saintex-scene.webp · 280 px · haut-gauche · α 0.70 · dérive 13 s</div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 09 · COSMOS — Saturne et sa lune (nouveau skin) ════════════════ -->
+    <div class="card">
+      <div class="card-head"><span class="num">09</span><span class="theme">Cosmos</span><span class="new">nouveau skin</span><span class="rule"></span></div>
+      <div class="win theme-cosmos">
+        <svg class="shape" viewBox="0 0 340 280" fill="none">
+          <defs>
+            <radialGradient id="o-pl" cx="0.35" cy="0.3" r="1">
+              <stop offset="0" stop-color="#ffd9a0"/><stop offset="0.55" stop-color="#e89a6b"/><stop offset="1" stop-color="#7e4450"/>
+            </radialGradient>
+            <radialGradient id="o-moon" cx="0.35" cy="0.3" r="1">
+              <stop offset="0" stop-color="#f0f2fa"/><stop offset="1" stop-color="#9aa2c8"/>
+            </radialGradient>
+            <linearGradient id="o-ring" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#cdbfff"/><stop offset="0.5" stop-color="#8e7bff"/><stop offset="1" stop-color="#4f3fae"/>
+            </linearGradient>
+            <linearGradient id="o-tail" x1="1" y1="1" x2="0" y2="0">
+              <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+            </linearGradient>
+            <clipPath id="o-clip"><circle cx="190" cy="130" r="68"/></clipPath>
+            <filter id="o-soft"><feGaussianBlur stdDeviation="1.5"/></filter>
+            <filter id="o-neb"><feGaussianBlur stdDeviation="16"/></filter>
+            <filter id="o-glow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="3" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <!-- nébuleuse -->
+          <ellipse cx="180" cy="140" rx="130" ry="80" fill="#3c3282" opacity="0.30" filter="url(#o-neb)"/>
+          <!-- étoiles -->
+          <g fill="#e6e9f7">
+            <circle cx="36" cy="36" r="1.3" opacity="0.7"/><circle cx="92" cy="22" r="1" opacity="0.5"/>
+            <circle cx="140" cy="48" r="1.2" opacity="0.6"/><circle cx="58" cy="120" r="1" opacity="0.45"/>
+            <circle cx="34" cy="208" r="1.3" opacity="0.6"/><circle cx="120" cy="246" r="1.1" opacity="0.5"/>
+            <circle cx="296" cy="232" r="1.2" opacity="0.55"/><circle cx="318" cy="120" r="1" opacity="0.5"/>
+            <circle cx="262" cy="26" r="1.1" opacity="0.5"/>
+          </g>
+          <path d="M70 76 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z" fill="#e6e9f7" opacity="0.8"/>
+          <path d="M288 180 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6 Z" fill="#e6e9f7" opacity="0.7"/>
+          <!-- comète -->
+          <g filter="url(#o-glow)">
+            <line x1="296" y1="44" x2="240" y2="14" stroke="url(#o-tail)" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="298" cy="45" r="3.5" fill="#ffffff"/>
+          </g>
+          <!-- saturne : anneau arrière, globe, anneau avant -->
+          <g transform="rotate(-16 190 130)">
+            <path d="M72,130 A118,32 0 0 1 308,130" stroke="url(#o-ring)" stroke-width="9" opacity="0.55"/>
+            <circle cx="190" cy="130" r="68" fill="url(#o-pl)"/>
+            <g clip-path="url(#o-clip)" opacity="0.4">
+              <rect x="112" y="96"  width="160" height="7"  rx="3.5" fill="#b5654f"/>
+              <rect x="108" y="116" width="170" height="10" rx="5"  fill="#c97a58"/>
+              <rect x="110" y="142" width="166" height="8"  rx="4"  fill="#a35a4e"/>
+              <rect x="116" y="164" width="150" height="6"  rx="3"  fill="#8a4b4e"/>
+              <circle cx="216" cy="150" r="74" fill="#070912" opacity="0.55"/>
+            </g>
+            <path d="M72,130 A118,32 0 0 0 308,130" stroke="url(#o-ring)" stroke-width="9"/>
+            <path d="M64,130 A126,38 0 0 0 316,130" stroke="url(#o-ring)" stroke-width="2.5" opacity="0.7"/>
+          </g>
+          <!-- lune avec cratères -->
+          <g>
+            <circle cx="78" cy="58" r="13" fill="url(#o-moon)"/>
+            <circle cx="73" cy="54" r="2.5" fill="#7d86ad" opacity="0.5"/>
+            <circle cx="83" cy="62" r="1.8" fill="#7d86ad" opacity="0.45"/>
+            <circle cx="79" cy="50" r="1.2" fill="#7d86ad" opacity="0.4"/>
+          </g>
+        </svg>
+        <div class="ui">
+          <div class="chrome"><i></i><i></i><i></i><span class="skin-chip">Cosmos</span></div>
+          <div class="wm">Split<small>One bar · every expert</small></div>
+          <div class="rows">
+            <div class="row"><span class="ava">C</span><div><b>Consultant</b><small>Claude · idle</small></div><span class="st"></span></div>
+            <div class="row"><span class="ava">R</span><div><b>Researcher</b><small>Hermes · running</small></div><span class="st"></span></div>
+          </div>
+          <div class="composer">Demande à ton expert…<kbd>@ expert</kbd></div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="shape-name">Saturne, sa lune, une comète</div>
+        <div class="why">Nuit d'observatoire — gaz ambré sur nébuleuse violette, l'anneau passe derrière puis devant le globe (la vraie 3D), terminateur au sud-est.</div>
+        <div class="spec">nouveau skin `cosmos` (skins.ts + app.css) · cosmos-saturn.webp · 290 px · haut-droit · α 0.24 · dérive 12 s</div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 10 · PARISIAN — la Tour, les toits, la nuit rose ════════════════ -->
+    <div class="card">
+      <div class="card-head"><span class="num">10</span><span class="theme">Parisian</span><span class="new">nouveau skin</span><span class="rule"></span></div>
+      <div class="win theme-parisian">
+        <svg class="shape" viewBox="0 0 460 200" fill="none" preserveAspectRatio="xMidYMax slice">
+          <defs>
+            <linearGradient id="par-iron" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2a1830"/><stop offset="1" stop-color="#0d0512"/>
+            </linearGradient>
+            <linearGradient id="par-gold" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#f5cf95"/><stop offset="0.5" stop-color="#d4a574"/><stop offset="1" stop-color="#8a6740"/>
+            </linearGradient>
+            <radialGradient id="par-moon" cx="0.35" cy="0.3" r="1">
+              <stop offset="0" stop-color="#fff5dc"/><stop offset="1" stop-color="#d4b690"/>
+            </radialGradient>
+            <filter id="par-glow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="4" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="par-soft"><feGaussianBlur stdDeviation="1.5"/></filter>
+            <filter id="par-sh" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#1a0a18" flood-opacity="0.55"/>
+            </filter>
+          </defs>
+          <!-- lune basse -->
+          <circle cx="76" cy="48" r="13" fill="url(#par-moon)" opacity="0.7" filter="url(#par-glow)"/>
+          <!-- nuée d'oiseaux — dans la bande rose, trait clair -->
+          <g stroke="#f3e6ce" stroke-width="1.1" stroke-linecap="round" fill="none" opacity="0.32">
+            <path d="M118 98 q 4 -3 8 0 q 4 -3 8 0"/>
+            <path d="M148 110 q 3.5 -2.5 7 0 q 3.5 -2.5 7 0"/>
+            <path d="M414 68 q 4 -3 8 0 q 4 -3 8 0"/>
+            <path d="M432 84 q 3.5 -2.5 7 0 q 3.5 -2.5 7 0"/>
+          </g>
+          <!-- toits Haussmann · plan lointain -->
+          <g fill="#2a1928" opacity="0.7" filter="url(#par-soft)">
+            <path d="M0 168 L 0 142 L 22 142 L 28 130 L 56 130 L 62 142 L 84 142 L 84 168 Z"/>
+            <path d="M70 168 L 70 138 L 100 138 L 106 124 L 138 124 L 144 138 L 174 138 L 174 168 Z"/>
+            <path d="M186 168 L 186 140 L 210 140 L 216 127 L 246 127 L 252 140 L 276 140 L 276 168 Z"/>
+            <path d="M286 168 L 286 142 L 314 142 L 320 130 L 348 130 L 354 142 L 376 142 L 376 168 Z"/>
+            <path d="M362 168 L 362 138 L 392 138 L 398 124 L 430 124 L 436 138 L 460 138 L 460 168 Z"/>
+          </g>
+          <!-- la Tour Eiffel · silhouette de fer — décentrée à droite (x ≈ 74 %), ciel dégagé -->
+          <g transform="translate(110 0)">
+          <g fill="url(#par-iron)" filter="url(#par-sh)">
+            <!-- jambage extérieur gauche -->
+            <path d="M 188 180 L 216 124 L 222 124 L 220 180 Z"/>
+            <!-- jambage extérieur droit -->
+            <path d="M 272 180 L 244 124 L 238 124 L 240 180 Z"/>
+            <!-- jambage intérieur gauche (courbe vers la 1re plateforme) -->
+            <path d="M 220 180 C 217 162, 220 144, 226 130 L 226 180 Z"/>
+            <!-- jambage intérieur droit -->
+            <path d="M 240 180 C 243 162, 240 144, 234 130 L 234 180 Z"/>
+            <!-- 1re plateforme -->
+            <rect x="212" y="120" width="36" height="4" rx="0.5"/>
+            <!-- section médiane -->
+            <path d="M 219 120 L 223 84 L 237 84 L 241 120 Z"/>
+            <!-- 2e plateforme -->
+            <rect x="220" y="81" width="20" height="3" rx="0.5"/>
+            <!-- section haute -->
+            <path d="M 224 81 L 226 44 L 234 44 L 236 81 Z"/>
+            <!-- 3e plateforme -->
+            <rect x="225" y="42" width="10" height="2.2" rx="0.4"/>
+            <!-- couronnement (campanile) -->
+            <path d="M 227 42 L 228.5 22 L 231.5 22 L 233 42 Z"/>
+          </g>
+          <!-- antenne et phare (le phare pulse — classe .beacon) -->
+          <line x1="230" y1="22" x2="230" y2="9" stroke="#1a1322" stroke-width="1.4"/>
+          <circle class="beacon" cx="230" cy="8" r="3.5" fill="#f5cf95" opacity="0.95" filter="url(#par-glow)"/>
+          <!-- treillis en fil d'or (croisillons) -->
+          <g stroke="url(#par-gold)" stroke-width="0.65" opacity="0.75" fill="none">
+            <line x1="194" y1="172" x2="216" y2="124"/>
+            <line x1="266" y1="172" x2="244" y2="124"/>
+            <line x1="220" y1="118" x2="240" y2="86"/>
+            <line x1="240" y1="118" x2="220" y2="86"/>
+            <line x1="225" y1="80" x2="235" y2="46"/>
+            <line x1="235" y1="80" x2="225" y2="46"/>
+          </g>
+          <!-- fenêtres dorées aux trois étages -->
+          <g fill="#f5cf95" opacity="0.9" filter="url(#par-glow)">
+            <circle cx="220" cy="122" r="1.8"/><circle cx="226" cy="122" r="1.8"/>
+            <circle cx="234" cy="122" r="1.8"/><circle cx="240" cy="122" r="1.8"/>
+            <circle cx="226" cy="82.5" r="1.5"/><circle cx="234" cy="82.5" r="1.5"/>
+            <circle cx="228.5" cy="43" r="1.2"/><circle cx="231.5" cy="43" r="1.2"/>
+          </g>
+          </g>
+          <!-- toits Haussmann · plan premier -->
+          <g fill="#160b1f" opacity="0.96" filter="url(#par-sh)">
+            <path d="M0 200 L 0 156 L 34 156 L 40 138 L 84 138 L 90 156 L 130 156 L 130 200 Z"/>
+            <path d="M118 200 L 118 152 L 154 152 L 160 136 L 196 136 L 202 152 L 214 152 L 214 200 Z"/>
+            <path d="M204 200 L 204 152 L 216 152 L 222 136 L 258 136 L 264 152 L 288 152 L 288 200 Z"/>
+            <path d="M386 200 L 386 156 L 410 156 L 416 138 L 444 138 L 450 156 L 460 156 L 460 200 Z"/>
+          </g>
+          <!-- cheminées de zinc -->
+          <g fill="#160b1f" opacity="0.95">
+            <rect x="18" y="148" width="3.5" height="9"/>
+            <rect x="58" y="130" width="3.5" height="10"/>
+            <rect x="106" y="146" width="3.5" height="9"/>
+            <rect x="172" y="128" width="3.5" height="10"/>
+            <rect x="236" y="128" width="3.5" height="10"/>
+            <rect x="272" y="146" width="3.5" height="9"/>
+            <rect x="420" y="130" width="3.5" height="10"/>
+            <rect x="448" y="148" width="3.5" height="9"/>
+          </g>
+          <!-- fenêtres allumées des immeubles -->
+          <g fill="#f5cf95" opacity="0.95" filter="url(#par-glow)">
+            <rect x="12"  y="172" width="3.2" height="4" rx="0.5"/>
+            <rect x="24"  y="169" width="3.2" height="4" rx="0.5"/>
+            <rect x="50"  y="174" width="3.2" height="4" rx="0.5"/>
+            <rect x="74"  y="169" width="3.2" height="4" rx="0.5"/>
+            <rect x="102" y="172" width="3.2" height="4" rx="0.5"/>
+            <rect x="148" y="169" width="3.2" height="4" rx="0.5"/>
+            <rect x="178" y="172" width="3.2" height="4" rx="0.5"/>
+            <rect x="212" y="169" width="3.2" height="4" rx="0.5"/>
+            <rect x="232" y="172" width="3.2" height="4" rx="0.5"/>
+            <rect x="252" y="169" width="3.2" height="4" rx="0.5"/>
+            <rect x="276" y="172" width="3.2" height="4" rx="0.5"/>
+            <rect x="396" y="172" width="3.2" height="4" rx="0.5"/>
+            <rect x="424" y="169" width="3.2" height="4" rx="0.5"/>
+            <rect x="446" y="172" width="3.2" height="4" rx="0.5"/>
+          </g>
+          <!-- reflets dorés dans la percée, au pied de la Tour -->
+          <g stroke="#d4a574" stroke-linecap="round" fill="none" stroke-width="0.9" opacity="0.3">
+            <line x1="300" y1="186" x2="378" y2="186"/>
+            <line x1="312" y1="191" x2="366" y2="191"/>
+          </g>
+        </svg>
+        <div class="ui">
+          <div class="chrome"><i></i><i></i><i></i><span class="skin-chip">Parisian</span></div>
+          <div class="wm">Split<small>One bar · every expert</small></div>
+          <div class="rows">
+            <div class="row"><span class="ava">C</span><div><b>Consultant</b><small>Claude · idle</small></div><span class="st"></span></div>
+            <div class="row"><span class="ava">W</span><div><b>Writer</b><small>Mistral · running</small></div><span class="st"></span></div>
+          </div>
+          <div class="composer">Demande à ton expert…<kbd>@ expert</kbd></div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="shape-name">La Dame de fer, toits Haussmann, lune basse</div>
+        <div class="why">Ciel de crépuscule parisien — bleu minuit vers vieux rose puis cuivre. La Tour se dresse à droite dans le ciel dégagé (la lune lui répond à gauche), treillis filé à l'or, trois étages allumés, phare qui pulse ; les toits de zinc s'ouvrent en percée à son pied, les fenêtres respirent au gaz, des reflets dorés prennent la lumière en dessous.</div>
+        <div class="spec">nouveau skin `parisian` (skins.ts + app.css) · parisian-eiffel.webp · pleine largeur, ancré bas · α 0.52 · dérive 14 s · phare = dot CSS pulsé (4.5 s) par-dessus le webp</div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 11 · NOIR — persiennes, fumée, pas une couleur ════════════════ -->
+    <div class="card">
+      <div class="card-head"><span class="num">11</span><span class="theme">Noir</span><span class="new">nouveau skin</span><span class="rule"></span></div>
+      <div class="win theme-noir">
+        <svg class="shape" viewBox="0 0 460 295" fill="none" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="noir-slat" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="0.85"/>
+              <stop offset="0.7" stop-color="#ffffff" stop-opacity="0.30"/>
+              <stop offset="1" stop-color="#ffffff" stop-opacity="0.10"/>
+            </linearGradient>
+            <filter id="noir-soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.6"/></filter>
+            <filter id="noir-haze" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>
+            <filter id="noir-glow" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="3" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <!-- persiennes — la lumière coupée en lames obliques -->
+          <g transform="rotate(-22 230 148)" fill="url(#noir-slat)" filter="url(#noir-soft)" opacity="0.75">
+            <rect x="-150" y="-58" width="760" height="13"/>
+            <rect x="-150" y="-12" width="760" height="13"/>
+            <rect x="-150" y="34"  width="760" height="13"/>
+            <rect x="-150" y="80"  width="760" height="13"/>
+            <rect x="-150" y="126" width="760" height="13"/>
+            <rect x="-150" y="172" width="760" height="13"/>
+            <rect x="-150" y="218" width="760" height="13"/>
+            <rect x="-150" y="264" width="760" height="13"/>
+            <rect x="-150" y="310" width="760" height="13"/>
+          </g>
+          <!-- volute de fumée depuis le cendrier (remontée dans le gap rows/composer) -->
+          <g class="smoke">
+            <path d="M 90 226 C 84 204, 102 192, 94 170 C 87 150, 106 138, 99 116 C 94 100, 108 90, 104 72"
+                  stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" opacity="0.40" filter="url(#noir-haze)"/>
+            <path d="M 92 224 C 88 208, 100 198, 95 180 C 91 164, 103 154, 99 136"
+                  stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.25" filter="url(#noir-haze)"/>
+          </g>
+          <!-- braise -->
+          <circle cx="90" cy="229" r="1.7" fill="#ffffff" opacity="0.9" filter="url(#noir-glow)"/>
+          <line x1="78" y1="232" x2="100" y2="229" stroke="#ffffff" stroke-width="2.2" opacity="0.5" stroke-linecap="round"/>
+        </svg>
+        <div class="ui">
+          <div class="chrome"><i></i><i></i><i></i><span class="skin-chip">Noir</span></div>
+          <div class="wm">Split<small>One bar · every expert</small></div>
+          <div class="rows">
+            <div class="row"><span class="ava">A</span><div><b>Analyst</b><small>Codex · running</small></div><span class="st"></span></div>
+            <div class="row"><span class="ava">C</span><div><b>Consultant</b><small>Claude · idle</small></div><span class="st"></span></div>
+          </div>
+          <div class="composer">Demande à ton expert…<kbd>@ expert</kbd></div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="shape-name">Persiennes, volute de fumée</div>
+        <div class="why">Le film noir en deux signes — la lumière coupée en lames obliques sur le mur, la fumée qui monte du cendrier. Pas une couleur dans tout le skin : même le point de statut passe au blanc, seuls les feux de la chrome macOS restent en couleur.</div>
+        <div class="spec">nouveau skin `noir` (skins.ts + app.css) · noir-persiennes.webp · plein cadre · α 0.5 · lames statiques, la fumée seule ondule (skew 7 s)</div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 12 · MINUIT — le skin qui s'allume tout seul la nuit ════════════════ -->
+    <div class="card">
+      <div class="card-head"><span class="num">12</span><span class="theme">Minuit</span><span class="new">nouveau skin</span><span class="new">auto · 21 h – 7 h</span><span class="rule"></span></div>
+      <div class="win theme-minuit">
+        <svg class="shape" viewBox="0 0 460 295" fill="none" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <radialGradient id="min-veilleuse" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#c9924e" stop-opacity="0.5"/>
+              <stop offset="1" stop-color="#c9924e" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="min-glow" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="3" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <mask id="min-cres"><rect x="0" y="0" width="460" height="295" fill="#fff"/><circle cx="101" cy="56" r="23" fill="#000"/></mask>
+          </defs>
+          <!-- halo de veilleuse -->
+          <ellipse cx="372" cy="223" rx="96" ry="50" fill="url(#min-veilleuse)"/>
+          <!-- croissant de lune -->
+          <circle cx="88" cy="64" r="26" fill="#e8dcc0" opacity="0.85" mask="url(#min-cres)" filter="url(#min-glow)"/>
+          <!-- étoiles éparses -->
+          <g fill="#e8dcc0">
+            <circle cx="180" cy="42" r="1.1" opacity="0.7"/>
+            <circle cx="236" cy="70" r="0.9" opacity="0.45"/>
+            <circle cx="292" cy="38" r="1.3" opacity="0.8" filter="url(#min-glow)"/>
+            <circle cx="338" cy="86" r="0.8" opacity="0.4"/>
+            <circle cx="396" cy="52" r="1.2" opacity="0.7"/>
+            <circle cx="428" cy="110" r="0.9" opacity="0.5"/>
+            <circle cx="142" cy="96" r="0.8" opacity="0.4"/>
+            <circle cx="58" cy="128" r="1" opacity="0.55"/>
+            <circle cx="262" cy="120" r="0.9" opacity="0.45"/>
+            <circle cx="370" cy="30" r="0.8" opacity="0.5"/>
+          </g>
+          <!-- le chat de la maison, lové dans le halo (remonté au-dessus du composer) -->
+          <g transform="translate(0 -43)">
+          <line x1="296" y1="268" x2="456" y2="268" stroke="#1c150c" stroke-width="2.5" opacity="0.9"/>
+            <path d="M 332 266 C 330 252, 342 242, 360 241 C 378 240, 392 248, 393 258 C 394 264, 388 266, 380 266 Z"
+                  fill="#0a0805" stroke="#d9a05c" stroke-width="0.9" stroke-opacity="0.55"/>
+            <path d="M 376 244 L 380 234 L 387 242 Z" fill="#0a0805" stroke="#d9a05c" stroke-width="0.9" stroke-opacity="0.55"/>
+            <path d="M 387 245 L 394 237 L 397 246 Z" fill="#0a0805" stroke="#d9a05c" stroke-width="0.9" stroke-opacity="0.55"/>
+            <path d="M 333 263 C 322 261, 319 251, 327 247" stroke="#0a0805" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+            <path d="M 333 263 C 322 261, 319 251, 327 247" stroke="#d9a05c" stroke-width="0.9" stroke-opacity="0.4" fill="none"/>
+          </g>
+        </svg>
+        <div class="ui">
+          <div class="chrome"><i></i><i></i><i></i><span class="skin-chip">Minuit · Auto</span></div>
+          <div class="wm">Split<small>One bar · every expert</small></div>
+          <div class="rows">
+            <div class="row"><span class="ava">C</span><div><b>Consultant</b><small>Claude · idle</small></div><span class="st"></span></div>
+            <div class="row"><span class="ava">W</span><div><b>Writer</b><small>Mistral · idle</small></div><span class="st"></span></div>
+          </div>
+          <div class="composer">La maison dort — demande quand même…<kbd>@ expert</kbd></div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="shape-name">Croissant, étoiles, le chat de la maison</div>
+        <div class="why">Le skin qui s'allume tout seul à la nuit tombée — l'heure locale décide. Aucun blanc pur, contrastes baissés, ambre de veilleuse : une UI qui n'éblouit pas à deux heures du matin. Le chat dort dans le halo, la lune veille, tout le monde est idle.</div>
+        <div class="spec">nouveau skin `minuit` (skins.ts + app.css) · minuit-veilleuse.webp · plein cadre · α 0.55 · dérive 18 s · auto : getHours() ∈ [21, 7) au boot + re-check horaire · pick manuel = override persisté</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════ fontes ════════════════ -->
+  <section class="fonts">
+    <h2>Fontes — une voix par époque</h2>
+    <p class="fonts-note">Aujourd'hui : <b>Bricolage Grotesque</b> partout en display, <b>Playfair</b> partagé par
+    Baroque <i>et</i> Titanic (doublon), <b>Space Grotesk</b> sur Night City, <b>Quicksand</b> sur Ghibli —
+    et le corps de texte en <b>Inter</b>. Les watermarks ci-dessus utilisent déjà les propositions :</p>
+
+    <div class="frow">
+      <div class="spec-type" style="font-family:'Cinzel Decorative',serif; color:#d4af37;">Split</div>
+      <div class="fmeta"><span class="ftheme">Gatsby</span><span class="to">Cinzel Decorative — inchangé</span></div>
+      <div class="fwhy">Déjà parfait. On n'y touche pas.</div>
+    </div>
+    <div class="frow">
+      <div class="spec-type" style="font-family:'Marcellus',serif; color:#c89c4a; letter-spacing:0.14em; text-transform:uppercase; font-size:25px;">Split</div>
+      <div class="fmeta"><span class="ftheme">Titanic</span><span class="from">Playfair Display → </span><span class="to">Marcellus</span></div>
+      <div class="fwhy">Romaine inscriptionnelle — la plaque de laiton gravée. Et Titanic cesse de partager sa voix avec Baroque.</div>
+    </div>
+    <div class="frow">
+      <div class="spec-type" style="font-family:'Cormorant Garamond',serif; font-style:italic; font-weight:600; color:#d97a8c;">Split</div>
+      <div class="fmeta"><span class="ftheme">Baroque</span><span class="from">Playfair Display → </span><span class="to">Cormorant Garamond</span></div>
+      <div class="fwhy">Garalde à fort contraste, italique de salon — plus ornée, plus xviiiᵉ que Playfair.</div>
+    </div>
+    <div class="frow">
+      <div class="spec-type" style="font-family:'Chakra Petch',sans-serif; font-weight:600; color:#ff3df2; letter-spacing:0.08em; text-transform:uppercase; font-size:27px;">Split</div>
+      <div class="fmeta"><span class="ftheme">Night City</span><span class="from">Space Grotesk → </span><span class="to">Chakra Petch</span></div>
+      <div class="fwhy">Carrée, taillée au cutter, pensée pour les HUD — du néon, pas du SaaS.</div>
+    </div>
+    <div class="frow">
+      <div class="spec-type" style="font-family:'Zen Kaku Gothic New',sans-serif; font-weight:700; color:#bb9af7;">Split</div>
+      <div class="fmeta"><span class="ftheme">Tokyo Night</span><span class="from">Bricolage (défaut) → </span><span class="to">Zen Kaku Gothic New</span></div>
+      <div class="fwhy">Géométrique calme d'une fonderie japonaise — la retenue editor-grade du thème, mais avec un accent.</div>
+    </div>
+    <div class="frow">
+      <div class="spec-type" style="font-family:'Klee One',cursive; font-weight:600; color:#4a8fb3;">Split</div>
+      <div class="fmeta"><span class="ftheme">Saint-Ex (ex-Ghibli)</span><span class="from">Quicksand → </span><span class="to">Klee One</span></div>
+      <div class="fwhy">Main d'écolier au crayon — le narrateur qui dessine ses moutons. Colle encore mieux au renommage.</div>
+    </div>
+    <div class="frow">
+      <div class="spec-type" style="font-family:'Michroma',sans-serif; color:#8e7bff; letter-spacing:0.2em; text-transform:uppercase; font-size:21px;">Split</div>
+      <div class="fmeta"><span class="ftheme">Cosmos (nouveau)</span><span class="to">Michroma</span></div>
+      <div class="fwhy">Large, espacée, agence spatiale rétro — la voix de l'observatoire pour le skin à proposer.</div>
+    </div>
+    <div class="frow">
+      <div class="spec-type" style="font-family:'Italiana',serif; color:#d4a574; letter-spacing:0.06em; font-size:38px;">Split</div>
+      <div class="fmeta"><span class="ftheme">Parisian (nouveau)</span><span class="to">Italiana</span></div>
+      <div class="fwhy">Didone très haute, traits filiformes, voix Vogue-Paris — la couverture d'un numéro de septembre à un seul mot.</div>
+    </div>
+    <div class="frow">
+      <div class="spec-type" style="font-family:'Special Elite',serif; color:#f0f0f0; font-size:30px;">Split</div>
+      <div class="fmeta"><span class="ftheme">Noir (nouveau)</span><span class="to">Special Elite</span></div>
+      <div class="fwhy">Machine à écrire à l'encre inégale — le rapport de filature tapé à trois heures du matin.</div>
+    </div>
+    <div class="frow">
+      <div class="spec-type" style="font-family:'Lora',serif; font-style:italic; font-weight:500; color:#c9924e; font-size:30px;">Split</div>
+      <div class="fmeta"><span class="ftheme">Minuit (nouveau)</span><span class="to">Lora italique</span></div>
+      <div class="fwhy">Italique de liseuse — la voix qu'on baisse quand la maison dort.</div>
+    </div>
+
+    <p class="fonts-note" style="margin-top:22px;">Optionnel, plus structurel : le <b>corps de texte global</b> passe
+    d'Inter à <b>Albert Sans</b> (cette page l'utilise) — mêmes proportions, plus de chaleur. Bright et Classic
+    gardent Bricolage : leur sobriété est le thème.</p>
+  </section>
+
+  <!-- ════════════════ implémentation ════════════════ -->
+  <section class="impl">
+    <h2>Câblage — une ligne par thème</h2>
+    <div class="cols">
+      <pre><span class="c">/* app.css — la forme s'ajoute en tête de la pile,</span>
+<span class="c">   aucun DOM ni JS en plus : */</span>
+.app.theme-gatsby {
+  <span class="k">background</span>:
+    <span class="s">url(/bg3d/gatsby-sunburst.webp)</span>
+      no-repeat 100% 0 / 250px auto,
+    radial-gradient(820px 520px at 86% -12%,
+      rgba(212,175,55,.22), transparent 60%),
+    linear-gradient(180deg, #0a0a0a, #050505);
+}</pre>
+      <ul>
+        <li><b>WebP alpha 50–100 Ko</b> par forme — rendu Blender/Spline ou génération IA, pas de three.js : la bar est always-on-top, un WebGL permanent coûte en batterie.</li>
+        <li><b>Opacité cuite dans l'asset</b> : 6–20 % sur les thèmes sombres, 30–70 % en tonal sur les clairs (Baroque, Ghibli).</li>
+        <li><b>Dérive lente optionnelle</b> — <code>background-position</code> animé sur 60 s ; jamais de rotation temps réel.</li>
+        <li><b>Fondu radial</b> côté contenu si la forme approche du texte (mask dans l'asset, pas en CSS).</li>
+        <li><b>Bright et Classic restent les plus discrets</b> — verre tonal côté clair, cuivre à α 0.12 côté sombre : l'objet est à peine là, la sobriété reste le thème.</li>
+        <li><b>Minuit s'allume seul</b> — au boot puis re-check chaque heure : <code>getHours()</code> ∈ [21, 7) bascule le skin sur <code>minuit</code> ; un pick manuel (persisté dans <code>split.skin</code>) gagne toujours. Une seule règle JS dans skins.ts, zéro dépendance.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <span>SPLIT · DESIGN/BG3D-PROPOSAL.HTML</span>
+    <span>12 FORMES + 10 FONTES · 4 NOUVEAUX SKINS · 1 RENOMMAGE · CSS/SVG PREVIEW · 2026-06</span>
+  </footer>
+
+</div>
+</body>
+</html>

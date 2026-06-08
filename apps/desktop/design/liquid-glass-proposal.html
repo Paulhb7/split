@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Split — proposition Liquid Glass (cross-thème)</title>
+<!--
+  PROPOSITION, pas une implémentation. Deux fenêtres Split identiques côte à
+  côte : à gauche l'état ACTUEL (valeurs réelles d'app.css), à droite le même
+  thème avec le traitement LIQUID GLASS transversal proposé. Le traitement
+  n'est PAS un nouveau skin : c'est une couche partagée (tokens --glass-* à
+  polarité claire/sombre) appliquée aux primitives de surface de TOUS les
+  thèmes. La vraie app a déjà la vibrancy native macOS (NSVisualEffectMaterial
+  ::Sidebar) + fenêtre transparente — simulée ici par un backdrop-filter sur
+  un faux bureau. Voir les notes d'implémentation en bas de page.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;700&family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    background: #0c0d12; color: #efeee9;
+    -webkit-font-smoothing: antialiased;
+    display: flex; flex-direction: column; min-height: 100vh;
+  }
+
+  /* ============================= controls ============================= */
+  header {
+    padding: 18px 26px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 22px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  header h1 { font-size: 17px; font-weight: 800; letter-spacing: -0.03em; margin-right: 6px; }
+  header h1 small { display: block; font-family: "JetBrains Mono", monospace; font-size: 9.5px; font-weight: 400; color: #9395a1; letter-spacing: 0.08em; margin-top: 3px; }
+  .ctl { display: flex; align-items: center; gap: 8px; }
+  .ctl label { font-family: "JetBrains Mono", monospace; font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: #5f6271; }
+  .pills { display: inline-flex; border: 1px solid rgba(255,255,255,0.12); border-radius: 99px; overflow: hidden; }
+  .pills button {
+    font-family: "JetBrains Mono", monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em;
+    color: #9395a1; background: transparent; border: 0; padding: 6px 12px; cursor: pointer; transition: 0.15s;
+  }
+  .pills button + button { border-left: 1px solid rgba(255,255,255,0.1); }
+  .pills button:hover { color: #efeee9; }
+  .pills button.on { color: #0c0d12; background: #efeee9; }
+
+  /* ============================= the desk ============================= */
+  .desk {
+    position: relative; flex: 1; min-height: 620px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; gap: 34px; padding: 30px;
+  }
+  .wall { position: absolute; inset: 0; transition: opacity 0.5s; }
+  /* aurora — wallpaper macOS coloré : c'est lui qui doit transparaître */
+  .wall.aurora { background:
+    radial-gradient(900px 600px at 18% 22%, #ff7ab6 0%, transparent 55%),
+    radial-gradient(1000px 700px at 82% 30%, #4f8dff 0%, transparent 55%),
+    radial-gradient(900px 700px at 55% 90%, #2bd9a7 0%, transparent 55%),
+    radial-gradient(700px 500px at 90% 85%, #ffb74f 0%, transparent 50%),
+    linear-gradient(180deg, #1a1040, #0a1530); }
+  .wall.dark { background:
+    radial-gradient(800px 600px at 70% 20%, #1d2a4a 0%, transparent 60%),
+    radial-gradient(700px 500px at 20% 80%, #2a1d3e 0%, transparent 60%),
+    linear-gradient(180deg, #07080d, #0d0f16); }
+  .wall.light { background:
+    radial-gradient(900px 600px at 25% 25%, #ffe9d6 0%, transparent 60%),
+    radial-gradient(900px 700px at 80% 70%, #d6e6ff 0%, transparent 60%),
+    linear-gradient(180deg, #f4f1ec, #e8e9f2); }
+  .wall { opacity: 0; pointer-events: none; }
+  .desk[data-wall="aurora"] .wall.aurora, .desk[data-wall="dark"] .wall.dark, .desk[data-wall="light"] .wall.light { opacity: 1; }
+
+  .col { position: relative; display: flex; flex-direction: column; gap: 12px; }
+  .col > .tag {
+    align-self: center; font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.2);
+    padding: 5px 14px; border-radius: 99px; backdrop-filter: blur(8px);
+  }
+  .desk[data-wall="light"] .col > .tag { color: rgba(20,22,30,0.8); background: rgba(255,255,255,0.4); border-color: rgba(0,0,0,0.15); }
+
+  /* ============================= mock window ============================= */
+  .window {
+    position: relative; width: 480px; height: 520px; border-radius: 13px; overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.25);
+    isolation: isolate;
+  }
+  /* simulation de la vibrancy native (NSVisualEffectMaterial::Sidebar) —
+     présente dans la vraie app dans LES DEUX états ; aujourd'hui les fonds de
+     thème quasi opaques la masquent. */
+  .vib { position: absolute; inset: 0; z-index: 0;
+    backdrop-filter: blur(64px) saturate(180%); -webkit-backdrop-filter: blur(64px) saturate(180%); }
+  .window.dark .vib { background: rgba(18, 20, 27, 0.42); }
+  .window.light .vib { background: rgba(255, 255, 255, 0.42); }
+
+  /* ---- l'app mock — valeurs réelles d'app.css ---- */
+  .app { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column;
+    color: var(--text); font-family: var(--disp); font-size: 14px; }
+  /* grain global — existe déjà dans la vraie app (.app::after, feTurbulence) */
+  .app::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    opacity: 0.05; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .window.light .app::after { mix-blend-mode: multiply; }
+  /* en mode glass, le grain devient un film sur TOUTE l'interface : il passe
+     AU-DESSUS du contenu (z-30, pointer-events none) — un seul dépoli uniforme
+     sur le chrome, les cartes, les menus, le fond. Dosé par l'intensité. */
+  .window.glass .app::after { opacity: calc(0.09 * var(--g-a)); z-index: 30; }
+  .chrome { position: relative; z-index: 1; }
+  .body { z-index: 1; }
+  /* le chrome aussi est du verre : frost + arête, plus une simple bordure */
+  .window.glass .chrome {
+    background: linear-gradient(180deg, var(--g-hi), var(--g-lo));
+    border-bottom: 1px solid var(--g-edge);
+    box-shadow: inset 0 1px 0 var(--g-spec);
+    backdrop-filter: blur(var(--g-blur)) saturate(175%);
+    -webkit-backdrop-filter: blur(var(--g-blur)) saturate(175%);
+  }
+
+  /* THÈMES (extraits exacts d'app.css ; le linear-gradient final = "voile") */
+  .window[data-theme="classic"] .app {
+    --panel: rgba(20,23,30,0.55); --panel2: rgba(28,31,40,0.7);
+    --line: rgba(255,255,255,0.09); --line2: rgba(255,255,255,0.05);
+    --text: #efeee9; --dim: #9395a1; --dim2: #5f6271;
+    --brand: #d97757; --good: #5cc98a; --ink: #0a0b0e;
+    --mono: "JetBrains Mono", monospace; --disp: "Bricolage Grotesque", system-ui, sans-serif; --r: 14px;
+    background:
+      radial-gradient(620px 420px at 86% -12%, rgba(217,119,87,0.16), transparent 60%),
+      radial-gradient(520px 460px at -6% 108%, rgba(66,116,244,0.10), transparent 60%),
+      linear-gradient(180deg, rgba(16,19,25, var(--veil1)), rgba(8,9,12, var(--veil2)));
+  }
+  .window[data-theme="classic"] { --v1: 0.72; --v2: 0.82; }
+  .window[data-theme="bright"] .app {
+    --panel: rgba(255,255,255,0.82); --panel2: rgba(245,247,250,0.92);
+    --line: rgba(23,26,38,0.10); --line2: rgba(23,26,38,0.05);
+    --text: #17171a; --dim: #5e616b; --dim2: #9095a0;
+    --brand: #0053fd; --good: #16a36a; --ink: #ffffff;
+    --mono: "JetBrains Mono", monospace; --disp: "Bricolage Grotesque", system-ui, sans-serif; --r: 14px;
+    background:
+      radial-gradient(620px 420px at 86% -12%, rgba(0,83,253,0.07), transparent 60%),
+      radial-gradient(520px 460px at -6% 108%, rgba(0,83,253,0.05), transparent 60%),
+      linear-gradient(180deg, rgba(248,250,255, var(--veil1)), rgba(241,244,251, var(--veil2)));
+  }
+  .window[data-theme="bright"] { --v1: 0.84; --v2: 0.9; }
+  .window[data-theme="tokyo"] .app {
+    --panel: rgba(36,40,59,0.62); --panel2: rgba(44,49,73,0.78);
+    --line: rgba(187,154,247,0.16); --line2: rgba(187,154,247,0.07);
+    --text: #c0caf5; --dim: #7e8bb7; --dim2: #565f89;
+    --brand: #bb9af7; --good: #9ece6a; --ink: #0e0f1d;
+    --mono: "JetBrains Mono", monospace; --disp: "Zen Kaku Gothic New", "Bricolage Grotesque", sans-serif; --r: 14px;
+    background:
+      radial-gradient(620px 420px at 86% -12%, rgba(187,154,247,0.18), transparent 60%),
+      radial-gradient(520px 460px at -6% 108%, rgba(125,207,255,0.12), transparent 60%),
+      linear-gradient(180deg, rgba(20,21,42, var(--veil1)), rgba(12,13,28, var(--veil2)));
+  }
+  .window[data-theme="tokyo"] { --v1: 0.8; --v2: 0.88; }
+  .window[data-theme="ghibli"] .app {
+    --panel: rgba(234,240,245,0.72); --panel2: rgba(220,232,240,0.85);
+    --line: rgba(70,100,130,0.18); --line2: rgba(70,100,130,0.08);
+    --text: #1f2b35; --dim: #5a6c80; --dim2: #8a99ad;
+    --brand: #4a8fb3; --good: #7ba87c; --ink: #1f2b35;
+    --mono: "JetBrains Mono", monospace; --disp: "Klee One", "Quicksand", sans-serif; --r: 14px;
+    background:
+      radial-gradient(620px 420px at 86% -12%, rgba(74,143,179,0.22), transparent 60%),
+      radial-gradient(520px 460px at -6% 108%, rgba(123,168,124,0.20), transparent 60%),
+      linear-gradient(180deg, rgba(234,240,245, var(--veil1)), rgba(217,230,238, var(--veil2)));
+  }
+  .window[data-theme="ghibli"] { --v1: 0.84; --v2: 0.9; }
+
+  /* AVANT : voile du thème à pleine valeur (la vibrancy ne se voit presque pas) */
+  .window.current .app { --veil1: var(--v1); --veil2: var(--v2); }
+
+  /* ====================================================================
+     APRÈS — LA COUCHE LIQUID GLASS PROPOSÉE (ce qui irait dans app.css)
+     1. le voile du thème s'amincit → le bureau transparaît via la vibrancy
+     2. tokens --g-* par polarité (sombre / claire)
+     3. une seule règle partagée pour toutes les surfaces
+     ==================================================================== */
+  .window.glass .app { --veil1: calc(var(--v1) * var(--thin)); --veil2: calc(var(--v2) * var(--thin)); }
+  .window.glass[data-int="subtil"]   { --thin: 0.78; --g-blur: 14px; --g-a: 0.8; }
+  .window.glass[data-int="standard"] { --thin: 0.58; --g-blur: 22px; --g-a: 1; }
+  .window.glass[data-int="intense"]  { --thin: 0.40; --g-blur: 30px; --g-a: 1.25; }
+
+  .window.glass.dark .app {
+    --g-hi: rgba(255,255,255, calc(0.075 * var(--g-a)));
+    --g-lo: rgba(255,255,255, calc(0.03 * var(--g-a)));
+    --g-edge: rgba(255,255,255, calc(0.12 * var(--g-a)));
+    --g-spec: rgba(255,255,255, calc(0.16 * var(--g-a)));
+    --g-spec2: rgba(255,255,255, 0.03);
+    --g-drop: rgba(0,0,0,0.14);
+  }
+  .window.glass.light .app {
+    --g-hi: rgba(255,255,255, calc(0.46 * var(--g-a)));
+    --g-lo: rgba(255,255,255, calc(0.3 * var(--g-a)));
+    --g-edge: rgba(255,255,255, calc(0.5 * var(--g-a)));
+    --g-spec: rgba(255,255,255, 0.55);
+    --g-spec2: rgba(255,255,255, 0.06);
+    --g-drop: rgba(31,38,56,0.07);
+  }
+  /* LA règle partagée — surfaces → verre (composer / wsbar / chips / rows / menus / toasts). */
+  .window.glass .composer, .window.glass .rchip, .window.glass .srow,
+  .window.glass .menu, .window.glass .toast {
+    position: relative;
+    background: linear-gradient(180deg, var(--g-hi), var(--g-lo));
+    border-color: var(--g-edge);
+    box-shadow: inset 0 1px 0 var(--g-spec), inset 0 -1px 0 var(--g-spec2), 0 6px 18px var(--g-drop);
+    backdrop-filter: blur(var(--g-blur)) saturate(175%);
+    -webkit-backdrop-filter: blur(var(--g-blur)) saturate(175%);
+  }
+  /* Le micrograin du dépoli : calque ::after dédié, bruit plein pot, fondu en
+     overlay sur le backdrop flouté — sans lui le blur lit "CSS", pas "verre". */
+  .window.glass .composer::after, .window.glass .rchip::after, .window.glass .srow::after,
+  .window.glass .menu::after, .window.glass .toast::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 140px 140px;
+    opacity: calc(0.12 * var(--g-a)); mix-blend-mode: overlay;
+  }
+  .window.glass.light .composer::after, .window.glass.light .rchip::after, .window.glass.light .srow::after,
+  .window.glass.light .menu::after, .window.glass.light .toast::after {
+    mix-blend-mode: multiply; opacity: calc(0.08 * var(--g-a));
+  }
+  /* panneaux flottants : frost plus lourd pour rester lisibles au-dessus du verre
+     (teintes via les tokens pour garder le grain de la règle partagée) */
+  .window.glass .menu, .window.glass .toast {
+    backdrop-filter: blur(calc(var(--g-blur) + 12px)) saturate(190%);
+    -webkit-backdrop-filter: blur(calc(var(--g-blur) + 12px)) saturate(190%);
+  }
+  .window.glass.dark .menu, .window.glass.dark .toast { --g-hi: rgba(255,255,255,0.10); --g-lo: rgba(255,255,255,0.05); }
+  .window.glass.light .menu, .window.glass.light .toast { --g-hi: rgba(255,255,255,0.62); --g-lo: rgba(255,255,255,0.44); }
+  /* bouton primaire : verre teinté brand + arête spéculaire */
+  .window.glass .run {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 88%, #fff), var(--brand));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 6px 16px color-mix(in srgb, var(--brand) 28%, transparent);
+  }
+  .window.glass .seg, .window.glass .iconbtn, .window.glass .pick { background: var(--g-lo); border-color: var(--g-edge); }
+
+  /* ---- anatomie de la fenêtre (reprise d'app.css, condensée) ---- */
+  .chrome { flex: none; display: flex; align-items: center; gap: 9px; height: 44px; padding: 0 12px; border-bottom: 1px solid var(--line2); }
+  .lights { display: flex; gap: 7px; margin-right: 4px; }
+  .lights i { width: 11px; height: 11px; border-radius: 50%; }
+  .lights i:nth-child(1) { background: #ff5f57; } .lights i:nth-child(2) { background: #febc2e; } .lights i:nth-child(3) { background: #28c840; }
+  .wm { font-weight: 800; letter-spacing: -0.04em; font-size: 15px; display: flex; align-items: center; gap: 7px; }
+  .orb { width: 15px; height: 15px; border-radius: 50%; background: radial-gradient(circle at 32% 28%, #fff5, transparent 40%), conic-gradient(from 0deg, var(--brand), #7c5cff, var(--good), var(--brand)); }
+  .chrome-meta { font-family: var(--mono); font-size: 10px; color: var(--dim2); letter-spacing: 0.04em; }
+  .spacer { flex: 1; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .seg b { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--dim); padding: 4px 8px; }
+  .seg b + b { border-left: 1px solid var(--line); }
+  .seg b.on { color: var(--ink); background: var(--brand); }
+  .iconbtn { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--line); font-size: 12px; }
+
+  .body { flex: 1; padding: 16px 16px 12px; overflow: hidden; position: relative; }
+  .sec { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; display: flex; align-items: center; gap: 10px; }
+  .sec::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  .composer { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: var(--r); border: 1px solid var(--line); background: var(--panel2); margin-bottom: 18px; }
+  .pick { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; color: var(--text); border: 1px solid var(--line); background: rgba(255,255,255,0.03); border-radius: 10px; padding: 6px 9px; white-space: nowrap; }
+  .pick .lg2 { width: 13px; height: 13px; border-radius: 4px; background: var(--brand); opacity: 0.85; }
+  .ph { flex: 1; color: var(--dim2); font-size: 13px; overflow: hidden; white-space: nowrap; }
+  .run { width: 34px; height: 34px; border-radius: 10px; border: 0; flex: none; color: var(--ink); background: var(--brand); font-size: 13px; display: grid; place-items: center; box-shadow: 0 6px 18px color-mix(in srgb, var(--brand) 38%, transparent); }
+
+  .roster { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 18px; }
+  .rchip { display: flex; align-items: center; gap: 6px; padding: 6px 11px 6px 8px; border-radius: 11px; border: 1px solid var(--line); background: var(--panel); font-size: 12px; font-weight: 600; }
+  .rchip .rv { font-family: var(--mono); font-size: 9px; text-transform: uppercase; color: var(--dim); }
+  .rchip.active { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
+
+  .sessions { display: grid; gap: 8px; }
+  .srow { display: flex; align-items: center; gap: 10px; padding: 11px 13px; border-radius: var(--r); border: 1px solid var(--line); background: var(--panel); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .dot.running { background: var(--brand); animation: pulse 1.4s infinite; }
+  .dot.idle { background: var(--good); }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 45%, transparent); } 50% { box-shadow: 0 0 0 5px transparent; } }
+  .meta { flex: 1; min-width: 0; }
+  .who { font-weight: 600; font-size: 13px; }
+  .who small { font-family: var(--mono); font-size: 9.5px; color: var(--dim); font-weight: 400; margin-left: 6px; }
+  .who small b { color: var(--brand); font-weight: 500; }
+  .sum { font-size: 11.5px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--dim); }
+  .badge.running { color: var(--brand); border-color: color-mix(in srgb, var(--brand) 40%, transparent); }
+
+  /* menu flottant ouvert (pour juger le frost des popovers) */
+  .menu { position: absolute; top: 50px; right: 14px; width: 168px; z-index: 5; background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 5px; box-shadow: 0 18px 50px rgba(0,0,0,0.4); }
+  .mi { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+  .mi.sel { background: rgba(255,255,255,0.06); }
+  .window.light .mi.sel { background: rgba(40,40,50,0.07); }
+  .mi .sw { width: 16px; height: 16px; border-radius: 5px; flex: none; }
+  .mi small { margin-left: auto; font-family: var(--mono); font-size: 8.5px; color: var(--dim2); }
+
+  .toast { position: absolute; right: 14px; bottom: 14px; z-index: 5; display: flex; align-items: center; gap: 8px; background: var(--panel2); border: 1px solid var(--line); border-radius: 11px; padding: 9px 13px; font-size: 12px; font-weight: 600; box-shadow: 0 14px 40px rgba(0,0,0,0.35); }
+
+  /* ============================= notes ============================= */
+  .notes { padding: 26px; border-top: 1px solid rgba(255,255,255,0.08); display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 22px; max-width: 1400px; margin: 0 auto; }
+  .note h3 { font-size: 13px; font-weight: 700; margin-bottom: 8px; color: #efeee9; }
+  .note h3 span { font-family: "JetBrains Mono", monospace; font-size: 9px; color: #d97757; letter-spacing: 0.12em; margin-right: 8px; }
+  .note p, .note li { font-size: 12.5px; line-height: 1.65; color: #9395a1; }
+  .note ul { padding-left: 16px; } .note li { margin-bottom: 4px; }
+  .note code { font-family: "JetBrains Mono", monospace; font-size: 11px; color: #c8cadb; background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Liquid Glass <small>PROPOSITION · COUCHE TRANSVERSALE, TOUS THÈMES</small></h1>
+  <div class="ctl"><label>Thème</label>
+    <div class="pills" id="themes">
+      <button data-t="classic" data-pol="dark" class="on">Classic</button>
+      <button data-t="bright" data-pol="light">Bright</button>
+      <button data-t="tokyo" data-pol="dark">Tokyo</button>
+      <button data-t="ghibli" data-pol="light">Saint-Ex</button>
+    </div>
+  </div>
+  <div class="ctl"><label>Bureau</label>
+    <div class="pills" id="walls">
+      <button data-w="aurora" class="on">Aurora</button>
+      <button data-w="dark">Sombre</button>
+      <button data-w="light">Clair</button>
+    </div>
+  </div>
+  <div class="ctl"><label>Intensité</label>
+    <div class="pills" id="ints">
+      <button data-i="subtil">Subtil</button>
+      <button data-i="standard" class="on">Standard</button>
+      <button data-i="intense">Intense</button>
+    </div>
+  </div>
+</header>
+
+<div class="desk" data-wall="aurora">
+  <div class="wall aurora"></div>
+  <div class="wall dark"></div>
+  <div class="wall light"></div>
+
+  <div class="col">
+    <div class="tag">Actuel</div>
+    <div class="window current dark" data-theme="classic" id="winA"></div>
+  </div>
+  <div class="col">
+    <div class="tag">Liquid Glass</div>
+    <div class="window glass dark" data-theme="classic" data-int="standard" id="winB"></div>
+  </div>
+</div>
+
+<div class="notes">
+  <div class="note">
+    <h3><span>01</span>Pas un skin — une couche</h3>
+    <p>Le traitement n'ajoute aucun thème : des tokens <code>--g-*</code> (teinte, arête, spéculaire, blur) définis par polarité (sombre / claire) sur <code>.app</code>, et <strong>une seule règle partagée</strong> qui passe les primitives de surface en verre : <code>.composer</code>, <code>.wsbar</code>, <code>.rchip</code>, <code>.srow</code>, <code>.ecard</code>, <code>.menu</code>, <code>.am</code>, <code>.toast</code>, <code>.skin-menu</code>. Chaque skin garde sa personnalité (accent, fonte, objet signature) — seul le matériau change.</p>
+  </div>
+  <div class="note">
+    <h3><span>02</span>La vibrancy enfin visible</h3>
+    <p>La vraie app a déjà tout : <code>transparent: true</code> + <code>NSVisualEffectMaterial::Sidebar</code> (lib.rs:1840). Aujourd'hui le voile final de chaque thème (alpha 0.72–0.9) la masque. La proposition amincit ce voile (×0.78 / ×0.58 / ×0.40 selon l'intensité) → le bureau transparaît réellement, flouté par macOS — pas de coût CSS, c'est le compositeur natif.</p>
+  </div>
+  <div class="note">
+    <h3><span>03</span>La recette du verre</h3>
+    <ul>
+      <li><strong>Frost</strong> : <code>backdrop-filter: blur(22px) saturate(175%)</code> sur les surfaces, +12px sur les popovers (menus/toasts).</li>
+      <li><strong>Grain</strong> : deux niveaux — un calque par surface (overlay 0.12 sombre / multiply 0.08 clair) pour la matière du verre, + le grain global existant (<code>.app::after</code>) transformé en <strong>film uniforme sur toute l'interface</strong> (au-dessus du contenu, 0.09, dosé par l'intensité).</li>
+      <li><strong>Spéculaire</strong> : <code>inset 0 1px 0</code> blanc en haut (l'arête éclairée), un soupçon en bas.</li>
+      <li><strong>Arête</strong> : bordure blanche translucide au lieu des lignes teintées.</li>
+      <li><strong>Bouton primaire</strong> : dégradé brand→brand éclairci + arête spéculaire (verre teinté).</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3><span>04</span>Implémentation réelle &amp; garde-fous</h3>
+    <ul>
+      <li>~60 lignes dans <code>app.css</code> : un bloc tokens + la règle partagée + amincissement des voiles par thème.</li>
+      <li>Option : réglage d'intensité persisté (<code>split.glass</code>) à côté de <code>split.skin</code> — incluant « Off » pour revenir à l'actuel.</li>
+      <li>Perf : backdrop-filter limité aux surfaces de premier plan (pas sur <code>.turn .text</code> ni les listes longues) ; ~15 éléments max à l'écran, OK Apple Silicon.</li>
+      <li>Lisibilité : sur bureau très contrasté, l'intensité « Intense » peut gêner les thèmes clairs → « Standard » par défaut.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  const MOCK = (cls) => `
+    <div class="vib"></div>
+    <div class="app">
+      <div class="chrome">
+        <div class="lights"><i></i><i></i><i></i></div>
+        <div class="wm"><span class="orb"></span>split</div>
+        <div class="chrome-meta">2 sessions</div>
+        <div class="spacer"></div>
+        <div class="seg"><b>S</b><b class="on">M</b><b>L</b></div>
+        <div class="iconbtn">🗃️</div>
+        <div class="iconbtn">🎨</div>
+      </div>
+      <div class="body">
+        <div class="sec">compose</div>
+        <div class="composer">
+          <span class="pick"><span class="lg2"></span>Claude</span>
+          <span class="pick">@ Consultant</span>
+          <span class="ph">Brief your expert…</span>
+          <span class="run">▸</span>
+        </div>
+        <div class="sec">roster</div>
+        <div class="roster">
+          <span class="rchip active"><span class="rv">adv ·</span>Consultant</span>
+          <span class="rchip"><span class="rv">res ·</span>Analyst</span>
+          <span class="rchip"><span class="rv">fnd ·</span>Scout</span>
+          <span class="rchip"><span class="rv">opr ·</span>Alfred</span>
+        </div>
+        <div class="sec">sessions</div>
+        <div class="sessions">
+          <div class="srow">
+            <span class="dot running"></span>
+            <div class="meta">
+              <div class="who">Consultant <small>on <b>Claude</b></small></div>
+              <div class="sum">Comparing ACP session lifecycles across vendors…</div>
+            </div>
+            <span class="badge running">running</span>
+          </div>
+          <div class="srow">
+            <span class="dot idle"></span>
+            <div class="meta">
+              <div class="who">Analyst <small>on <b>Codex</b></small></div>
+              <div class="sum">Market sizing memo filed to the vault</div>
+            </div>
+            <span class="badge">idle</span>
+          </div>
+        </div>
+        <div class="menu">
+          <div class="mi"><span class="sw" style="background:#f8faff"></span>Bright<small></small></div>
+          <div class="mi sel"><span class="sw" style="background:#0a0b0e"></span>Classic<small>✓</small></div>
+          <div class="mi"><span class="sw" style="background:#0b0e1d"></span>Cosmos<small></small></div>
+        </div>
+        <div class="toast">🗃️ Memo saved to the vault</div>
+      </div>
+    </div>`;
+
+  const winA = document.getElementById('winA'), winB = document.getElementById('winB');
+  winA.innerHTML = MOCK(); winB.innerHTML = MOCK();
+
+  const wire = (id, attr, fn) => {
+    const box = document.getElementById(id);
+    box.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+      fn(b);
+    });
+  };
+  wire('themes', 't', (b) => {
+    for (const w of [winA, winB]) {
+      w.dataset.theme = b.dataset.t;
+      w.classList.toggle('dark', b.dataset.pol === 'dark');
+      w.classList.toggle('light', b.dataset.pol === 'light');
+    }
+  });
+  wire('walls', 'w', (b) => { document.querySelector('.desk').dataset.wall = b.dataset.w; });
+  wire('ints', 'i', (b) => { winB.dataset.int = b.dataset.i; });
+</script>
+</body>
+</html>

@@ -17,6 +17,12 @@ export interface SiriOrbProps {
   isSpeaking?: boolean;
   /** Web Audio analyser node feeding 128-bin frequency data. */
   analyser?: AnalyserNode | null;
+  /** Optional silhouette image painted onto the Fibonacci sphere via
+   *  front-projection. Each point samples the image once at mount, then
+   *  carries that color through the orb's rotation — non-white pixels
+   *  become "ink" points (full coreColor), white/transparent pixels
+   *  fade to near-invisible. The outer halo is suppressed when set. */
+  imageUrl?: string;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -43,6 +49,7 @@ export default function SiriOrb({
   haloColor,
   isSpeaking = false,
   analyser = null,
+  imageUrl,
   className,
   style,
 }: SiriOrbProps) {
@@ -121,6 +128,13 @@ export default function SiriOrb({
     geo.setAttribute("position", new THREE.BufferAttribute(rawPos.slice(), 3));
     const originalPos = rawPos;
 
+    // Per-vertex mask (1.0 = ink / part of silhouette, 0.05 = background).
+    // Stays at 1.0 everywhere when no image — multiplied by mat.color in the
+    // shader, so the brand color (and brightness pulse) keeps working
+    // unchanged. Patched in-place when the image finishes loading.
+    const colors = new Float32Array(N * 3).fill(1);
+    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
     const mat = new THREE.PointsMaterial({
       color: new THREE.Color(0xffffff),
       size: 0.075,
@@ -129,12 +143,85 @@ export default function SiriOrb({
       transparent: true,
       alphaTest: 0.01,
       depthWrite: false,
+      vertexColors: true,
     });
     const dots = new THREE.Points(geo, mat);
     scene.add(dots);
 
+    // Front-project the silhouette: for each Fibonacci point, look up the
+    // pixel at (x, y) — z is ignored, so both hemispheres carry the figure.
+    // The bbox of non-white pixels is auto-detected so any silhouette PNG
+    // fills the sphere regardless of its canvas padding. Async — the orb
+    // renders with the uniform color until the image arrives.
+    let cancelled = false;
+    if (imageUrl) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        if (cancelled) return;
+        const cnv = document.createElement("canvas");
+        cnv.width = img.naturalWidth;
+        cnv.height = img.naturalHeight;
+        const ictx = cnv.getContext("2d");
+        if (!ictx) return;
+        ictx.drawImage(img, 0, 0);
+        const W = cnv.width, H = cnv.height;
+        let pixels: Uint8ClampedArray;
+        try {
+          pixels = ictx.getImageData(0, 0, W, H).data;
+        } catch {
+          return; // cross-origin tainted canvas
+        }
+        // bbox of non-white, non-transparent pixels
+        let minX = W, minY = H, maxX = 0, maxY = 0;
+        for (let y = 0; y < H; y++) {
+          for (let x = 0; x < W; x++) {
+            const k = (y * W + x) * 4;
+            const a = pixels[k + 3];
+            if (a < 30) continue;
+            const lum = (pixels[k] + pixels[k + 1] + pixels[k + 2]) / 3;
+            if (lum < 240) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+        if (maxX <= minX || maxY <= minY) return;
+        const cx = (minX + maxX) / 2;
+        const cy = (minY + maxY) / 2;
+        const bbox = Math.max(maxX - minX, maxY - minY);
+        const margin = 0.92;          // figure fits inside sphere with a small gap
+        const scale = bbox / (2 * margin);
+        const dim = 0.04;             // background points: ~5% brightness (still alive but recessive)
+        for (let i = 0; i < N; i++) {
+          const x3 = rawPos[i * 3];
+          const y3 = rawPos[i * 3 + 1];
+          const px = Math.round(cx + x3 * scale);
+          const py = Math.round(cy - y3 * scale); // flip — canvas y is top-down
+          let ink = false;
+          if (px >= 0 && px < W && py >= 0 && py < H) {
+            const k = (py * W + px) * 4;
+            if (pixels[k + 3] > 30) {
+              const lum = (pixels[k] + pixels[k + 1] + pixels[k + 2]) / 3;
+              ink = lum < 240;
+            }
+          }
+          const v = ink ? 1 : dim;
+          colors[i * 3] = v;
+          colors[i * 3 + 1] = v;
+          colors[i * 3 + 2] = v;
+        }
+        (geo.attributes.color as THREE.BufferAttribute).needsUpdate = true;
+      };
+      img.src = imageUrl;
+    }
+
     // Outer halo — sparser ring at radius ~1.22, different spiral.
-    const HATM = 700;
+    // Suppressed when an imageUrl is set: the silhouette needs to read,
+    // and a competing dust ring would mush it.
+    const HATM = imageUrl ? 0 : 700;
     const atmRaw = new Float32Array(HATM * 3);
     for (let i = 0; i < HATM; i++) {
       const y = 1 - (i / (HATM - 1)) * 2;
@@ -225,6 +312,7 @@ export default function SiriOrb({
     animate();
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(animId);
       renderer.dispose();
       geo.dispose();
@@ -234,7 +322,7 @@ export default function SiriOrb({
       dotTexture.dispose();
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
     };
-  }, [size]);
+  }, [size, imageUrl]);
 
   return (
     <div

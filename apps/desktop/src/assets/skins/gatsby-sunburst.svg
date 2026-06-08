@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" fill="none">
+  <defs>
+    <linearGradient id="ray1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f9e9a8"/><stop offset="1" stop-color="#a8842a"/>
+    </linearGradient>
+    <linearGradient id="ray2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a6d1f"/><stop offset="1" stop-color="#d4af37"/>
+    </linearGradient>
+    <radialGradient id="hub"><stop offset="0" stop-color="#fdf3c0"/><stop offset="1" stop-color="#b18d2c"/></radialGradient>
+  </defs>
+  <g opacity="0.14" transform="translate(312,-12)">
+    <path d="M0 0 L-15 252 L15 252 Z" fill="url(#ray1)"/>
+    <path d="M0 0 L-15 252 L15 252 Z" fill="url(#ray2)" transform="rotate(11.25)"/>
+    <path d="M0 0 L-15 252 L15 252 Z" fill="url(#ray1)" transform="rotate(22.5)"/>
+    <path d="M0 0 L-15 252 L15 252 Z" fill="url(#ray2)" transform="rotate(33.75)"/>
+    <path d="M0 0 L-15 252 L15 252 Z" fill="url(#ray1)" transform="rotate(45)"/>
+    <path d="M0 0 L-15 252 L15 252 Z" fill="url(#ray2)" transform="rotate(56.25)"/>
+    <path d="M0 0 L-15 252 L15 252 Z" fill="url(#ray1)" transform="rotate(67.5)"/>
+    <path d="M0 0 L-15 252 L15 252 Z" fill="url(#ray2)" transform="rotate(78.75)"/>
+    <path d="M0 0 L-15 252 L15 252 Z" fill="url(#ray1)" transform="rotate(90)"/>
+    <circle r="118" stroke="#d4af37" stroke-width="2.5" opacity="0.85"/>
+    <circle r="96"  stroke="#d4af37" stroke-width="1.5" opacity="0.5"/>
+    <circle r="74"  stroke="#f4e4a8" stroke-width="1"   opacity="0.35"/>
+    <circle r="34" fill="url(#hub)"/>
+    <circle r="34" stroke="#8a6d1f" stroke-width="1.5"/>
+  </g>
+</svg>
