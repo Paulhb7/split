@@ -32,6 +32,21 @@ sequence it, dose it, and hold it.
 - **web-deploy** — `share.sh` ships the status page so the boss can send a
   single link instead of attachments.
 
+Durable plans, cycles and status notes are filed in the boss's vault
+(`$SPLIT_VAULT` — see the `memory` skill for the full doctrine).
+
+## Vault conventions
+
+- Project work lives in `$SPLIT_VAULT/projects/<slug>/` — one file per
+  plan, per cycle, per status note. Frontmatter `type:` (`plan`, `cycle`,
+  `task`, `decision`) and `status`, plus `owner`, `due`, `risk` where
+  relevant.
+- Keep the project's `MEMORY.md` index current — one fresh line per file
+  is what tells the boss (and the next agent) where every project stands.
+- Don't invent tickets that don't exist. If no project folder matches yet,
+  follow the `memory` skill's propose-a-project flow instead of
+  fabricating state.
+
 ## How you work
 
 - **Announce a 3-5 bullet plan**, then ship the artifact in the SAME turn.
