@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { type ExpertMap, isClassicExpert, type ExpertKind } from "../shared/experts";
+import { type ExpertMap } from "../shared/experts";
 import { EXPERT_CONTENT, type UseCase } from "../shared/expertContent";
+import GalleryWall, { buildWings, type WingId } from "../shared/GalleryWall";
 import "./cabinet.css";
 
 // Cabinet overlay — two views inside one shell:
@@ -11,17 +12,6 @@ import "./cabinet.css";
 //      cases, deliverables, example output). Clicking a use case launches a
 //      real session on the user's primary agent.
 
-const KIND_ORDER: ExpertKind[] = [
-  "researcher",
-  "analyst",
-  "advisor",
-  "builder",
-  "operator",
-  "finder",
-  "creator",
-  "recruiter",
-];
-
 interface CabinetProps {
   experts: ExpertMap;
   /** Optional pre-selected expert (e.g. when opened from the @ chip). null =
@@ -29,18 +19,22 @@ interface CabinetProps {
   initialSlug?: string | null;
   onClose: () => void;
   onLaunch: (slug: string, prompt: string) => void;
+  /** The gallery's last-exhibit easter egg (Titanic skin toggle). */
+  onIceberg?: () => void;
 }
 
-export default function Cabinet({ experts, initialSlug = null, onClose, onLaunch }: CabinetProps) {
+export default function Cabinet({ experts, initialSlug = null, onClose, onLaunch, onIceberg }: CabinetProps) {
   const [selected, setSelected] = useState<string | null>(initialSlug);
 
-  const classicEntries = Object.entries(experts)
-    .filter(([slug]) => isClassicExpert(slug))
-    .sort(([, a], [, b]) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
-
-  const supers = classicEntries.filter(([, e]) => (e.category ?? "super") === "super");
-  const genii = classicEntries.filter(([, e]) => e.category === "genius");
-  const coaches = classicEntries.filter(([, e]) => e.category === "coach");
+  // Deferred experts (status: "next") get their own "coming next" wing rather
+  // than mixing with the live roster — Cabinet is the ONE place that keeps
+  // surfacing them, since the composer / picker have hidden them entirely.
+  const wings = buildWings(experts);
+  const wingEntries = (id: WingId) => wings.find((w) => w.id === id)?.entries ?? [];
+  const supers = wingEntries("super");
+  const genii = wingEntries("genius");
+  const coaches = wingEntries("coach");
+  const next = wingEntries("next");
 
   return (
     <div className="cab-overlay" onClick={onClose}>
@@ -48,74 +42,22 @@ export default function Cabinet({ experts, initialSlug = null, onClose, onLaunch
         <button className="cab-close" onClick={onClose} title="Close">✕</button>
 
         {selected === null ? (
-          /* ============ GRID VIEW — full-width landing ============ */
-          <div className="cab-grid-page">
-            <header className="cab-grid-head">
-              <span className="cab-eyebrow">your cabinet</span>
-              <h1>Pick the expert you want to brief.</h1>
-              <p className="cab-grid-lede">
-                Each one ships with their own skills and tools. <b>Super agents</b> handle jobs you
-                already know — done in seconds. <b>Genius agents</b> make what only a genius could.
-              </p>
-            </header>
-
-            {supers.length > 0 && (
-              <section className="cab-grid-section">
-                <div className="cab-section">super agents</div>
-                <div className="cab-grid">
-                  {supers.map(([slug, e]) => {
-                    const curated = !!EXPERT_CONTENT[slug];
-                    return (
-                      <button key={slug} className="cab-tile" onClick={() => setSelected(slug)}>
-                        <span className="cab-tile-name">@{e.label}</span>
-                        <span className="cab-tile-figure">{e.figure ?? e.role ?? e.kind}</span>
-                        <span className="cab-tile-blurb">{e.blurb}</span>
-                        {curated && <span className="cab-tile-badge">curated</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
-            {genii.length > 0 && (
-              <section className="cab-grid-section">
-                <div className="cab-section genius">genius agents</div>
-                <div className="cab-grid">
-                  {genii.map(([slug, e]) => {
-                    const curated = !!EXPERT_CONTENT[slug];
-                    return (
-                      <button key={slug} className="cab-tile genius" onClick={() => setSelected(slug)}>
-                        <span className="cab-tile-name">@{e.label}</span>
-                        <span className="cab-tile-figure">{e.role ?? e.kind}</span>
-                        <span className="cab-tile-blurb">{e.blurb}</span>
-                        {curated && <span className="cab-tile-badge">curated</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
-            {coaches.length > 0 && (
-              <section className="cab-grid-section">
-                <div className="cab-section coach">coaches</div>
-                <div className="cab-grid">
-                  {coaches.map(([slug, e]) => {
-                    const curated = !!EXPERT_CONTENT[slug];
-                    return (
-                      <button key={slug} className="cab-tile coach" onClick={() => setSelected(slug)}>
-                        <span className="cab-tile-name">@{e.label}</span>
-                        <span className="cab-tile-figure">coach</span>
-                        <span className="cab-tile-blurb">{e.blurb}</span>
-                        {curated && <span className="cab-tile-badge">curated</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-          </div>
+          /* ============ GALLERY VIEW — full-width landing ============ */
+          <GalleryWall
+            intro={{
+              eyebrow: "your cabinet",
+              title: <>the gallery</>,
+              lede: (
+                <>
+                  A wing for the masters, a wing for the working hands, a wing for the coaches
+                  who walk with you. Pick a portrait — they wake up ready to brief.
+                </>
+              ),
+            }}
+            wings={wings}
+            onPick={setSelected}
+            onIceberg={onIceberg}
+          />
         ) : (
           /* ============ DETAIL VIEW — 2-pane (rail + detail) ============ */
           <>
@@ -126,7 +68,7 @@ export default function Cabinet({ experts, initialSlug = null, onClose, onLaunch
               {supers.length > 0 && (
                 <>
                   <div className="cab-section">super agents</div>
-                  {supers.map(([s, e]) => (
+                  {supers.map(({ slug: s, expert: e }) => (
                     <button
                       key={s}
                       className={"cab-row" + (s === selected ? " on" : "")}
@@ -141,7 +83,7 @@ export default function Cabinet({ experts, initialSlug = null, onClose, onLaunch
               {genii.length > 0 && (
                 <>
                   <div className="cab-section genius">genius agents</div>
-                  {genii.map(([s, e]) => (
+                  {genii.map(({ slug: s, expert: e }) => (
                     <button
                       key={s}
                       className={"cab-row genius" + (s === selected ? " on" : "")}
@@ -156,7 +98,7 @@ export default function Cabinet({ experts, initialSlug = null, onClose, onLaunch
               {coaches.length > 0 && (
                 <>
                   <div className="cab-section coach">coaches</div>
-                  {coaches.map(([s, e]) => (
+                  {coaches.map(({ slug: s, expert: e }) => (
                     <button
                       key={s}
                       className={"cab-row coach" + (s === selected ? " on" : "")}
@@ -164,6 +106,21 @@ export default function Cabinet({ experts, initialSlug = null, onClose, onLaunch
                     >
                       <span className="cab-row-name">@{e.label}</span>
                       <span className="cab-row-figure">coach</span>
+                    </button>
+                  ))}
+                </>
+              )}
+              {next.length > 0 && (
+                <>
+                  <div className="cab-section next">coming next</div>
+                  {next.map(({ slug: s, expert: e }) => (
+                    <button
+                      key={s}
+                      className={"cab-row next" + (s === selected ? " on" : "")}
+                      onClick={() => setSelected(s)}
+                    >
+                      <span className="cab-row-name">@{e.label}</span>
+                      <span className="cab-row-figure">{e.role ?? e.kind}</span>
                     </button>
                   ))}
                 </>
