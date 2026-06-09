@@ -1,7 +1,33 @@
 ---
 title: "Memory"
-description: "Cross-session expert memory that survives a workspace wipe."
+description: "The boss's vault + cross-session expert memory."
 ---
+
+Split has **two memory layers**: the boss-facing **vault** and the
+agent-private `var/memory/`.
+
+## The vault (`$SPLIT_VAULT`)
+
+A plain-markdown folder at `~/Documents/SplitVault` (override with the
+`SPLIT_VAULT` env var) — the boss's data, deliberately outside `var/`, where
+every expert files durable deliverables and durable facts. Layout:
+
+- **`INDEX.md`** — the scope list, one line per project; inlined into every
+  persona at session start (the boot-time recall trigger).
+- **`_meta/boss-profile.md`** — durable facts about the boss, read first
+  every session.
+- **`notes/`** — the default bucket when no project is set.
+- **`projects/<slug>/`** — deliverables + facts + a `MEMORY.md` index per
+  project.
+
+The doctrine (buckets, frontmatter vocabulary, index discipline, the
+propose-a-project flow) is the `memory` skill
+(`config/skills/memory/SKILL.md`), auto-mounted on every expert. The boss browses and edits the vault in-app via the **Vault overlay**
+(🗃️ in the chrome bar) — tree on the left, TipTap editor on the right. The
+filesystem is the single source of truth on both sides; agents write with
+plain file operations, no API.
+
+## Agent-private memory (`var/memory/`)
 
 `var/memory/` is **cross-session memory**, separate from the workspace and
 surviving a `rm -rf var/workspace/`:
