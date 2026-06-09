@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { save as saveDialog } from "@tauri-apps/plugin-dialog";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Editor } from "@tiptap/react";
 import { MarkdownEditor } from "./MarkdownEditor";
 import type { Artifact } from "../shared/events";
+
+// Tagline carried by the Share intent when the artifact has no public URL yet.
+// LinkedIn ignores text params and just renders the OG card from this URL;
+// X uses both. Keeping the same string in one place so the two intents stay in
+// sync — and the URL doubles as a soft promo for Split itself.
+const SHARE_PROMO_URL = "https://split-app.dev";
+const SHARE_PROMO_TAG = "Made with Split";
 
 // Injected into the HTML edit iframe. Makes text-bearing elements
 // contentEditable, paints a discreet outline on hover/focus, exposes
@@ -285,6 +293,71 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
   // hiding everything except `.art-print-target`. macOS surfaces a "Save
   // as PDF" destination in the print sheet → one-click PDF, zero deps.
   function exportPdf() { window.print(); }
+
+  // Save-a-copy flow. The OS save panel returns the user-chosen absolute path
+  // (or null on cancel); the Rust side writes the content there. For text
+  // artifacts we already have the bytes in payload — no need to round-trip
+  // through disk. For binary/image the button is hidden (v1 — no base64 path).
+  async function saveAs() {
+    if (!payload || payload.kind !== "text") return;
+    const defaultName = artifact.rel.split("/").pop() || artifact.rel;
+    const ext = extOf(artifact.rel);
+    const target = await saveDialog({
+      defaultPath: defaultName,
+      filters: ext ? [{ name: ext.toUpperCase(), extensions: [ext] }] : undefined,
+    });
+    if (!target) return;
+    try {
+      await invoke("save_artifact_as", { targetPath: target, content: payload.content });
+    } catch (e) {
+      setErr(String(e));
+    }
+  }
+
+  // Share popover state — small dropdown anchored under the Share button,
+  // closes on outside-click and on Esc. Two destinations (LinkedIn, X), each
+  // opens the platform's web-intent composer in the default browser.
+  const [shareOpen, setShareOpen] = useState(false);
+  const shareRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!shareOpen) return;
+    function onDoc(e: MouseEvent) {
+      if (shareRef.current && !shareRef.current.contains(e.target as Node)) {
+        setShareOpen(false);
+      }
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") setShareOpen(false); }
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [shareOpen]);
+  function shareTo(platform: "linkedin" | "x") {
+    const title = artifact.rel.split("/").pop() || artifact.rel;
+    const text = `${SHARE_PROMO_TAG} — ${title}`;
+    const url = SHARE_PROMO_URL;
+    let intent: string;
+    if (platform === "linkedin") {
+      // LinkedIn deprecated the title/summary params — modern share-offsite
+      // only honours `url`, then fetches the OG card from that URL. Pointing
+      // at split-app.dev means LinkedIn renders Split's preview; the user
+      // adds their own commentary in LinkedIn's composer.
+      intent = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+    } else {
+      // X's tweet intent takes both `text` and `url` — we send a pre-filled
+      // tweet with the tagline + artifact name + Split URL, user can edit
+      // before posting.
+      intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    }
+    invoke("open_url", { target: intent }).catch((e) => setErr(String(e)));
+    setShareOpen(false);
+  }
+  // Save-a-copy / Share are meaningful for any artifact except the binary
+  // fallback (no in-memory text content to write or to caption).
+  const canSaveAs = payload?.kind === "text";
+  const canShare = !!payload && payload.kind !== "binary";
   // Stable callbacks for the TipTap markdown editor — passing inline
   // closures would re-run the editor's effects on every render.
   const onTiptapReady = useCallback((editor: Editor) => { tiptapRef.current = editor; }, []);
@@ -303,6 +376,8 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
             <button className="iconbtn on" style={{ width: "auto", padding: "4px 10px" }}
                     onClick={saveEdit} disabled={saving} title="Save (⌘S)">{saving ? "Saving…" : "Save"}</button>
             {canExport && <button className="iconbtn" onClick={exportPdf} title="Export as PDF">⎙</button>}
+            {canSaveAs && <button className="iconbtn" onClick={saveAs} title="Save a copy…">⤓</button>}
+            {canShare && <ShareControl shareRef={shareRef} open={shareOpen} setOpen={setShareOpen} onPick={shareTo} />}
             <button className="iconbtn" onClick={reveal} title="Open in default app">↗</button>
           </>
         ) : editing ? (
@@ -316,6 +391,8 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
           <>
             {canEdit && <button className="iconbtn" onClick={startEdit} title="Edit">✎</button>}
             {canExport && <button className="iconbtn" onClick={exportPdf} title="Export as PDF">⎙</button>}
+            {canSaveAs && <button className="iconbtn" onClick={saveAs} title="Save a copy…">⤓</button>}
+            {canShare && <ShareControl shareRef={shareRef} open={shareOpen} setOpen={setShareOpen} onPick={shareTo} />}
             <button className="iconbtn" onClick={reveal} title="Open in default app">↗</button>
           </>
         )}
@@ -387,6 +464,43 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Small share control: a button + a popover that anchors to it. Lives in this
+// file because it's tightly coupled to ArtifactViewer's wiring — it doesn't
+// own the open state (the parent does, so outside-click can close it from any
+// header layout) and just routes the chosen platform back via onPick.
+function ShareControl({
+  shareRef, open, setOpen, onPick,
+}: {
+  shareRef: React.RefObject<HTMLDivElement | null>;
+  open: boolean;
+  setOpen: (v: boolean) => void;
+  onPick: (platform: "linkedin" | "x") => void;
+}) {
+  return (
+    <div className="art-share-wrap" ref={shareRef}>
+      <button
+        className={"iconbtn" + (open ? " on" : "")}
+        onClick={() => setOpen(!open)}
+        title="Share…"
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >⤴</button>
+      {open && (
+        <div className="art-share-menu" role="menu">
+          <button role="menuitem" className="art-share-item" onClick={() => onPick("linkedin")}>
+            <span className="art-share-mark" aria-hidden="true">in</span>
+            <span>Share on LinkedIn</span>
+          </button>
+          <button role="menuitem" className="art-share-item" onClick={() => onPick("x")}>
+            <span className="art-share-mark" aria-hidden="true">𝕏</span>
+            <span>Share on X</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { H, brandOf } from "../shared/harnesses";
+import { H } from "../shared/harnesses";
 import { useExperts } from "../shared/util";
-import { Tile, vars } from "../shared/ui";
+import { Tile } from "../shared/ui";
 import type { ArchivedSessionMeta } from "../shared/events";
 
 // Past-conversations picker. Loads on mount, then refreshes when the user
@@ -57,8 +57,8 @@ export function HistoryOverlay({
               const expertLabel = experts[m.expert]?.label ?? m.expert;
               const when = m.started_at ? new Date(m.started_at).toLocaleString() : "";
               return (
-                <div key={m.id} className="srow" style={vars({ "--brand": brandOf(m.harness) })} onClick={() => onOpen(m)}>
-                  <Tile id={m.harness} size={40} />
+                <div key={m.id} className="srow" onClick={() => onOpen(m)}>
+                  <Tile id={m.harness} size={40} themed />
                   <div className="meta">
                     <div className="ln1">
                       <span className="who">@{expertLabel}</span>
