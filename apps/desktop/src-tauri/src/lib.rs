@@ -699,6 +699,24 @@ fn start_session(
         resume.unwrap_or(false),
     );
 
+    // The runner task can also end on its own (agent crash, connection
+    // error) — not just via stop_session. Watch for its control-channel
+    // receiver dropping and evict the map entry, so dead senders don't
+    // accumulate. `same_channel` guards against a same-id restart (resume
+    // reuses session ids) racing the eviction.
+    let tx_watch = handle.tx.clone();
+    let id_watch = id.clone();
+    tauri::async_runtime::spawn(async move {
+        tx_watch.closed().await;
+        let mut map = SESSIONS.lock().unwrap();
+        if map
+            .get(&id_watch)
+            .is_some_and(|s| s.tx.same_channel(&tx_watch))
+        {
+            map.remove(&id_watch);
+        }
+    });
+
     SESSIONS.lock().unwrap().insert(
         id,
         Session {

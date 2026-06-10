@@ -60,7 +60,8 @@ export function applyEvent(s: Session, ev: VEvt): Session {
       }
       if (ev.status === "error")
         return { ...s, status: "error", summary: "error · " + (ev.error || "") };
-      if (ev.status === "ended") return { ...s, status: "ended", summary: "ended" };
+      // "ended" is not a VEVT status — end-of-session arrives as the wire
+      // envelope's `exit` flag and is applied in useSessions directly.
       return s;
 
     case "auth_required":
