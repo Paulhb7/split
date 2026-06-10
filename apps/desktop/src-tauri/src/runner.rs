@@ -95,53 +95,66 @@ fn next_req_id() -> String {
     format!("rp-{t:x}-{n:x}")
 }
 
-#[derive(Clone, serde::Serialize)]
-struct WireEvent {
-    id: String,
-    vevt: Option<String>,
-    log: Option<String>,
-    exit: bool,
+/// One `session-event` payload as the React side receives it.
+#[derive(Clone, Debug, serde::Serialize)]
+pub struct WireEvent {
+    pub id: String,
+    pub vevt: Option<String>,
+    pub log: Option<String>,
+    pub exit: bool,
 }
 
-fn emit_vevt(app: &AppHandle, id: &str, payload: Value, archive: Option<&SessionArchive>) {
+/// Where runner events land: the Tauri event bus in production, an mpsc
+/// channel in integration tests (which run `run_session` without a Tauri app).
+#[derive(Clone)]
+pub enum EventSink {
+    Tauri(AppHandle),
+    Channel(mpsc::UnboundedSender<WireEvent>),
+}
+
+impl EventSink {
+    fn emit(&self, ev: WireEvent) {
+        match self {
+            EventSink::Tauri(app) => {
+                let _ = app.emit("session-event", ev);
+            }
+            EventSink::Channel(tx) => {
+                let _ = tx.send(ev);
+            }
+        }
+    }
+}
+
+fn emit_vevt(app: &EventSink, id: &str, payload: Value, archive: Option<&SessionArchive>) {
     if let Some(a) = archive {
         a.write_event(&payload);
     }
     if let Ok(s) = serde_json::to_string(&payload) {
-        let _ = app.emit(
-            "session-event",
-            WireEvent {
-                id: id.into(),
-                vevt: Some(s),
-                log: None,
-                exit: false,
-            },
-        );
+        app.emit(WireEvent {
+            id: id.into(),
+            vevt: Some(s),
+            log: None,
+            exit: false,
+        });
     }
 }
 
-fn emit_log(app: &AppHandle, id: &str, line: String) {
-    let _ = app.emit(
-        "session-event",
-        WireEvent {
-            id: id.into(),
-            vevt: None,
-            log: Some(line),
-            exit: false,
-        },
-    );
+fn emit_log(app: &EventSink, id: &str, line: String) {
+    app.emit(WireEvent {
+        id: id.into(),
+        vevt: None,
+        log: Some(line),
+        exit: false,
+    });
 }
 
-fn emit_exit(app: &AppHandle, id: &str) {
-    let _ = app.emit(
-        "session-event",
-        WireEvent {
-            id: id.into(),
-            vevt: None,
-            log: None,
-            exit: true,
-        },
-    );
+fn emit_exit(app: &EventSink, id: &str) {
+    app.emit(WireEvent {
+        id: id.into(),
+        vevt: None,
+        log: None,
+        exit: true,
+    });
 }
 
 /// Translate one ACP `SessionUpdate` into the VEVT payload Split's reducer
@@ -421,7 +434,9 @@ fn scan_referenced_paths(text: &str, workspace: &Path) -> Vec<PathBuf> {
     let mut seen: std::collections::HashSet<PathBuf> = std::collections::HashSet::new();
 
     let mut push = |candidate: &str, acc: &mut Vec<PathBuf>| {
-        let trimmed = candidate.trim().trim_end_matches([',', '.', ';', ')', ']', '"', '\'']);
+        let trimmed = candidate
+            .trim()
+            .trim_end_matches([',', '.', ';', ')', ']', '"', '\'']);
         if trimmed.is_empty() {
             return;
         }
@@ -503,7 +518,7 @@ fn scan_referenced_paths(text: &str, workspace: &Path) -> Vec<PathBuf> {
 /// is the path relative to workspace when applicable, else the file name —
 /// good enough for display, and unique enough to key by.
 fn emit_referenced_artifact(
-    app: &AppHandle,
+    app: &EventSink,
     id: &str,
     archive: &SessionArchive,
     workspace: &Path,
@@ -553,7 +568,7 @@ fn emit_referenced_artifact(
 /// VEVT `artifact` event per change. `root` is needed to materialize the
 /// absolute `path` field the UI uses for `shell.open`.
 fn emit_artifact_diff(
-    app: &AppHandle,
+    app: &EventSink,
     id: &str,
     archive: &SessionArchive,
     root: &Path,
@@ -624,9 +639,47 @@ pub fn start(
     persona_body: String,
     resume_requested: bool,
 ) -> RunnerHandle {
-    let (tx, mut rx) = mpsc::unbounded_channel::<RunnerInput>();
+    let (tx, rx) = mpsc::unbounded_channel::<RunnerInput>();
 
-    tauri::async_runtime::spawn(async move {
+    tauri::async_runtime::spawn(run_session(
+        EventSink::Tauri(app),
+        id,
+        harness,
+        expert,
+        sessions_dir,
+        workspace,
+        command,
+        args,
+        env,
+        mcp_servers,
+        persona_body,
+        resume_requested,
+        rx,
+    ));
+
+    RunnerHandle { tx }
+}
+
+/// The per-session task body. Public so integration tests can run it on
+/// their own tokio runtime against a fake ACP agent, capturing events via
+/// `EventSink::Channel` — production goes through `start` above.
+#[allow(clippy::too_many_arguments)]
+pub async fn run_session(
+    app: EventSink,
+    id: String,
+    harness: String,
+    expert: String,
+    sessions_dir: PathBuf,
+    workspace: String,
+    command: String,
+    args: Vec<String>,
+    env: HashMap<String, String>,
+    mcp_servers: Vec<McpServer>,
+    persona_body: String,
+    resume_requested: bool,
+    mut rx: mpsc::UnboundedReceiver<RunnerInput>,
+) {
+    {
         // ── archive ───────────────────────────────────────────────────────
         let archive = Arc::new(SessionArchive::open(&sessions_dir, &id, &harness, &expert));
         // Mirror the Python runner's first-line: emit `ready` immediately so
@@ -1034,9 +1087,7 @@ pub fn start(
 
         archive.close();
         emit_exit(&app, &id);
-    });
-
-    RunnerHandle { tx }
+    }
 }
 
 /// Try `resume_session` if requested + supported + we have an `acp_sid`;
@@ -1053,7 +1104,7 @@ async fn open_session(
     prior_acp_sid: Option<String>,
     auth_methods: &[agent_client_protocol::schema::AuthMethod],
     harness: String,
-    app: &AppHandle,
+    app: &EventSink,
     id: &str,
     archive: &SessionArchive,
     pending_turn: &mut Option<String>,
@@ -1202,7 +1253,7 @@ async fn run_one_turn(
     text: String,
     persona_body: &str,
     persona_injected: bool,
-    app: &AppHandle,
+    app: &EventSink,
     id: &str,
     archive: &SessionArchive,
     workspace: &Path,
@@ -1283,7 +1334,7 @@ async fn authenticate_and_emit(
     method_id: String,
     harness: &str,
     auth_methods: &[agent_client_protocol::schema::AuthMethod],
-    app: &AppHandle,
+    app: &EventSink,
     id: &str,
     archive: &SessionArchive,
 ) {
@@ -1320,7 +1371,7 @@ async fn logout_and_emit(
     connection: &ConnectionTo<Agent>,
     harness: &str,
     auth_methods: &[agent_client_protocol::schema::AuthMethod],
-    app: &AppHandle,
+    app: &EventSink,
     id: &str,
     archive: &SessionArchive,
 ) {

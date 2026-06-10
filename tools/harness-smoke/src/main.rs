@@ -26,7 +26,7 @@ use std::time::Duration;
 use agent_client_protocol::{
     schema::{
         ClientCapabilities, ContentBlock, EnvVariable, FileSystemCapabilities, InitializeRequest,
-        McpServer, McpServerStdio, NewSessionRequest, ProtocolVersion, PromptRequest,
+        McpServer, McpServerStdio, NewSessionRequest, PromptRequest, ProtocolVersion,
         ReadTextFileRequest, RequestPermissionOutcome, RequestPermissionRequest,
         RequestPermissionResponse, SessionNotification, SessionUpdate, TextContent,
         WriteTextFileRequest,
@@ -126,9 +126,7 @@ async fn main() {
     print_table(&results);
 
     // Exit non-zero if any harness hard-failed (auth-required is not a failure).
-    let any_failed = results
-        .iter()
-        .any(|(_, o)| matches!(o, Outcome::Failed(_)));
+    let any_failed = results.iter().any(|(_, o)| matches!(o, Outcome::Failed(_)));
     if any_failed {
         std::process::exit(1);
     }
@@ -192,7 +190,10 @@ async fn probe(
     env: HashMap<String, String>,
     cwd: PathBuf,
 ) -> Outcome {
-    let env_vars: Vec<EnvVariable> = env.into_iter().map(|(k, v)| EnvVariable::new(k, v)).collect();
+    let env_vars: Vec<EnvVariable> = env
+        .into_iter()
+        .map(|(k, v)| EnvVariable::new(k, v))
+        .collect();
     let stdio = McpServerStdio::new(name, PathBuf::from(&command))
         .args(args)
         .env(env_vars);
@@ -343,7 +344,14 @@ fn print_table(results: &[(String, Outcome)]) {
         let (icon, detail) = match o {
             Outcome::TurnOk(s) => {
                 ok += 1;
-                ("✅ turn ok", if s.is_empty() { String::new() } else { format!("“{s}”") })
+                (
+                    "✅ turn ok",
+                    if s.is_empty() {
+                        String::new()
+                    } else {
+                        format!("“{s}”")
+                    },
+                )
             }
             Outcome::AcpOk(s) => {
                 acp += 1;
@@ -381,8 +389,18 @@ fn first_line(s: &str) -> String {
 fn looks_like_auth_error(msg: &str) -> bool {
     let lower = msg.to_lowercase();
     [
-        "auth", "login", "unauthor", "api key", "api_key", "credit", "401", "403", "forbidden",
-        "sign in", "not permitted", "no_api_key",
+        "auth",
+        "login",
+        "unauthor",
+        "api key",
+        "api_key",
+        "credit",
+        "401",
+        "403",
+        "forbidden",
+        "sign in",
+        "not permitted",
+        "no_api_key",
     ]
     .iter()
     .any(|h| lower.contains(h))
