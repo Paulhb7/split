@@ -42,7 +42,7 @@ export interface LifecycleAPI {
   refresh: () => void;
 }
 
-export function EngineCard({
+function EngineCard({
   id,
   selected,
   onPick,

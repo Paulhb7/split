@@ -101,9 +101,6 @@
 @media (prefers-reduced-motion: reduce) {
   .wm-star { animation: none; }
 }
-/* The chrome mark uses the Three.js <SiriOrb> directly — owns its own
-   canvas + colors via props, so no CSS body needed here. The wm layout
-   keeps the flex/gap so the orb + "split" wordmark stay aligned. */
 .chrome-meta { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); letter-spacing: 0.04em; }
 .spacer { flex: 1; }
 

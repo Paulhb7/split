@@ -57,7 +57,7 @@ export type ExpertMap = Record<string, Expert>;
 // cabinet). They still exist in the registry — Teams mode picks them up
 // directly. Toscanini (Chief of Staff) is the team conductor; it has no role
 // when there's only one expert in the room.
-export const TEAMS_ONLY = new Set<string>(["toscanini"]);
+const TEAMS_ONLY = new Set<string>(["toscanini"]);
 export const isClassicExpert = (slug: string) => !TEAMS_ONLY.has(slug);
 
 /** Whether an expert is fully active — not Teams-only AND not deferred to a

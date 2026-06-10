@@ -12,7 +12,7 @@
 // Fictional characters (Indiana, Alfred): no PD source — also placeholder
 // until generated.
 
-export const PORTRAITS: Record<string, string> = {
+const PORTRAITS: Record<string, string> = {
   // ---- Genius wing — Wikimedia Commons (public domain) ----
   genius_davinci:   "https://upload.wikimedia.org/wikipedia/commons/c/cb/Francesco_Melzi_-_Portrait_of_Leonardo.png",
   genius_wolfgang:  "https://upload.wikimedia.org/wikipedia/commons/a/ad/The_Mozart_Family_-_Wolfgang_Amadeus_Mozart_headshot.jpg",
@@ -48,7 +48,7 @@ export const PORTRAITS: Record<string, string> = {
 /** Fallback portrait when a slug has no registered image (custom experts
  * created via @Socrates, future experts before their portrait ships). The
  * gallery component reads the same Unsplash CDN so the failover is silent. */
-export const PORTRAIT_FALLBACK =
+const PORTRAIT_FALLBACK =
   "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=600&q=80";
 
 export const getPortrait = (slug: string): string =>
