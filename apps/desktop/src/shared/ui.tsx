@@ -7,14 +7,28 @@ import { ModelPickerPanel } from "./ModelPickerPanel";
 
 export const vars = (o: Record<string, string | number>) => o as React.CSSProperties;
 
-export function Logo({ id, size = 18 }: { id: string; size?: number }) {
-  return <span className="logo" style={vars({ "--logo": logoUrl(id), "--brand": brandOf(id), "--s": `${size}px` })} />;
+// `themed` keeps the logo shape (so you still recognise which harness it is)
+// but lets the colour fall through to the skin's `--brand` instead of the
+// harness's own brand colour. Used by single-harness contexts (chrome bar,
+// session row, conversation head, stage, composer) where the harness is
+// already named in text beside the mark, so the colour isn't carrying ID
+// info — the surface reads more cohesive when the tile tracks the theme.
+// Multi-harness contexts (League grid, onboarding carousels) leave `themed`
+// off so each agent keeps its own accent.
+export function Logo({ id, size = 18, themed = false }: { id: string; size?: number; themed?: boolean }) {
+  const style = themed
+    ? vars({ "--logo": logoUrl(id), "--s": `${size}px` })
+    : vars({ "--logo": logoUrl(id), "--brand": brandOf(id), "--s": `${size}px` });
+  return <span className="logo" style={style} />;
 }
 
-export function Tile({ id, size = 44 }: { id: string; size?: number }) {
+export function Tile({ id, size = 44, themed = false }: { id: string; size?: number; themed?: boolean }) {
+  const style = themed
+    ? vars({ "--t": `${size}px` })
+    : vars({ "--brand": brandOf(id), "--t": `${size}px` });
   return (
-    <span className="tile" style={vars({ "--brand": brandOf(id), "--t": `${size}px` })}>
-      <Logo id={id} size={size - 20} />
+    <span className="tile" style={style}>
+      <Logo id={id} size={size - 20} themed={themed} />
     </span>
   );
 }

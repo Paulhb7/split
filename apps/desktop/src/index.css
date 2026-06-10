@@ -5,10 +5,13 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  /* Opaque dark base. The window is no longer `transparent` (native decorations
-     + traffic lights), so the .app's translucent gradients now blend over this
-     instead of the OS transparency layer. */
-  background: #0a0b0e;
+  /* Transparent base: the window is `transparent: true` again (macOSPrivateApi)
+     and a Sidebar-material NSVisualEffectView sits behind the webview (lib.rs),
+     so the skins' translucent gradient stacks blend over real frosted glass.
+     The native decorations still own the frame + rounded corners. On Windows,
+     where no blur layer is wired, the skins' ≥80%-opaque gradients carry the
+     surface on their own. */
+  background: transparent;
 }
 
 body {
@@ -17,6 +20,22 @@ body {
   user-select: none;
   overflow: hidden;
   cursor: default;
+}
+
+/* Skin switch cross-fade — View Transitions API (WebKit ≥ Safari 18). The
+   default root cross-fade, slowed to a deliberate dissolve so two skin worlds
+   blend instead of snapping. Feature-detected in App.tsx pickSkin; engines
+   without the API just swap instantly. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
 }
 
 /* Markdown in the action stream (selectable text) */

@@ -1,5 +1,5 @@
-import { H, brandOf } from "../shared/harnesses";
-import { Tile, vars } from "../shared/ui";
+import { H } from "../shared/harnesses";
+import { Tile } from "../shared/ui";
 import type { Session } from "../shared/models";
 
 // One row in the home sessions list: engine tile + who/where + status badge +
@@ -10,8 +10,8 @@ export function SessionRow({ s, onOpen, onStop, onClose }: { s: Session; onOpen:
     ? "past"
     : ({ running: "running", idle: "ready", ended: "ended", error: "error", auth: "sign-in" } as Record<string, string>)[s.status] || s.status;
   return (
-    <div className="srow" style={vars({ "--brand": brandOf(s.harness) })} onClick={onOpen}>
-      <Tile id={s.harness} size={40} />
+    <div className="srow" onClick={onOpen}>
+      <Tile id={s.harness} size={40} themed />
       <div className="meta">
         <div className="ln1">
           <span className={"dot " + s.status} />

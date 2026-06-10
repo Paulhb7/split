@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import { HARNESSES, H, brandOf } from "./shared/harnesses";
 import { useExperts, composeTurn, type Attachment } from "./shared/util";
-import { isClassicExpert } from "./shared/experts";
+import { isActiveExpert } from "./shared/experts";
 import { useSessions } from "./shared/useSessions";
-import { useWindowChrome, useAdaptiveHeight, useFullscreen, useBarWidth } from "./shared/useWindowChrome";
+import { useWindowChrome, useAdaptiveHeight, useFullscreen, useNativeFullscreen, useBarWidth } from "./shared/useWindowChrome";
 import { useHarnessStates } from "./shared/useHarnessStates";
 import { useToasts } from "./shared/useToasts";
-import { SKINS, isSkin, DEFAULT_SKIN, type Skin } from "./shared/skins";
+import { SKINS, isSkin, DEFAULT_SKIN, isNight, nightId, type Skin } from "./shared/skins";
 import { League, vars } from "./shared/ui";
 import { Composer } from "./home/Composer";
 import { SessionRow } from "./home/SessionRow";
@@ -22,7 +24,9 @@ import Stage from "./stage/Stage";
 import Teams from "./teams/Teams";
 import { useTeam } from "./teams/useTeam";
 import Cabinet from "./cabinet/Cabinet";
-import SiriOrb from "./shared/SiriOrb";
+import { VaultOverlay } from "./vault/VaultOverlay";
+import SplitMark from "./shared/SplitMark";
+import GalleryWall, { buildWings } from "./shared/GalleryWall";
 import "./app.css";
 
 const LS_DONE = "split.onboarded";
@@ -31,8 +35,13 @@ const LS_DEF = "split.defaultHarness"; // legacy single-pick (migrated to LS_ENA
 const LS_ENABLED = "split.enabledHarnesses"; // the agents the user activated
 const LS_ACTIVE = "split.activeHarness"; // the armed engine for the next session
 const LS_MODE = "split.mode"; // "simple" (one expert/session) | "teams" (Chief-of-Staff)
-const LS_SKIN = "split.skin"; // "" (default dark) | "pastel" | "cyberpunk" | "tokyo"
+const LS_SKIN = "split.skin"; // skin id ("" = Classic dark) — see shared/skins.ts for the registry
+const LS_NIGHT_OPTOUT = "split.skin.nightOptOut"; // nightId() of the evening the user opted out of auto-Minuit
+const LS_PRENOIR = "split.skin.preNoir"; // skin to restore when the Noir easter egg is toggled off
+const LS_PRETITANIC = "split.skin.preTitanic"; // skin to refloat when the Titanic easter egg is toggled off
+const LS_PRECOSMOS = "split.skin.preCosmos"; // skin to come back down to when the Cosmos easter egg is toggled off
 const LS_RAILW = "split.artRailWidth"; // px width of the conversation rail in artifact-split mode
+const LS_GOD = "split.godMode"; // "1" = auto-approve every tool permission request
 const RAIL_MIN = 320;
 const RAIL_MAX = 900;
 const RAIL_DEFAULT = 460;
@@ -64,7 +73,7 @@ function loadActive(): string {
 
 export default function App() {
   const experts = useExperts();
-  const { sessions, start, send, sendAuth, sendLogout, sendPermission, stop, remove, cancelQueued, pickArtifact, openArchive, resumeArchive } = useSessions(experts);
+  const { sessions, start, send, sendAuth, sendPermission, stop, remove, cancelQueued, pickArtifact, openArchive, resumeArchive } = useSessions(experts);
   const teamApi = useMemo(() => ({ start, send, stop }), [start, send, stop]);
   const { project, channels, activeChannel, activeRoster, setActiveChannel, newChannel, stopChannel, removeChannel } = useTeam(teamApi, experts);
   const { startMove, hide } = useWindowChrome();
@@ -74,10 +83,20 @@ export default function App() {
   const [enabled, setEnabled] = useState<string[]>(loadEnabled);
   const [active, setActiveState] = useState(loadActive);
   const [expertSlug, setExpertSlug] = useState("consultant");
-  const [menu, setMenu] = useState<"engine" | "expert" | "slash" | null>(null);
+  const [menu, setMenu] = useState<"engine" | "expert" | "slash" | "project" | null>(null);
   // Query after the `/` at the cursor — null when no slash is active. Drives
   // the slash-command palette in the focused conversation composer.
   const [slashQuery, setSlashQuery] = useState<string | null>(null);
+  // `#` type-ahead state (home composer only): query after the `#` at the
+  // cursor, null when inactive. Drives the vault-project picker.
+  const [projectQuery, setProjectQuery] = useState<string | null>(null);
+  // Vault project pinned on the NEXT session (the `#project` chip). Per
+  // session-start only: the persona is projected once, so a pin can't change
+  // mid-session.
+  const [pinnedProject, setPinnedProject] = useState<string | null>(null);
+  // Project slugs read from the vault's projects/ folder, refreshed each
+  // time the `#` menu opens.
+  const [vaultProjects, setVaultProjects] = useState<string[]>([]);
   const [overlay, setOverlay] = useState(false);
   const [view, setViewState] = useState<"list" | "stage">(() => (localStorage.getItem(LS_VIEW) === "stage" ? "stage" : "list"));
   const setView = (v: "list" | "stage") => {
@@ -94,14 +113,81 @@ export default function App() {
   };
   const [skin, setSkinState] = useState<Skin>(() => {
     const raw = localStorage.getItem(LS_SKIN);
-    return raw === null ? DEFAULT_SKIN : isSkin(raw) ? raw : DEFAULT_SKIN;
+    const s = raw === null ? DEFAULT_SKIN : isSkin(raw) ? raw : DEFAULT_SKIN;
+    return s === "minuit" ? DEFAULT_SKIN : s; // minuit is the night state, never the day skin
   });
-  const pickSkin = (s: Skin) => {
-    setSkinState(s);
-    localStorage.setItem(LS_SKIN, s);
-    setSkinMenu(false);
+  // Auto-"Minuit": between 21:00 and 07:00 local the bar dresses for the
+  // night, unless the user picked another skin tonight (opt-out scoped to
+  // nightId() so it expires at the next sunset). The minute tick keeps the
+  // flip honest for windows that stay open across 21:00 / 07:00.
+  const [night, setNight] = useState(isNight());
+  // The observatory window (Cosmos egg): the ✦ only rises at midnight —
+  // 00:00 to 07:00, the small hours — not the whole Minuit evening.
+  const [smallHours, setSmallHours] = useState(new Date().getHours() < 7);
+  useEffect(() => {
+    const tick = () => {
+      setNight(isNight());
+      setSmallHours(new Date().getHours() < 7);
+    };
+    const t = setInterval(tick, 60_000);
+    return () => clearInterval(t);
+  }, []);
+  const [nightOptOut, setNightOptOut] = useState(() => localStorage.getItem(LS_NIGHT_OPTOUT) === nightId());
+  useEffect(() => {
+    if (night) setNightOptOut(localStorage.getItem(LS_NIGHT_OPTOUT) === nightId());
+  }, [night]);
+  // Fashion-Week easter egg (Konami code): while the runway is live this
+  // override dresses the window, beating even the auto-Minuit night rule.
+  const [runwaySkin, setRunwaySkin] = useState<Skin | null>(null);
+  // What the window actually wears right now (runway look, else the day skin,
+  // else Minuit after dark).
+  const shownSkin: Skin = runwaySkin ?? (night && !nightOptOut ? "minuit" : skin);
+  const withSkinTransition = (commit: () => void) => {
+    // Cross-fade the whole window between skins (View Transitions API,
+    // WebKit ≥ Safari 18). flushSync commits the new theme class inside the
+    // transition's capture window; engines without the API swap instantly.
+    const vt = (document as Document & { startViewTransition?: (cb: () => void) => unknown }).startViewTransition;
+    if (vt) vt.call(document, () => flushSync(commit));
+    else commit();
   };
-  const [skinMenu, setSkinMenu] = useState(false);
+  // Easter egg #3, the mainstream one — indecision: 4 skin picks within 6 s
+  // reads as "can't choose", so the bar shows the whole wardrobe itself
+  // (runway(), below) before settling on the user's last pick.
+  const pickTimes = useRef<number[]>([]);
+  const pickSkin = (s: Skin) => {
+    setMoreMenu(false);
+    const now = Date.now();
+    pickTimes.current = [...pickTimes.current.filter((t) => now - t < 6000), now];
+    if (pickTimes.current.length >= 4) {
+      pickTimes.current = [];
+      runway();
+    }
+    if (s === "minuit") {
+      // Only offered at night, never persisted as the day skin — picking it
+      // just re-arms the auto rule for tonight.
+      localStorage.removeItem(LS_NIGHT_OPTOUT);
+      withSkinTransition(() => setNightOptOut(false));
+      return;
+    }
+    // Picking a skin after dark means "not tonight" — Minuit stands down for
+    // the rest of this night only and returns tomorrow evening.
+    if (isNight()) localStorage.setItem(LS_NIGHT_OPTOUT, nightId());
+    localStorage.setItem(LS_SKIN, s);
+    withSkinTransition(() => {
+      if (isNight()) setNightOptOut(true);
+      setSkinState(s);
+    });
+  };
+  // Chrome overflow menu (⋯) — gathers the rare actions (skin, workspace,
+  // replay onboarding) behind one glyph. "skins" is the drill-down page.
+  const [moreMenu, setMoreMenu] = useState<false | "root" | "skins">(false);
+  // Pin the native window appearance to the skin's polarity so the vibrancy
+  // glass behind the translucent surface (lib.rs, Sidebar material) reads
+  // bright under the light skins and deep under the dark ones.
+  useEffect(() => {
+    const dark = SKINS.find((x) => x.id === shownSkin)?.dark ?? true;
+    getCurrentWindow().setTheme(dark ? "dark" : "light").catch(() => {});
+  }, [shownSkin]);
   const [historyOpen, setHistoryOpen] = useState(false);
   // Width (in px) of the conversation rail when the artifact-split layout is
   // active. The user drags the divider to taste; we clamp to [RAIL_MIN,
@@ -112,6 +198,32 @@ export default function App() {
     return RAIL_DEFAULT;
   });
   useEffect(() => { localStorage.setItem(LS_RAILW, String(Math.round(railWidth))); }, [railWidth]);
+
+  // God Mode — when on, every pending permission_request is auto-resolved
+  // with the agent's "allow" option (scope="once" so nothing gets persisted
+  // to var/permissions.json). Toggle persisted in localStorage; the toggle
+  // button lives in the conv-head.
+  const [godMode, setGodModeState] = useState<boolean>(() => localStorage.getItem(LS_GOD) === "1");
+  const toggleGodMode = () => {
+    setGodModeState((on) => {
+      const next = !on;
+      localStorage.setItem(LS_GOD, next ? "1" : "0");
+      return next;
+    });
+  };
+  useEffect(() => {
+    if (!godMode) return;
+    for (const s of sessions) {
+      const pp = s.pendingPermission;
+      if (!pp) continue;
+      // Match the Conversation.tsx selection: prefer a non-`always` allow
+      // (we own persistence on our side) and fall back to any allow option.
+      const allowOpt =
+        pp.options.find((o) => /allow/i.test(o.kind) && !/always/i.test(o.kind)) ??
+        pp.options.find((o) => /allow/i.test(o.kind));
+      if (allowOpt) sendPermission(s.id, pp.id, allowOpt.id, "once");
+    }
+  }, [godMode, sessions, sendPermission]);
   // Pointer drag for the split divider. We listen on the window for
   // mousemove/up so the drag survives the cursor briefly leaving the 6px
   // handle. The cursor is forced to col-resize across the whole document
@@ -145,10 +257,120 @@ export default function App() {
   //                   from @ chip or focused conversation header)
   // Closes via ✕ / Esc / clicking a use case (which also launches a session).
   const [cabinet, setCabinet] = useState<boolean | string>(false);
+  // Vault overlay — the boss's window into $SPLIT_VAULT (tree + editor).
+  // Like Cabinet, it forces fullscreen geometry.
+  const [vaultOpen, setVaultOpen] = useState(false);
   const [value, setValue] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragging, setDragging] = useState(false);
   const { toasts, push: pushToast } = useToasts();
+  // Easter egg — 5 quick clicks on the chrome wordmark toggle the hidden
+  // film-noir skin (and back to whatever was worn before). Not in the picker,
+  // not in a tooltip: you find it, or you hear about it.
+  const eggClicks = useRef<number[]>([]);
+  const noirEgg = () => {
+    const now = Date.now();
+    eggClicks.current = [...eggClicks.current.filter((t) => now - t < 1800), now];
+    if (eggClicks.current.length < 5) return;
+    eggClicks.current = [];
+    if (skin === "noir") {
+      const back = localStorage.getItem(LS_PRENOIR);
+      pickSkin(isSkin(back) && back !== "noir" && back !== "minuit" ? back : DEFAULT_SKIN);
+    } else {
+      localStorage.setItem(LS_PRENOIR, skin);
+      pickSkin("noir");
+      pushToast("🕶️ Mode Noir. Motus.");
+    }
+  };
+  // Easter egg — the Cabinet gallery's last exhibit ("untitled — 1912", a
+  // tiny unframed 🧊). Clicking it sinks the bar into the hidden Titanic
+  // skin; clicking again refloats whatever was worn before.
+  const titanicEgg = () => {
+    if (skin === "titanic") {
+      const back = localStorage.getItem(LS_PRETITANIC);
+      pickSkin(isSkin(back) && back !== "titanic" && back !== "noir" && back !== "minuit" ? back : DEFAULT_SKIN);
+    } else {
+      localStorage.setItem(LS_PRETITANIC, skin);
+      pickSkin("titanic");
+      pushToast("🧊 Iceberg, right ahead.");
+    }
+  };
+  // Easter egg — the observatory only opens at midnight: in the small hours
+  // (00:00–07:00), while the bar wears Minuit, a tiny ✦ glints in the chrome
+  // next to the wordmark (the .wm-star button below). Clicking it flies to
+  // the hidden Cosmos skin; the star stays lit inside so you can fly back.
+  // Entering from Minuit stores
+  // "minuit" as the way back — pickSkin("minuit") re-arms the night rule,
+  // so leaving the observatory returns you to the night, not the day skin.
+  const cosmosEgg = () => {
+    if (skin === "cosmos") {
+      const back = localStorage.getItem(LS_PRECOSMOS);
+      pickSkin(isSkin(back) && back !== "cosmos" && back !== "noir" && back !== "titanic" ? back : DEFAULT_SKIN);
+    } else {
+      localStorage.setItem(LS_PRECOSMOS, shownSkin === "minuit" ? "minuit" : skin);
+      pickSkin("cosmos");
+      pushToast("🔭 Welcome to the observatory.");
+    }
+  };
+  // Easter egg #2 — the Konami code (↑↑↓↓←→←→ B A) sends the whole wardrobe
+  // down the runway: every skin for ~1 s, Noir closes the show, then the bar
+  // goes back to whatever it was wearing. Nothing is persisted.
+  const runwayLive = useRef(false);
+  const runwayTimers = useRef<number[]>([]);
+  useEffect(() => () => runwayTimers.current.forEach(clearTimeout), []);
+  const startRunway = () => {
+    if (runwayLive.current) return;
+    runwayLive.current = true;
+    pushToast("✨ Fashion Week — le vestiaire au complet.");
+    const lineup = SKINS.map((s) => s.id);
+    runwayTimers.current = lineup.map((id, i) => window.setTimeout(() => setRunwaySkin(id), 400 + 900 * i));
+    runwayTimers.current.push(
+      window.setTimeout(() => {
+        setRunwaySkin(null);
+        runwayLive.current = false;
+      }, 400 + 900 * lineup.length),
+    );
+  };
+  // Mid-onboarding the show isn't forced on the user — the egg asks first
+  // (runwayAsk popup) instead of stealing the guided tour's screen.
+  const [runwayAsk, setRunwayAsk] = useState(false);
+  const runway = () => {
+    if (runwayLive.current) return;
+    if (!onboarded) {
+      setRunwayAsk(true);
+      return;
+    }
+    startRunway();
+  };
+  useEffect(() => {
+    // e.key (not e.code) so the sequence survives AZERTY & friends.
+    const seq = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
+    let pos = 0;
+    const onKey = (e: KeyboardEvent) => {
+      const k = e.key.toLowerCase();
+      pos = k === seq[pos] ? pos + 1 : k === seq[0] ? 1 : 0;
+      if (pos === seq.length) {
+        pos = 0;
+        runway();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // `runway` only touches refs and stable setters — safe to bind once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // Easter egg #3b — the patient cousin of the indecision trigger: linger in
+  // the skin picker for 30 s without committing and a gentle offer slides in
+  // at the top of the list to run the Fashion Week for you.
+  const [runwayOffer, setRunwayOffer] = useState(false);
+  useEffect(() => {
+    if (moreMenu !== "skins") {
+      setRunwayOffer(false);
+      return;
+    }
+    const t = window.setTimeout(() => setRunwayOffer(true), 30_000);
+    return () => window.clearTimeout(t);
+  }, [moreMenu]);
   // `@` type-ahead state: when the cursor sits inside an `@…` mention with no
   // whitespace between the `@` and the cursor, this holds the text typed after
   // the `@` (so the expert dropdown can filter). null = not in mention mode.
@@ -173,8 +395,9 @@ export default function App() {
   // Two geometries, full stop: a 680px-wide adaptive bar (height fits content)
   // for the home/composer/conversation flow, and native macOS fullscreen for
   // any "serious" surface — Teams orchestration, onboarding, Add Agent,
-  // Cabinet, History. Fullscreen pauses the adaptive fit so the OS owns the
-  // window; on exit the ResizeObserver re-fits whatever the body now shows.
+  // Cabinet, History, and art mode (focused session with deliverables).
+  // Fullscreen pauses the adaptive fit so the OS owns the window; on exit
+  // the ResizeObserver re-fits whatever the body now shows.
   const expanded = !!focused || classicSessions.length > 0 || !!authSession;
   // Art mode = the focused session has at least one deliverable. We widen the
   // bar (so the conversation rail + viewer don't fight for pixels) and pause
@@ -183,8 +406,16 @@ export default function App() {
   // window expands; restored to the 680 default when artifacts vanish or the
   // user backs out of the focused session.
   const artMode = !!focused && focused.artifacts.length > 0;
-  const isFullscreen = mode === "teams" || overlay || !!cabinet || historyOpen || !onboarded;
+  const isFullscreen = mode === "teams" || overlay || !!cabinet || historyOpen || !onboarded || vaultOpen || artMode;
   useFullscreen(isFullscreen);
+  // "Roomy" home = the user maximised the window themselves (green traffic
+  // light) while on the home view. The adaptive bar never reaches this state
+  // on its own (manual drags are re-fit back to content height), so it's safe
+  // to fill the extra canvas with the expert gallery without feeding back into
+  // the auto-height loop. App-driven fullscreen (cabinet, teams, …) is
+  // excluded — those surfaces own the canvas.
+  const nativeFs = useNativeFullscreen();
+  const roomyHome = nativeFs && !isFullscreen;
   // Pre-compute how much extra height the open dropdown needs. The menu is
   // `position: absolute` so it doesn't contribute to `measureRef`'s natural
   // offsetHeight; we reserve room manually so the window grows tall enough
@@ -193,7 +424,7 @@ export default function App() {
     ? 0
     : menu === "engine"
       ? Math.min(320, enabledHarnesses.length * 56 + 80)
-      : Math.min(320, Object.keys(experts).filter(isClassicExpert).length * 56 + 16);
+      : Math.min(320, Object.keys(experts).filter((s) => isActiveExpert(experts, s)).length * 56 + 16);
   useAdaptiveHeight({
     measureRef,
     disabled: isFullscreen || artMode,
@@ -217,8 +448,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!experts[expertSlug] || !isClassicExpert(expertSlug)) {
-      const first = Object.keys(experts).find(isClassicExpert);
+    if (!experts[expertSlug] || !isActiveExpert(experts, expertSlug)) {
+      const first = Object.keys(experts).find((s) => isActiveExpert(experts, s));
       if (first) setExpertSlug(first);
     }
   }, [experts, expertSlug]);
@@ -308,11 +539,6 @@ export default function App() {
     }
   }
 
-  function openWorkspaceFolder(sessionId?: string) {
-    const workspace = localStorage.getItem("split.workspace") || "";
-    invoke("open_workspace", { workspace, sessionId: sessionId ?? null });
-  }
-
   function launch() {
     const t = value.trim();
     if (!t && !attachments.length) return;
@@ -324,7 +550,9 @@ export default function App() {
     setValue("");
     setAttachments([]);
     setMenu(null);
-    start({ harness: active, expertSlug, display: turn.display, wire: turn.wire, files: turn.files }).then(setFocusedId);
+    const project = pinnedProject ?? undefined;
+    setPinnedProject(null);
+    start({ harness: active, expertSlug, display: turn.display, wire: turn.wire, files: turn.files, project }).then(setFocusedId);
   }
   function reply() {
     if (!focused) return;
@@ -348,7 +576,7 @@ export default function App() {
     setTimeout(() => inputRef.current?.focus(), 0);
   }
 
-  const expertEntries = useMemo(() => Object.entries(experts).filter(([slug]) => isClassicExpert(slug)), [experts]);
+  const expertEntries = useMemo(() => Object.entries(experts).filter(([slug]) => isActiveExpert(experts, slug)), [experts]);
   const expertLabel = experts[expertSlug]?.label || "Consultant";
 
   // The expert list shown in the dropdown: full when the menu was opened by
@@ -359,6 +587,25 @@ export default function App() {
     const q = mentionQuery.toLowerCase();
     return expertEntries.filter(([, x]) => x.label.toLowerCase().startsWith(q));
   }, [expertEntries, mentionQuery]);
+
+  // Refresh the vault's project list each time the `#` picker opens — the
+  // vault changes underneath us (agents create projects mid-flight).
+  useEffect(() => {
+    if (menu !== "project") return;
+    invoke<string>("vault_tree")
+      .then((raw) => {
+        const data = JSON.parse(raw) as { tree: { name: string; dir: boolean; children: { name: string; dir: boolean }[] }[] };
+        const projects = data.tree.find((n) => n.dir && n.name === "projects");
+        setVaultProjects((projects?.children ?? []).filter((c) => c.dir).map((c) => c.name));
+      })
+      .catch(() => setVaultProjects([]));
+  }, [menu]);
+
+  const filteredProjects = useMemo(() => {
+    if (projectQuery == null || projectQuery === "") return vaultProjects;
+    const q = projectQuery.toLowerCase();
+    return vaultProjects.filter((p) => p.toLowerCase().startsWith(q));
+  }, [vaultProjects, projectQuery]);
 
   // Detect an active `@…` mention at the cursor and sync menu state. Called
   // from every input's onChange (the home composer and the conv reply input).
@@ -374,12 +621,24 @@ export default function App() {
         setMentionQuery(newValue.slice(i + 1, cursor));
         setMenu("expert");
         if (slashQuery !== null) { setSlashQuery(null); }
+        if (projectQuery !== null) { setProjectQuery(null); }
+        return;
+      }
+      // `#project` picker — home composer only: the pin shapes the persona
+      // projected at session START, so it's meaningless on a focused
+      // session's reply input.
+      if (newValue[i] === "#" && !focused) {
+        setProjectQuery(newValue.slice(i + 1, cursor));
+        setMenu("project");
+        if (mentionQuery !== null) { setMentionQuery(null); }
+        if (slashQuery !== null) { setSlashQuery(null); }
         return;
       }
       if (newValue[i] === "/" && i === 0) {
         setSlashQuery(newValue.slice(i + 1, cursor));
         setMenu("slash");
         if (mentionQuery !== null) { setMentionQuery(null); }
+        if (projectQuery !== null) { setProjectQuery(null); }
         return;
       }
       i--;
@@ -388,6 +647,10 @@ export default function App() {
     if (mentionQuery !== null) {
       setMentionQuery(null);
       if (menu === "expert") setMenu(null);
+    }
+    if (projectQuery !== null) {
+      setProjectQuery(null);
+      if (menu === "project") setMenu(null);
     }
     if (slashQuery !== null) {
       setSlashQuery(null);
@@ -430,6 +693,38 @@ export default function App() {
     }, 0);
   }
 
+  // Apply a project pick: strip the `#<query>` from the input (the pin lives
+  // in the chip, not in the prompt text) and arm `pinnedProject` for the next
+  // session start.
+  function pickProject(slug: string) {
+    setMenu(null);
+    const wasHash = projectQuery !== null;
+    setProjectQuery(null);
+    setPinnedProject(slug);
+    if (!wasHash) {
+      inputRef.current?.focus();
+      return;
+    }
+    const input = inputRef.current;
+    const cursor = input?.selectionStart ?? value.length;
+    // Find the `#` that opened the picker (same walk-back as above).
+    let i = cursor - 1;
+    while (i >= 0 && !/\s/.test(value[i]) && value[i] !== "#") i--;
+    if (i < 0 || value[i] !== "#") {
+      inputRef.current?.focus();
+      return;
+    }
+    const before = value.slice(0, i);
+    const after = value.slice(cursor);
+    const next = (before + after).replace(/\s{2,}/g, " ");
+    setValue(next);
+    const newCursor = before.length;
+    setTimeout(() => {
+      input?.focus();
+      input?.setSelectionRange(newCursor, newCursor);
+    }, 0);
+  }
+
   function onKey(e: React.KeyboardEvent) {
     // While the @-mention picker is open, Enter picks the top filtered entry
     // (insert it into the input) instead of submitting the brief.
@@ -440,9 +735,17 @@ export default function App() {
         return;
       }
     }
+    // Same for the #-project picker.
+    if (menu === "project" && projectQuery !== null && e.key === "Enter") {
+      if (filteredProjects.length > 0) {
+        e.preventDefault();
+        pickProject(filteredProjects[0]);
+        return;
+      }
+    }
     if (e.key === "Enter") submit();
     else if (e.key === "Escape") {
-      if (menu) { setMenu(null); setMentionQuery(null); setSlashQuery(null); }
+      if (menu) { setMenu(null); setMentionQuery(null); setSlashQuery(null); setProjectQuery(null); }
       else if (cabinet) setCabinet(false);
       else if (overlay) setOverlay(false);
       else if (focused) setFocusedId(null);
@@ -450,27 +753,47 @@ export default function App() {
     }
   }
 
-  // shared attachment chips
-  const chips = attachments.map((a, i) => (
+  // shared chips: the pinned vault project (home composer only) + attachments
+  const projectChip = pinnedProject && !focused ? (
+    <span className="chip chip-project" title={`Pinned vault project — this session writes to projects/${pinnedProject}/`}>
+      #{pinnedProject}
+      <button className="xbtn" onMouseDown={(e) => { e.preventDefault(); setPinnedProject(null); }}>✕</button>
+    </span>
+  ) : null;
+  const attachmentChips = attachments.map((a, i) => (
     <span key={i} className="chip">
       📎 {a.name}
       <button className="xbtn" onMouseDown={(e) => { e.preventDefault(); setAttachments((p) => p.filter((_, k) => k !== i)); }}>✕</button>
     </span>
   ));
+  const chips = (
+    <>
+      {projectChip}
+      {attachmentChips}
+    </>
+  );
 
   return (
-    <div className={"app" + (skin ? ` theme-${skin}` : "")} style={vars({ "--brand": accent })}>
+    <div className={"app" + (shownSkin ? ` theme-${shownSkin}` : "")} style={vars({ "--engine": accent })}>
       {dragging && <div className="drop">⬇ Drop a file to attach</div>}
 
       {/* chrome */}
-      <div className="chrome" onMouseDown={(e) => { if (!(e.target as HTMLElement).closest("button")) startMove(); }}>
+      <div className="chrome" onMouseDown={(e) => { if (!(e.target as HTMLElement).closest("button, .wm-name")) startMove(); }}>
         <span className={"wm" + (anyRunning ? " live" : "")}>
           {/* The chrome mark uses the same Three.js orb as the home hero,
               just much smaller. `anyRunning` → isSpeaking makes it swell &
               swirl faster when any session is working — visual heartbeat. */}
-          <SiriOrb size={22} coreColor={accent} isSpeaking={anyRunning} />
-          <span className="wm-name">split</span>
+          <SplitMark size={22} isSpeaking={anyRunning} />
+          {/* The wordmark is excluded from window-drag so its clicks land —
+              5 quick ones flip the hidden Noir skin (see noirEgg). */}
+          <span className="wm-name" onClick={noirEgg}>split</span>
         </span>
+        {/* The night star — only in the sky from midnight, while the bar
+            wears Minuit (and kept lit inside Cosmos so you can fly back).
+            No tooltip: you notice the glint, or you don't. See cosmosEgg. */}
+        {((shownSkin === "minuit" && smallHours) || skin === "cosmos") && (
+          <button className={"wm-star" + (skin === "cosmos" ? " in" : "")} onClick={cosmosEgg} type="button">✦</button>
+        )}
         <span className="chrome-meta">{focused ? `on ${H[focused.harness]?.label || focused.harness}` : classicSessions.length ? `${classicSessions.length} session${classicSessions.length === 1 ? "" : "s"}` : "ready"}</span>
         <span className="spacer" />
         {onboarded && !focused && (
@@ -480,25 +803,69 @@ export default function App() {
             ))}
           </div>
         )}
-        <button className="iconbtn" onClick={() => { localStorage.removeItem(LS_DONE); setOnboarded(false); }} title="Replay onboarding">↻</button>
         <button className="iconbtn" onClick={() => setCabinet(true)} title="Browse cabinet — use cases & examples per expert">☷</button>
         <button className="iconbtn" onClick={() => setHistoryOpen(true)} title="Past conversations">🕰️</button>
+        <button className="iconbtn" onClick={() => setVaultOpen(true)} title="Vault — everything your experts know & produce">🗃️</button>
         <div className="skin-wrap">
-          <button className={"iconbtn" + (skin ? " on" : "")} onClick={() => setSkinMenu((v) => !v)} title="Skin">✿</button>
-          {skinMenu && (
+          <button className="iconbtn" onClick={() => setMoreMenu((v) => (v ? false : "root"))} title="More — skin, onboarding">⋯</button>
+          {moreMenu && (
             <>
-              <div className="skin-scrim" onClick={() => setSkinMenu(false)} />
+              <div className="skin-scrim" onClick={() => setMoreMenu(false)} />
               <div className="skin-menu" role="menu">
-                {SKINS.map((s) => (
-                  <button key={s.id || "classic"} className={"skin-item" + (skin === s.id ? " on" : "")} onClick={() => pickSkin(s.id)} role="menuitem">
-                    <span className="skin-sw" style={{ background: `linear-gradient(135deg, ${s.sw[0]} 0%, ${s.sw[0]} 50%, ${s.sw[1]} 50%, ${s.sw[1]} 100%)`, boxShadow: `inset 0 0 0 1.5px ${s.sw[2]}` }} />
-                    <span className="skin-meta">
-                      <b>{s.label}</b>
-                      <small>{s.hint}</small>
-                    </span>
-                    {skin === s.id && <span className="skin-tick">●</span>}
-                  </button>
-                ))}
+                {moreMenu === "root" ? (
+                  <>
+                    <button className="more-item" onClick={() => setMoreMenu("skins")} role="menuitem">
+                      <span className="more-ic">✿</span>
+                      <span className="more-meta">
+                        <b>Skin</b>
+                        <small>{SKINS.find((s) => s.id === shownSkin)?.label ?? "Classic"}</small>
+                      </span>
+                      <span className="more-chev">▸</span>
+                    </button>
+                    <button className="more-item" onClick={() => { setMoreMenu(false); setVaultOpen(true); }} role="menuitem">
+                      <span className="more-ic">🗃️</span>
+                      <span className="more-meta">
+                        <b>Vault</b>
+                        <small>tout ce que tes experts savent</small>
+                      </span>
+                    </button>
+                    <button className="more-item" onClick={() => { setMoreMenu(false); localStorage.removeItem(LS_DONE); setOnboarded(false); }} role="menuitem">
+                      <span className="more-ic">↻</span>
+                      <span className="more-meta">
+                        <b>Replay onboarding</b>
+                        <small>the guided tour, from the top</small>
+                      </span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button className="more-item more-back" onClick={() => setMoreMenu("root")}>
+                      <span className="more-ic">‹</span>
+                      <span className="more-meta"><b>Skin</b></span>
+                    </button>
+                    {runwayOffer && (
+                      <button className="skin-item runway-offer" onClick={() => { setMoreMenu(false); startRunway(); }} role="menuitem">
+                        <span className="skin-sw" style={{ background: "conic-gradient(from 20deg, #0053fd, #d4a574, #d4af37, #c89c4a, #ff3df2, #8e7bff, #0053fd)" }} />
+                        <span className="skin-meta">
+                          <b>Toujours pas décidé ?</b>
+                          <small>Lancer la Fashion Week — tout le vestiaire défile</small>
+                        </span>
+                      </button>
+                    )}
+                    {/* Hidden skins (Noir) only list while worn — so you can
+                        leave; night skins (Minuit) only exist after dark. */}
+                    {SKINS.filter((s) => (!s.hidden || skin === s.id) && (!s.night || night)).map((s) => (
+                      <button key={s.id || "classic"} className={"skin-item" + (shownSkin === s.id ? " on" : "")} onClick={() => pickSkin(s.id)} role="menuitem">
+                        <span className="skin-sw" style={{ background: `linear-gradient(135deg, ${s.sw[0]} 0%, ${s.sw[0]} 50%, ${s.sw[1]} 50%, ${s.sw[1]} 100%)`, boxShadow: `inset 0 0 0 1.5px ${s.sw[2]}` }} />
+                        <span className="skin-meta">
+                          <b>{s.label}</b>
+                          <small>{s.hint}</small>
+                        </span>
+                        {shownSkin === s.id && <span className="skin-tick">●</span>}
+                      </button>
+                    ))}
+                  </>
+                )}
               </div>
             </>
           )}
@@ -531,12 +898,12 @@ export default function App() {
                   slashQuery={slashQuery}
                   chips={chips}
                   onBack={() => setFocusedId(null)}
-                  onOpenWorkspace={openWorkspaceFolder}
-                  onLogout={sendLogout}
                   onStop={stop}
                   onClose={() => { stop(focused.id); remove(focused.id); setFocusedId(null); }}
                   onAuth={sendAuth}
                   onPermission={sendPermission}
+                  godMode={godMode}
+                  onToggleGodMode={toggleGodMode}
                   onCancelQueued={cancelQueued}
                   onInputChange={handleInputChange}
                   onKey={onKey}
@@ -572,12 +939,12 @@ export default function App() {
             slashQuery={slashQuery}
             chips={chips}
             onBack={() => setFocusedId(null)}
-            onOpenWorkspace={openWorkspaceFolder}
-            onLogout={sendLogout}
             onStop={stop}
             onClose={() => { stop(focused.id); remove(focused.id); setFocusedId(null); }}
             onAuth={sendAuth}
             onPermission={sendPermission}
+            godMode={godMode}
+            onToggleGodMode={toggleGodMode}
             onCancelQueued={cancelQueued}
             onInputChange={handleInputChange}
             onKey={onKey}
@@ -596,18 +963,20 @@ export default function App() {
           />
         ) : (
           /* ============ HOME ============ */
-          <div className="home">
-            {!expanded && (
-              <div className="home-orb">
-                <SiriOrb size={96} coreColor={accent} />
+          <div className={"home" + (roomyHome ? " roomy" : "")}>
+            <div className={"home-orb" + (expanded ? " mini" : "")}>
+              <div className="split-levitate">
+                <SplitMark size={expanded ? 72 : 140} isSpeaking={anyRunning} />
               </div>
-            )}
+              <div className="split-shadow" aria-hidden="true" />
+            </div>
             <Composer
               experts={experts} expertSlug={expertSlug} expertLabel={expertLabel} active={active}
               engines={enabledHarnesses} onAddAgent={() => setOverlay(true)}
               menu={menu} setMenu={setMenu} setActive={setActive}
               value={value} onChange={handleInputChange} onKey={onKey} onRun={launch} chips={chips} inputRef={inputRef}
               expertEntries={filteredExperts} onPickExpert={pickExpert}
+              projects={filteredProjects} onPickProject={pickProject}
             />
 
             {/* The minimal-bar idle state shows ONLY the composer — adaptive
@@ -643,6 +1012,19 @@ export default function App() {
               </div>
             )}
             </>}
+
+            {/* Maximised home: the void below the composer becomes the cabinet
+                hanging. A portrait click opens the expert's fiche (use cases +
+                launch CTA) via the Cabinet overlay. */}
+            {roomyHome && (
+              <div className="home-gallery">
+                <div className="sec">
+                  <span>the cabinet</span>
+                  <span className="muted">pick a portrait — they wake up ready to brief</span>
+                </div>
+                <GalleryWall wings={buildWings(experts)} onPick={(slug) => setCabinet(slug)} />
+              </div>
+            )}
           </div>
         )}
         </div>
@@ -673,6 +1055,7 @@ export default function App() {
         <Cabinet
           experts={experts}
           initialSlug={typeof cabinet === "string" ? cabinet : null}
+          onIceberg={titanicEgg}
           onClose={() => setCabinet(false)}
           onLaunch={(slug, prompt) => {
             setCabinet(false);
@@ -705,7 +1088,24 @@ export default function App() {
         />
       )}
 
+      {vaultOpen && <VaultOverlay onClose={() => setVaultOpen(false)} />}
+
       {authSession && <AuthModal session={authSession} onPick={(m) => sendAuth(authSession.id, m)} />}
+
+      {/* Fashion-Week proposal — the runway eggs ask instead of firing during
+          onboarding (see runway()/startRunway). */}
+      {runwayAsk && (
+        <div className="modal-bg" onClick={() => setRunwayAsk(false)}>
+          <div className="am" onClick={(e) => e.stopPropagation()}>
+            <h3>✨ Fashion Week ?</h3>
+            <p>On dirait que tu hésites — envie de voir tous les skins défiler une fois avant de choisir ?</p>
+            <div className="am-acts">
+              <button className="btn" onClick={() => { setRunwayAsk(false); startRunway(); }}>Lancer le défilé</button>
+              <button className="btn ghost" onClick={() => setRunwayAsk(false)}>Plus tard</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toasts.length > 0 && <div className="toasts">{toasts.map((t) => <div key={t.id} className="toast">{t.text}</div>)}</div>}
     </div>
