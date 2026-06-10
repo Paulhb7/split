@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 280" fill="none">
+  <defs>
+    <radialGradient id="pl" cx="0.35" cy="0.3" r="1">
+      <stop offset="0" stop-color="#ffd9a0"/><stop offset="0.55" stop-color="#e89a6b"/><stop offset="1" stop-color="#7e4450"/>
+    </radialGradient>
+    <radialGradient id="moon" cx="0.35" cy="0.3" r="1">
+      <stop offset="0" stop-color="#f0f2fa"/><stop offset="1" stop-color="#9aa2c8"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#cdbfff"/><stop offset="0.5" stop-color="#8e7bff"/><stop offset="1" stop-color="#4f3fae"/>
+    </linearGradient>
+    <linearGradient id="tail" x1="1" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="clip"><circle cx="190" cy="130" r="68"/></clipPath>
+    <filter id="neb"><feGaussianBlur stdDeviation="16"/></filter>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g opacity="0.24">
+    <ellipse cx="180" cy="140" rx="130" ry="80" fill="#3c3282" opacity="0.30" filter="url(#neb)"/>
+    <g fill="#e6e9f7">
+      <circle cx="36" cy="36" r="1.3" opacity="0.7"/><circle cx="92" cy="22" r="1" opacity="0.5"/>
+      <circle cx="140" cy="48" r="1.2" opacity="0.6"/><circle cx="58" cy="120" r="1" opacity="0.45"/>
+      <circle cx="34" cy="208" r="1.3" opacity="0.6"/><circle cx="120" cy="246" r="1.1" opacity="0.5"/>
+      <circle cx="296" cy="232" r="1.2" opacity="0.55"/><circle cx="318" cy="120" r="1" opacity="0.5"/>
+      <circle cx="262" cy="26" r="1.1" opacity="0.5"/>
+    </g>
+    <path d="M70 76 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z" fill="#e6e9f7" opacity="0.8"/>
+    <path d="M288 180 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6 Z" fill="#e6e9f7" opacity="0.7"/>
+    <g filter="url(#glow)">
+      <line x1="296" y1="44" x2="240" y2="14" stroke="url(#tail)" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="298" cy="45" r="3.5" fill="#ffffff"/>
+    </g>
+    <g transform="rotate(-16 190 130)">
+      <path d="M72,130 A118,32 0 0 1 308,130" stroke="url(#ring)" stroke-width="9" opacity="0.55"/>
+      <circle cx="190" cy="130" r="68" fill="url(#pl)"/>
+      <g clip-path="url(#clip)" opacity="0.4">
+        <rect x="112" y="96"  width="160" height="7"  rx="3.5" fill="#b5654f"/>
+        <rect x="108" y="116" width="170" height="10" rx="5"  fill="#c97a58"/>
+        <rect x="110" y="142" width="166" height="8"  rx="4"  fill="#a35a4e"/>
+        <rect x="116" y="164" width="150" height="6"  rx="3"  fill="#8a4b4e"/>
+        <circle cx="216" cy="150" r="74" fill="#070912" opacity="0.55"/>
+      </g>
+      <path d="M72,130 A118,32 0 0 0 308,130" stroke="url(#ring)" stroke-width="9"/>
+      <path d="M64,130 A126,38 0 0 0 316,130" stroke="url(#ring)" stroke-width="2.5" opacity="0.7"/>
+    </g>
+    <g>
+      <circle cx="78" cy="58" r="13" fill="url(#moon)"/>
+      <circle cx="73" cy="54" r="2.5" fill="#7d86ad" opacity="0.5"/>
+      <circle cx="83" cy="62" r="1.8" fill="#7d86ad" opacity="0.45"/>
+      <circle cx="79" cy="50" r="1.2" fill="#7d86ad" opacity="0.4"/>
+    </g>
+  </g>
+</svg>

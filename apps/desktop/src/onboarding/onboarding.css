@@ -20,8 +20,22 @@
   .ob2-hero { grid-template-columns: 1fr; gap: 28px; align-items: start; }
 }
 
-/* ---- page 0: theme picker ---- */
-.ob2-skins { display: flex; flex-direction: column; gap: 10px; }
+/* ---- page 0: theme picker ----
+   `.ob2-skin-stage` is the floating majordome under the lede in the LEFT
+   column (sibling of the heading), not over the swatches on the right.
+   `width: fit-content` keeps it tracking the text's left edge instead of
+   centering it in the half-column, while `align-items: center` keeps the
+   ground shadow centered under the mark. The levitation + shadow-breath
+   keyframes live in `app.css` (`.split-levitate` / `.split-shadow`) because
+   the home idle orb reuses the same effect. */
+.ob2-skin-stage {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  width: fit-content;
+  margin-top: 32px;
+}
+
+.ob2-skins { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .ob2-skin {
   display: flex; align-items: center; gap: 14px;
   border: 1px solid var(--line); border-radius: 12px;
@@ -63,16 +77,86 @@
 .ob2-seed b { color: var(--text); font-weight: 600; }
 .ob2-seed em { font-style: normal; color: var(--brand); }
 
-/* ---- page 1: constellation ---- */
-.cons { margin-top: 4px; }
-.cons-row.experts { display: flex; flex-wrap: wrap; gap: 8px; }
-.cons-expert { font-family: var(--mono); font-size: 12px; color: var(--text); border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; background: var(--panel); opacity: 0; animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.cons-link { display: flex; align-items: center; gap: 12px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim2); margin: 18px 0; }
+/* ---- page 1: wall (centred hero + two opposite-scrolling carousels) ----
+ * Replaces the previous split-grid + static cons-rows. The wall layout puts
+ * the hero text on top, then a row of brain Tiles and a row of @expert chips
+ * that scroll in opposite directions — visualising "12 agents × 11 experts,
+ * one runtime" instead of just listing them. */
+.ob2-wall {
+  display: flex; flex-direction: column;
+  align-items: center;
+  width: 100%; max-width: 1120px; margin: auto;
+  gap: 22px;
+}
+.ob2-wall-text {
+  display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+  max-width: 720px;
+}
+.ob2-wall .ob2-h1 { text-align: center; }
+.ob2-wall .ob2-lede { text-align: center; }
+.ob2-wall .ob2-seed { text-align: center; margin: 6px 0 0; }
+
+/* The carousel wrapper. The mask-image gives the smooth fade on the left/right
+ * edges so tiles dissolve into the background instead of hard-clipping. The
+ * track is :hover-paused so the user can read a brand that's mid-scroll. */
+.carousel-wrap {
+  position: relative; width: 100%;
+  overflow: hidden;
+  padding: 8px 0;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+          mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+.carousel-track {
+  display: flex; gap: 28px; width: max-content;
+  will-change: transform;
+}
+.carousel-track.left  { animation: scroll-left  38s linear infinite; }
+.carousel-track.right { animation: scroll-right 38s linear infinite; }
+.carousel-wrap:hover .carousel-track { animation-play-state: paused; }
+.carousel-group { display: flex; gap: 28px; flex: none; padding: 0 14px; }
+
+@keyframes scroll-left  { from { transform: translateX(0);    } to { transform: translateX(-50%); } }
+@keyframes scroll-right { from { transform: translateX(-50%); } to { transform: translateX(0);    } }
+
+/* Per-tile dressing — same brand-mix recipe the static `.cons-engine` used,
+ * just stripped of the entry stagger (the scroll IS the animation now). */
+.wall-engine {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 7px; width: 78px;
+}
+.wall-engine-name {
+  font-size: 11px; color: var(--dim);
+  white-space: nowrap;
+}
+.wall-expert {
+  font-family: var(--mono); font-size: 12.5px;
+  color: var(--text);
+  border: 1px solid var(--line); border-radius: 99px;
+  padding: 7px 14px;
+  background: var(--panel);
+  white-space: nowrap;
+  flex: none;
+}
+.wall-expert-at { color: var(--dim2); margin-right: 2px; }
+
+/* `cons-link` (the "wrapped, becomes" divider) is reused — kept lean here.
+ * Same visual rule as before so it stays consistent if other pages reference
+ * it (none today, but the class is generic enough). */
+.cons-link {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--dim2);
+  width: 100%; max-width: 720px;
+}
 .cons-link::before, .cons-link::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-.cons-row.engines { display: flex; flex-wrap: wrap; gap: 16px; }
-.cons-engine { display: flex; flex-direction: column; align-items: center; gap: 7px; width: 62px; opacity: 0; animation: floatIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.cons-name { font-size: 11px; color: var(--dim); }
-@keyframes floatIn { from { opacity: 0; transform: translateY(12px) scale(0.9); } to { opacity: 1; transform: none; } }
+
+/* Accessibility — when the user opted into reduced motion at the OS level,
+ * the carousels stop scrolling. The tiles still render, just static. */
+@media (prefers-reduced-motion: reduce) {
+  .carousel-track { animation: none !important; }
+}
 
 /* ---- picker (page 2) ---- */
 .ob2-pickhint { font-family: var(--mono); font-size: 11px; color: var(--dim2); margin: 0 0 12px; }

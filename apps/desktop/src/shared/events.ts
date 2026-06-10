@@ -47,7 +47,7 @@ export type VEvt =
   | { type: "plan"; entries: PlanEntry[] }
   | { type: "commands"; commands: SlashCommand[] }
   | { type: "usage"; used: number; size: number; cost: number | null }
-  | { type: "status"; status: "running" | "idle" | "error" | "ended"; stop?: string; error?: string }
+  | { type: "status"; status: "running" | "idle" | "error"; stop?: string; error?: string }
   | { type: "auth_required"; harness: string; methods: AuthMethod[]; hasLogin: boolean; note: string }
   | { type: "auth_result"; harness: string; ok: boolean; error?: string; loggedOut?: boolean }
   | { type: "permission_request"; id: string; toolId: string; expert: string;

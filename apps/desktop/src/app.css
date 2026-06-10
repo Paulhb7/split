@@ -13,6 +13,14 @@
   --dim: #9395a1;
   --dim2: #5f6271;
   --brand: #d97757;
+  /* `--engine` carries the active harness brand (claude/codex/gemini/…) to
+   * engine-identity surfaces (chrome SplitMark, conv-head accent, running dot,
+   * focused-session glow). Defaults to the same warm copper as the Classic
+   * skin so unscoped reads have a sensible value; the React side overrides
+   * inline on .app and inside the .ob2 onboarding root. Distinct from `--brand`
+   * (the SKIN accent) so the user's theme keeps showing through every CTA,
+   * em, link and focus ring even after they pick a harness. */
+  --engine: #d97757;
   --good: #5cc98a;
   --warn: #e6b450;
   --bad: #e0533d;
@@ -28,7 +36,11 @@
   /* No CSS border-radius / border: the native window (decorations: true) now
      owns the frame + rounded corners. A CSS radius here would reveal the opaque
      window background in the four corners. */
+  /* Skin signature object (le roi et le pion, cuivre tourné) — first layer of
+     the stack, opacity baked into the SVG. Themes override `background` whole,
+     so each carries its own object. */
   background:
+    url(./assets/skins/classic-chess.svg) no-repeat 100% 100% / 340px auto,
     radial-gradient(820px 520px at 86% -12%, color-mix(in srgb, var(--brand) 16%, transparent), transparent 60%),
     radial-gradient(720px 620px at -6% 108%, rgba(66, 116, 244, 0.1), transparent 60%),
     radial-gradient(560px 460px at 50% 46%, rgba(124, 92, 255, 0.05), transparent 70%),
@@ -70,9 +82,25 @@
 }
 .wm { font-weight: 800; letter-spacing: -0.04em; font-size: 16px; display: flex; align-items: center; gap: 9px; }
 .wm-name { line-height: 1; }
-/* The chrome mark uses the Three.js <SiriOrb> directly — owns its own
-   canvas + colors via props, so no CSS body needed here. The wm layout
-   keeps the flex/gap so the orb + "split" wordmark stay aligned. */
+/* The night star (Cosmos easter egg) — faint with a slow periodic glint;
+   brightens on hover, stays lit (.in) while inside the observatory. The
+   glint animates transform so it never fights the opacity hover. */
+.wm-star {
+  background: none; border: none; cursor: pointer;
+  padding: 0 2px; margin-left: 2px;
+  font-size: 11px; line-height: 1; color: var(--brand);
+  opacity: 0.35; transition: opacity 0.3s;
+  animation: wm-star-glint 6s ease-in-out infinite;
+}
+.wm-star:hover { opacity: 1; }
+.wm-star.in { opacity: 0.8; }
+@keyframes wm-star-glint {
+  0%, 88%, 100% { transform: scale(1) rotate(0deg); }
+  94%           { transform: scale(1.45) rotate(20deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wm-star { animation: none; }
+}
 .chrome-meta { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); letter-spacing: 0.04em; }
 .spacer { flex: 1; }
 
@@ -232,9 +260,52 @@
 
 /* ============================ HOME ============================ */
 .home { max-width: 880px; margin: 0 auto; padding: 16px 18px 22px; }
-/* Idle-state orb above the composer — only renders when there's no session
-   open. The bar's adaptive height grows to accommodate it (~110px extra). */
-.home-orb { display: flex; justify-content: center; padding: 6px 0 14px; }
+/* Roomy home (user-maximised window): the page widens for the gallery while
+   the working column (orb, composer, sessions) keeps the 880px measure. */
+.home.roomy { max-width: 1240px; }
+.home.roomy > *:not(.home-gallery) { max-width: 880px; margin-left: auto; margin-right: auto; }
+.home-gallery { margin-top: 36px; animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.home-gallery > .sec { margin-bottom: 30px; }
+/* Idle-state orb above the composer — full size when there's no session
+   open (the bar's adaptive height grows ~110px to fit it), and a 72px
+   `.mini` variant above the sessions section once the bar is expanded. */
+.home-orb {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 14px 0 18px;
+  position: relative;
+}
+.home-orb.mini { padding: 10px 0 12px; }
+.home-orb.mini .split-shadow { width: 40px; height: 7px; }
+
+/* Generic "active assistant" presence: the silhouette floats up & down, with
+   a soft ground shadow that breathes opposite (shrinks as the figure rises)
+   for a Luxo-Jr.-style levitation read. Reused by both the home idle orb
+   and the onboarding skin picker hero. Brand-tinted shadow so it tracks
+   the current skin's accent. */
+.split-levitate {
+  animation: split-levitate 4.5s ease-in-out infinite;
+  filter: drop-shadow(0 14px 18px color-mix(in srgb, var(--brand) 28%, transparent));
+}
+.split-shadow {
+  margin-top: 6px;
+  width: 64px; height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--brand) 35%, transparent), transparent 75%);
+  animation: split-shadow 4.5s ease-in-out infinite;
+}
+@keyframes split-levitate {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+@keyframes split-shadow {
+  0%, 100% { transform: scaleX(1);    opacity: 0.85; }
+  50%      { transform: scaleX(0.78); opacity: 0.55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .split-levitate,
+  .split-shadow { animation: none; }
+}
 .sec { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); margin: 0 0 11px; display: flex; align-items: center; gap: 10px; }
 .sec::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .sec .muted { color: var(--dim2); letter-spacing: 0.05em; text-transform: none; font-size: 10px; }
@@ -299,13 +370,21 @@
 .conv-head { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
 .conv-title { font-weight: 700; font-size: 17px; letter-spacing: -0.02em; }
 .conv-on { font-family: var(--mono); font-size: 11px; color: var(--dim); }
-.conv-on b { color: var(--brand); }
+.conv-on b { color: var(--engine); }
 .thread { display: flex; flex-direction: column; gap: 14px; flex: 1; }
 .turn { display: flex; flex-direction: column; gap: 4px; }
+.turn-head { display: flex; align-items: center; gap: 8px; }
 .turn .role { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim2); }
+.copy-btn { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim2); background: transparent; border: 0; padding: 1px 6px; border-radius: 5px; cursor: pointer; opacity: 0; transition: opacity 0.15s, color 0.15s, background 0.15s; }
+.turn:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+.copy-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
 .turn.user .role { color: var(--brand); }
 .turn .text { font-size: 14px; line-height: 1.6; user-select: text; overflow-wrap: anywhere; word-break: break-word; }
-.turn.user .text { color: var(--text); }
+/* user turns: right-aligned, brand-tinted bubble. Agent stays as plain
+   prose on the left so its markdown (headings, code, lists) reads cleanly. */
+.turn.user { align-items: flex-end; }
+.turn.user .text { color: var(--text); max-width: 72%; background: color-mix(in srgb, var(--brand) 11%, transparent); border: 1px solid color-mix(in srgb, var(--brand) 22%, var(--line)); padding: 8px 12px; border-radius: 14px; border-bottom-right-radius: 4px; white-space: pre-wrap; }
+.turn.user .text .attach { margin-top: 6px; }
 .turn.thought .role { color: var(--dim2); }
 .turn.thought .text { font-style: italic; color: var(--dim); border-left: 2px solid var(--line); padding-left: 10px; font-size: 13px; }
 .turn.thought .text code { font-style: normal; }
@@ -334,6 +413,8 @@
 .logs-pre { margin: 8px 0 0; max-height: 260px; overflow: auto; font-family: var(--mono); font-size: 11px; line-height: 1.5; color: var(--dim); background: rgba(0, 0, 0, 0.25); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; white-space: pre-wrap; word-break: break-word; }
 .attach { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .chip { font-family: var(--mono); font-size: 10px; color: var(--dim); border: 1px solid var(--line); border-radius: 8px; padding: 3px 7px; display: inline-flex; align-items: center; gap: 4px; }
+/* Pinned vault project — brand-tinted so it reads as "this session is scoped". */
+.chip-project { color: var(--brand); border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); background: color-mix(in srgb, var(--brand) 10%, transparent); }
 
 /* ---- menu (engine / expert picker) ---- */
 /* opens DOWNWARD — the composer sits near the top of the window */
@@ -408,9 +489,10 @@
   --warn: #b8860b;
   --bad: #d63d3d;
   background:
+    url(./assets/skins/bright-orbs.svg) no-repeat 92% 5% / 360px auto,
     radial-gradient(820px 520px at 86% -12%, rgba(0, 83, 253, 0.07), transparent 60%),
     radial-gradient(720px 620px at -6% 108%, rgba(0, 83, 253, 0.05), transparent 60%),
-    linear-gradient(180deg, #f8faff, #f1f4fb);
+    linear-gradient(180deg, rgba(248, 250, 255, 0.84), rgba(241, 244, 251, 0.9));
 }
 .app.theme-bright::before { opacity: 0.4; }
 .app.theme-bright::after { opacity: 0.05; mix-blend-mode: multiply; }
@@ -467,12 +549,13 @@
   --good: #9bb088;
   --warn: #d4a847;
   --bad: #8b1e3f;
-  --disp: "Playfair Display", "Bricolage Grotesque", Georgia, serif;
+  --disp: "Cormorant Garamond", "Playfair Display", Georgia, serif;
   background:
+    url(./assets/skins/baroque-column.svg) no-repeat 0 100% / auto 320px,
     radial-gradient(820px 520px at 86% -12%, rgba(217, 122, 140, 0.22), transparent 60%),
     radial-gradient(720px 620px at -6% 108%, rgba(155, 176, 136, 0.18), transparent 60%),
     radial-gradient(560px 460px at 50% 46%, rgba(212, 168, 71, 0.10), transparent 70%),
-    linear-gradient(180deg, #f5ecd9, #ecd9c0);
+    linear-gradient(180deg, rgba(245, 236, 217, 0.86), rgba(236, 217, 192, 0.92));
 }
 .app.theme-pastel::before { opacity: 0.28; }
 .app.theme-pastel::after { opacity: 0.07; mix-blend-mode: multiply; }
@@ -536,12 +619,13 @@
   --good: #00ffd1;
   --warn: #ffd000;
   --bad: #ff2a5e;
-  --disp: "Space Grotesk", "Bricolage Grotesque", system-ui, sans-serif;
+  --disp: "Chakra Petch", "Space Grotesk", system-ui, sans-serif;
   background:
+    url(./assets/skins/nightcity-sun.svg) no-repeat 92% 88% / 320px auto,
     radial-gradient(840px 540px at 86% -10%, rgba(255, 61, 242, 0.22), transparent 60%),
     radial-gradient(720px 620px at -6% 108%, rgba(0, 255, 209, 0.16), transparent 60%),
     radial-gradient(560px 460px at 50% 46%, rgba(124, 92, 255, 0.10), transparent 70%),
-    linear-gradient(180deg, #0a0816 0%, #050410 100%);
+    linear-gradient(180deg, rgba(10, 8, 22, 0.8) 0%, rgba(5, 4, 16, 0.88) 100%);
 }
 .app.theme-cyberpunk::before {
   background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
@@ -581,11 +665,13 @@
   --good: #9ece6a;
   --warn: #e0af68;
   --bad: #f7768e;
+  --disp: "Zen Kaku Gothic New", "Bricolage Grotesque", system-ui, sans-serif;
   background:
+    url(./assets/skins/tokyo-fuji.svg) no-repeat 50% 100% / 74% auto,
     radial-gradient(820px 520px at 86% -12%, rgba(187, 154, 247, 0.18), transparent 60%),
     radial-gradient(720px 620px at -6% 108%, rgba(125, 207, 255, 0.12), transparent 60%),
     radial-gradient(560px 460px at 50% 46%, rgba(247, 118, 142, 0.06), transparent 70%),
-    linear-gradient(180deg, #14152a 0%, #0c0d1c 100%);
+    linear-gradient(180deg, rgba(20, 21, 42, 0.8) 0%, rgba(12, 13, 28, 0.88) 100%);
 }
 .app.theme-tokyo .seg button.on { color: var(--ink); background: var(--brand); }
 .app.theme-tokyo .btn { color: var(--ink); }
@@ -620,10 +706,11 @@
   --bad: #c44d4d;
   --disp: "Cinzel Decorative", "Playfair Display", Georgia, serif;
   background:
+    url(./assets/skins/gatsby-sunburst.svg) no-repeat 100% 0 / 250px auto,
     radial-gradient(820px 520px at 86% -12%, rgba(212, 175, 55, 0.22), transparent 60%),
     radial-gradient(720px 620px at -6% 108%, rgba(212, 175, 55, 0.10), transparent 60%),
     radial-gradient(560px 460px at 50% 46%, rgba(212, 175, 55, 0.05), transparent 70%),
-    linear-gradient(180deg, #0a0a0a 0%, #050505 100%);
+    linear-gradient(180deg, rgba(10, 10, 10, 0.82) 0%, rgba(5, 5, 5, 0.9) 100%);
 }
 .app.theme-gatsby::before { opacity: 0.16; }
 .app.theme-gatsby::after { opacity: 0.05; }
@@ -669,12 +756,13 @@
   --good: #7eb088;
   --warn: #e5b452;
   --bad: #b95850;
-  --disp: "Playfair Display", "EB Garamond", Georgia, serif;
+  --disp: "Marcellus", "Playfair Display", Georgia, serif;
   background:
+    url(./assets/skins/titanic-liner.svg) no-repeat 50% 100% / 78% auto,
     radial-gradient(820px 520px at 86% -12%, rgba(200, 156, 74, 0.14), transparent 60%),
     radial-gradient(720px 620px at -6% 108%, rgba(70, 110, 160, 0.18), transparent 60%),
     radial-gradient(560px 460px at 50% 46%, rgba(255, 255, 255, 0.03), transparent 70%),
-    linear-gradient(180deg, #0a2540 0%, #050f1c 100%);
+    linear-gradient(180deg, rgba(10, 37, 64, 0.82) 0%, rgba(5, 15, 28, 0.9) 100%);
 }
 .app.theme-titanic::before { opacity: 0.20; }
 .app.theme-titanic::after { opacity: 0.04; }
@@ -697,10 +785,11 @@
 .app.theme-titanic .logs-pre { background: rgba(200, 156, 74, 0.06); color: var(--text); }
 .app.theme-titanic .xbtn:hover { background: rgba(200, 156, 74, 0.10); }
 
-/* ============================ THEME · GHIBLI ===============================
-   Light pastoral — endless sky, sage pasture, watercolor cloud. Cleanly
-   different from Baroque (which is warm cream salon): Ghibli reads outdoor
-   and dewy where Baroque reads indoor and serif. */
+/* ====================== THEME · SAINT-EX (id "ghibli") =====================
+   Light pastoral — watercolor sky, butter biplane under asteroid B-612.
+   Renamed from "Ghibli" (label only; the CSS class / persisted skin id stays
+   `ghibli` so existing user picks keep working). Cleanly different from
+   Baroque (warm cream salon): Saint-Ex reads outdoor and dewy. */
 .app.theme-ghibli {
   --ink: #1f2b35;
   --ink2: #eaf0f5;
@@ -715,12 +804,13 @@
   --good: #7ba87c;
   --warn: #d4a55a;
   --bad: #b8554a;
-  --disp: "Quicksand", "Bricolage Grotesque", system-ui, sans-serif;
+  --disp: "Klee One", "Quicksand", system-ui, sans-serif;
   background:
+    url(./assets/skins/saintex-scene.svg) no-repeat 4% 4% / 400px auto,
     radial-gradient(820px 520px at 86% -12%, rgba(74, 143, 179, 0.22), transparent 60%),
     radial-gradient(720px 620px at -6% 108%, rgba(123, 168, 124, 0.20), transparent 60%),
     radial-gradient(560px 460px at 50% 46%, rgba(255, 255, 255, 0.30), transparent 70%),
-    linear-gradient(180deg, #eaf0f5 0%, #d9e6ee 100%);
+    linear-gradient(180deg, rgba(234, 240, 245, 0.84) 0%, rgba(217, 230, 238, 0.9) 100%);
 }
 .app.theme-ghibli::before { opacity: 0.26; }
 .app.theme-ghibli::after { opacity: 0.06; mix-blend-mode: multiply; }
@@ -743,6 +833,198 @@
 .app.theme-ghibli .logs-pre { background: rgba(70, 100, 130, 0.06); color: var(--text); }
 .app.theme-ghibli .xbtn:hover { background: rgba(70, 100, 130, 0.08); }
 
+/* ============================ THEME · COSMOS ===============================
+   Observatory night — amber Saturn on violet nebula, teal comet accents.
+   Michroma (wide, retro space-agency) for the display voice. */
+.app.theme-cosmos {
+  --ink: #070912;
+  --ink2: #12152b;
+  --panel: rgba(22, 25, 48, 0.62);
+  --panel2: rgba(30, 34, 62, 0.78);
+  --line: rgba(142, 123, 255, 0.18);
+  --line2: rgba(142, 123, 255, 0.08);
+  --text: #e6e9f7;
+  --dim: #8a90b8;
+  --dim2: #5a5f86;
+  --brand: #8e7bff;
+  --good: #5ce0c8;
+  --warn: #e5c452;
+  --bad: #f25c7a;
+  --disp: "Michroma", "Bricolage Grotesque", system-ui, sans-serif;
+  background:
+    url(./assets/skins/cosmos-saturn.svg) no-repeat 94% 5% / 410px auto,
+    radial-gradient(820px 520px at 80% -12%, rgba(142, 123, 255, 0.20), transparent 60%),
+    radial-gradient(720px 620px at -8% 110%, rgba(92, 224, 200, 0.10), transparent 62%),
+    radial-gradient(700px 500px at 50% 50%, rgba(60, 50, 130, 0.12), transparent 70%),
+    linear-gradient(180deg, rgba(11, 14, 29, 0.8) 0%, rgba(5, 6, 14, 0.88) 100%);
+}
+.app.theme-cosmos::before { opacity: 0.3; }
+.app.theme-cosmos::after { opacity: 0.05; }
+.app.theme-cosmos .wm { letter-spacing: 0.12em; }
+.app.theme-cosmos .seg button.on { color: var(--ink); background: var(--brand); }
+.app.theme-cosmos .btn { color: var(--ink); }
+.app.theme-cosmos .run { color: var(--ink); }
+.app.theme-cosmos .stop { background: rgba(242, 92, 122, 0.10); border-color: rgba(242, 92, 122, 0.45); color: var(--bad); }
+.app.theme-cosmos .stream-md a,
+.app.theme-cosmos .turn .text a { color: var(--good); }
+.app.theme-cosmos .stream-md code,
+.app.theme-cosmos .turn .text code { background: rgba(142, 123, 255, 0.12); color: var(--good); }
+.app.theme-cosmos .stream-md pre,
+.app.theme-cosmos .turn .text pre { background: rgba(18, 21, 43, 0.7); border: 1px solid var(--line); }
+.app.theme-cosmos .menu { background: #12152b; }
+.app.theme-cosmos .mi:hover, .app.theme-cosmos .mi.sel { background: rgba(142, 123, 255, 0.10); }
+.app.theme-cosmos .overlay, .app.theme-cosmos .modal-bg { background: rgba(5, 6, 14, 0.6); }
+.app.theme-cosmos .am { background: #12152b; }
+.app.theme-cosmos .toast { background: #12152b; }
+.app.theme-cosmos .drop { background: rgba(18, 21, 43, 0.88); }
+.app.theme-cosmos .logs-pre { background: rgba(142, 123, 255, 0.06); color: var(--text); }
+.app.theme-cosmos .xbtn:hover { background: rgba(142, 123, 255, 0.10); }
+
+/* =========================== THEME · PARISIAN ==============================
+   Eiffel dusk — midnight plum through vieux rose to copper. The Tower rises
+   off-centre right with gaslit gold windows (the beacon pulses via SMIL in
+   the asset); Haussmann rooflines anchor the bottom. Italiana for the
+   Vogue-Paris display voice. */
+.app.theme-parisian {
+  --ink: #1d1428;
+  --ink2: #2b1b34;
+  --panel: rgba(40, 26, 50, 0.66);
+  --panel2: rgba(52, 34, 62, 0.8);
+  --line: rgba(212, 165, 116, 0.22);
+  --line2: rgba(212, 165, 116, 0.09);
+  --text: #f3e6ce;
+  --dim: #b09a7c;
+  --dim2: #8a7560;
+  --brand: #d4a574;
+  --good: #a8c08a;
+  --warn: #e5c452;
+  --bad: #e06a6a;
+  --disp: "Italiana", "Bricolage Grotesque", serif;
+  background:
+    url(./assets/skins/parisian-eiffel.svg) no-repeat 50% 100% / 100% auto,
+    radial-gradient(820px 520px at 86% -14%, rgba(247, 187, 132, 0.20), transparent 60%),
+    radial-gradient(720px 620px at -6% 110%, rgba(122, 70, 110, 0.26), transparent 60%),
+    linear-gradient(180deg, rgba(29, 20, 40, 0.84) 0%, rgba(58, 30, 58, 0.86) 38%, rgba(110, 58, 82, 0.88) 68%, rgba(176, 96, 84, 0.9) 100%);
+}
+.app.theme-parisian::before { opacity: 0.3; }
+.app.theme-parisian::after { opacity: 0.05; }
+.app.theme-parisian .wm { letter-spacing: 0.05em; }
+.app.theme-parisian .seg button.on { color: var(--ink); background: var(--brand); }
+.app.theme-parisian .btn { color: var(--ink); }
+.app.theme-parisian .run { color: var(--ink); }
+.app.theme-parisian .stop { background: rgba(224, 106, 106, 0.10); border-color: rgba(224, 106, 106, 0.45); color: var(--bad); }
+.app.theme-parisian .stream-md a,
+.app.theme-parisian .turn .text a { color: #f5cf95; }
+.app.theme-parisian .stream-md code,
+.app.theme-parisian .turn .text code { background: rgba(212, 165, 116, 0.12); color: #f5cf95; }
+.app.theme-parisian .stream-md pre,
+.app.theme-parisian .turn .text pre { background: rgba(43, 27, 52, 0.7); border: 1px solid var(--line); }
+.app.theme-parisian .menu { background: #2b1b34; }
+.app.theme-parisian .mi:hover, .app.theme-parisian .mi.sel { background: rgba(212, 165, 116, 0.10); }
+.app.theme-parisian .overlay, .app.theme-parisian .modal-bg { background: rgba(20, 12, 26, 0.6); }
+.app.theme-parisian .am { background: #2b1b34; }
+.app.theme-parisian .toast { background: #2b1b34; }
+.app.theme-parisian .drop { background: rgba(43, 27, 52, 0.88); }
+.app.theme-parisian .logs-pre { background: rgba(212, 165, 116, 0.06); color: var(--text); }
+.app.theme-parisian .xbtn:hover { background: rgba(212, 165, 116, 0.10); }
+
+/* ============================= THEME · NOIR ================================
+   The easter egg — film-noir black & white, not a colour in the whole skin
+   (even status dots go white). Venetian-blind light slats cut the wall, smoke
+   curls from an ashtray bottom-left. Special Elite (typewriter) display.
+   Found by clicking the chrome wordmark 5 times; listed only while active. */
+.app.theme-noir {
+  --ink: #0a0a0a;
+  --ink2: #161616;
+  --panel: rgba(14, 14, 14, 0.72);
+  --panel2: rgba(26, 26, 26, 0.85);
+  --line: rgba(255, 255, 255, 0.18);
+  --line2: rgba(255, 255, 255, 0.08);
+  --text: #f0f0f0;
+  --dim: #8f8f8f;
+  --dim2: #5f5f5f;
+  --brand: #f0f0f0;
+  --good: #f0f0f0;
+  --warn: #bdbdbd;
+  --bad: #d9d9d9;
+  --disp: "Special Elite", "Bricolage Grotesque", serif;
+  background:
+    url(./assets/skins/noir-fumee.svg) no-repeat 1% 100% / 170px auto,
+    url(./assets/skins/noir-persiennes.svg) no-repeat 50% 50% / cover,
+    radial-gradient(820px 520px at 18% -12%, rgba(255, 255, 255, 0.10), transparent 60%),
+    linear-gradient(180deg, rgba(24, 24, 24, 0.88) 0%, rgba(10, 10, 10, 0.92) 100%);
+}
+.app.theme-noir::before { opacity: 0.3; }
+.app.theme-noir::after { opacity: 0.07; }
+.app.theme-noir .wm { letter-spacing: 0.03em; }
+.app.theme-noir .seg button.on { color: var(--ink); background: var(--brand); }
+.app.theme-noir .btn { color: var(--ink); }
+.app.theme-noir .run { color: var(--ink); }
+.app.theme-noir .stop { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.4); color: var(--text); }
+.app.theme-noir .stream-md a,
+.app.theme-noir .turn .text a { color: #ffffff; text-decoration: underline; }
+.app.theme-noir .stream-md code,
+.app.theme-noir .turn .text code { background: rgba(255, 255, 255, 0.10); color: #ffffff; }
+.app.theme-noir .stream-md pre,
+.app.theme-noir .turn .text pre { background: rgba(22, 22, 22, 0.7); border: 1px solid var(--line); }
+.app.theme-noir .menu { background: #161616; }
+.app.theme-noir .mi:hover, .app.theme-noir .mi.sel { background: rgba(255, 255, 255, 0.08); }
+.app.theme-noir .overlay, .app.theme-noir .modal-bg { background: rgba(0, 0, 0, 0.62); }
+.app.theme-noir .am { background: #161616; }
+.app.theme-noir .toast { background: #161616; }
+.app.theme-noir .drop { background: rgba(22, 22, 22, 0.9); }
+.app.theme-noir .logs-pre { background: rgba(255, 255, 255, 0.05); color: var(--text); }
+.app.theme-noir .xbtn:hover { background: rgba(255, 255, 255, 0.08); }
+
+/* ============================ THEME · MINUIT ===============================
+   The night watch — auto-applied 21:00–07:00 local (see App.tsx), never in
+   the picker by day. Built for 2 a.m. eyes: no pure white, lowered contrast,
+   nightlight amber. Crescent + stars up top, the house cat asleep in the
+   veilleuse halo bottom-right. Lora italic display. */
+.app.theme-minuit {
+  --ink: #060509;
+  --ink2: #141118;
+  --panel: rgba(16, 13, 9, 0.74);
+  --panel2: rgba(26, 21, 15, 0.85);
+  --line: rgba(201, 146, 78, 0.15);
+  --line2: rgba(201, 146, 78, 0.07);
+  --text: #cfc6b2;
+  --dim: #79705c;
+  --dim2: #564f40;
+  --brand: #c9924e;
+  --good: #87976a;
+  --warn: #c9b25e;
+  --bad: #b8554a;
+  --disp: "Lora", "Bricolage Grotesque", serif;
+  background:
+    url(./assets/skins/minuit-chat.svg) no-repeat 100% 100% / 230px auto,
+    url(./assets/skins/minuit-lune.svg) no-repeat 50% 0 / 100% auto,
+    radial-gradient(540px 380px at 82% 108%, rgba(201, 146, 78, 0.10), transparent 62%),
+    radial-gradient(620px 420px at 12% -12%, rgba(60, 70, 110, 0.14), transparent 60%),
+    linear-gradient(180deg, rgba(10, 11, 18, 0.88) 0%, rgba(6, 5, 9, 0.92) 100%);
+}
+.app.theme-minuit::before { opacity: 0.28; }
+.app.theme-minuit::after { opacity: 0.05; }
+.app.theme-minuit .wm { font-style: italic; }
+.app.theme-minuit .seg button.on { color: var(--ink); background: var(--brand); }
+.app.theme-minuit .btn { color: var(--ink); }
+.app.theme-minuit .run { color: var(--ink); }
+.app.theme-minuit .stop { background: rgba(184, 85, 74, 0.10); border-color: rgba(184, 85, 74, 0.4); color: var(--bad); }
+.app.theme-minuit .stream-md a,
+.app.theme-minuit .turn .text a { color: #d9a05c; }
+.app.theme-minuit .stream-md code,
+.app.theme-minuit .turn .text code { background: rgba(201, 146, 78, 0.10); color: #d9a05c; }
+.app.theme-minuit .stream-md pre,
+.app.theme-minuit .turn .text pre { background: rgba(20, 17, 24, 0.7); border: 1px solid var(--line); }
+.app.theme-minuit .menu { background: #141118; }
+.app.theme-minuit .mi:hover, .app.theme-minuit .mi.sel { background: rgba(201, 146, 78, 0.10); }
+.app.theme-minuit .overlay, .app.theme-minuit .modal-bg { background: rgba(4, 3, 6, 0.62); }
+.app.theme-minuit .am { background: #141118; }
+.app.theme-minuit .toast { background: #141118; }
+.app.theme-minuit .drop { background: rgba(20, 17, 24, 0.9); }
+.app.theme-minuit .logs-pre { background: rgba(201, 146, 78, 0.06); color: var(--text); }
+.app.theme-minuit .xbtn:hover { background: rgba(201, 146, 78, 0.10); }
+
 /* ============================ skin picker (chrome popover) ============== */
 .skin-wrap { position: relative; }
 .skin-scrim { position: fixed; inset: 0; z-index: 39; }
@@ -751,7 +1033,23 @@
   width: 268px; background: var(--ink2); border: 1px solid var(--line);
   border-radius: 13px; padding: 5px; box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55);
   display: flex; flex-direction: column; gap: 1px;
+  max-height: min(460px, 78vh); overflow-y: auto;
 }
+/* Items of the ⋯ overflow menu (root page). Same anatomy as .skin-item but
+   with a glyph well instead of a swatch. */
+.more-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 10px; border-radius: 9px;
+  background: transparent; border: 0; cursor: pointer; text-align: left;
+  color: var(--text); font-family: var(--disp);
+}
+.more-item:hover { background: rgba(255, 255, 255, 0.04); }
+.more-ic { width: 26px; height: 26px; display: grid; place-items: center; flex: none; font-size: 13px; color: var(--dim); }
+.more-meta { flex: 1; min-width: 0; line-height: 1.25; }
+.more-meta b { font-size: 13px; font-weight: 700; display: block; }
+.more-meta small { display: block; font-family: var(--mono); font-size: 9.5px; color: var(--dim2); margin-top: 2px; }
+.more-chev { color: var(--dim2); font-size: 12px; flex: none; }
+.more-back { position: sticky; top: -5px; z-index: 1; background: var(--ink2); border-bottom: 1px solid var(--line2); border-radius: 9px 9px 0 0; margin-bottom: 4px; }
 .skin-item {
   display: flex; align-items: center; gap: 11px;
   padding: 9px 10px; border-radius: 9px;
@@ -760,6 +1058,24 @@
 }
 .skin-item:hover { background: rgba(255, 255, 255, 0.04); }
 .skin-item.on { background: rgba(255, 255, 255, 0.06); }
+/* The 30-second "still undecided?" Fashion-Week offer — slides in at the top
+   of the skin list after lingering in the picker (see runwayOffer, App.tsx). */
+.skin-item.runway-offer { animation: offer-in 0.5s cubic-bezier(.22, 1, .36, 1); }
+.skin-item.runway-offer .skin-sw { animation: offer-spin 4s linear infinite; }
+@keyframes offer-in { from { opacity: 0; transform: translateY(-7px); } }
+@keyframes offer-spin { to { filter: hue-rotate(360deg); } }
+/* Light skins: a white-alpha wash is invisible on a light --ink2, so flip the
+   hover/selected feedback to a dark wash there. */
+.app.theme-bright .skin-item:hover, .app.theme-pastel .skin-item:hover,
+.app.theme-saintex .skin-item:hover, .app.theme-ghibli .skin-item:hover,
+.app.theme-bright .more-item:hover, .app.theme-pastel .more-item:hover,
+.app.theme-saintex .more-item:hover, .app.theme-ghibli .more-item:hover {
+  background: rgba(40, 40, 50, 0.07);
+}
+.app.theme-bright .skin-item.on, .app.theme-pastel .skin-item.on,
+.app.theme-saintex .skin-item.on, .app.theme-ghibli .skin-item.on {
+  background: rgba(40, 40, 50, 0.1);
+}
 .skin-sw { width: 26px; height: 26px; border-radius: 7px; flex: none; }
 .skin-meta { flex: 1; min-width: 0; line-height: 1.25; }
 .skin-meta b { font-size: 13px; font-weight: 700; display: block; }
@@ -882,6 +1198,39 @@
 }
 .art-fallback-title { font-size: 13px; color: var(--text); margin-bottom: 4px; }
 .art-fallback-meta { font-size: 11px; color: var(--dim2); }
+
+/* Share popover (LinkedIn / X) anchored under the Share icon in the artifact
+ * header. The wrapper is `position: relative` so the menu floats absolutely
+ * from its right edge — mirrors how the Reveal/Export buttons sit, just with
+ * an extra layer underneath. */
+.art-share-wrap { position: relative; display: inline-block; }
+.art-share-menu {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  min-width: 180px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+  z-index: 50;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.art-share-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  border: 0; border-radius: 7px; background: transparent;
+  color: var(--text); font-size: 13px; cursor: pointer;
+  text-align: left; transition: background 0.12s;
+}
+.art-share-item:hover { background: rgba(255, 255, 255, 0.06); }
+.art-share-mark {
+  width: 20px; height: 20px;
+  display: grid; place-items: center;
+  font-family: var(--mono); font-weight: 700; font-size: 12px;
+  color: var(--dim);
+  border: 1px solid var(--line); border-radius: 4px;
+  flex: none;
+}
 
 /* Raw-source editor — text-class artifacts only. Monospaced so structure
    (markdown lists, indented code, HTML tags) stays readable. Fills the body
@@ -1056,3 +1405,4 @@
   /* No page margin override — let the OS print dialog ("Margins" dropdown)
      handle it; default macOS margins look reasonable for a deliverable. */
 }
+

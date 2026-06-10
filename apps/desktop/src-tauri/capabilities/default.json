@@ -17,6 +17,8 @@
     "core:window:allow-set-fullscreen",
     "core:window:allow-is-fullscreen",
     "core:window:allow-set-resizable",
-    "global-shortcut:default"
+    "core:window:allow-set-theme",
+    "global-shortcut:default",
+    "dialog:default"
   ]
 }

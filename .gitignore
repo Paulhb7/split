@@ -23,6 +23,10 @@ var/
 # parked / unused files moved out of the live tree (audit cleanup)
 archive/
 
+# local desktop design experiments
+apps/desktop/design/bg3d-proposal.html
+apps/desktop/design/liquid-glass-proposal.html
+
 # desktop build artifacts
 apps/desktop/node_modules/
 apps/desktop/dist/
@@ -38,6 +42,7 @@ Claude.md
 
 # working notes (boss-only, not for the repo)
 next_steps.md
+roadmap.md
 
 split_acp.egg-info
 .ruff_cache/

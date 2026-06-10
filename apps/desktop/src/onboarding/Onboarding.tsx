@@ -4,10 +4,11 @@ import { H } from "../shared/harnesses";
 import { Tile, League, vars } from "../shared/ui";
 import { useHarnessStates } from "../shared/useHarnessStates";
 import { useExperts } from "../shared/util";
-import { isClassicExpert, type ExpertKind } from "../shared/experts";
+import { isActiveExpert, type ExpertKind } from "../shared/experts";
 import { SKINS, type Skin } from "../shared/skins";
-import SiriOrb from "../shared/SiriOrb";
 import { DetailPane } from "../cabinet/Cabinet";
+import GalleryWall, { type Wing } from "../shared/GalleryWall";
+import SplitMark from "../shared/SplitMark";
 import "../cabinet/cabinet.css";
 import "./onboarding.css";
 
@@ -133,8 +134,10 @@ const KIND_ORDER: ExpertKind[] = [
   "recruiter",
 ];
 
-const SHOWCASE = ["claude", "codex", "gemini", "mistral-vibe", "copilot", "opencode", "qwen"];
-const EXPERTS = ["Consultant", "Scientist", "Engineer", "Analyst", "Lawyer", "Finder"];
+// Every harness with a working logo gets a slot in the page-1 wall carousel.
+// Order is the canonical "cloud first → local lane" reading order from the
+// roster — same one used in the home menus.
+const SHOWCASE = ["claude", "codex", "gemini", "mistral-vibe", "copilot", "cursor", "qwen", "opencode", "hermes"];
 
 export type EnterIntent = "test_wolfgang" | "start_recruiter" | undefined;
 
@@ -161,13 +164,24 @@ export default function Onboarding({
   const engineId = picks[0] || "claude"; // "primary" = the first picked agent
   const primarySt = states[engineId];
   const accent = H[engineId].brand;
-  // 4 pages: theme (0) · welcome (1) · pick (2) · brief (3).
+  // Only override `--brand` once the user has actually picked an agent. Before
+  // that (welcome, skin picker, cabinet intro), the skin's `--brand` from the
+  // .theme-<id> class on .app flows naturally — so switching skins on the
+  // picker page visibly retints the "Next" button, the eyebrow, the heading
+  // accent, etc. Forcing the harness brand here would lock everything to the
+  // default agent's color (claude → orange) regardless of skin.
+  // `--engine` carries the active harness brand to engine-specific surfaces
+  // (chrome SplitMark, session-row glow, running dot) without ever touching
+  // `--brand` — which stays owned by the skin's .theme-<id> class so every
+  // CTA / em / link / focus ring keeps tracking the user's skin choice.
+  const engineStyle = vars({ "--engine": accent });
+  // 4 pages: theme (0) · cabinet intro (1) · pick (2) · brief (3).
   // Page 2 = picker; can't advance until at least one agent is selected.
   const canNext = page !== 2 || picks.length > 0;
   const toggle = (id: string) => setPicks((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
   return (
-    <div className="ob2" style={vars({ "--brand": accent })}>
+    <div className="ob2" style={engineStyle}>
       <div className="ob2-page" key={page}>
         {page === 0 && (
           <div className="ob2-hero">
@@ -179,10 +193,22 @@ export default function Onboarding({
                 you can switch any time from the chrome bar.
               </p>
               <p className="ob2-seed">Live preview — it applies as you click.</p>
+              {/* The floating majordome — a "live assistant" presence that
+                  retints with every skin click. Tucked under the lede on the
+                  left so the user sees the brand silhouette breathe under
+                  each candidate theme before committing. */}
+              <div className="ob2-skin-stage">
+                <div className="split-levitate">
+                  <SplitMark size={180} />
+                </div>
+                <div className="split-shadow" aria-hidden="true" />
+              </div>
             </div>
             <div className="ob2-hero-visual">
               <div className="ob2-skins">
-                {SKINS.map((s) => (
+                {/* Special skins stay out of the tour: Noir is an easter egg,
+                    Minuit only exists after dark (see App.tsx night logic). */}
+                {SKINS.filter((s) => !s.hidden && !s.night).map((s) => (
                   <button
                     key={s.id || "classic"}
                     className={"ob2-skin" + (skin === s.id ? " on" : "")}
@@ -209,8 +235,8 @@ export default function Onboarding({
         )}
 
         {page === 1 && (
-          <div className="ob2-hero">
-            <div className="ob2-hero-text stagger">
+          <div className="ob2-wall stagger">
+            <div className="ob2-wall-text">
               <div className="ob-eyebrow">welcome to your cabinet · 01</div>
               <h1 className="ob2-h1">Any AI agent.<br />Now a <em>genius</em>.</h1>
               <p className="ob2-lede">
@@ -220,25 +246,44 @@ export default function Onboarding({
               </p>
               <p className="ob2-seed">An <b>agent</b> is a model with hands. An <b>expert</b> is that agent with a craft.</p>
             </div>
-            <div className="ob2-hero-visual">
-              <div className="ob2-orb-wrap">
-                <SiriOrb size={200} coreColor={accent} />
+
+            {/* Row 1 — brains. Defaults to scroll-left so it reads "things coming
+             * at you". The track is rendered TWICE inside the wrap (same array
+             * mapped back-to-back) so the 0% → -50% translate loops seamlessly. */}
+            <div className="carousel-wrap" aria-label="Available agents">
+              <div className="carousel-track left">
+                {[0, 1].map((pass) => (
+                  <div key={pass} className="carousel-group" aria-hidden={pass === 1}>
+                    {SHOWCASE.map((id) => (
+                      <span key={id} className="wall-engine" style={vars({ "--brand": H[id].brand })}>
+                        <Tile id={id} size={48} />
+                        <span className="wall-engine-name">{H[id].label}</span>
+                      </span>
+                    ))}
+                  </div>
+                ))}
               </div>
-              <div className="cons">
-                <div className="cons-row engines">
-                  {SHOWCASE.map((id, i) => (
-                    <span key={id} className="cons-engine" style={vars({ animationDelay: `${0.15 + i * 0.05}s`, "--brand": H[id].brand })}>
-                      <Tile id={id} size={42} />
-                      <span className="cons-name">{H[id].label}</span>
-                    </span>
-                  ))}
-                </div>
-                <div className="cons-link">wrapped, becomes</div>
-                <div className="cons-row experts">
-                  {EXPERTS.map((e, i) => (
-                    <span key={e} className="cons-expert" style={{ animationDelay: `${0.4 + i * 0.05}s` }}>@{e}</span>
-                  ))}
-                </div>
+            </div>
+
+            <div className="cons-link">wrapped, becomes</div>
+
+            {/* Row 2 — experts. Scrolls the opposite way so the two rows feel
+             * like a weave instead of a parade. The friendly display name is
+             * the persona's `.label` field (genius_wolfgang → "Wolfgang",
+             * coach_sport → "Sport Coach", etc.) — single source of truth. */}
+            <div className="carousel-wrap" aria-label="Bundled experts">
+              <div className="carousel-track right">
+                {[0, 1].map((pass) => (
+                  <div key={pass} className="carousel-group" aria-hidden={pass === 1}>
+                    {Object.entries(experts)
+                      .filter(([slug]) => isActiveExpert(experts, slug))
+                      .map(([slug, e]) => (
+                        <span key={slug} className="wall-expert">
+                          <span className="wall-expert-at">@</span>{e.label}
+                        </span>
+                      ))}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -323,77 +368,20 @@ export default function Onboarding({
             )}
             {(() => {
               const cabinet = Object.entries(experts)
-                .filter(([slug]) => slug !== "genius_socrates" && slug !== "consultant" && isClassicExpert(slug))
+                .filter(([slug]) => slug !== "genius_socrates" && slug !== "consultant" && isActiveExpert(experts, slug))
                 .sort(([, a], [, b]) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
               const supers = cabinet.filter(([, e]) => (e.category ?? "super") === "super");
               const genii = cabinet.filter(([, e]) => e.category === "genius");
               const coaches = cabinet.filter(([, e]) => e.category === "coach");
               return (
-                <>
-                  {supers.length > 0 && (
-                    <>
-                      <div className="ob-eyebrow ob-eyebrow-section">super agents · jobs you already know, done in seconds</div>
-                      <div className="ob2-cabinet">
-                        {supers.map(([slug, exp]) => (
-                          <button
-                            key={slug}
-                            className="ob2-cabinet-card"
-                            onClick={() => setFicheSlug(slug)}
-                          >
-                            <span className="ob2-cabinet-name">
-                              <span className="ob2-cabinet-icon"><KindIcon kind={exp.kind} /></span>
-                              @{exp.label}
-                            </span>
-                            <span className="ob2-cabinet-role">{exp.figure ?? exp.role ?? slug}</span>
-                            <span className="ob2-cabinet-blurb">{exp.blurb}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                  {genii.length > 0 && (
-                    <>
-                      <div className="ob-eyebrow ob-eyebrow-section genius">genius agents · what only a genius could make</div>
-                      <div className="ob2-cabinet ob2-cabinet-genius">
-                        {genii.map(([slug, exp]) => (
-                          <button
-                            key={slug}
-                            className="ob2-cabinet-card"
-                            onClick={() => setFicheSlug(slug)}
-                          >
-                            <span className="ob2-cabinet-name">
-                              <span className="ob2-cabinet-icon"><KindIcon kind={exp.kind} /></span>
-                              @{exp.label}
-                            </span>
-                            <span className="ob2-cabinet-role">{exp.role ?? "genius"}</span>
-                            <span className="ob2-cabinet-blurb">{exp.blurb}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                  {coaches.length > 0 && (
-                    <>
-                      <div className="ob-eyebrow ob-eyebrow-section coach">coaches · grow with them, day after day</div>
-                      <div className="ob2-cabinet ob2-cabinet-coach">
-                        {coaches.map(([slug, exp]) => (
-                          <button
-                            key={slug}
-                            className="ob2-cabinet-card"
-                            onClick={() => setFicheSlug(slug)}
-                          >
-                            <span className="ob2-cabinet-name">
-                              <span className="ob2-cabinet-icon"><KindIcon kind={exp.kind} /></span>
-                              @{exp.label}
-                            </span>
-                            <span className="ob2-cabinet-role">coach</span>
-                            <span className="ob2-cabinet-blurb">{exp.blurb}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </>
+                <GalleryWall
+                  wings={[
+                    { id: "genius", eyebrow: "east wing · what only a genius could make", title: "the geniuses", entries: genii.map(([slug, expert]) => ({ slug, expert })) },
+                    { id: "super",  eyebrow: "main floor · jobs you already know",        title: "the working hands", entries: supers.map(([slug, expert]) => ({ slug, expert })) },
+                    { id: "coach",  eyebrow: "west wing · grow with them",                title: "the coaches",       entries: coaches.map(([slug, expert]) => ({ slug, expert })) },
+                  ] satisfies Wing[]}
+                  onPick={setFicheSlug}
+                />
               );
             })()}
             {experts.genius_socrates && (

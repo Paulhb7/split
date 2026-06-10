@@ -69,8 +69,15 @@ Defaults:
   stack — not Times New Roman), generous spacing, one accent color, soft
   shadows, hover states, keyboard support. Make it feel **made**, not
   generated.
-- **State persists** in `localStorage` when that fits — a todo list that
-  forgets your todos on refresh is broken.
+- **State persists** in `localStorage`, always. Anything the user can
+  tick, type, toggle, drag, or fill in — checkboxes, todos, a project
+  view, form drafts, settings — saves to `localStorage` and reloads on
+  open. A page that forgets is broken. Don't reach for Electron, a
+  backend, or a "real" database for this; a single HTML file with
+  `localStorage` covers 95% of mini-apps and the user double-clicks to
+  open it. Only bump up to the File System Access API (export/import a
+  JSON file) if the user wants to back up or move the data between
+  machines.
 - **No secrets in the file.** If the app needs an API key, take it from
   a field at runtime.
 - **Mobile-first** when the boss mentions a phone. Otherwise responsive
@@ -84,12 +91,14 @@ Save to `~/Documents/split-apps/<short-name>/`:
 
 Once built:
 
-1. **Open it locally** — run `open ~/Documents/split-apps/<name>/index.html`.
-2. **Tell the boss what it does in two lines**, plain, then the absolute
+1. **Tell the boss what it does in two lines**, plain, then the absolute
    path: *"A countdown to your wedding date with the photo you sent as the
    background. Click the date in the corner to edit it. Saved at
-   `~/Documents/split-apps/wedding-countdown/index.html`."*
-3. **Offer the deploy.** This is the part the boss really wants — *"want
+   `~/Documents/split-apps/wedding-countdown/index.html`."* Split's
+   artifact rail previews the HTML in-app — **don't call `open`** on the
+   local file, it would pop a duplicate in the system browser (see
+   `_discipline.md`).
+2. **Offer the deploy.** This is the part the boss really wants — *"want
    me to put it online so you can open it on your phone or send the link
    to someone?"*. Then use the **`web-deploy`** skill (surge.sh, permanent
    URL, free, no real account):
@@ -114,11 +123,12 @@ This is one session. They will say *"make the background blue"*,
 *"add a sound when I click"*, *"the font is ugly"*. You:
 
 1. **Edit the existing file in place** — do not start a new folder.
-2. **Re-open it** so they see the change immediately (`open <path>`).
-3. **If it was deployed**, re-deploy: `share` re-uses the same subdomain
+   Split's artifact rail auto-refreshes the in-app preview on file
+   change; don't call `open` (it pops a duplicate in the browser).
+2. **If it was deployed**, re-deploy: `share` re-uses the same subdomain
    on a fresh `surge` call; `preview` keeps the same URL while the tunnel
    is up.
-4. **One short line** of what changed, no changelog ceremony.
+3. **One short line** of what changed, no changelog ceremony.
 
 ---
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
@@ -125,16 +125,27 @@ export function useBarWidth(width: number) {
   }, [width]);
 }
 
-/** Override the bar HEIGHT with an absolute value, bypassing the adaptive fit.
- *  Pair with `useAdaptiveHeight({ disabled: <same condition> })` so the two
- *  don't fight. `null` disables the override (no resize fired). Used for views
- *  whose content sits OUTSIDE `measureRef` (e.g. the overlay), so the
- *  ResizeObserver can't see them and the natural fit would leave them clipped. */
-export function useBarHeight(height: number | null) {
+/** Observe the window's ACTUAL fullscreen state (the user's green traffic
+ *  light included), as opposed to `useFullscreen`'s app-driven flag. The home
+ *  uses it to fill the canvas with the expert gallery when the user maximised
+ *  the bar themselves: native fullscreen is the only persistent large state —
+ *  manual edge-drags get re-fit back to content height by `useAdaptiveHeight`. */
+export function useNativeFullscreen(): boolean {
+  const [fs, setFs] = useState(false);
   useEffect(() => {
-    if (height == null) return;
-    invoke("set_bar_height", { height }).catch(() => { /* ignore */ });
-  }, [height]);
+    const win = getCurrentWindow();
+    let alive = true;
+    const check = () => {
+      win.isFullscreen().then((v) => { if (alive) setFs(v); }).catch(() => { /* headless test */ });
+    };
+    check();
+    const un = win.onResized(check);
+    return () => {
+      alive = false;
+      un.then((f) => f()).catch(() => { /* ignore */ });
+    };
+  }, []);
+  return fs;
 }
 
 /** Toggle the Tauri window to native fullscreen (macOS creates a dedicated

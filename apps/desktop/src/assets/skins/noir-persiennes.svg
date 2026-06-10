@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 295" fill="none">
+  <defs>
+    <linearGradient id="slat" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.85"/>
+      <stop offset="0.7" stop-color="#ffffff" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.10"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.6"/></filter>
+  </defs>
+  <!-- persiennes — la lumière coupée en lames obliques -->
+  <g opacity="0.30" transform="rotate(-22 230 148)" fill="url(#slat)" filter="url(#soft)">
+    <rect x="-150" y="-104" width="760" height="13"/>
+    <rect x="-150" y="-58" width="760" height="13"/>
+    <rect x="-150" y="-12" width="760" height="13"/>
+    <rect x="-150" y="34"  width="760" height="13"/>
+    <rect x="-150" y="80"  width="760" height="13"/>
+    <rect x="-150" y="126" width="760" height="13"/>
+    <rect x="-150" y="172" width="760" height="13"/>
+    <rect x="-150" y="218" width="760" height="13"/>
+    <rect x="-150" y="264" width="760" height="13"/>
+    <rect x="-150" y="310" width="760" height="13"/>
+    <rect x="-150" y="356" width="760" height="13"/>
+  </g>
+</svg>

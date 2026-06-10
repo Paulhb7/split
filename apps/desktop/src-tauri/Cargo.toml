@@ -15,8 +15,16 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+# `macos-private-api` lets the WKWebView itself be transparent, which is what
+# allows the NSVisualEffectView vibrancy layer (lib.rs) to show through the
+# skins' translucent gradient stacks. Paired with `macOSPrivateApi: true` +
+# `transparent: true` in tauri.conf.json.
+tauri = { version = "2", features = ["macos-private-api"] }
 tauri-plugin-global-shortcut = "2"
+# Native file dialogs (save / open picker) for the artifact-rail "Save a copy…"
+# button. Cross-platform — wraps NSSavePanel on macOS, IFileDialog on Windows,
+# xdg-portal/zenity on Linux.
+tauri-plugin-dialog = "2"
 window-vibrancy = "0.5"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { listen } from "@tauri-apps/api/event";
 import { DEFAULT_EXPERTS, type ExpertMap } from "./experts";
 
 // A file dropped on a window, read by Rust, pending attachment to the next turn.
@@ -49,15 +49,24 @@ export function useExperts(): ExpertMap {
         })
         .catch(() => {});
     refresh();
-    let unlisten: UnlistenFn | null = null;
-    listen<{ type?: string; status?: string }>("session-event", (e) => {
-      if (e.payload?.type === "status" && e.payload?.status === "idle") refresh();
-    }).then((fn) => {
-      unlisten = fn;
+    // The broadcast payload is the WireEvent envelope {id, vevt?, log?, exit}
+    // — the VEVT itself is a JSON string under `.vevt`. Cheap substring guard
+    // first: this listener fires for every chunk of every session.
+    const un = listen<{ vevt?: string | null }>("session-event", (e) => {
+      const raw = e.payload?.vevt;
+      if (!raw || !raw.includes('"status"')) return;
+      try {
+        const v = JSON.parse(raw) as { type?: string; status?: string };
+        if (v.type === "status" && v.status === "idle") refresh();
+      } catch {
+        /* not JSON we care about */
+      }
     });
     window.addEventListener("focus", refresh);
     return () => {
-      unlisten?.();
+      // `un` may still be pending at unmount — resolve-then-unlisten so the
+      // listener never leaks (same pattern as useSessions).
+      un.then((f) => f());
       window.removeEventListener("focus", refresh);
     };
   }, []);

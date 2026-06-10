@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" fill="none">
+  <defs>
+    <radialGradient id="veil" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#c9924e" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#c9924e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g opacity="0.55">
+    <!-- halo de veilleuse -->
+    <ellipse cx="128" cy="92" rx="104" ry="52" fill="url(#veil)"/>
+    <!-- rebord -->
+    <line x1="36" y1="108" x2="226" y2="108" stroke="#1c150c" stroke-width="2.5" opacity="0.9"/>
+    <!-- le chat de la maison, lové, liseré de lune -->
+    <path d="M 88 106 C 86 92, 98 82, 116 81 C 134 80, 148 88, 149 98 C 150 104, 144 106, 136 106 Z"
+          fill="#0a0805" stroke="#d9a05c" stroke-width="0.9" stroke-opacity="0.55"/>
+    <path d="M 132 84 L 136 74 L 143 82 Z" fill="#0a0805" stroke="#d9a05c" stroke-width="0.9" stroke-opacity="0.55"/>
+    <path d="M 143 85 L 150 77 L 153 86 Z" fill="#0a0805" stroke="#d9a05c" stroke-width="0.9" stroke-opacity="0.55"/>
+    <path d="M 89 103 C 78 101, 75 91, 83 87" stroke="#0a0805" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M 89 103 C 78 101, 75 91, 83 87" stroke="#d9a05c" stroke-width="0.9" stroke-opacity="0.4"/>
+  </g>
+</svg>

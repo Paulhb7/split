@@ -11,8 +11,9 @@ use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewW
 // drives ACP in-process via `runner.rs` + the portable `split-core` engine,
 // so the shipped `.dmg` needs no Python runtime. (The retired Python sidecar
 // lives, reference-only, in the gitignored `split-python/`; it is no longer
-// wired into the app.)
-mod runner;
+// wired into the app.) Public so the integration tests in `tests/` can run
+// `run_session` against the fake ACP agent without a Tauri app.
+pub mod runner;
 
 // Engine modules from the workspace's `split-core` crate. `lib.rs` uses
 // `harness_config` (model picker translation) + `persona` (workspace
@@ -359,6 +360,27 @@ fn write_artifact(path: String, content: String) -> Result<(), String> {
     std::fs::write(&p, content).map_err(|e| e.to_string())
 }
 
+/// Save the in-memory artifact content to a user-chosen path. Sibling to
+/// `write_artifact`, but for the "Save a copy…" flow where the user picks the
+/// target via the OS file dialog — so the target file usually does NOT exist
+/// yet, and may live outside the workspace (Documents, Desktop, …). The OS
+/// picker already enforces user intent on the destination; we only enforce
+/// the size cap so a runaway buffer can't blow up the disk.
+#[tauri::command]
+fn save_artifact_as(target_path: String, content: String) -> Result<(), String> {
+    if content.len() as u64 > ARTIFACT_INLINE_CAP {
+        return Err(format!(
+            "content exceeds {} MB cap",
+            ARTIFACT_INLINE_CAP / 1024 / 1024
+        ));
+    }
+    let p = std::path::PathBuf::from(&target_path);
+    if let Some(parent) = p.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    std::fs::write(&p, content).map_err(|e| e.to_string())
+}
+
 // Reveal the workspace folder (or one session's subfolder) in Finder. `workspace`
 // empty → the default root (<repo>/var/workspace).
 #[tauri::command]
@@ -505,6 +527,7 @@ fn start_session(
     expert: String,
     workspace: String,
     resume: Option<bool>,
+    project: Option<String>,
 ) {
     let harness = if harness.is_empty() {
         "claude".to_string()
@@ -516,7 +539,11 @@ fn start_session(
     } else {
         expert
     };
-    eprintln!("[start_session] {id} ({harness}/{expert}) ws={workspace:?}");
+    // The vault project pinned on this session (composer `#project` chip).
+    // Threaded as a parameter — NOT process env — so two parallel sessions
+    // can pin different projects.
+    let project = project.unwrap_or_default().trim().to_string();
+    eprintln!("[start_session] {id} ({harness}/{expert}) ws={workspace:?} project={project:?}");
 
     // Resolve the harness's launch command from harnesses.json (same source
     // the Python runner reads via `core.load_harnesses`).
@@ -584,14 +611,15 @@ fn start_session(
     } else {
         PathBuf::from(&workspace)
     };
-    let ws = persona::ensure_expert_workspace(&REPO_ROOT, &var_dir, &workspace_root, &expert);
+    let ws =
+        persona::ensure_expert_workspace(&REPO_ROOT, &var_dir, &workspace_root, &expert, &project);
     let resolved_workspace = ws.to_string_lossy().into_owned();
 
     // First-turn persona injection — ACP has no standardised system prompt,
     // and per-harness cwd conventions all differ. Prepending the persona to
     // the first user prompt of the session lands it in the agent's history
     // and persists across turns, exactly like the runner does.
-    let persona_body = persona::persona_text_for_injection(&REPO_ROOT, &var_dir, &expert);
+    let persona_body = persona::persona_text_for_injection(&REPO_ROOT, &var_dir, &expert, &project);
 
     let mcp_servers = load_mcp_servers();
     let sessions_dir = var_dir.join("sessions");
@@ -637,6 +665,16 @@ fn start_session(
     for (k, v) in extra_env {
         agent_env.insert(k, v);
     }
+    // Vault env — the boss's plain-markdown vault (native successor to the
+    // retired Obsidian / Notion workspace backends). Always present: ensure
+    // the skeleton exists, then hand the agent its path. The `memory` skill
+    // and the persona's "Your vault" block assume `SPLIT_VAULT`.
+    let vault = persona::vault_root();
+    persona::ensure_vault(&vault);
+    agent_env.insert("SPLIT_VAULT".into(), vault.to_string_lossy().into_owned());
+    if !project.is_empty() {
+        agent_env.insert("SPLIT_PROJECT".into(), project.clone());
+    }
 
     // On Windows, `npx`/`uvx`/`npm`/… are `.cmd` shims; `Command::new("npx")`
     // (what the ACP SDK does under the hood) does NOT resolve them via PATHEXT
@@ -660,6 +698,24 @@ fn start_session(
         persona_body,
         resume.unwrap_or(false),
     );
+
+    // The runner task can also end on its own (agent crash, connection
+    // error) — not just via stop_session. Watch for its control-channel
+    // receiver dropping and evict the map entry, so dead senders don't
+    // accumulate. `same_channel` guards against a same-id restart (resume
+    // reuses session ids) racing the eviction.
+    let tx_watch = handle.tx.clone();
+    let id_watch = id.clone();
+    tauri::async_runtime::spawn(async move {
+        tx_watch.closed().await;
+        let mut map = SESSIONS.lock().unwrap();
+        if map
+            .get(&id_watch)
+            .is_some_and(|s| s.tx.same_channel(&tx_watch))
+        {
+            map.remove(&id_watch);
+        }
+    });
 
     SESSIONS.lock().unwrap().insert(
         id,
@@ -1572,6 +1628,190 @@ fn pull_ollama_model(app: AppHandle, harness_id: String, model: String) -> Resul
     Ok(json!({ "ok": true, "model": model }).to_string())
 }
 
+// --- workspaces (Notion / Obsidian / Logseq / …) -----------------------------
+// The user picks ONE workspace where every Split agent reads / writes notes,
+// pipelines, project boards (see `config/workspaces.json` for the catalogue).
+// Notion is viewed in-app via the WorkspaceFrame iframe; Obsidian and Logseq
+// are launched in their native app via URI scheme. The choice + per-workspace
+// credentials/paths live at `var/state/workspace.json` so the runner can
+// inject them into the agent's env at session spawn.
+
+// --- vault (the boss's plain-markdown memory folder) --------------------------
+
+/// One node of the vault tree returned to the React side. `path` is absolute
+/// so the overlay can feed it straight into `read_artifact` / `write_artifact`.
+#[derive(serde::Serialize)]
+struct VaultNode {
+    name: String,
+    path: String,
+    rel: String,
+    dir: bool,
+    size: u64,
+    mtime: u64,
+    description: Option<String>,
+    children: Vec<VaultNode>,
+}
+
+/// Frontmatter `description:` of a markdown file, if it opens with a YAML
+/// block. Cheap line scan — no YAML parser, mirrors what the agents write.
+fn md_description(path: &std::path::Path) -> Option<String> {
+    let raw = std::fs::read_to_string(path).ok()?;
+    let rest = raw.strip_prefix("---")?;
+    let end = rest.find("\n---")?;
+    for line in rest[..end].lines() {
+        if let Some(v) = line.strip_prefix("description:") {
+            let v = v.trim().trim_matches('"').trim_matches('\'');
+            if !v.is_empty() {
+                return Some(v.to_string());
+            }
+        }
+    }
+    None
+}
+
+fn vault_node(path: &std::path::Path, root: &std::path::Path, depth: usize) -> Option<VaultNode> {
+    let name = path.file_name()?.to_string_lossy().into_owned();
+    if name.starts_with('.') {
+        return None; // .DS_Store, .obsidian, editor droppings
+    }
+    let meta = std::fs::metadata(path).ok()?;
+    let rel = path
+        .strip_prefix(root)
+        .map(|p| p.to_string_lossy().into_owned())
+        .unwrap_or_else(|_| name.clone());
+    let mtime = meta
+        .modified()
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let dir = meta.is_dir();
+    let mut children = Vec::new();
+    if dir && depth < 8 {
+        if let Ok(entries) = std::fs::read_dir(path) {
+            for e in entries.flatten() {
+                if let Some(n) = vault_node(&e.path(), root, depth + 1) {
+                    children.push(n);
+                }
+            }
+        }
+        children.sort_by_key(|n: &VaultNode| (!n.dir, n.name.to_lowercase()));
+    }
+    let description = (!dir && name.ends_with(".md") && meta.len() < 262_144)
+        .then(|| md_description(path))
+        .flatten();
+    Some(VaultNode {
+        name,
+        path: path.to_string_lossy().into_owned(),
+        rel,
+        dir,
+        size: meta.len(),
+        mtime,
+        description,
+        children,
+    })
+}
+
+/// Resolve a vault-relative path, rejecting traversal so the overlay can
+/// never create/delete outside the vault root.
+fn vault_rel_path(rel: &str) -> Result<std::path::PathBuf, String> {
+    let rel = rel.trim().trim_matches('/');
+    if rel.is_empty() {
+        return Err("empty path".into());
+    }
+    if rel
+        .split(['/', '\\'])
+        .any(|c| c == ".." || c == "." || c.is_empty())
+    {
+        return Err("invalid path".into());
+    }
+    let root = persona::vault_root();
+    persona::ensure_vault(&root);
+    Ok(root.join(rel))
+}
+
+/// Create a file (empty) or folder inside the vault. New project folders
+/// (direct children of `projects/`) get their `MEMORY.md` index seeded so
+/// the doctrine's index discipline starts at file one.
+#[tauri::command]
+fn vault_create(rel: String, dir: bool) -> Result<(), String> {
+    let p = vault_rel_path(&rel)?;
+    if p.exists() {
+        return Err("already exists".into());
+    }
+    if dir {
+        std::fs::create_dir_all(&p).map_err(|e| e.to_string())?;
+        let is_project = p
+            .parent()
+            .map(|par| par.ends_with("projects"))
+            .unwrap_or(false);
+        if is_project {
+            let slug = p
+                .file_name()
+                .map(|s| s.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            let _ = std::fs::write(
+                p.join("MEMORY.md"),
+                format!(
+                    "# {slug} — index\n\nOne line per file: `- [title](file.md) — one-line hook`.\n"
+                ),
+            );
+        }
+    } else {
+        if let Some(parent) = p.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+        std::fs::write(&p, "").map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// Delete a file or folder inside the vault (the overlay confirms first).
+#[tauri::command]
+fn vault_delete(rel: String) -> Result<(), String> {
+    let p = vault_rel_path(&rel)?;
+    if !p.exists() {
+        return Err("not found".into());
+    }
+    if p.is_dir() {
+        std::fs::remove_dir_all(&p).map_err(|e| e.to_string())
+    } else {
+        std::fs::remove_file(&p).map_err(|e| e.to_string())
+    }
+}
+
+/// Walk the boss's vault and return `{ root, tree }` as JSON. Ensures the
+/// skeleton exists first so the overlay never opens on a missing folder.
+#[tauri::command]
+fn vault_tree() -> Result<String, String> {
+    let root = persona::vault_root();
+    persona::ensure_vault(&root);
+    let mut top: Vec<VaultNode> = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(&root) {
+        for e in entries.flatten() {
+            if let Some(n) = vault_node(&e.path(), &root, 0) {
+                top.push(n);
+            }
+        }
+    }
+    top.sort_by_key(|n: &VaultNode| (!n.dir, n.name.to_lowercase()));
+    serde_json::to_string(&json!({ "root": root.to_string_lossy(), "tree": top }))
+        .map_err(|e| e.to_string())
+}
+
+/// Open an arbitrary URL in the OS default handler. Used by the React side
+/// for "Open in browser ↗". Scheme is restricted to a small allowlist so the
+/// UI can't be tricked into launching arbitrary handlers.
+#[tauri::command]
+fn open_url(target: String) -> Result<(), String> {
+    let allowed_schemes = ["http://", "https://", "file://"];
+    let ok = allowed_schemes.iter().any(|p| target.starts_with(p));
+    if !ok {
+        return Err(format!("scheme not allowed: {target}"));
+    }
+    open_external(&target).map_err(|e| e.to_string())
+}
+
 // --- file drops --------------------------------------------------------------
 #[derive(serde::Serialize)]
 struct FileAttachment {
@@ -1632,6 +1872,7 @@ fn center_on_screen(window: &WebviewWindow) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             // Native macOS app menu — mirrors what a "real" macOS app exposes:
             // App > About/Services/Hide/Quit · Edit > Cut/Copy/Paste/Select-All ·
@@ -1642,9 +1883,7 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             {
                 use tauri::menu::{AboutMetadataBuilder, MenuBuilder, SubmenuBuilder};
-                let app_meta = AboutMetadataBuilder::new()
-                    .name(Some("Split"))
-                    .build();
+                let app_meta = AboutMetadataBuilder::new().name(Some("Split")).build();
                 let app_menu = SubmenuBuilder::new(app, "Split")
                     .about(Some(app_meta))
                     .separator()
@@ -1665,9 +1904,7 @@ pub fn run() {
                     .paste()
                     .select_all()
                     .build()?;
-                let view_menu = SubmenuBuilder::new(app, "View")
-                    .fullscreen()
-                    .build()?;
+                let view_menu = SubmenuBuilder::new(app, "View").fullscreen().build()?;
                 let window_menu = SubmenuBuilder::new(app, "Window")
                     .minimize()
                     .maximize()
@@ -1687,12 +1924,30 @@ pub fn run() {
                     use window_vibrancy::{
                         apply_vibrancy, NSVisualEffectMaterial, NSVisualEffectState,
                     };
+                    // Sidebar (unlike HudWindow) follows the window appearance,
+                    // which React pins per skin via `setTheme(dark|light)` — so
+                    // the glass is bright under Bright/Saint-Ex/Baroque and deep
+                    // under the dark skins. No radius override: the decorated
+                    // window's own frame clips the corners.
                     let _ = apply_vibrancy(
                         &win,
-                        NSVisualEffectMaterial::HudWindow,
+                        NSVisualEffectMaterial::Sidebar,
                         Some(NSVisualEffectState::Active),
-                        Some(18.0),
+                        None,
                     );
+                }
+                #[cfg(target_os = "windows")]
+                {
+                    use window_vibrancy::{apply_acrylic, apply_mica};
+                    // Mica on Windows 11 — follows the window dark mode, which
+                    // React pins per skin via `setTheme(dark|light)`, same as
+                    // the macOS glass. Acrylic as the Windows 10 fallback
+                    // (slower on resize, but better than the desktop bleeding
+                    // through the transparent window). The skins' ≥80%-opaque
+                    // gradients sit on top either way.
+                    if apply_mica(&win, None).is_err() {
+                        let _ = apply_acrylic(&win, Some((18, 18, 18, 125)));
+                    }
                 }
                 center_on_screen(&win);
                 let _ = win.set_focus();
@@ -1775,7 +2030,12 @@ pub fn run() {
             save_model_config,
             read_artifact,
             reveal_artifact,
-            write_artifact
+            write_artifact,
+            save_artifact_as,
+            vault_tree,
+            vault_create,
+            vault_delete,
+            open_url
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

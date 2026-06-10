@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -9,6 +9,28 @@ import type { Session } from "../shared/models";
 import { ArtifactStrip } from "./ArtifactViewer";
 
 type PermissionScope = "once" | "session" | "always-allow" | "always-deny";
+
+function CopyBtn({ text }: { text: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      className="copy-btn"
+      onClick={async (e) => {
+        e.stopPropagation();
+        try {
+          await navigator.clipboard.writeText(text);
+          setDone(true);
+          setTimeout(() => setDone(false), 1200);
+        } catch {
+          /* clipboard write can reject (denied / unfocused) — ignore */
+        }
+      }}
+      title="Copy answer"
+    >
+      {done ? "✓ copied" : "copy"}
+    </button>
+  );
+}
 
 // The focused-session view: header (who/where + actions), the streamed thread
 // (turns / live thoughts / answer / auth prompt / permission prompt / queued),
@@ -23,12 +45,12 @@ export function Conversation(props: {
   slashQuery: string | null;
   chips: React.ReactNode;
   onBack: () => void;
-  onOpenWorkspace: (id: string) => void;
-  onLogout: (id: string) => void;
   onStop: (id: string) => void;
   onClose: () => void;
   onAuth: (id: string, methodId: string) => void;
   onPermission: (id: string, requestId: string, optionId: string | null, scope: PermissionScope) => void;
+  godMode: boolean;
+  onToggleGodMode: () => void;
   onCancelQueued: (id: string) => void;
   onInputChange: (v: string, cursor: number | null) => void;
   onKey: (e: React.KeyboardEvent) => void;
@@ -38,31 +60,43 @@ export function Conversation(props: {
 }) {
   const {
     session: focused, experts, value, inputRef, slashQuery, chips,
-    onBack, onOpenWorkspace, onLogout, onStop, onClose, onAuth, onPermission,
+    onBack, onStop, onClose, onAuth, onPermission,
+    godMode, onToggleGodMode,
     onCancelQueued, onInputChange, onKey, onReply, onPickCommand, onPickArtifact,
   } = props;
 
   const threadRef = useRef<HTMLDivElement>(null);
+  const lastSessionRef = useRef<string | null>(null);
   useEffect(() => {
-    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
-  }, [focused.answer, focused.thoughts, focused.thread.length]);
+    const el = threadRef.current;
+    if (!el) return;
+    // First render for this session → jump to bottom so the user lands on the
+    // latest message. After that, only follow the stream if they're already
+    // near the bottom; otherwise leave them where they were reading.
+    if (lastSessionRef.current !== focused.id) {
+      lastSessionRef.current = focused.id;
+      el.scrollTo({ top: el.scrollHeight });
+      return;
+    }
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    if (nearBottom) el.scrollTo({ top: el.scrollHeight });
+  }, [focused.id, focused.answer, focused.thoughts, focused.thread.length]);
 
   return (
     <div className="conv">
       <div className="conv-head">
         <button className="iconbtn" onClick={onBack} title="Back">‹</button>
-        <Tile id={focused.harness} size={38} />
+        <Tile id={focused.harness} size={38} themed />
         <div>
           <div className="conv-title">@{focused.expertLabel}{experts[focused.expertSlug]?.role ? <span className="conv-role"> · {experts[focused.expertSlug]?.role}</span> : null}</div>
           <div className="conv-on">on <b>{H[focused.harness]?.label || focused.harness}</b> · {focused.status}</div>
         </div>
         <span className="spacer" />
-        <button className="iconbtn" onClick={() => onOpenWorkspace(focused.id)} title="Open this session's folder">📁</button>
-        {(focused.status === "idle" || focused.status === "running") && !focused.archived && (
-          <button className="iconbtn" style={{ width: "auto", padding: "2px 8px", fontSize: 11 }}
-                  onClick={() => onLogout(focused.id)}
-                  title={`Sign out of ${H[focused.harness]?.label || focused.harness}`}>sign out</button>
-        )}
+        <button
+          className={"iconbtn" + (godMode ? " on" : "")}
+          onClick={onToggleGodMode}
+          title={godMode ? "God Mode ON — every tool permission is auto-approved. Click to disable." : "God Mode OFF — click to auto-approve every tool permission."}
+        >⚡</button>
         {focused.status === "running" ? (
           <button className="iconbtn" onClick={() => onStop(focused.id)} title="Stop">■</button>
         ) : focused.status !== "ended" ? (
@@ -71,23 +105,29 @@ export function Conversation(props: {
       </div>
 
       <div className="thread" ref={threadRef}>
-        {focused.thread.map((turn, i) => (
-          <div key={i} className={"turn " + turn.role}>
-            <span className="role">
-              {turn.role === "user" ? "You" : turn.role === "thought" ? `${focused.expertLabel} · thinking` : focused.expertLabel}
-            </span>
-            <div className="text">
-              {turn.role === "user" ? (
-                <>
-                  {turn.text}
-                  {turn.files?.length ? <div className="attach">{turn.files.map((f, j) => <span key={j} className="chip">📎 {f}</span>)}</div> : null}
-                </>
-              ) : (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{turn.text}</ReactMarkdown>
-              )}
+        {focused.thread.map((turn, i) => {
+          const isAgent = turn.role !== "user" && turn.role !== "thought";
+          return (
+            <div key={i} className={"turn " + turn.role}>
+              <div className="turn-head">
+                <span className="role">
+                  {turn.role === "user" ? "You" : turn.role === "thought" ? `${focused.expertLabel} · thinking` : focused.expertLabel}
+                </span>
+                {isAgent && turn.text && <CopyBtn text={turn.text} />}
+              </div>
+              <div className="text">
+                {turn.role === "user" ? (
+                  <>
+                    {turn.text}
+                    {turn.files?.length ? <div className="attach">{turn.files.map((f, j) => <span key={j} className="chip">📎 {f}</span>)}</div> : null}
+                  </>
+                ) : (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{turn.text}</ReactMarkdown>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {focused.thoughts && (
           <div className="turn thought">
             <span className="role">{focused.expertLabel} · thinking</span>
@@ -96,7 +136,10 @@ export function Conversation(props: {
         )}
         {focused.answer && (
           <div className="turn agent">
-            <span className="role">{focused.expertLabel}</span>
+            <div className="turn-head">
+              <span className="role">{focused.expertLabel}</span>
+              <CopyBtn text={focused.answer} />
+            </div>
             <div className="text"><ReactMarkdown remarkPlugins={[remarkGfm]}>{focused.answer}</ReactMarkdown></div>
           </div>
         )}

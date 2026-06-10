@@ -35,7 +35,21 @@ export interface Expert {
   category?: "super" | "genius" | "coach";
   kind: ExpertKind;
   blurb: string;
+  /** Lifecycle flag for the roster UI:
+   *  - undefined / "active" — surfaced everywhere (composer picker, @-mention,
+   *    Cabinet grid, Teams roster).
+   *  - "next" — kept in the registry so the persona + skills + memory work,
+   *    but hidden from the active picker surfaces and rendered only in
+   *    Cabinet's dedicated "Coming next" section. Used when the persona
+   *    promises something we haven't shipped yet (e.g. Sales / Project Manager
+   *    need the Cartographer's machine-context mapping to deliver). */
+  status?: "active" | "next";
 }
+
+/** True when the expert is hidden from the active picker (composer, @-mention,
+ * roster) but still listed in Cabinet's "Coming next" section. */
+export const isNextExpert = (e: Expert | undefined): boolean =>
+  !!e && e.status === "next";
 
 export type ExpertMap = Record<string, Expert>;
 
@@ -43,8 +57,16 @@ export type ExpertMap = Record<string, Expert>;
 // cabinet). They still exist in the registry — Teams mode picks them up
 // directly. Toscanini (Chief of Staff) is the team conductor; it has no role
 // when there's only one expert in the room.
-export const TEAMS_ONLY = new Set<string>(["toscanini"]);
+const TEAMS_ONLY = new Set<string>(["toscanini"]);
 export const isClassicExpert = (slug: string) => !TEAMS_ONLY.has(slug);
+
+/** Whether an expert is fully active — not Teams-only AND not deferred to a
+ * future version via `status: "next"`. The composer picker, @-mention,
+ * default-expert resolution and onboarding roster all use this. The Cabinet
+ * uses `isClassicExpert` directly so deferred experts still render (in their
+ * own "Coming next" section). */
+export const isActiveExpert = (experts: ExpertMap, slug: string): boolean =>
+  isClassicExpert(slug) && !isNextExpert(experts[slug]);
 
 // Fallback roster if `list_experts` fails (matches experts.json order/defaults).
 // Slug convention: supers stay unprefixed (`consultant`, `scientist`, `toscanini`),
