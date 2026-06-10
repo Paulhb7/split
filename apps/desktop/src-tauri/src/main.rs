@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    acp_desktop_lib::run()
+    split_desktop_lib::run()
 }

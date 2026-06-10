@@ -1,6 +1,9 @@
 [package]
-name = "acp-desktop"
+name = "split-desktop"
 version = "0.1.0"
+# Two binaries live here (the app + the fake ACP agent used by the
+# integration tests) — `tauri dev`'s bare `cargo run` needs the tiebreak.
+default-run = "split-desktop"
 description = "Split — ACP agent league (Tauri)"
 authors = ["Paul Barbaste"]
 license = "Apache-2.0"
@@ -8,7 +11,7 @@ edition = "2021"
 
 [lib]
 # The `_lib` suffix keeps the lib name distinct from the bin name (Windows).
-name = "acp_desktop_lib"
+name = "split_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
