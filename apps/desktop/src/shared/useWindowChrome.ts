@@ -62,9 +62,13 @@ export function useAdaptiveHeight(opts: {
    *  opens — those menus are `position: absolute` and don't contribute to the
    *  measured wrapper's offsetHeight, so we have to add them explicitly. */
   menuExtra?: number;
+  /** Growth ceiling as a fraction of the screen height. Defaults to MAX_FRAC
+   *  (0.7); the bar posture passes a lower cap so a streaming turn stops
+   *  pumping the window early and scrolls instead. */
+  maxFrac?: number;
   extraDeps?: unknown[];
 }) {
-  const { measureRef, disabled, menuExtra = 0 } = opts;
+  const { measureRef, disabled, menuExtra = 0, maxFrac = MAX_FRAC } = opts;
   const lastHeightRef = useRef(0);
 
   const setHeight = useCallback((h: number) => {
@@ -88,7 +92,7 @@ export function useAdaptiveHeight(opts: {
       raf = requestAnimationFrame(() => {
         const measureH = measureEl.offsetHeight || 0;
         const screen = window.screen?.height ?? 1080;
-        const MAX = Math.floor(screen * MAX_FRAC);
+        const MAX = Math.floor(screen * maxFrac);
         const desired = CHROME_H + measureH + menuExtra + SLACK;
         const clamped = Math.max(MIN_HEIGHT, Math.min(MAX, desired));
         setHeight(clamped);
@@ -101,17 +105,27 @@ export function useAdaptiveHeight(opts: {
     // green traffic light, a manual edge-drag). The ResizeObserver above watches
     // the content; this watches the WINDOW. Without it, exiting fullscreen
     // leaves the window at the fullscreen size because nothing changed inside.
+    // Debounce the window-resize re-fit so it acts on the SETTLED size, not on
+    // every intermediate frame of a native-fullscreen animation. By the time it
+    // fires (~420ms), `useNativeFullscreen` has flipped `nativeFs` true and this
+    // effect has been torn down via `disabled` — so we never push a content-sized
+    // `set_bar_height` against a window macOS is taking fullscreen.
+    let geomTimer: ReturnType<typeof setTimeout> | undefined;
     const unlistenPromise = listen("geom-changed", () => {
-      lastHeightRef.current = -1;
-      fit();
+      if (geomTimer) clearTimeout(geomTimer);
+      geomTimer = setTimeout(() => {
+        lastHeightRef.current = -1;
+        fit();
+      }, 420);
     });
     return () => {
       ro.disconnect();
       cancelAnimationFrame(raf);
+      if (geomTimer) clearTimeout(geomTimer);
       unlistenPromise.then((un) => un()).catch(() => { /* ignore */ });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [disabled, menuExtra, ...(opts.extraDeps ?? [])]);
+  }, [disabled, menuExtra, maxFrac, ...(opts.extraDeps ?? [])]);
 }
 
 /** Drive the Tauri bar's logical WIDTH. Width is normally fixed (680 px) and
@@ -135,13 +149,25 @@ export function useNativeFullscreen(): boolean {
   useEffect(() => {
     const win = getCurrentWindow();
     let alive = true;
-    const check = () => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const read = () => {
       win.isFullscreen().then((v) => { if (alive) setFs(v); }).catch(() => { /* headless test */ });
+    };
+    // macOS flips the fullscreen flag on `windowDidEnterFullScreen`, which fires
+    // AFTER the final `Resized` event of the ~250ms animation. So an immediate
+    // read during the transition reports the stale value and nothing re-reads it
+    // — leaving `nativeFs` false even though we ARE fullscreen. Read now for the
+    // live size and again once the animation has settled.
+    const check = () => {
+      read();
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(read, 350);
     };
     check();
     const un = win.onResized(check);
     return () => {
       alive = false;
+      if (timer) clearTimeout(timer);
       un.then((f) => f()).catch(() => { /* ignore */ });
     };
   }, []);

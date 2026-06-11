@@ -11,7 +11,7 @@
 // the gallery happens in one place.
 import type { ReactNode } from "react";
 import { isClassicExpert, isNextExpert, type Expert, type ExpertKind, type ExpertMap } from "./experts";
-import { getPortrait } from "./portraits";
+import { Crest } from "./Crest";
 
 export type WingId = "super" | "genius" | "coach" | "next";
 
@@ -151,13 +151,11 @@ function Portrait({
       <span className="gw-spotlight" aria-hidden="true" />
       <span className="gw-frame">
         <span className="gw-pic">
-          <img
-            className="gw-portrait-img"
-            src={getPortrait(slug)}
-            alt={expert.label}
-            loading="lazy"
-            decoding="async"
-          />
+          {/* Every expert wears its crest — the photo portraits clashed with
+              the etched-glass DA. The kind sets the archetype; the slug seeds a
+              unique milled rim so same-kind figures (the geniuses) stay
+              distinct. */}
+          <Crest kind={expert.kind} seed={slug} size={120} className="gw-crest" />
         </span>
       </span>
       <span className="gw-plaque">

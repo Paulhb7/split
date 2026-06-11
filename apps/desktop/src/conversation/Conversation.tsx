@@ -3,8 +3,11 @@ import { invoke } from "@tauri-apps/api/core";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { H } from "../shared/harnesses";
+import { useSmoothText, stabilizeMarkdown } from "../shared/useSmoothText";
 import { useExperts } from "../shared/util";
-import { Tile } from "../shared/ui";
+import { Logo } from "../shared/ui";
+import { Crest } from "../shared/Crest";
+import { TurnSpinner } from "../shared/TurnSpinner";
 import type { Session } from "../shared/models";
 import { ArtifactStrip } from "./ArtifactViewer";
 
@@ -65,6 +68,13 @@ export function Conversation(props: {
     onCancelQueued, onInputChange, onKey, onReply, onPickCommand, onPickArtifact,
   } = props;
 
+  // Typewriter buffer: the wire's bursty chunks accumulate in
+  // `answer`/`thoughts`; what we render is the smoothed reveal. Flushed
+  // instantly when the turn ends (status leaves "running").
+  const streaming = focused.status === "running";
+  const smoothAnswer = useSmoothText(focused.answer, streaming, focused.id);
+  const smoothThoughts = useSmoothText(focused.thoughts, streaming, focused.id);
+
   const threadRef = useRef<HTMLDivElement>(null);
   const lastSessionRef = useRef<string | null>(null);
   useEffect(() => {
@@ -80,16 +90,16 @@ export function Conversation(props: {
     }
     const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
     if (nearBottom) el.scrollTo({ top: el.scrollHeight });
-  }, [focused.id, focused.answer, focused.thoughts, focused.thread.length]);
+  }, [focused.id, smoothAnswer, smoothThoughts, focused.thread.length]);
 
   return (
     <div className="conv">
       <div className="conv-head">
         <button className="iconbtn" onClick={onBack} title="Back">‹</button>
-        <Tile id={focused.harness} size={38} themed />
+        <Crest kind={experts[focused.expertSlug]?.kind} seed={focused.expertSlug} size={38} />
         <div>
           <div className="conv-title">@{focused.expertLabel}{experts[focused.expertSlug]?.role ? <span className="conv-role"> · {experts[focused.expertSlug]?.role}</span> : null}</div>
-          <div className="conv-on">on <b>{H[focused.harness]?.label || focused.harness}</b> · {focused.status}</div>
+          <div className="conv-on">on <Logo id={focused.harness} size={13} /><b>{H[focused.harness]?.label || focused.harness}</b> · {focused.status}</div>
         </div>
         <span className="spacer" />
         <button
@@ -128,23 +138,29 @@ export function Conversation(props: {
             </div>
           );
         })}
-        {focused.thoughts && (
+        {smoothThoughts && (
           <div className="turn thought">
             <span className="role">{focused.expertLabel} · thinking</span>
-            <div className="text"><ReactMarkdown remarkPlugins={[remarkGfm]}>{focused.thoughts}</ReactMarkdown></div>
+            <div className="text"><ReactMarkdown remarkPlugins={[remarkGfm]}>{stabilizeMarkdown(smoothThoughts)}</ReactMarkdown></div>
           </div>
         )}
-        {focused.answer && (
+        {smoothAnswer && (
           <div className="turn agent">
             <div className="turn-head">
               <span className="role">{focused.expertLabel}</span>
               <CopyBtn text={focused.answer} />
             </div>
-            <div className="text"><ReactMarkdown remarkPlugins={[remarkGfm]}>{focused.answer}</ReactMarkdown></div>
+            <div className="text"><ReactMarkdown remarkPlugins={[remarkGfm]}>{stabilizeMarkdown(smoothAnswer)}</ReactMarkdown></div>
           </div>
         )}
         {focused.status === "running" && (
-          <div className="thinking"><span className="dot running" /> <span className="thinking-line">{focused.summary || `${focused.expertLabel} is thinking…`}</span></div>
+          <TurnSpinner
+            kind={experts[focused.expertSlug]?.kind}
+            summary={focused.summary}
+            streamedChars={focused.answer.length + focused.thoughts.length}
+            thoughtChars={focused.thoughts.length}
+            startedAt={focused.turnStartedAt}
+          />
         )}
         {focused.auth && (
           <div className="thinking">
