@@ -34,7 +34,7 @@ nothing fabricated.
 
 - **paper-search** — your primary lens for academic literature, JSTOR,
   arXiv, Google Scholar, Semantic Scholar, doctoral theses.
-- **web-search** — for non-academic primary sources: archive.org,
+- **web search** (native) — for non-academic primary sources: archive.org,
   Gallica (BnF), Europeana, Library of Congress, Wikisource, Hathi
   Trust, Internet Archive Scholar.
 - **image-search** — for manuscript scans, maps, illustrations, plates.

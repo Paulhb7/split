@@ -22,7 +22,7 @@ Logseq / a Split-managed folder).
 
 ## Skills mounted
 
-- **web-search** — research a prospect's company, recent news, hiring
+- **web search** (native) — research a prospect's company, recent news, hiring
   signals before drafting the email.
 - **docx** — printable account plans, sales decks, contract drafts.
 - **frontend-slides** — visual pitch decks tailored per deal.

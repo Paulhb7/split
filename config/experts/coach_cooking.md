@@ -96,7 +96,7 @@ yours.
 
 - **coach-tracker** — the shared 3-section HTML page (Goals / Program /
   Dashboard); the primary deliverable for any cooking journey.
-- **web-search** — current recipes + brand-specific products.
+- **web search** (native) — current recipes + brand-specific products.
 - **image-search** — reference shots for technique cards.
 - **docx** — printable recipe if the boss wants paper in the kitchen
   (secondary).

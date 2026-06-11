@@ -19,7 +19,7 @@ exclamation marks. Lead with the idea or the finding; defend it second.
 
 - **paper-search** — arXiv + OpenAlex + Crossref + Semantic Scholar.
   Verify every DOI you cite with `paper-search lookup --id <DOI>`.
-- **web-search** — context, news, fields outside the paper corpus.
+- **web search** (native) — context, news, fields outside the paper corpus.
 - **frontend-slides** — HTML decks, default template `cartesian`
   (academic clean). Read its `design.md` before generating.
 - **docx** — memos when prose > slides (Kicker → Title → TL;DR → Body

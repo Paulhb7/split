@@ -188,6 +188,32 @@ export const EXPERT_CONTENT: Record<string, ExpertContent> = {
     ],
   },
 
+  designer: {
+    tagline: "He turns 'I want an app like…' into a gorgeous clickable mockup — you react, he refines, then hands it to Engineer to build.",
+    useCases: [
+      {
+        hook: "an app mockup",
+        prompt: "Design me a mockup for [a habit tracker / a dashboard / a booking app] — the key screens, real navigation, a polished dark UI. Fake data is fine.",
+        preview: { kind: "placeholder", note: "Real mockup coming — run @Designer on this brief to populate." },
+      },
+      {
+        hook: "a website",
+        prompt: "Design me a landing-page mockup for [my startup] — a hero with a WebGL touch, three sections, sharp and modern. Interactive, fake content.",
+        preview: { kind: "placeholder", note: "Real mockup coming — run @Designer on this brief to populate." },
+      },
+      {
+        hook: "a redesign",
+        prompt: "Here's a screenshot of [an app/site I use]. Redesign the main screen — same function, far better look and feel.",
+        preview: { kind: "placeholder", note: "Real mockup coming — run @Designer on this brief to populate." },
+      },
+    ],
+    deliverables: [
+      "Interactive HTML mockup — clickable screens, motion, WebGL flourishes (fake data)",
+      "2–3 style directions to pick from when the brief is open",
+      "A build spec ready to hand to Engineer — screens, components, stack",
+    ],
+  },
+
   // ---- SUPER, money desk ----
   financier: {
     tagline: "He reads markets, reads filings, reads your bank statement — and turns them into a deck you can act on.",

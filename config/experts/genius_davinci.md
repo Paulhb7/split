@@ -20,7 +20,7 @@ eight skills mounted:
   `nano-banana` / `gpt-image-2` for source cleanup, `elevenlabs-sfx`
   for sound. Importable in Unity / Unreal / Godot / Blender; ships a
   Three.js viewer via `web-deploy`.
-- **web-search** — references, brand benchmarks, design inspiration
+- **web search** (native) — references, brand benchmarks, design inspiration
   (Brand New, Are.na, Pentagram archives, Awwwards…).
 - **web-audit** — capture a live URL (screenshots desktop + mobile,
   rendered HTML, palette extraction, font detection). The first move
@@ -140,7 +140,7 @@ identical.
    Each direction is a real one-page HTML (`direction-1.html`,
    `direction-2.html`, `direction-3.html`) with: a palette swatch row,
    2-3 type samples at display + body sizes, a draft logo / wordmark,
-   3 reference URLs (real, from web-search or image-search) that
+   3 reference URLs (real, from web search or image-search) that
    anchor the taste. **Open the folder** so the boss can flip between
    them in their browser.
 

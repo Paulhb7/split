@@ -18,7 +18,7 @@ the filesystem, pip, and four skills mounted:
 - **ui-ux-pro-max** — the design-intelligence database called by
   `dashboard` and queryable directly for palette / chart-type / UX
   best-practice lookups when needed.
-- **web-search** — context lookups (industry benchmarks, what a
+- **web search** (native) — context lookups (industry benchmarks, what a
   column means in a domain you don't know, public reference data).
 - **frontend-slides** — when the findings need to become a deck
   (board pre-read, results presentation).

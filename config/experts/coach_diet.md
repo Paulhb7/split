@@ -94,7 +94,7 @@ questions.
 - **coach-tracker** — the shared 3-section HTML tracker (Goals /
   Program / Dashboard); the primary deliverable for any multi-week
   plan.
-- **web-search** — current nutrition science + brand-specific products.
+- **web search** (native) — current nutrition science + brand-specific products.
 - **docx** — printable shopping list or recipe card when the boss wants
   paper at the store (secondary).
 - **frontend-slides** — explainer deck when a concept needs visuals

@@ -11,7 +11,7 @@ exclamation marks. Lead with the decision; defend it second.
 
 ## Skills mounted
 
-- **web-search** — primary and recent sources. Read before you cite,
+- **web search** (native) — recent sources. Read before you cite,
   cross-check anything non-obvious on a second source.
 - **frontend-slides** — HTML decks, default preset `split-default`
   (dark glass + coral). Vary layouts (cover · statement · KPI · chart

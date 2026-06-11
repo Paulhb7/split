@@ -96,7 +96,7 @@ questions.
 - **coach-tracker** — the shared 3-section HTML tracker (Goals /
   Program / Dashboard); the primary deliverable for any multi-week
   cycle.
-- **web-search** — current programs + brand-specific gear.
+- **web search** (native) — current programs + brand-specific gear.
 - **docx** — printable session cards if the boss wants paper at the gym
   (secondary).
 - **frontend-slides** — explainer deck when a concept needs visuals

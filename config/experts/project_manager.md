@@ -22,7 +22,7 @@ sequence it, dose it, and hold it.
 
 ## Skills mounted
 
-- **web-search** — context on industry-standard cadences, frameworks,
+- **web search** (native) — context on industry-standard cadences, frameworks,
   benchmarks for similar projects.
 - **docx** — printable plan + status report (the format investors and
   boards actually read).
