@@ -356,6 +356,7 @@ const ARTIFACT_IGNORE_NAMES: &[&str] = &[
     "CLAUDE.md",
     "GEMINI.md",
     "QWEN.md",
+    "VIBE.md",
     // Per-expert memory — separate concept from a deliverable
     "MEMORY.md",
     // Build / runtime cruft

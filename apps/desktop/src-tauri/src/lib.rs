@@ -381,6 +381,129 @@ fn save_artifact_as(target_path: String, content: String) -> Result<(), String> 
     std::fs::write(&p, content).map_err(|e| e.to_string())
 }
 
+/// Lowercase ASCII slug: alnum kept, every other run collapses to a single
+/// `-`, edges trimmed. Idempotent on existing slugs (picking an existing
+/// project passes its folder name straight through).
+fn slugify(s: &str) -> String {
+    let mut out = String::new();
+    let mut prev_dash = false;
+    for c in s.trim().chars() {
+        if c.is_ascii_alphanumeric() {
+            out.push(c.to_ascii_lowercase());
+            prev_dash = false;
+        } else if !out.is_empty() && !prev_dash {
+            out.push('-');
+            prev_dash = true;
+        }
+    }
+    out.trim_matches('-').to_string()
+}
+
+/// Recursive copy that skips plumbing (dotfiles, build dirs) and never follows
+/// symlinks — used to bring a folder-based deliverable (game/dashboard with
+/// sibling assets) into the vault without dragging in caches or skill links.
+fn copy_dir_filtered(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let name = entry.file_name();
+        let name_s = name.to_string_lossy();
+        if name_s.starts_with('.')
+            || matches!(
+                name_s.as_ref(),
+                "node_modules" | "target" | "__pycache__" | "dist" | "build"
+            )
+        {
+            continue;
+        }
+        let ft = entry.file_type()?;
+        if ft.is_symlink() {
+            continue;
+        }
+        let to = dst.join(&name);
+        if ft.is_dir() {
+            copy_dir_filtered(&entry.path(), &to)?;
+        } else if ft.is_file() {
+            std::fs::copy(entry.path(), &to)?;
+        }
+    }
+    Ok(())
+}
+
+/// "Keep in vault": copy a deliverable from the agent's scratch workspace into
+/// the boss's curated vault. `source_path` is the artifact's absolute path,
+/// `rel` is its path relative to the session cwd (so we can find the workspace
+/// root and never copy more than the deliverable). `project`: empty/None →
+/// `notes/`; a name → `projects/<slug>/` (created on demand). Returns the
+/// absolute path of what landed in the vault.
+///
+/// A folder deliverable — an `index.html` living in its own subfolder under
+/// cwd — is copied whole (sibling css/js/assets come along). A loose file is
+/// copied on its own; an `index.*` sitting at cwd root is renamed after its
+/// folder so deliverables don't all collide on `index.html` in `notes/`.
+#[tauri::command]
+fn keep_in_vault(source_path: String, rel: String, project: Option<String>) -> Result<String, String> {
+    let src = std::path::PathBuf::from(&source_path);
+    if !src.exists() {
+        return Err(format!("source not found: {source_path}"));
+    }
+    let root = persona::vault_root();
+    persona::ensure_vault(&root);
+    let bucket = match project.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        Some(name) => root.join("projects").join(slugify(name)),
+        None => root.join("notes"),
+    };
+    std::fs::create_dir_all(&bucket).map_err(|e| e.to_string())?;
+
+    // Derive the workspace root by popping `rel`'s components off `src`; this is
+    // the cwd boundary that keeps a folder copy from ever reaching the whole
+    // expert workspace (and its projected AGENTS.md / skill symlinks).
+    let mut cwd = Some(src.clone());
+    for _ in rel.split('/').filter(|s| !s.is_empty() && *s != ".") {
+        cwd = cwd.and_then(|p| p.parent().map(|q| q.to_path_buf()));
+    }
+    let parent = src.parent();
+    let stem_is_index = src
+        .file_stem()
+        .map(|s| s.to_string_lossy().eq_ignore_ascii_case("index"))
+        .unwrap_or(false);
+    // Folder deliverable: index.* nested at least one level below cwd → copy the
+    // folder. Guard: parent must exist AND differ from the workspace root.
+    let folder_mode = stem_is_index
+        && parent.is_some()
+        && cwd.as_deref() != parent
+        && parent.and_then(|p| p.file_name()).is_some();
+
+    let dest = if folder_mode {
+        let folder = parent.unwrap();
+        let target = bucket.join(folder.file_name().unwrap());
+        copy_dir_filtered(folder, &target).map_err(|e| e.to_string())?;
+        target
+    } else {
+        let ext = src.extension().map(|e| e.to_string_lossy().into_owned());
+        // Rename a root-level index.* after its folder so multiple kept games
+        // don't all clobber `notes/index.html`.
+        let fname = if stem_is_index {
+            let base = parent
+                .and_then(|p| p.file_name())
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_else(|| "index".into());
+            match ext {
+                Some(e) => format!("{base}.{e}"),
+                None => base,
+            }
+        } else {
+            src.file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .ok_or_else(|| "source has no file name".to_string())?
+        };
+        let target = bucket.join(fname);
+        std::fs::copy(&src, &target).map_err(|e| e.to_string())?;
+        target
+    };
+    Ok(dest.to_string_lossy().into_owned())
+}
+
 // Reveal the workspace folder (or one session's subfolder) in Finder. `workspace`
 // empty → the default root (<repo>/var/workspace).
 #[tauri::command]
@@ -605,6 +728,11 @@ fn start_session(
     // .vibe/AGENTS.md shims), and allowed skills are symlinked into the
     // harness-specific skill dirs (`.claude/skills/`, `.agents/skills/`,
     // `.vibe/skills/`). Empty `workspace` from the caller means "default".
+    //
+    // The workspace is SCRATCH — the agent's home, not the boss's vault.
+    // Deliverables worth keeping are filed into the vault deliberately by the
+    // boss via the "Keep in vault" action (`keep_in_vault`), or by the agent
+    // writing durable notes/facts to the vault per the `memory` skill.
     let var_dir = REPO_ROOT.join("var");
     let workspace_root = if workspace.is_empty() {
         var_dir.join("workspace")
@@ -1812,6 +1940,58 @@ fn open_url(target: String) -> Result<(), String> {
     open_external(&target).map_err(|e| e.to_string())
 }
 
+// --- native notifications ----------------------------------------------------
+
+/// Post a native notification for "an agent finished while Split was in the
+/// background", with an actionable "Open" button. `send()` parks a thread
+/// until the user clicks, dismisses, or the banner expires; a click (banner
+/// body or button) emits `notification-open` with the session id — the React
+/// side raises the window and focuses that conversation.
+///
+/// macOS-only today (`mac-notification-sys`, see Cargo.toml for why not the
+/// tauri plugins). Elsewhere it's a silent no-op — the in-app toasts cover it.
+///
+/// Known limit: the NSUserNotification delegate is per-process, so with
+/// several banners in flight a click is attributed to the most recent one —
+/// worst case the window raises on the wrong (newest) session. Rare enough
+/// (two agents finishing while away + clicking the older banner) to accept.
+#[tauri::command]
+fn notify_turn_done(app: AppHandle, id: String, title: String, body: String) {
+    #[cfg(target_os = "macos")]
+    {
+        // Bundled: adopt Split's identity so the banner shows our name/icon.
+        // The one-shot guard is the crate's (set_application errors on a second
+        // call); a failed adoption (app not registered with Launch Services)
+        // falls through to the crate's default identity at send() time, which
+        // is also the `tauri dev` path (unbundled → banner shows as Terminal).
+        if std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.ends_with("Contents/MacOS")))
+            .unwrap_or(false)
+        {
+            let _ = mac_notification_sys::set_application(&app.config().identifier);
+        }
+        std::thread::spawn(move || {
+            use mac_notification_sys::{MainButton, Notification, NotificationResponse};
+            let sent = Notification::new()
+                .title(&title)
+                .message(&body)
+                .main_button(MainButton::SingleAction("Open"))
+                .send();
+            if matches!(
+                sent,
+                Ok(NotificationResponse::Click) | Ok(NotificationResponse::ActionButton(_))
+            ) {
+                let _ = app.emit("notification-open", id);
+            }
+        });
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (app, id, title, body);
+    }
+}
+
 // --- file drops --------------------------------------------------------------
 #[derive(serde::Serialize)]
 struct FileAttachment {
@@ -2032,10 +2212,12 @@ pub fn run() {
             reveal_artifact,
             write_artifact,
             save_artifact_as,
+            keep_in_vault,
             vault_tree,
             vault_create,
             vault_delete,
-            open_url
+            open_url,
+            notify_turn_done
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

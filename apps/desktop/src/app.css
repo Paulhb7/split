@@ -27,15 +27,23 @@
   --mono: "JetBrains Mono", ui-monospace, monospace;
   --disp: "Bricolage Grotesque", system-ui, sans-serif;
   --r: 14px;
+  /* Luminous glass rim — the 1px translucent edge from the postures mock
+     (design/window-postures-proposal.html `.splitwin`). Drawn as the inset
+     box-shadow below, never a border+radius, so it rides the inner edge
+     without exposing the native rounded corners. White reads as glass on the
+     dark surfaces; the two light skins override it to a dark hairline. */
+  --rim: rgba(255, 255, 255, 0.13);
 
   position: fixed;
   inset: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* No CSS border-radius / border: the native window (decorations: true) now
-     owns the frame + rounded corners. A CSS radius here would reveal the opaque
-     window background in the four corners. */
+  /* No CSS border-radius / border: the native window (decorations: true) owns
+     the frame + rounded corners. A CSS radius here would reveal the opaque
+     window background in the four corners. The glass contour is instead the
+     inset box-shadow rim (`--rim`) below — it hugs the inner edge without a
+     radius, so the native corners stay clean. */
   /* Skin signature object (le roi et le pion, cuivre tourné) — first layer of
      the stack, opacity baked into the SVG. Themes override `background` whole,
      so each carries its own object. */
@@ -45,6 +53,7 @@
     radial-gradient(720px 620px at -6% 108%, rgba(66, 116, 244, 0.1), transparent 60%),
     radial-gradient(560px 460px at 50% 46%, rgba(124, 92, 255, 0.05), transparent 70%),
     linear-gradient(180deg, rgba(16, 19, 25, 0.72), rgba(8, 9, 12, 0.82));
+  box-shadow: inset 0 0 0 1px var(--rim);
   color: var(--text);
   font-family: var(--disp);
   -webkit-font-smoothing: antialiased;
@@ -82,6 +91,17 @@
 }
 .wm { font-weight: 800; letter-spacing: -0.04em; font-size: 16px; display: flex; align-items: center; gap: 9px; }
 .wm-name { line-height: 1; }
+/* The "split" lockup — majordome silhouette as the dot of the dotless "ı".
+   Typography is inherited from .wm; only structure + the em-sized dot live
+   here, so per-skin .wm overrides (weight/spacing/style) still apply. */
+.swm { display: inline-flex; align-items: baseline; white-space: nowrap; cursor: pointer; }
+.swm-i { position: relative; display: inline-block; }
+.swm-dot {
+  position: absolute; left: 50%; bottom: var(--swm-rise, 0.42em);
+  width: 0.40em; height: 0.56em;            /* figure aspect ≈ FIG_W/FIG_H */
+  transform: translateX(-50%); display: block; overflow: visible;
+  pointer-events: none;                      /* clicks fall through to the lockup */
+}
 /* The night star (Cosmos easter egg) — faint with a slow periodic glint;
    brightens on hover, stays lit (.in) while inside the observatory. The
    glint animates transform so it never fights the opacity hover. */
@@ -111,6 +131,9 @@
 }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button:hover { color: var(--text); }
+/* Disabled segment option (e.g. Teams — a future feature): greyed, inert. */
+.seg button:disabled { color: var(--dim2); opacity: 0.45; cursor: not-allowed; }
+.seg button:disabled:hover { color: var(--dim2); }
 .seg button.on { color: var(--ink); background: var(--brand); }
 
 .iconbtn {
@@ -153,6 +176,42 @@
   background: color-mix(in srgb, var(--brand) 13%, var(--ink2));
   border: 1px solid color-mix(in srgb, var(--brand) 26%, var(--line));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Expert crest — etched-glass coin (see Crest.tsx). The mark is monochrome
+   (silver on dark skins, dark on light — derived from --text) so the glow,
+   which tracks --brand (skin) or the engine colour set by the host row,
+   carries the colour. Scales from 30px (chips) to 64px+ (gallery). */
+.crest {
+  width: var(--cs, 40px); height: var(--cs, 40px); flex: none;
+  position: relative; display: grid; place-items: center; border-radius: 28%;
+  background:
+    radial-gradient(120% 120% at 30% 18%, color-mix(in srgb, var(--brand) 18%, transparent), transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  border: 1px solid var(--rim);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10),
+              inset 0 0 14px color-mix(in srgb, var(--brand) 10%, transparent),
+              0 8px 22px color-mix(in srgb, var(--brand) 16%, transparent);
+}
+.crest-mark {
+  width: 58%; height: 58%; fill: none;
+  stroke: color-mix(in srgb, var(--brand) 30%, var(--text));
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.5))
+          drop-shadow(0 0 5px color-mix(in srgb, var(--brand) 22%, transparent));
+}
+.crest-mark .dot { fill: color-mix(in srgb, var(--brand) 30%, var(--text)); stroke: none; }
+/* Mint-mark — a struck serif initial low on the coin, like a mint's mark.
+   Restores per-figure identity without leaving the etched-glass language.
+   Sized off --cs so it tracks the coin from chip (30px) to gallery (120px). */
+.crest-mint {
+  position: absolute; bottom: 9%; left: 50%; transform: translateX(-50%);
+  font-family: "Playfair Display", var(--disp), Georgia, serif;
+  font-style: italic; font-weight: 500; line-height: 1;
+  font-size: calc(var(--cs, 40px) * 0.19);
+  color: color-mix(in srgb, var(--brand) 42%, var(--text));
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+  pointer-events: none; user-select: none;
 }
 
 /* ---- buttons ---- */
@@ -263,7 +322,28 @@
 /* Roomy home (user-maximised window): the page widens for the gallery while
    the working column (orb, composer, sessions) keeps the 880px measure. */
 .home.roomy { max-width: 1240px; }
-.home.roomy > *:not(.home-gallery) { max-width: 880px; margin-left: auto; margin-right: auto; }
+/* Maximised home: the working column gets real width so the composer reads as a
+   confident hero bar, not a thin 880px filament lost in a fullscreen canvas. */
+.home.roomy > *:not(.home-gallery) { max-width: min(1080px, 82vw); margin-left: auto; margin-right: auto; }
+/* The composer is the hero of the maximised home — give it presence: taller,
+   bigger input + run, so it doesn't look "triste" in all that space. */
+.home.roomy .composer { padding: 13px 14px; gap: 11px; border-radius: 18px; }
+.home.roomy .composer input { font-size: 16px; }
+.home.roomy .composer .run { width: 46px; height: 46px; font-size: 16px; border-radius: 13px; }
+.home.roomy .composer .pick { font-size: 13.5px; padding: 9px 13px; }
+/* Roomy + few sessions: center the working column so a maximised window doesn't
+   dump all its vertical slack below the fold. The adaptive bar never reaches
+   the roomy state on its own (manual drags re-fit to content), so stretching
+   `.measure` to fill here can't feed back into the auto-height loop. The
+   modifier rides `.measure` directly (set in App.tsx) — more reliable than a
+   `:has()` on `.body`, and it gives `.home` a definite height to resolve 100%
+   against. */
+.measure.center { min-height: 100%; }
+.home.center { min-height: 100%; display: flex; flex-direction: column; justify-content: center; }
+/* Accroche under the idle orb — gives the floating figure a reason and ties it
+   to the composer below. Only on the empty landing; once sessions exist the
+   "each on its own engine" sessions header carries the same line. */
+.home-eyebrow { margin-top: 12px; text-align: center; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--dim2); }
 .home-gallery { margin-top: 36px; animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .home-gallery > .sec { margin-bottom: 30px; }
 /* Idle-state orb above the composer — full size when there's no session
@@ -312,7 +392,9 @@
 .sec-row::after { display: none; } /* row with a right-aligned control instead of the divider line */
 .sec-row .spacer { flex: 1; }
 
-.composer { display: flex; align-items: center; gap: 9px; padding: 9px; border-radius: var(--r); border: 1px solid var(--line); background: var(--panel2); margin-bottom: 22px; position: relative; }
+.composer { display: flex; align-items: center; gap: 9px; padding: 9px; border-radius: var(--r); border: 1px solid var(--line); background: var(--panel2); margin-bottom: 22px; position: relative; transition: border-color 0.15s, box-shadow 0.15s; }
+/* Brand focus-ring when the prompt input (or any control) is focused. */
+.composer:focus-within { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent); }
 .pick { display: inline-flex; align-items: center; gap: 7px; font-family: var(--disp); font-weight: 600; font-size: 13px; color: var(--text); border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); border-radius: 10px; padding: 7px 10px; cursor: pointer; white-space: nowrap; transition: 0.15s; }
 .pick:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); }
 .pick .k { font-family: var(--mono); color: var(--dim); font-size: 11px; }
@@ -350,12 +432,19 @@
 .srow .who { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
 .srow .on { font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
 .srow .on b { color: var(--brand); font-weight: 500; }
+.srow .on .logo { display: inline-block; vertical-align: -0.18em; margin-right: 3px; }
 .srow .sum { font-size: 12.5px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .dot.running { background: var(--brand); animation: pulse 1.4s infinite; }
 .dot.idle { background: var(--good); } .dot.ended { background: var(--dim2); } .dot.error { background: var(--bad); } .dot.auth { background: var(--warn); }
 .badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--dim); flex-shrink: 0; white-space: nowrap; }
 .badge.running { color: var(--brand); border-color: color-mix(in srgb, var(--brand) 40%, transparent); }
+/* Status pill reads in its state colour (matching the dot), not a uniform grey. */
+.badge.idle { color: var(--good); border-color: color-mix(in srgb, var(--good) 38%, transparent); }
+.badge.error { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, transparent); }
+.badge.auth { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+/* Cost is secondary telemetry — a quiet tabular figure, not a competing pill. */
+.srow .cost { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); font-variant-numeric: tabular-nums; flex-shrink: 0; white-space: nowrap; }
 .xbtn { background: none; border: 0; color: var(--dim2); cursor: pointer; font-size: 13px; padding: 3px 6px; border-radius: 7px; }
 .xbtn:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
 .empty { padding: 30px; text-align: center; color: var(--dim2); border: 1px dashed var(--line); border-radius: var(--r); font-family: var(--mono); font-size: 12px; line-height: 1.6; }
@@ -366,12 +455,34 @@
 .teams-pointer:hover { background: color-mix(in srgb, var(--brand) 6%, transparent); border-color: color-mix(in srgb, var(--brand) 40%, var(--line)); color: var(--text); }
 
 /* ============================ CONVERSATION ============================ */
-.conv { max-width: 820px; margin: 0 auto; padding: 14px 18px 18px; display: flex; flex-direction: column; min-height: 100%; }
+.conv { max-width: 820px; margin: 0 auto; padding: 14px 35px 18px; display: flex; flex-direction: column; min-height: 100%; }
 .conv-head { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
 .conv-title { font-weight: 700; font-size: 17px; letter-spacing: -0.02em; }
 .conv-on { font-family: var(--mono); font-size: 11px; color: var(--dim); }
 .conv-on b { color: var(--engine); }
-.thread { display: flex; flex-direction: column; gap: 14px; flex: 1; }
+/* small harness mark inline before its name (e.g. "on ◐ Codex · running") */
+.conv-on .logo { display: inline-block; vertical-align: -0.2em; margin-right: 4px; }
+/* Reading surface — "voile plat" (design/conv-surface-proposal.html, option D):
+   a flat uniform wash behind the prose, feathered to nothing on the left/right
+   so it has no hard card edge and no border. It calms the rich app decor (orbs,
+   grain, gradients) just under the text while letting it stay vivid all around —
+   no blur, zero GPU cost. The head/composer stay transparent over the decor for
+   layered depth. Replaces the old frosted-glass panel (border + blur + shadow),
+   whose hard rim read as too much contrast against the page. */
+.thread {
+  position: relative;
+  display: flex; flex-direction: column; gap: 14px; flex: 1;
+  padding: 14px 18px; margin: -2px -6px;
+}
+.thread::before {
+  content: ""; position: absolute; z-index: -1; inset: -8px -20px -14px -20px;
+  border-radius: 16px;
+  /* Derived from --ink so the wash follows the skin: a dark veil on the dark
+     themes, a light veil on theme-bright / theme-ember-light (both --ink #fff). */
+  background: color-mix(in srgb, var(--ink) 60%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
 .turn { display: flex; flex-direction: column; gap: 4px; }
 .turn-head { display: flex; align-items: center; gap: 8px; }
 .turn .role { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim2); }
@@ -400,6 +511,18 @@
 .turn .text th, .turn .text td { border: 1px solid var(--line); padding: 3px 9px; }
 .thinking { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--dim); flex-wrap: wrap; }
 .thinking-line { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---- TurnSpinner: pawn→queen glyph + persona verb (glimmer) + odometer ----
+   Skin-accent surface (same as the old running dot): glyph + verb run in
+   `--brand`; the glimmer spot (.g0/.g1) brightens toward white via color-mix
+   so it follows whatever skin is active. */
+.thinking.spin { flex-wrap: nowrap; }
+.spin-glyph { min-width: 16px; text-align: center; flex: none; font-size: 14px; line-height: 1; color: var(--brand); }
+.spin-verb { color: var(--brand); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.spin-verb span { white-space: pre; transition: color 90ms linear; }
+.spin-meta { color: var(--dim2); flex: none; font-variant-numeric: tabular-nums; }
+.spin-think { animation: spin-think-breathe 2s ease-in-out infinite; }
+@keyframes spin-think-breathe { 0%, 100% { color: var(--dim2); } 50% { color: var(--dim); } }
 
 /* ---- raw logs panel (collapsible, auto-scroll while running) ---- */
 .logs { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
@@ -488,8 +611,9 @@
   --good: #16a36a;
   --warn: #b8860b;
   --bad: #d63d3d;
+  --rim: rgba(23, 26, 38, 0.10);
   background:
-    url(./assets/skins/bright-orbs.svg) no-repeat 92% 5% / 360px auto,
+    url(./assets/skins/bright-orbs.svg) no-repeat 99% 1% / 300px auto,
     radial-gradient(820px 520px at 86% -12%, rgba(0, 83, 253, 0.07), transparent 60%),
     radial-gradient(720px 620px at -6% 108%, rgba(0, 83, 253, 0.05), transparent 60%),
     linear-gradient(180deg, rgba(248, 250, 255, 0.84), rgba(241, 244, 251, 0.9));
@@ -499,6 +623,8 @@
 .app.theme-bright .seg button.on { color: #fff; }
 .app.theme-bright .btn { color: #fff; box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 24%, transparent); }
 .app.theme-bright .run { color: #fff; }
+.app.theme-bright .composer { box-shadow: 0 8px 26px rgba(23, 26, 38, 0.06); }
+.app.theme-bright .composer:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent), 0 8px 26px rgba(23, 26, 38, 0.06); }
 .app.theme-bright .stop { background: rgba(214, 61, 61, 0.10); border-color: rgba(214, 61, 61, 0.40); color: var(--bad); }
 .app.theme-bright .stream-md a,
 .app.theme-bright .turn .text a { color: var(--brand); }
@@ -530,6 +656,96 @@
   border-color: rgba(23, 26, 38, 0.10);
 }
 
+/* ============================ THEME · EMBER ============================
+   Charcoal near-black canvas, a cool blue-grey ramp, fully monochrome — a
+   crisp white accent, zero colour. The app base is already dark, so this
+   mostly retunes the vars + a faint cool vignette; the dark defaults carry
+   the rest. (Brand-filled buttons keep `color: var(--ink)` = near-black, so a
+   white brand lands the contrast for free.)
+   ====================================================================== */
+.app.theme-ember {
+  --ink: #040405;
+  --ink2: #111117;
+  --panel: rgba(17, 17, 23, 0.58);
+  --panel2: rgba(28, 28, 38, 0.72);
+  --line: rgba(255, 255, 255, 0.10);
+  --line2: rgba(255, 255, 255, 0.05);
+  --text: #dcdce4;
+  --dim: #adadbc;
+  --dim2: #7a7a8a;
+  --brand: #ffffff;
+  --mark: #ffffff; /* house silhouette: plain white on the dark canvas */
+  --good: #38a878;
+  --warn: #d8b34a;
+  --bad: #e5484d;
+  --rim: rgba(255, 255, 255, 0.07);
+  background:
+    radial-gradient(820px 520px at 88% -14%, rgba(255, 255, 255, 0.05), transparent 60%),
+    radial-gradient(720px 620px at -6% 110%, rgba(255, 255, 255, 0.03), transparent 62%),
+    linear-gradient(180deg, #050507, #09090d);
+}
+
+/* ========================= THEME · EMBER LIGHT =========================
+   The light counterpart — soft #f7f7f8 canvas, white elevated cards,
+   near-black text, fully monochrome black accent (zero colour). The app base
+   is dark, so (like Bright) this re-skins the elevated surfaces back to white.
+   ====================================================================== */
+.app.theme-ember-light {
+  --ink: #ffffff;
+  --ink2: #f2f2f5;
+  --panel: rgba(255, 255, 255, 0.84);
+  --panel2: rgba(242, 242, 245, 0.92);
+  --line: rgba(13, 13, 18, 0.10);
+  --line2: rgba(13, 13, 18, 0.05);
+  --text: #0d0d12;
+  --dim: #4a4a58;
+  --dim2: #7a7a8a;
+  --brand: #000000;
+  --mark: #000000; /* house silhouette: plain black on the light canvas */
+  --good: #18794e;
+  --warn: #b8860b;
+  --bad: #c0404a;
+  --rim: rgba(13, 13, 18, 0.10);
+  background:
+    radial-gradient(820px 520px at 88% -12%, rgba(13, 13, 18, 0.05), transparent 60%),
+    radial-gradient(720px 620px at -6% 108%, rgba(13, 13, 18, 0.03), transparent 60%),
+    linear-gradient(180deg, #fbfbfc, #f4f4f6);
+}
+.app.theme-ember-light::before { opacity: 0.4; }
+.app.theme-ember-light::after { opacity: 0.05; mix-blend-mode: multiply; }
+.app.theme-ember-light .seg button.on { color: #fff; }
+.app.theme-ember-light .btn { color: #fff; box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 24%, transparent); }
+.app.theme-ember-light .run { color: #fff; }
+.app.theme-ember-light .stop { background: rgba(192, 64, 74, 0.10); border-color: rgba(192, 64, 74, 0.40); color: var(--bad); }
+.app.theme-ember-light .stream-md a,
+.app.theme-ember-light .turn .text a { color: var(--brand); }
+.app.theme-ember-light .stream-md code,
+.app.theme-ember-light .turn .text code { background: rgba(13, 13, 18, 0.07); }
+.app.theme-ember-light .stream-md pre,
+.app.theme-ember-light .turn .text pre { background: rgba(13, 13, 18, 0.05); }
+.app.theme-ember-light .menu { background: #ffffff; box-shadow: 0 12px 32px rgba(13, 13, 18, 0.14); }
+.app.theme-ember-light .mi:hover, .app.theme-ember-light .mi.sel { background: rgba(13, 13, 18, 0.06); }
+.app.theme-ember-light .overlay, .app.theme-ember-light .modal-bg { background: rgba(13, 13, 18, 0.30); }
+.app.theme-ember-light .am { background: #ffffff; }
+.app.theme-ember-light .toast { background: #ffffff; box-shadow: 0 10px 30px rgba(13, 13, 18, 0.14); }
+.app.theme-ember-light .drop { background: rgba(242, 242, 245, 0.92); }
+.app.theme-ember-light .logs-pre { background: rgba(13, 13, 18, 0.05); color: var(--text); }
+.app.theme-ember-light .xbtn:hover { background: rgba(13, 13, 18, 0.06); }
+.app.theme-ember-light .demo,
+.app.theme-ember-light .ob2-tryout {
+  background: linear-gradient(180deg, #ffffff, #fafbfd);
+  box-shadow: 0 16px 40px rgba(13, 13, 18, 0.10);
+}
+.app.theme-ember-light .ob2-primary {
+  background: linear-gradient(180deg, #ffffff, #f4f4f6);
+}
+.app.theme-ember-light .demo-at,
+.app.theme-ember-light .ob2-tryout-prompt,
+.app.theme-ember-light .ob2-tryout-at {
+  background: rgba(13, 13, 18, 0.04);
+  border-color: rgba(13, 13, 18, 0.10);
+}
+
 /* ============================ THEME · SALON ============================
    Warm, serif, lobby-pastel skin. Re-skins the chrome via CSS vars; the
    per-harness brand tints injected inline on cards/chips/tiles still win,
@@ -549,6 +765,7 @@
   --good: #9bb088;
   --warn: #d4a847;
   --bad: #8b1e3f;
+  --rim: rgba(94, 58, 60, 0.20);
   --disp: "Cormorant Garamond", "Playfair Display", Georgia, serif;
   background:
     url(./assets/skins/baroque-column.svg) no-repeat 0 100% / auto 320px,
@@ -784,6 +1001,49 @@
 .app.theme-titanic .drop { background: rgba(13, 39, 69, 0.86); }
 .app.theme-titanic .logs-pre { background: rgba(200, 156, 74, 0.06); color: var(--text); }
 .app.theme-titanic .xbtn:hover { background: rgba(200, 156, 74, 0.10); }
+
+/* ============================ THEME · EMERALD =============================
+   Deep forest green — jewel-dark surfaces, a vivid emerald accent, a faint
+   mint glass rim. The green member of the dark family (set apart from the
+   blue/violet darks). Surfaces (menu/am/toast) ride `--ink2` and CTAs ride
+   `--brand`/`--ink` straight from the base rules, so only the bits the base
+   hardcodes are restated below. Per-harness brand still wins on tiles/chips. */
+.app.theme-emerald {
+  --ink: #04130d;
+  --ink2: #0a2018;
+  --panel: rgba(12, 32, 24, 0.60);
+  --panel2: rgba(18, 44, 33, 0.78);
+  --line: rgba(52, 211, 153, 0.18);
+  --line2: rgba(52, 211, 153, 0.08);
+  --text: #e6f4ec;
+  --dim: #8fb3a3;
+  --dim2: #587468;
+  --brand: #34d399;
+  --good: #7ce38b;
+  --warn: #e5c452;
+  --bad: #f0795f;
+  --rim: rgba(110, 231, 183, 0.16);
+  background:
+    radial-gradient(820px 520px at 86% -12%, rgba(52, 211, 153, 0.20), transparent 60%),
+    radial-gradient(720px 620px at -6% 108%, rgba(16, 185, 129, 0.14), transparent 60%),
+    radial-gradient(560px 460px at 50% 46%, rgba(45, 212, 191, 0.06), transparent 70%),
+    linear-gradient(180deg, rgba(6, 22, 16, 0.82) 0%, rgba(3, 12, 9, 0.92) 100%);
+}
+.app.theme-emerald::before { opacity: 0.22; }
+.app.theme-emerald::after { opacity: 0.04; }
+.app.theme-emerald .stop { background: rgba(240, 121, 95, 0.12); border-color: rgba(240, 121, 95, 0.45); color: var(--bad); }
+.app.theme-emerald .stream-md a,
+.app.theme-emerald .turn .text a { color: var(--brand); }
+.app.theme-emerald .stream-md code,
+.app.theme-emerald .turn .text code { background: rgba(52, 211, 153, 0.12); color: var(--brand); }
+.app.theme-emerald .stream-md pre,
+.app.theme-emerald .turn .text pre { background: rgba(6, 22, 16, 0.7); border: 1px solid var(--line); }
+.app.theme-emerald .menu { border-color: rgba(52, 211, 153, 0.30); }
+.app.theme-emerald .mi:hover, .app.theme-emerald .mi.sel { background: rgba(52, 211, 153, 0.10); }
+.app.theme-emerald .overlay, .app.theme-emerald .modal-bg { background: rgba(3, 12, 9, 0.62); }
+.app.theme-emerald .drop { background: rgba(12, 32, 24, 0.88); }
+.app.theme-emerald .logs-pre { background: rgba(52, 211, 153, 0.06); color: var(--text); }
+.app.theme-emerald .xbtn:hover { background: rgba(52, 211, 153, 0.10); }
 
 /* ====================== THEME · SAINT-EX (id "ghibli") =====================
    Light pastoral — watercolor sky, butter biplane under asteroid B-612.
@@ -1126,14 +1386,17 @@
 .art-split-handle:active::before {
   background: var(--brand);
 }
+/* No solid fill: the app decor (gradients, grain, skin object) rises behind
+   the right side too, so the artifact panel can float on it as a rounded glass
+   card — the twin of the left thread. The inset padding is that float gap. */
 .art-split-view {
   flex: 1; min-width: 0; min-height: 0;
   display: flex; flex-direction: column;
-  background: var(--ink2);
+  padding: 12px;
 }
-/* In split mode the conv loses its centered max-width and gets a tighter
-   horizontal padding so it doesn't waste rail width on margins. */
-.art-split .conv { max-width: none; margin: 0; padding: 14px 14px 14px; }
+/* In split mode the conv loses its centered max-width but keeps a comfortable
+   horizontal gutter so the prose doesn't run edge-to-edge in a wide rail. */
+.art-split .conv { max-width: none; margin: 0; padding: 14px 35px; }
 
 /* Per-session chips strip — one per deliverable, the active one highlighted.
    Sits between the thread and the composer; clicking pilots the viewer. */
@@ -1158,7 +1421,18 @@
 }
 
 /* ArtifactViewer pane (right side of the split). */
-.art-pane { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+/* Rounded frosted-glass card floating on the decor — mirrors the left thread
+   so the split reads as two twin panels on one desk. overflow:hidden clips the
+   head/body to the radius; flex:1 fills the inset .art-split-view padding box. */
+.art-pane {
+  display: flex; flex-direction: column; flex: 1; min-height: 0; position: relative;
+  border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--rim);
+  background: color-mix(in srgb, var(--ink) 55%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.34);
+}
 .art-head {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 14px;
@@ -1187,6 +1461,29 @@
 .art-md a { color: var(--brand); }
 .art-img { max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 8px; }
 .art-iframe { width: 100%; height: 100%; min-height: 480px; border: 0; background: #fff; border-radius: 6px; }
+
+/* Floating edit affordance for HTML artifacts. They open in preview/play mode
+   (the iframe is fully interactive — a generated game is playable), so the way
+   into the contentEditable editor is this pencil, parked bottom-left over the
+   preview. Pill shape + shadow so it reads as a floating control, not chrome. */
+.art-edit-fab {
+  position: absolute; left: 14px; bottom: 14px; z-index: 20;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 14px 8px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--brand) 45%, var(--line));
+  background: var(--bg); color: var(--text);
+  font-size: 12.5px; font-weight: 600; letter-spacing: -0.01em;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
+  transition: 0.15s;
+}
+.art-edit-fab:hover {
+  border-color: var(--brand); color: var(--brand);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.art-edit-fab-ico { font-size: 14px; line-height: 1; }
 .art-csv-wrap { overflow: auto; }
 .art-csv { border-collapse: collapse; font-size: 12.5px; font-family: var(--mono); }
 .art-csv th, .art-csv td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; }
@@ -1230,6 +1527,49 @@
   color: var(--dim);
   border: 1px solid var(--line); border-radius: 4px;
   flex: none;
+}
+
+/* "Keep in vault" popover — reuses .art-share-menu, adds a title row, a
+   "Projets" separator, and an inline new-project field. */
+.art-keep-menu { min-width: 210px; }
+.art-keep-head {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--dim); padding: 4px 10px 6px;
+}
+.art-keep-def { color: var(--dim2); font-weight: 400; }
+.art-keep-sep {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--dim2); padding: 8px 10px 3px;
+  border-top: 1px solid var(--line); margin-top: 4px;
+}
+.art-keep-new { display: flex; align-items: center; gap: 6px; padding: 6px 8px 4px; }
+.art-keep-input {
+  flex: 1; min-width: 0;
+  font-size: 12.5px; font-family: var(--mono);
+  background: rgba(255, 255, 255, 0.04); color: var(--text);
+  border: 1px solid var(--line); border-radius: 7px;
+  padding: 5px 8px; outline: none;
+}
+.art-keep-input:focus { border-color: var(--brand); }
+
+/* Transient "kept in vault" confirmation, bottom-right of the pane, clickable
+   to reveal the copy. Mirrors the edit FAB's floating-pill language in green. */
+.art-kept-toast {
+  position: absolute; right: 14px; bottom: 14px; z-index: 20;
+  display: inline-flex; align-items: center;
+  padding: 8px 14px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #22c55e 50%, var(--line));
+  background: var(--bg);
+  color: color-mix(in srgb, #22c55e 75%, var(--text));
+  font-size: 12.5px; font-weight: 600; letter-spacing: -0.01em;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
+  transition: 0.15s;
+}
+.art-kept-toast:hover {
+  border-color: #22c55e; color: #22c55e;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 /* Raw-source editor — text-class artifacts only. Monospaced so structure

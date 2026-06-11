@@ -56,6 +56,34 @@
 .ob2-skin-meta small { font-size: 11.5px; color: var(--dim); line-height: 1.45; }
 .ob2-skin-tick { flex: none; font-size: 14px; color: var(--brand); }
 
+/* ---- page 0: the welcome threshold ----
+   Full-bleed majordome in filigree (planche 01 "calm presence") behind a
+   single welcome line. The mark stays faint (~7%) so it reads as a watermark,
+   not a logo, and retints with the skin's `--brand`; a soft `--panel` scrim
+   keeps the copy legible over the torso on both dark and light skins. */
+.ob2-welcome {
+  flex: 1; position: relative; overflow: hidden;
+  display: grid; place-items: center; text-align: center;
+}
+.ob2-welcome-mark {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  opacity: 0.07; pointer-events: none;
+  animation: welcomeFloat 9s ease-in-out infinite;
+}
+.ob2-welcome-mark svg { filter: drop-shadow(0 0 60px color-mix(in srgb, var(--brand) 40%, transparent)); }
+@keyframes welcomeFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+@media (prefers-reduced-motion: reduce) { .ob2-welcome-mark { animation: none; } }
+.ob2-welcome-text {
+  position: relative; z-index: 2; max-width: 42ch;
+  padding: 30px 34px; border-radius: 26px;
+  background: radial-gradient(62% 72% at 50% 46%, var(--panel), transparent 74%);
+}
+.ob2-welcome-h1 { font-size: clamp(40px, 7vw, 80px); line-height: 0.95; letter-spacing: -0.05em; font-weight: 800; margin: 0 0 12px; }
+.ob2-welcome-h1 em { font-style: normal; color: var(--brand); }
+.ob2-welcome-sub { font-size: clamp(17px, 2.6vw, 27px); color: var(--text); font-weight: 500; letter-spacing: -0.02em; margin: 0 0 18px; }
+.ob2-welcome-sub b { color: var(--brand); font-weight: 700; }
+.ob2-welcome-seed { font-size: clamp(13px, 1.6vw, 15px); color: var(--dim); line-height: 1.55; max-width: 46ch; margin: 0 auto; }
+
 
 @keyframes pageIn { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
 
@@ -77,11 +105,9 @@
 .ob2-seed b { color: var(--text); font-weight: 600; }
 .ob2-seed em { font-style: normal; color: var(--brand); }
 
-/* ---- page 1: wall (centred hero + two opposite-scrolling carousels) ----
- * Replaces the previous split-grid + static cons-rows. The wall layout puts
- * the hero text on top, then a row of brain Tiles and a row of @expert chips
- * that scroll in opposite directions — visualising "12 agents × 11 experts,
- * one runtime" instead of just listing them. */
+/* ---- page 1: wall (centred hero + the Conduit) ----
+ * The hero text sits on top, centred; the Conduit (one connected brain→expert
+ * transformation) renders below it. Conduit's own styles live further down. */
 .ob2-wall {
   display: flex; flex-direction: column;
   align-items: center;
@@ -97,176 +123,11 @@
 .ob2-wall .ob2-lede { text-align: center; }
 .ob2-wall .ob2-seed { text-align: center; margin: 6px 0 0; }
 
-/* The carousel wrapper. The mask-image gives the smooth fade on the left/right
- * edges so tiles dissolve into the background instead of hard-clipping. The
- * track is :hover-paused so the user can read a brand that's mid-scroll. */
-.carousel-wrap {
-  position: relative; width: 100%;
-  overflow: hidden;
-  padding: 8px 0;
-  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-          mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-}
-.carousel-track {
-  display: flex; gap: 28px; width: max-content;
-  will-change: transform;
-}
-.carousel-track.left  { animation: scroll-left  38s linear infinite; }
-.carousel-track.right { animation: scroll-right 38s linear infinite; }
-.carousel-wrap:hover .carousel-track { animation-play-state: paused; }
-.carousel-group { display: flex; gap: 28px; flex: none; padding: 0 14px; }
-
-@keyframes scroll-left  { from { transform: translateX(0);    } to { transform: translateX(-50%); } }
-@keyframes scroll-right { from { transform: translateX(-50%); } to { transform: translateX(0);    } }
-
-/* Per-tile dressing — same brand-mix recipe the static `.cons-engine` used,
- * just stripped of the entry stagger (the scroll IS the animation now). */
-.wall-engine {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 7px; width: 78px;
-}
-.wall-engine-name {
-  font-size: 11px; color: var(--dim);
-  white-space: nowrap;
-}
-.wall-expert {
-  font-family: var(--mono); font-size: 12.5px;
-  color: var(--text);
-  border: 1px solid var(--line); border-radius: 99px;
-  padding: 7px 14px;
-  background: var(--panel);
-  white-space: nowrap;
-  flex: none;
-}
-.wall-expert-at { color: var(--dim2); margin-right: 2px; }
-
-/* `cons-link` (the "wrapped, becomes" divider) is reused — kept lean here.
- * Same visual rule as before so it stays consistent if other pages reference
- * it (none today, but the class is generic enough). */
-.cons-link {
-  display: flex; align-items: center; gap: 12px;
-  font-family: var(--mono); font-size: 10px;
-  letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--dim2);
-  width: 100%; max-width: 720px;
-}
-.cons-link::before, .cons-link::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-
-/* Accessibility — when the user opted into reduced motion at the OS level,
- * the carousels stop scrolling. The tiles still render, just static. */
-@media (prefers-reduced-motion: reduce) {
-  .carousel-track { animation: none !important; }
-}
-
 /* ---- picker (page 2) ---- */
 .ob2-pickhint { font-family: var(--mono); font-size: 11px; color: var(--dim2); margin: 0 0 12px; }
 
-/* ---- @Wolfgang featured starter card (page 3 top) ---- */
-.ob2-wolfgang {
-  display: flex; flex-direction: column; gap: 12px;
-  border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--line));
-  border-radius: 14px; padding: 18px;
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--brand) 7%, var(--panel)),
-    color-mix(in srgb, var(--brand) 3%, var(--panel)));
-  box-shadow: 0 12px 32px color-mix(in srgb, var(--brand) 10%, transparent);
-  margin-bottom: 6px;
-}
-.ob2-wolfgang-head { display: flex; align-items: center; gap: 10px; }
-.ob2-wolfgang-head .kind-glyph { width: 20px; height: 20px; color: var(--brand); }
-.ob2-wolfgang-at {
-  font-family: var(--mono); font-size: 12px; font-weight: 600;
-  color: var(--text);
-  border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--line));
-  background: color-mix(in srgb, var(--brand) 8%, transparent);
-  border-radius: 99px; padding: 4px 11px;
-}
-.ob2-wolfgang-prefix {
-  font-family: var(--disp); font-size: 14px; color: var(--dim); font-style: italic;
-}
-.ob2-wolfgang-row { display: flex; gap: 10px; align-items: stretch; }
-.ob2-wolfgang-input {
-  flex: 1; min-width: 0;
-  font-family: var(--disp); font-size: 15px;
-  color: var(--text);
-  background: var(--ink);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px 14px;
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.ob2-wolfgang-input::placeholder { color: var(--dim2); }
-.ob2-wolfgang-input:focus {
-  border-color: color-mix(in srgb, var(--brand) 60%, var(--line));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent);
-}
-.ob2-wolfgang .btn { padding: 8px 18px; font-size: 14px; }
-.ob2-wolfgang-hint {
-  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em;
-  color: var(--dim2); margin: 0;
-}
 
-/* ---- cabinet (page 3) — single-row table: name | role/figure | blurb ---- */
-/* Section headers between super agents and genius agents. The "genius" variant
-   gets a brand-tinted accent to telegraph the different emotional register
-   (flamboyant create vs. sober jobs). */
-.ob-eyebrow-section { margin-top: 22px; margin-bottom: 10px; }
-.ob-eyebrow-section.genius { color: var(--brand); }
-.ob2-cabinet { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 6px; background: var(--panel); }
-
-/* Genius cabinet: warmer, more flamboyant — brand-tinted gradient ground,
-   colored border, hover shifts brighter. Same row structure as super to keep
-   scanning rhythm consistent. */
-.ob2-cabinet-genius {
-  border-color: color-mix(in srgb, var(--brand) 32%, var(--line));
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--brand) 7%, var(--panel)),
-    color-mix(in srgb, var(--brand) 3%, var(--panel)));
-  box-shadow: 0 10px 28px color-mix(in srgb, var(--brand) 10%, transparent);
-}
-.ob2-cabinet-genius .ob2-cabinet-card { border-bottom-color: color-mix(in srgb, var(--brand) 18%, var(--line2)); }
-.ob2-cabinet-genius .ob2-cabinet-card:hover { background: color-mix(in srgb, var(--brand) 14%, transparent); }
-.ob2-cabinet-genius .ob2-cabinet-icon { color: var(--brand); }
-.ob2-cabinet-genius .ob2-cabinet-name { color: var(--text); }
-.ob2-cabinet-genius .ob2-cabinet-role { color: color-mix(in srgb, var(--brand) 70%, var(--dim)); }
-
-/* Coach cabinet: soft green ground, growth/cultivation register. Mirrors
-   genius structurally but in --good (green) instead of --brand. */
-.ob-eyebrow-section.coach { color: var(--good); }
-.ob2-cabinet-coach {
-  border-color: color-mix(in srgb, var(--good) 32%, var(--line));
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--good) 7%, var(--panel)),
-    color-mix(in srgb, var(--good) 3%, var(--panel)));
-  box-shadow: 0 10px 28px color-mix(in srgb, var(--good) 10%, transparent);
-}
-.ob2-cabinet-coach .ob2-cabinet-card { border-bottom-color: color-mix(in srgb, var(--good) 18%, var(--line2)); }
-.ob2-cabinet-coach .ob2-cabinet-card:hover { background: color-mix(in srgb, var(--good) 14%, transparent); }
-.ob2-cabinet-coach .ob2-cabinet-icon { color: var(--good); }
-.ob2-cabinet-coach .ob2-cabinet-role { color: color-mix(in srgb, var(--good) 70%, var(--dim)); }
-.ob2-cabinet-card { display: grid; grid-template-columns: 160px 130px 1fr; column-gap: 14px; align-items: center; padding: 7px 14px; border: 0; border-bottom: 1px solid var(--line2); background: transparent; cursor: pointer; transition: 0.12s; text-align: left; font: inherit; color: inherit; opacity: 0; animation: tableRowIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.ob2-cabinet-card:last-child { border-bottom: 0; }
-.ob2-cabinet-card:hover { background: color-mix(in srgb, var(--brand) 8%, transparent); }
-.ob2-cabinet-card:nth-child(1) { animation-delay: 0.02s; }
-.ob2-cabinet-card:nth-child(2) { animation-delay: 0.04s; }
-.ob2-cabinet-card:nth-child(3) { animation-delay: 0.06s; }
-.ob2-cabinet-card:nth-child(4) { animation-delay: 0.08s; }
-.ob2-cabinet-card:nth-child(5) { animation-delay: 0.10s; }
-.ob2-cabinet-card:nth-child(6) { animation-delay: 0.12s; }
-.ob2-cabinet-card:nth-child(7) { animation-delay: 0.14s; }
-.ob2-cabinet-card:nth-child(8) { animation-delay: 0.16s; }
-.ob2-cabinet-card:nth-child(9) { animation-delay: 0.18s; }
-.ob2-cabinet-card:nth-child(n+10) { animation-delay: 0.20s; }
-@keyframes tableRowIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
-.ob2-cabinet-name { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
-.ob2-cabinet-icon { display: inline-flex; color: var(--dim); flex: none; }
-.ob2-cabinet-icon .kind-glyph { width: 16px; height: 16px; }
-.ob2-cabinet-card:hover .ob2-cabinet-icon { color: var(--brand); }
-.ob2-cabinet-role { font-family: var(--mono); font-size: 10.5px; color: var(--dim); letter-spacing: 0.04em; text-transform: lowercase; }
-.ob2-cabinet-blurb { font-size: 11.5px; color: var(--dim); line-height: 1.4; }
-
-/* Socrates "hire" CTA — visually distinct from the cabinet cards */
+/* Socrates "hire" CTA — page-3 footer, visually distinct from the gallery */
 .ob2-hire { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border: 1px dashed color-mix(in srgb, var(--brand) 42%, var(--line)); border-radius: 14px; background: color-mix(in srgb, var(--brand) 6%, transparent); cursor: pointer; transition: 0.2s; text-align: left; font: inherit; color: inherit; width: 100%; }
 .ob2-hire:hover { background: color-mix(in srgb, var(--brand) 12%, transparent); border-color: color-mix(in srgb, var(--brand) 60%, var(--line)); transform: translateY(-1px); }
 .ob2-hire-ic { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 36px; height: 36px; border-radius: 10px; background: color-mix(in srgb, var(--brand) 14%, transparent); color: var(--brand); }
@@ -275,9 +136,6 @@
 .ob2-hire-title { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
 .ob2-hire-text { font-size: 12px; color: var(--dim); line-height: 1.5; }
 .ob2-hire-cta { flex: none; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em; padding: 8px 14px; border-radius: 9px; background: var(--brand); color: #fff; }
-.demo-answer.dim { color: var(--dim2); }
-.caret { display: inline-block; width: 2px; height: 1.05em; background: var(--brand); margin-left: 2px; vertical-align: -2px; animation: blink 1s steps(1) infinite; }
-@keyframes blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
 
 /* ---- page 3: primary install + sign-in panel ---- */
 .ob2-primary { margin-top: 16px; border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--line)); border-radius: 12px; padding: 14px; background: linear-gradient(180deg, rgba(18, 21, 28, 0.6), rgba(10, 12, 16, 0.7)); }
@@ -293,13 +151,6 @@
 .ob2-step-hint { color: var(--dim2); font-size: 11.5px; }
 .ob2-step-progress { font-family: var(--mono); font-size: 10.5px; color: var(--brand); }
 .ob2-step .btn { padding: 5px 11px; font-size: 12px; }
-
-/* ---- pages 4 + 5: try-it panel (Wolfgang / Socrates) ---- */
-.ob2-tryout { max-width: 560px; border: 1px solid color-mix(in srgb, var(--brand) 26%, var(--line)); border-radius: 16px; padding: 22px; background: linear-gradient(180deg, rgba(18, 21, 28, 0.72), rgba(10, 12, 16, 0.86)); box-shadow: 0 26px 70px rgba(0, 0, 0, 0.45); }
-.ob2-tryout-prompt { display: flex; align-items: center; gap: 9px; padding: 12px 14px; border: 1px solid var(--line2); border-radius: 11px; background: rgba(255, 255, 255, 0.02); margin-bottom: 16px; }
-.ob2-tryout-at { font-weight: 600; font-size: 13px; border: 1px solid var(--line); border-radius: 9px; padding: 5px 9px; background: rgba(255, 255, 255, 0.03); white-space: nowrap; }
-.ob2-tryout-text { font-size: 14px; color: var(--text); }
-.ob2-tryout-hint { font-family: var(--mono); font-size: 11px; color: var(--dim2); margin: 10px 0 0; }
 
 /* ---- page 3: fiche overlay (Cabinet's DetailPane shown over the cards) ---- */
 .ob2-fiche-overlay {
@@ -350,3 +201,90 @@
 .dot2 { width: 8px; height: 8px; border-radius: 99px; border: 0; background: var(--line); cursor: pointer; transition: 0.25s; padding: 0; }
 .dot2.on { background: var(--brand); width: 22px; }
 .ob2-actions { display: flex; gap: 10px; }
+
+/* ============================================================
+   page 1: the Conduit — one connected brain → expert transform.
+   The 3-col stage (engine | seam | expert) cycles in lockstep;
+   .out fades the expert side out between swaps. The seam sweep
+   is the only motion and stills under prefers-reduced-motion.
+   ============================================================ */
+.ob2-conduit { display: flex; flex-direction: column; align-items: center; gap: 24px; width: 100%; }
+.ob2-cd-stage { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; width: 100%; max-width: 720px; min-height: 168px; }
+.ob2-cd-side { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; }
+.ob2-cd-engine { display: grid; place-items: center; }
+.ob2-cd-cap { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.04em; }
+.ob2-cd-cap b { color: var(--text); font-weight: 600; }
+.ob2-cd-mid { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 140px; }
+.ob2-cd-seam { position: relative; width: 100%; height: 2px; border-radius: 2px; overflow: hidden;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 8%, transparent), color-mix(in srgb, var(--brand) 55%, transparent), color-mix(in srgb, var(--brand) 8%, transparent)); }
+.ob2-cd-seam::after { content: ""; position: absolute; top: 0; left: -40%; width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text) 75%, #fff), transparent); opacity: 0.8;
+  animation: cdSweep 2.6s cubic-bezier(0.5, 0, 0.5, 1) infinite; }
+@keyframes cdSweep { 0% { left: -40%; } 60%, 100% { left: 120%; } }
+.ob2-cd-word { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--brand); }
+.ob2-cd-card { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px 18px 14px; border-radius: 18px; min-width: 190px;
+  border: 1px solid color-mix(in srgb, var(--brand) 26%, var(--line));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 8%, var(--panel)), var(--panel));
+  box-shadow: 0 18px 44px color-mix(in srgb, var(--brand) 12%, transparent); }
+.ob2-cd-swap { display: block; text-align: center; transition: opacity 0.36s, transform 0.36s; }
+.ob2-cd-swap.out { opacity: 0; transform: translateY(6px); }
+.ob2-cd-at { display: block; font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text); }
+.ob2-cd-at span { color: var(--dim2); }
+.ob2-cd-role { display: block; margin-top: 3px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: color-mix(in srgb, var(--brand) 75%, var(--dim)); }
+.ob2-cd-craft { font-size: 11.5px; color: var(--dim); text-align: center; line-height: 1.4; max-width: 26ch; transition: opacity 0.36s; }
+.ob2-cd-craft.out { opacity: 0; }
+.ob2-cd-foot { display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; }
+.ob2-cd-tally { font-family: var(--mono); font-size: 11px; color: var(--dim2); letter-spacing: 0.06em; }
+.ob2-cd-tally b { color: var(--text); }
+.ob2-cd-minirow { display: flex; gap: 9px; align-items: center; }
+@media (prefers-reduced-motion: reduce) { .ob2-cd-seam::after { animation: none; } }
+
+/* ============================================================
+   page 3: the Spotlight — featured hero + docked brief + a
+   grouped filmstrip of the whole cabinet. Selecting a thumb
+   promotes it AND retargets the brief (one hero, one CTA).
+   ============================================================ */
+.ob2-sl { display: flex; flex-direction: column; gap: 22px; }
+.ob2-sl-main { display: grid; grid-template-columns: 300px 1fr; gap: 28px; align-items: stretch; }
+.ob2-sl-hero { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px;
+  border: 1px solid color-mix(in srgb, var(--brand) 26%, var(--line)); border-radius: 20px; padding: 28px 24px; overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 50% -12%, color-mix(in srgb, var(--brand) 14%, transparent), transparent 62%),
+    linear-gradient(180deg, var(--panel), color-mix(in srgb, var(--panel) 68%, var(--ink)));
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.34); }
+.ob2-sl-gild { position: absolute; inset: 9px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--brand) 22%, transparent); pointer-events: none; }
+.ob2-sl-crest { margin-bottom: 2px; }
+.ob2-sl-name { font-family: var(--disp); font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; color: var(--text); }
+.ob2-sl-role { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: color-mix(in srgb, var(--brand) 70%, var(--dim)); }
+.ob2-sl-craft { font-size: 13px; color: var(--dim); line-height: 1.5; max-width: 30ch; margin: 0; }
+.ob2-sl-more { margin-top: 2px; background: transparent; border: 0; cursor: pointer; padding: 4px; color: var(--brand); font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; }
+.ob2-sl-more:hover { text-decoration: underline; }
+.ob2-sl-right { display: flex; flex-direction: column; min-width: 0; }
+.ob2-sl-briefcard { border: 1px solid color-mix(in srgb, var(--brand) 28%, var(--line)); border-radius: 16px; padding: 18px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 7%, var(--panel)), var(--panel)); }
+.ob2-sl-brief-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-family: var(--mono); font-size: 12px; color: var(--dim); }
+.ob2-sl-brief-head b { color: var(--text); font-weight: 700; }
+.ob2-sl-brief-row { display: flex; gap: 10px; align-items: stretch; }
+.ob2-sl-input { flex: 1; min-width: 0; font-family: var(--disp); font-size: 15px; color: var(--text); background: var(--ink); border: 1px solid var(--line); border-radius: 11px; padding: 11px 14px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+.ob2-sl-input::placeholder { color: var(--dim2); }
+.ob2-sl-input:focus { border-color: color-mix(in srgb, var(--brand) 55%, var(--line)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 16%, transparent); }
+.ob2-sl-briefcard .btn { padding: 9px 18px; font-size: 14px; }
+.ob2-sl-runson { font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; color: var(--dim2); margin: 10px 0 0; }
+.ob2-sl-runson b { color: var(--text); }
+.ob2-sl-strips { display: flex; flex-direction: column; gap: 14px; }
+.ob2-sl-group-label { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim2); }
+.ob2-sl-group-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.ob2-sl-strip { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px; }
+.ob2-sl-thumb { flex: none; width: 84px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 6px; border-radius: 14px; border: 1px solid transparent; background: transparent; cursor: pointer; transition: 0.16s; font: inherit; color: inherit; }
+.ob2-sl-thumb:hover { border-color: var(--line); background: var(--panel); transform: translateY(-2px); }
+.ob2-sl-thumb.on { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); background: color-mix(in srgb, var(--brand) 8%, var(--panel)); }
+.ob2-sl-thumb-nm { font-size: 11.5px; font-weight: 600; color: var(--text); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.ob2-sl-thumb-rl { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim2); }
+/* Coaches carry the green growth register — scope --brand to --good so their
+   crests glow and their selected highlight read green, matching the cabinet. */
+.ob2-sl-group-coach { --brand: var(--good); }
+
+@media (max-width: 760px) {
+  .ob2-sl-main { grid-template-columns: 1fr; }
+  .ob2-cd-stage { gap: 6px; }
+}

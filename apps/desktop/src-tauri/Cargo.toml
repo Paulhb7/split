@@ -50,3 +50,14 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"
 split-core = { path = "../../../core-rs" }
 # Inline image / PDF artifact bytes for the React viewer as data URLs.
 base64 = "0.22"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# Native notifications with an actionable "Open" button + click response
+# (`notify_turn_done` in lib.rs). Chosen over the tauri notification plugins:
+# the official one is display-only on desktop (actions are mobile-only), and
+# the community UNUserNotificationCenter one ships Swift typed-throws sources
+# that require Xcode 16 / Swift 6 to build. This crate is pure ObjC bindings
+# (NSUserNotification — deprecated but still delivered on Sonoma/Sequoia),
+# needs no Swift toolchain, and works from the unbundled `tauri dev` binary
+# (it swizzles the bundle identity — dev banners show as Terminal).
+mac-notification-sys = "0.6"

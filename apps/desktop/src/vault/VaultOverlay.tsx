@@ -344,9 +344,14 @@ export function VaultOverlay({ onClose }: { onClose: () => void }) {
             />
           )}
           {!err && sel && payload?.kind === "text" && !isMd && isHtml && (
+            // Same sandbox as the ArtifactViewer preview: vault HTML is the
+            // user's own expert-produced deliverables (interactive dashboards,
+            // games), so scripts must run, storage must have a real origin,
+            // and pointer lock must be grantable (first-person games gate on
+            // it — without the token the "click to play" silently no-ops).
             <iframe
               className="vault-html"
-              sandbox=""
+              sandbox="allow-scripts allow-same-origin allow-pointer-lock"
               srcDoc={payload.content ?? ""}
               title={sel.name}
             />

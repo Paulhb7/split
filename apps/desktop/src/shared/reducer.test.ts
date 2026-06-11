@@ -43,6 +43,20 @@ describe("applyEvent", () => {
     expect(s.thread).toEqual(before.thread); // unchanged
   });
 
+  it("anchors the turn clock across the turn and clears it at idle", () => {
+    let s = base();
+    expect(s.turnStartedAt).not.toBeNull(); // a new session starts mid-turn
+    const anchor = s.turnStartedAt;
+    s = applyEvent(s, { type: "say", text: "a" });
+    s = applyEvent(s, { type: "step", title: "tool", status: "in_progress" });
+    expect(s.turnStartedAt).toBe(anchor); // preserved while running
+    s = applyEvent(s, { type: "status", status: "idle" });
+    expect(s.turnStartedAt).toBeNull(); // cleared at turn end
+    s = applyEvent(s, { type: "thought", text: "next turn" });
+    expect(s.turnStartedAt).not.toBeNull(); // fresh anchor on re-entry
+    expect(s.turnStartedAt).toBeGreaterThanOrEqual(anchor!);
+  });
+
   it("summarizes a tool step with the → prefix", () => {
     const s = applyEvent(base(), { type: "step", title: "web_search", status: "in_progress" });
     expect(s.status).toBe("running");

@@ -71,9 +71,9 @@ export default function SplitMark({
         transition: "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease",
         transform: isSpeaking ? "scale(1.06)" : "scale(1)",
         // `color` flows down to the <rect>'s `currentColor` fill. Default
-        // (no prop) → inherit from CSS, which the parent surface drives
-        // via `--brand` on the skin root.
-        color: color ?? "var(--brand)",
+        // (no prop) → the skin's `--mark` if it sets one (Ember paints the
+        // silhouette plain white on dark / black on light), else `--brand`.
+        color: color ?? "var(--mark, var(--brand))",
         filter,
         ...style,
       }}

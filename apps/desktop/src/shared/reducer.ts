@@ -4,6 +4,12 @@ import type { Session } from "./models";
 const clip = (s: string, n = 90) => (s.length > n ? s.slice(s.length - n) : s);
 const head = (s: string, n = 90) => (s.length > n ? s.slice(0, n) + "…" : s);
 
+// The turn clock: keep the existing anchor while the turn runs, stamp a fresh
+// one on the transition into "running" (say/thought/step can be the first
+// event of a turn — agents don't all open with `status:running`).
+const turnStart = (s: Session) =>
+  s.status === "running" && s.turnStartedAt != null ? s.turnStartedAt : Date.now();
+
 // Fold one VEVT event into a session. Pure — the caller does the setState.
 // `status:idle` is the turn-finished signal (no separate `done` event): the
 // streamed answer is committed into the thread there.
@@ -16,6 +22,7 @@ export function applyEvent(s: Session, ev: VEvt): Session {
       return {
         ...s,
         status: "running",
+        turnStartedAt: turnStart(s),
         answer: s.answer + ev.text,
         summary: "writing · " + clip(s.answer + ev.text),
       };
@@ -24,12 +31,13 @@ export function applyEvent(s: Session, ev: VEvt): Session {
       return {
         ...s,
         status: "running",
+        turnStartedAt: turnStart(s),
         thoughts: s.thoughts + ev.text,
         summary: "thinking…",
       };
 
     case "step":
-      return { ...s, status: "running", summary: `→ ${ev.title || "tool"} · ${ev.status || ""}` };
+      return { ...s, status: "running", turnStartedAt: turnStart(s), summary: `→ ${ev.title || "tool"} · ${ev.status || ""}` };
 
     case "plan":
       return { ...s, plan: ev.entries };
@@ -41,7 +49,8 @@ export function applyEvent(s: Session, ev: VEvt): Session {
       return ev.cost != null ? { ...s, cost: ev.cost } : s;
 
     case "status":
-      if (ev.status === "running") return { ...s, status: "running", summary: "thinking…" };
+      if (ev.status === "running")
+        return { ...s, status: "running", turnStartedAt: turnStart(s), summary: "thinking…" };
       if (ev.status === "idle") {
         const withThoughts = s.thoughts
           ? [...s.thread, { role: "thought" as const, text: s.thoughts }]
@@ -52,6 +61,7 @@ export function applyEvent(s: Session, ev: VEvt): Session {
         return {
           ...s,
           status: "idle",
+          turnStartedAt: null,
           thread: committed,
           answer: "",
           thoughts: "",
@@ -59,7 +69,7 @@ export function applyEvent(s: Session, ev: VEvt): Session {
         };
       }
       if (ev.status === "error")
-        return { ...s, status: "error", summary: "error · " + (ev.error || "") };
+        return { ...s, status: "error", turnStartedAt: null, summary: "error · " + (ev.error || "") };
       // "ended" is not a VEVT status — end-of-session arrives as the wire
       // envelope's `exit` flag and is applied in useSessions directly.
       return s;

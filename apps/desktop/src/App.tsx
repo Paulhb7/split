@@ -9,6 +9,7 @@ import { useSessions } from "./shared/useSessions";
 import { useWindowChrome, useAdaptiveHeight, useFullscreen, useNativeFullscreen, useBarWidth } from "./shared/useWindowChrome";
 import { useHarnessStates } from "./shared/useHarnessStates";
 import { useToasts } from "./shared/useToasts";
+import { useNativeNotify } from "./shared/useNativeNotify";
 import { SKINS } from "./shared/skins";
 import { useSkin } from "./shared/useSkin";
 import { useComposer } from "./shared/useComposer";
@@ -28,7 +29,7 @@ import { useTeam } from "./teams/useTeam";
 import Cabinet from "./cabinet/Cabinet";
 import { VaultOverlay } from "./vault/VaultOverlay";
 import SplitMark from "./shared/SplitMark";
-import GalleryWall, { buildWings } from "./shared/GalleryWall";
+import SplitWordmark from "./shared/SplitWordmark";
 import "./app.css";
 
 const LS_DONE = "split.onboarded";
@@ -37,6 +38,12 @@ const LS_DEF = "split.defaultHarness"; // legacy single-pick (migrated to LS_ENA
 const LS_ENABLED = "split.enabledHarnesses"; // the agents the user activated
 const LS_ACTIVE = "split.activeHarness"; // the armed engine for the next session
 const LS_MODE = "split.mode"; // "simple" (one expert/session) | "teams" (Chief-of-Staff)
+
+// Teams mode (a Chief-of-Staff orchestrating the roster) is a future feature.
+// Gated off for now: the chrome toggle is shown greyed/disabled and every
+// entry point is guarded. Flip to `true` to re-enable the whole path — the
+// view + state machine are kept intact underneath.
+const TEAMS_ENABLED = false;
 
 // The user's activated agents — only these show in the roster/menus. Falls back
 // to the legacy single default, then to claude.
@@ -83,7 +90,7 @@ export default function App() {
   };
 
   const [focusedId, setFocusedId] = useState<string | null>(null);
-  const [mode, setModeState] = useState<"simple" | "teams">(() => (localStorage.getItem(LS_MODE) === "teams" ? "teams" : "simple"));
+  const [mode, setModeState] = useState<"simple" | "teams">(() => (TEAMS_ENABLED && localStorage.getItem(LS_MODE) === "teams" ? "teams" : "simple"));
   const setMode = (m: "simple" | "teams") => {
     setModeState(m);
     localStorage.setItem(LS_MODE, m);
@@ -148,11 +155,15 @@ export default function App() {
   // Art mode = the focused session has at least one deliverable. We widen the
   // bar (so the conversation rail + viewer don't fight for pixels) and pause
   // the adaptive height fit (the layout owns its own scroll regions, same as
-  // Teams). Recomputed every render so the moment a deliverable lands the
-  // window expands; restored to the 680 default when artifacts vanish or the
-  // user backs out of the focused session.
+  // Teams). It deliberately does NOT force fullscreen — the side-by-side view
+  // stays a normal floating window the user can stretch by hand (adaptive is
+  // paused, so a manual drag sticks).
+  // Restored to the 680 bar when artifacts vanish or the user backs out.
   const artMode = !!focused && focused.artifacts.length > 0;
-  const isFullscreen = mode === "teams" || overlay || !!cabinet || historyOpen || !onboarded || vaultOpen || artMode;
+  // Fullscreen is only ever app-driven now (Teams, cabinet, overlays, …); the
+  // user reaches it themselves through the native green traffic light, which
+  // the app observes via `useNativeFullscreen` below. No window-posture toggle.
+  const isFullscreen = mode === "teams" || overlay || !!cabinet || historyOpen || !onboarded || vaultOpen;
   useFullscreen(isFullscreen);
   // "Roomy" home = the user maximised the window themselves (green traffic
   // light) while on the home view. The adaptive bar never reaches this state
@@ -173,7 +184,15 @@ export default function App() {
       : Math.min(320, Object.keys(experts).filter((s) => isActiveExpert(experts, s)).length * 56 + 16);
   useAdaptiveHeight({
     measureRef,
-    disabled: isFullscreen || artMode,
+    // Pause the auto-fit whenever the OS owns the window — app-driven fullscreen
+    // (Teams/overlays), artMode's manual-resize canvas, AND native fullscreen the
+    // user reached via the green traffic light. Without `nativeFs` here the fit
+    // kept firing `set_bar_height` against a fullscreen window, shrinking the bar
+    // back to content height mid-transition ("se resize toute seule").
+    disabled: isFullscreen || artMode || nativeFs,
+    // Streaming stops pumping the window at 55% of the screen and the thread
+    // scrolls from there (was 70% — too tall to feel stable).
+    maxFrac: 0.55,
     menuExtra,
     extraDeps: [
       menu,
@@ -185,7 +204,24 @@ export default function App() {
       view,
     ],
   });
+  // Bar width: 680 normally, 1180 in art mode (deliverable side-by-side).
   useBarWidth(artMode ? 1180 : 680);
+
+  // First time a deliverable opens the side-by-side canvas, give the window a
+  // sensible height ONCE (width is handled by useBarWidth above) so the split
+  // doesn't open as a thin bar. Only the rising edge fires — after that the
+  // window is the user's to resize (adaptive is paused in artMode, nothing
+  // snaps it back), so a manual stretch is never clobbered. Skipped when an
+  // app surface owns the window (fullscreen).
+  const enteredArtRef = useRef(false);
+  useEffect(() => {
+    const entering = artMode && !enteredArtRef.current;
+    enteredArtRef.current = artMode;
+    if (!entering || isFullscreen) return;
+    const screenH = window.screen?.height ?? 900;
+    invoke("set_bar_height", { height: Math.min(840, Math.round(screenH * 0.8)) })
+      .catch(() => { /* ignore */ });
+  }, [artMode, isFullscreen]);
 
   // arm an engine for the next session (persisted)
   const setActive = (id: string) => {
@@ -222,6 +258,14 @@ export default function App() {
     };
   }, []);
 
+  // Native macOS notification when an agent finishes while Split is in the
+  // background — clicking it raises the window and opens that conversation.
+  // Works in `tauri dev` too (the unbundled banner just shows as Terminal).
+  const notifyNative = useNativeNotify((sid) => {
+    setMode("simple");
+    setFocusedId(sid);
+  });
+
   // toast a session that finished while you weren't watching it — only for
   // classic-UI sessions; Teams members complete inside the Teams view and
   // their state changes shouldn't toast the global home.
@@ -229,14 +273,20 @@ export default function App() {
     const prev = prevStatus.current;
     for (const s of classicSessions) {
       const was = prev[s.id];
-      if (was === "running" && s.status !== "running" && s.id !== focusedId) {
+      if (was === "running" && s.status !== "running") {
         const verb = s.status === "ended" ? "ended" : s.status === "error" ? "errored" : "is ready";
-        pushToast(`@${s.expertLabel} ${verb}`, 6000);
+        if (s.id !== focusedId) pushToast(`@${s.expertLabel} ${verb}`, 6000);
+        // Another app has focus → the toast is invisible; go native. The last
+        // committed agent turn is the freshest "here's the work" preview.
+        if (!document.hasFocus()) {
+          const last = [...s.thread].reverse().find((t) => t.role === "agent")?.text ?? "";
+          notifyNative(s.id, `@${s.expertLabel} ${verb}`, last.length > 160 ? last.slice(0, 160) + "…" : last);
+        }
       }
       prev[s.id] = s.status;
     }
     for (const id of Object.keys(prev)) if (!classicSessions.some((s) => s.id === id)) delete prev[id];
-  }, [classicSessions, focusedId, pushToast]);
+  }, [classicSessions, focusedId, pushToast, notifyNative]);
 
   // toggle an agent in/out of the activated set (manage overlay)
   function toggleEnabled(id: string) {
@@ -251,7 +301,7 @@ export default function App() {
       return final;
     });
   }
-  function enterSplit(ids: string[], intent?: "test_wolfgang" | "start_recruiter", expertSlug?: string, customPrompt?: string) {
+  function enterSplit(ids: string[], intent?: "brief_expert" | "start_recruiter", expertSlug?: string, customPrompt?: string) {
     const list = ids.length ? ids : ["claude"];
     setEnabled(list);
     setActiveState(list[0]);
@@ -263,13 +313,13 @@ export default function App() {
     // - clicking an expert card → expertSlug set, no auto-launch (user types
     //   their own prompt in the home composer with that expert pre-selected)
     // - "Hire @Socrates" → auto-launches a recruiter session straight away
-    // - test_wolfgang now carries a custom topic ("Brief me on …") from the
-    //   page-3 form; falls back to a sample EV-market brief if no topic.
+    // - brief_expert auto-launches the spotlighted expert (page-3 Spotlight)
+    //   with the typed topic; falls back to consultant + a sample brief.
     if (expertSlug) {
       setExpertSlug(expertSlug);
     }
-    if (intent === "test_wolfgang") {
-      const slug = "consultant";
+    if (intent === "brief_expert") {
+      const slug = expertSlug || "consultant";
       const prompt = customPrompt || "Brief me on the EV market outlook for 2026";
       const turn = composeTurn(prompt, []);
       setExpertSlug(slug);
@@ -328,13 +378,12 @@ export default function App() {
       {/* chrome */}
       <div className="chrome" onMouseDown={(e) => { if (!(e.target as HTMLElement).closest("button, .wm-name")) startMove(); }}>
         <span className={"wm" + (anyRunning ? " live" : "")}>
-          {/* The chrome mark uses the same Three.js orb as the home hero,
-              just much smaller. `anyRunning` → isSpeaking makes it swell &
-              swirl faster when any session is working — visual heartbeat. */}
-          <SplitMark size={22} isSpeaking={anyRunning} />
-          {/* The wordmark is excluded from window-drag so its clicks land —
-              5 quick ones flip the hidden Noir skin (see noirEgg). */}
-          <span className="wm-name" onClick={noirEgg}>split</span>
+          {/* The lockup: the majordome silhouette is the dot of the "i" — the
+              pocket signature, recognisable without the word. It stays still on
+              purpose; the working heartbeat lives in the session UI, not the
+              chrome. Excluded from window-drag (className wm-name) so its clicks
+              land — 5 quick ones flip the hidden Noir skin (see noirEgg). */}
+          <SplitWordmark className="wm-name" onClick={noirEgg} />
         </span>
         {/* The night star — only in the sky from midnight, while the bar
             wears Minuit (and kept lit inside Cosmos so you can fly back).
@@ -346,12 +395,28 @@ export default function App() {
         <span className="spacer" />
         {onboarded && !focused && (
           <div className="seg" style={{ marginRight: 2 }}>
-            {(["simple", "teams"] as const).map((m) => (
-              <button key={m} className={mode === m ? "on" : ""} onClick={() => setMode(m)} title={m === "simple" ? "Simple — one expert per session" : "Teams — a Chief of Staff orchestrates the experts"}>{m}</button>
-            ))}
+            {(["simple", "teams"] as const).map((m) => {
+              const soon = m === "teams" && !TEAMS_ENABLED;
+              return (
+                <button
+                  key={m}
+                  className={mode === m ? "on" : ""}
+                  disabled={soon}
+                  onClick={() => setMode(m)}
+                  title={soon ? "Teams — coming soon" : m === "simple" ? "Simple — one expert per session" : "Teams — a Chief of Staff orchestrates the experts"}
+                >{m}</button>
+              );
+            })}
           </div>
         )}
-        <button className="iconbtn" onClick={() => setCabinet(true)} title="Browse cabinet — use cases & examples per expert">☷</button>
+        <button className="iconbtn" onClick={() => setCabinet(true)} title="Browse cabinet — use cases & examples per expert" aria-label="Browse cabinet">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" />
+            <rect x="14" y="3" width="7" height="7" rx="1.5" />
+            <rect x="3" y="14" width="7" height="7" rx="1.5" />
+            <rect x="14" y="14" width="7" height="7" rx="1.5" />
+          </svg>
+        </button>
         <button className="iconbtn" onClick={() => setHistoryOpen(true)} title="Past conversations">🕰️</button>
         <button className="iconbtn" onClick={() => setVaultOpen(true)} title="Vault — everything your experts know & produce">🗃️</button>
         <div className="skin-wrap">
@@ -426,7 +491,7 @@ export default function App() {
           and the adaptive ResizeObserver is paused (we want a fixed canvas). */}
       {(() => {
         const bodyCls = "body" + (mode === "teams" || artMode ? " fill" : isFullscreen ? " tall" : "");
-        const measureCls = "measure" + (mode === "teams" || artMode ? " fill" : isFullscreen ? " tall" : "");
+        const measureCls = "measure" + (mode === "teams" || artMode ? " fill" : isFullscreen ? " tall" : "") + (roomyHome && classicSessions.length < 3 ? " center" : "");
         return (
       <div className={bodyCls}>
         <div ref={measureRef} className={measureCls}>
@@ -511,12 +576,13 @@ export default function App() {
           />
         ) : (
           /* ============ HOME ============ */
-          <div className={"home" + (roomyHome ? " roomy" : "")}>
+          <div className={"home" + (roomyHome ? " roomy" : "") + (roomyHome && classicSessions.length < 3 ? " center" : "")}>
             <div className={"home-orb" + (expanded ? " mini" : "")}>
               <div className="split-levitate">
                 <SplitMark size={expanded ? 72 : 140} isSpeaking={anyRunning} />
               </div>
               <div className="split-shadow" aria-hidden="true" />
+              {!expanded && <div className="home-eyebrow">one runtime · each expert on its own engine</div>}
             </div>
             <Composer
               experts={experts} expertSlug={expertSlug} expertLabel={expertLabel} active={active}
@@ -550,9 +616,9 @@ export default function App() {
                 {classicSessions.length === 0 ? (
                   <div className="empty">No sessions yet — brief an expert above.<br />Its engine's logo shows here while it runs.</div>
                 ) : (
-                  classicSessions.map((s) => <SessionRow key={s.id} s={s} onOpen={() => setFocusedId(s.id)} onStop={() => stop(s.id)} onClose={() => remove(s.id)} />)
+                  classicSessions.map((s) => <SessionRow key={s.id} s={s} kind={experts[s.expertSlug]?.kind} onOpen={() => setFocusedId(s.id)} onStop={() => stop(s.id)} onClose={() => remove(s.id)} />)
                 )}
-                {teamSessionsCount > 0 && (
+                {TEAMS_ENABLED && teamSessionsCount > 0 && (
                   <button className="teams-pointer" onClick={() => setMode("teams")}>
                     {teamSessionsCount} team session{teamSessionsCount === 1 ? "" : "s"} running in Teams →
                   </button>
@@ -561,18 +627,8 @@ export default function App() {
             )}
             </>}
 
-            {/* Maximised home: the void below the composer becomes the cabinet
-                hanging. A portrait click opens the expert's fiche (use cases +
-                launch CTA) via the Cabinet overlay. */}
-            {roomyHome && (
-              <div className="home-gallery">
-                <div className="sec">
-                  <span>the cabinet</span>
-                  <span className="muted">pick a portrait — they wake up ready to brief</span>
-                </div>
-                <GalleryWall wings={buildWings(experts)} onPick={(slug) => setCabinet(slug)} />
-              </div>
-            )}
+            {/* The cabinet/gallery opens only from the chrome button now — the
+                maximised home stays a clean orb + composer, no wall below. */}
           </div>
         )}
         </div>

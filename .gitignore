@@ -23,9 +23,8 @@ var/
 # parked / unused files moved out of the live tree (audit cleanup)
 archive/
 
-# local desktop design experiments
-apps/desktop/design/bg3d-proposal.html
-apps/desktop/design/liquid-glass-proposal.html
+# local desktop design experiments (proposal mockups, drafts)
+apps/desktop/design/
 
 # desktop build artifacts
 apps/desktop/node_modules/

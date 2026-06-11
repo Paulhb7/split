@@ -27,6 +27,8 @@ describe("night window (auto-Minuit)", () => {
 describe("skin registry", () => {
   it("accepts the new ids and still rejects junk", () => {
     expect(isSkin("parisian")).toBe(true);
+    expect(isSkin("ember")).toBe(true);
+    expect(isSkin("ember-light")).toBe(true);
     expect(isSkin("noir")).toBe(true);
     expect(isSkin("minuit")).toBe(true);
     expect(isSkin("")).toBe(true);
@@ -40,10 +42,14 @@ describe("skin registry", () => {
     for (const id of ids) expect(isSkin(id)).toBe(true);
   });
 
-  it("places Parisian right after Bright, and flags the special skins", () => {
+  it("places the Ember skins right after Bright, and flags the special skins", () => {
     expect(SKINS[0].id).toBe("bright");
-    expect(SKINS[1].id).toBe("parisian");
+    expect(SKINS[1].id).toBe("ember");
+    expect(SKINS[2].id).toBe("ember-light");
     expect(SKINS.find((s) => s.id === "noir")?.hidden).toBe(true);
     expect(SKINS.find((s) => s.id === "minuit")?.night).toBe(true);
+    // Saint-Ex + Tokyo Night are parked out of the picker (future easter eggs).
+    expect(SKINS.find((s) => s.id === "ghibli")?.hidden).toBe(true);
+    expect(SKINS.find((s) => s.id === "tokyo")?.hidden).toBe(true);
   });
 });

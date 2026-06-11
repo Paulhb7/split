@@ -46,6 +46,13 @@ export interface Session {
   thoughts: string; // currently-streaming COT thoughts (uncommitted) — committed before `answer` at idle
 
   summary: string; // live one-line status (thinking / writing / → tool / done)
+  // Epoch ms of the current turn's start — set by the reducer on the
+  // transition into "running", cleared at idle/error. The TurnSpinner anchors
+  // its elapsed clock here so navigating away and back (component remount)
+  // doesn't reset the counter mid-turn. null = no turn in flight (or a
+  // session hydrated mid-turn from another window — spinner falls back to
+  // its mount time).
+  turnStartedAt: number | null;
   plan: PlanEntry[];
   // Slash commands advertised by the agent via `available_commands_update`.
   // Drives the autocomplete palette in the composer; empty = no agent commands.
@@ -103,6 +110,7 @@ export function newSession(
     expertSlug,
     expertLabel,
     status: "running",
+    turnStartedAt: Date.now(),
     thread: firstUserText || files.length
       ? [{ role: "user", text: firstUserText, files: files.length ? files : undefined }]
       : [],
