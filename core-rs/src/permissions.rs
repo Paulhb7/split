@@ -336,15 +336,15 @@ mod tests {
     #[test]
     fn mcp_server_matches_every_tool() {
         let rules = Rules {
-            allow: vec!["mcp__ddg_search".to_string()],
+            allow: vec!["mcp__cua_driver".to_string()],
             ..Rules::default()
         };
         assert_eq!(
-            decide(&rules, "any", "mcp__ddg_search__search"),
+            decide(&rules, "any", "mcp__cua_driver__click"),
             Decision::Allow
         );
         assert_eq!(
-            decide(&rules, "any", "mcp__ddg_search__fetch_content"),
+            decide(&rules, "any", "mcp__cua_driver__type_text"),
             Decision::Allow
         );
         assert_eq!(decide(&rules, "any", "mcp__other__tool"), Decision::Ask);
