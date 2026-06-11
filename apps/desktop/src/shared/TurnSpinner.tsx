@@ -13,7 +13,7 @@ const FRAMES = [...PIECES, ...[...PIECES].reverse()];
 const GLYPH_MS = 170;
 
 // Persona verbs by expert kind. Picked once per turn; the live `summary`
-// overrides them whenever a tool step is running ("→ ddg-search").
+// overrides them whenever a tool step is running ("→ paper-search").
 const VERBS: Record<ExpertKind | "default", string[]> = {
   researcher: ["Triangulating", "Cross-checking", "Surveying", "Synthesizing", "Mapping", "Digging"],
   advisor: ["Weighing", "Deliberating", "Reviewing", "Caveating", "Counseling"],

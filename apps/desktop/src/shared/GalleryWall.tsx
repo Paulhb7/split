@@ -50,8 +50,8 @@ export function buildWings(experts: ExpertMap): Wing[] {
   const next = classic.filter(([, e]) => isNextExpert(e));
   const entriesOf = (list: [string, Expert][]): WingEntry[] => list.map(([slug, expert]) => ({ slug, expert }));
   return [
-    { id: "genius", eyebrow: "east wing", title: "the geniuses", entries: entriesOf(active.filter(([, e]) => e.category === "genius")) },
     { id: "super", eyebrow: "main floor", title: "the working hands", entries: entriesOf(active.filter(([, e]) => (e.category ?? "super") === "super")) },
+    { id: "genius", eyebrow: "east wing · aka the nobel band", title: "the geniuses", entries: entriesOf(active.filter(([, e]) => e.category === "genius")) },
     { id: "coach", eyebrow: "west wing", title: "the coaches", entries: entriesOf(active.filter(([, e]) => e.category === "coach")) },
     { id: "next", eyebrow: "on tour", title: "coming next", entries: entriesOf(next) },
   ];
@@ -119,6 +119,41 @@ export default function GalleryWall({ wings, onPick, intro, onIceberg }: Gallery
 // Per-portrait button. Salon-hanging rhythm (spans, aspect ratios, slight
 // rotations) is driven by `index % 5` for the genius row so any number of
 // portraits keeps the irregular feel. Super + coach rows are uniform.
+// A 3–4 word "what they do → what you get" line for each plaque. Beats the bare
+// kind ("researcher", "analyst"), which repeats across experts who do very
+// different things (four researchers, three creators…). Falls back to the
+// kind/role/figure when a slug isn't listed.
+const CRAFT: Record<string, string> = {
+  // geniuses
+  genius_davinci: "Image → 3D world",
+  genius_wolfgang: "Original music & scores",
+  genius_homer: "Full podcasts, voiced",
+  genius_kubrick: "Directs short films",
+  genius_bronte: "Writes full novels",
+  genius_ride: "Reads the sky, live",
+  genius_curie: "Protein & molecular design",
+  genius_tesla: "Circuits & embedded systems",
+  genius_alfred: "Drives your apps",
+  genius_socrates: "Designs custom experts",
+  genius_indiana: "Hunts rare archives",
+  // working hands
+  toscanini: "Runs the whole team",
+  consultant: "Research → slides & memos",
+  scientist: "State-of-the-art briefs",
+  financier: "Markets & financial models",
+  lawyer: "Legal reads & contracts",
+  data_analyst: "Data → live dashboards",
+  engineer: "Ships micro-apps & sites",
+  designer: "App & site mockups",
+  project_manager: "Plans, owners & dates",
+  sales: "Leads, outreach & follow-up",
+  // coaches
+  coach_diet: "Meal plans & nutrition",
+  coach_learning: "Study plans & flashcards",
+  coach_sport: "Training cycles & recovery",
+  coach_cooking: "Techniques, recipes & subs",
+};
+
 function Portrait({
   slug,
   expert,
@@ -137,14 +172,15 @@ function Portrait({
   const cls = ["gw-portrait", "gw-portrait-" + wing, variant ? "gw-v" + variant : ""]
     .filter(Boolean)
     .join(" ");
-  // Coaches show their specialty ("nutrition", not a redundant "coach" under
-  // a wall already titled "the coaches"); geniuses show their kind.
+  // Prefer the craft line (what they do → what you get); fall back to the old
+  // per-wing logic (coach specialty, else figure/role/kind) when unlisted.
   const role =
-    wing === "genius"
+    CRAFT[slug] ??
+    (wing === "genius"
       ? expert.kind
       : wing === "coach"
         ? (expert.role ?? expert.kind)
-        : (expert.figure ?? expert.role ?? expert.kind);
+        : (expert.figure ?? expert.role ?? expert.kind));
 
   return (
     <button className={cls} onClick={() => onPick(slug)} title={`@${expert.label} — ${expert.blurb}`}>

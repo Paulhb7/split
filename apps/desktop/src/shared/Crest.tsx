@@ -85,6 +85,211 @@ const ARCHETYPES: Record<ExpertKind, ReactNode> = {
   ),
 };
 
+// Per-EXPERT seals — a glyph tied to what each one actually does, struck in the
+// same etched-glass coin as the kind archetypes. Keyed by slug, these win over
+// the kind archetype (see `arch` below), so the five "creator" geniuses no
+// longer share one sigil: Wolfgang gets notes, Kubrick a clapperboard, Brontë a
+// quill, etc. Same stroke language (48×48, fill via `.dot`). See
+// design/expert-seals-proposal.html for the full set + alternates.
+const SEALS: Record<string, ReactNode> = {
+  // — geniuses —
+  genius_curie: (
+    <>
+      <polygon points="37,24 30.5,35.3 17.5,35.3 11,24 17.5,12.7 30.5,12.7" />
+      <circle className="dot" cx="37" cy="24" r="1.7" />
+      <circle className="dot" cx="30.5" cy="35.3" r="1.7" />
+      <circle className="dot" cx="17.5" cy="35.3" r="1.7" />
+      <circle className="dot" cx="11" cy="24" r="1.7" />
+      <circle className="dot" cx="17.5" cy="12.7" r="1.7" />
+      <circle className="dot" cx="30.5" cy="12.7" r="1.7" />
+    </>
+  ),
+  genius_tesla: <path d="M27 9 L16 27 L23 27 L20 39 L33 20 L25 20 Z" />,
+  genius_wolfgang: (
+    <>
+      <path d="M20 34 V14 L34 11 V31" />
+      <path d="M20 18 L34 15" />
+      <ellipse className="dot" cx="16.5" cy="34.5" rx="4" ry="3" transform="rotate(-20 16.5 34.5)" />
+      <ellipse className="dot" cx="30.5" cy="31.5" rx="4" ry="3" transform="rotate(-20 30.5 31.5)" />
+    </>
+  ),
+  genius_homer: (
+    <>
+      <rect x="19" y="9" width="10" height="17" rx="5" />
+      <path d="M15 24 a9 9 0 0 0 18 0" />
+      <path d="M24 33 V39 M19 39 H29" />
+    </>
+  ),
+  genius_kubrick: (
+    <>
+      <rect x="12" y="22" width="24" height="15" rx="2" />
+      <path d="M12 22 L35 17 L37 23 L14 28" />
+      <path d="M19 18 L21 24 M26 17 L28 23 M33 16 L35 22" strokeWidth="1.5" />
+    </>
+  ),
+  genius_bronte: (
+    <>
+      <path d="M13 37 C20 22 30 13 37 11 C36 21 28 31 17 35 Z" />
+      <path d="M18 32 L26 24" />
+      <path d="M11 39 L20 39" />
+    </>
+  ),
+  genius_davinci: (
+    <>
+      <rect x="13" y="19" width="17" height="17" />
+      <path d="M13 19 L21 11 L38 11 L30 19 M30 36 L38 28 L38 11 M21 11 L21 28 L13 36" strokeWidth="1.6" />
+    </>
+  ),
+  genius_ride: (
+    <>
+      <circle cx="23" cy="25" r="9" />
+      <ellipse cx="23" cy="25" rx="17" ry="5.5" transform="rotate(-22 23 25)" />
+      <path d="M36 11 L36 17 M33 14 L39 14" strokeWidth="1.6" />
+    </>
+  ),
+  genius_alfred: (
+    <>
+      <path d="M11 17 L23 24 L11 31 Z" />
+      <path d="M37 17 L25 24 L37 31 Z" />
+      <rect className="dot" x="21.5" y="20.5" width="5" height="7" rx="1.4" />
+    </>
+  ),
+  genius_socrates: (
+    <>
+      <path d="M13 12 H35 a4 4 0 0 1 4 4 V27 a4 4 0 0 1 -4 4 H22 L15 37 L16 31 H13 a4 4 0 0 1 -4 -4 V16 a4 4 0 0 1 4 -4 Z" />
+      <path d="M21 19 a3 3 0 0 1 6 0 c0 3 -3 2.5 -3 5" strokeWidth="1.6" />
+      <circle className="dot" cx="24" cy="27" r="1.3" />
+    </>
+  ),
+  genius_indiana: (
+    <>
+      <circle cx="24" cy="24" r="14" />
+      <path className="dot" d="M24 13 L28 24 L24 28 L20 24 Z" />
+      <path d="M24 35 L20 24 L24 20 L28 24 Z" />
+      <circle className="dot" cx="24" cy="24" r="1.6" />
+    </>
+  ),
+  // — working hands —
+  toscanini: (
+    <>
+      <path d="M14 35 L32 16" />
+      <circle className="dot" cx="13.5" cy="35.5" r="2.6" />
+      <path d="M33 12 q4 3 1 7 M37 14 q3 3 0 6" strokeWidth="1.5" />
+    </>
+  ),
+  consultant: (
+    <>
+      <rect x="11" y="12" width="26" height="19" rx="2" />
+      <path d="M16 26 L21 21 L25 24 L32 16" />
+      <path d="M30 16 H32 V18" strokeWidth="1.5" />
+      <path d="M24 31 V36 M18 36 H30" strokeWidth="1.6" />
+    </>
+  ),
+  scientist: (
+    <>
+      <path d="M13 27 Q24 9 35 27" />
+      <circle cx="13" cy="29" r="3.4" />
+      <circle cx="35" cy="29" r="3.4" />
+      <circle className="dot" cx="24" cy="16" r="2.2" />
+    </>
+  ),
+  financier: (
+    <>
+      <path d="M16 13 V33" />
+      <rect x="13" y="19" width="6" height="9" rx="1" />
+      <path d="M24 11 V37" />
+      <rect x="21" y="21" width="6" height="7" rx="1" />
+      <path d="M32 16 V32" />
+      <rect x="29" y="18" width="6" height="10" rx="1" />
+    </>
+  ),
+  lawyer: (
+    <>
+      <path d="M24 11 V35 M18 37 H30" />
+      <path d="M12 16 H36" />
+      <circle className="dot" cx="24" cy="14" r="1.6" />
+      <path d="M12 16 L8 24 a4.5 2 0 0 0 8 0 Z" strokeWidth="1.5" />
+      <path d="M36 16 L32 24 a4.5 2 0 0 0 8 0 Z" strokeWidth="1.5" />
+    </>
+  ),
+  data_analyst: (
+    <>
+      <path d="M13 12 V35 H37" />
+      <path d="M16 31 L34 16" strokeDasharray="2 3" strokeWidth="1.4" />
+      <circle className="dot" cx="18" cy="30" r="1.7" />
+      <circle className="dot" cx="23" cy="26" r="1.7" />
+      <circle className="dot" cx="28" cy="27" r="1.7" />
+      <circle className="dot" cx="31" cy="20" r="1.7" />
+      <circle className="dot" cx="34" cy="17" r="1.7" />
+    </>
+  ),
+  engineer: (
+    <>
+      <path d="M19 16 L11 24 L19 32" />
+      <path d="M29 16 L37 24 L29 32" />
+      <path d="M26 13 L22 35" strokeWidth="1.6" />
+    </>
+  ),
+  designer: (
+    <>
+      <rect x="9" y="13" width="30" height="22" rx="2.5" />
+      <path d="M9 19 H39" />
+      <circle className="dot" cx="13" cy="16" r="1.3" />
+      <circle className="dot" cx="17.5" cy="16" r="1.3" />
+      <circle className="dot" cx="22" cy="16" r="1.3" />
+      <rect x="13" y="23" width="13" height="8" rx="1.5" />
+      <path className="dot" d="M30 25 L30 39 L33 35.7 L35.4 40 L37 39.1 L34.6 35 L38.6 35 Z" />
+    </>
+  ),
+  project_manager: (
+    <>
+      <path d="M12 12 V37" strokeDasharray="2 3" strokeWidth="1.4" />
+      <rect className="dot" x="14" y="15" width="15" height="4.5" rx="2.2" />
+      <rect className="dot" x="20" y="22" width="16" height="4.5" rx="2.2" />
+      <rect className="dot" x="16" y="29" width="11" height="4.5" rx="2.2" />
+    </>
+  ),
+  sales: (
+    <>
+      <circle cx="26" cy="22" r="12" />
+      <circle cx="26" cy="22" r="6.5" />
+      <circle className="dot" cx="26" cy="22" r="2" />
+      <path d="M9 39 L26 22" strokeWidth="1.8" />
+      <path d="M9 39 L9 33 M9 39 L15 39" strokeWidth="1.6" />
+    </>
+  ),
+  // — coaches —
+  coach_diet: (
+    <>
+      <path d="M24 17 C18 13 12 18 13 26 C14 34 19 38 24 35 C29 38 34 34 35 26 C36 18 30 13 24 17 Z" />
+      <path d="M24 17 L25 11" />
+      <path className="dot" d="M25 13 q5 -3 7 1 q-5 2 -7 -1 Z" />
+    </>
+  ),
+  coach_learning: (
+    <>
+      <path className="dot" d="M24 14 L39 20 L24 26 L9 20 Z" />
+      <path d="M16 23 V29 a8 3 0 0 0 16 0 V23" />
+      <path d="M39 20 V31" strokeWidth="1.5" />
+      <circle className="dot" cx="39" cy="32" r="1.6" />
+    </>
+  ),
+  coach_sport: (
+    <>
+      <path d="M16 24 H32" />
+      <path d="M13 18 V30 M17 21 V27" />
+      <path d="M35 18 V30 M31 21 V27" />
+    </>
+  ),
+  coach_cooking: (
+    <>
+      <path d="M16 30 a5 5 0 0 1 -1 -10 a6.5 6.5 0 0 1 18 0 a5 5 0 0 1 -1 10 Z" />
+      <rect x="16" y="30" width="16" height="6" rx="1.5" />
+      <path d="M24 21 V30" strokeWidth="1.4" />
+    </>
+  ),
+};
+
 // Fallback when kind is missing/unknown — a calm concentric ring.
 const FALLBACK: ReactNode = (
   <>
@@ -139,7 +344,9 @@ export function Crest({
    * every other crest surface is untouched. */
   mint?: string;
 }) {
-  const arch = kind ? (ARCHETYPES[kind] ?? FALLBACK) : FALLBACK;
+  // Per-expert seal (keyed by the slug `seed`) wins; else the kind archetype;
+  // else the calm ring. So same-kind experts now read as themselves.
+  const arch = (seed ? SEALS[seed] : undefined) ?? (kind ? (ARCHETYPES[kind] ?? FALLBACK) : FALLBACK);
   return (
     <span
       className={"crest" + (className ? " " + className : "")}
