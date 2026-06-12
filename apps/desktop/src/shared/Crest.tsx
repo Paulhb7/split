@@ -1,6 +1,12 @@
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import type { ExpertKind } from "./experts";
 import { vars } from "./ui";
+import majordomeUrl from "./majordome.svg";
+
+// Below this coin size (px) the house signet is hidden: the majordome inside a
+// ~16px sphere collapses to a blob, so chrome-size crests (rails, rows) stay
+// clean and only the showcase crests (gallery, hero, onboarding) get signed.
+const HOUSE_MIN = 44;
 
 // Expert crest — a generative sigil per expert `kind`, etched silver inside a
 // glass coin whose glow tracks the active accent (`--brand` — the skin, or the
@@ -347,6 +353,9 @@ export function Crest({
   // Per-expert seal (keyed by the slug `seed`) wins; else the kind archetype;
   // else the calm ring. So same-kind experts now read as themselves.
   const arch = (seed ? SEALS[seed] : undefined) ?? (kind ? (ARCHETYPES[kind] ?? FALLBACK) : FALLBACK);
+  // One id per instance (several crests share a page) → unique sphere
+  // gradient + majordome mask, same pattern as SplitMark.
+  const uid = useId();
   return (
     <span
       className={"crest" + (className ? " " + className : "")}
@@ -357,6 +366,30 @@ export function Crest({
         {seed ? rimDots(seed) : null}
         <g transform="translate(24 24) scale(0.84) translate(-24 -24)">{arch}</g>
       </svg>
+      {/* House signet — Split's majordome in a small glass sphere, struck
+          bottom-right like a maker's poinçon. The <image> is solid white, so a
+          brand-tinted rect painted through it renders the silhouette. */}
+      {size >= HOUSE_MIN ? (
+        <span className="crest-house" aria-hidden="true">
+          <svg className="house-orb" viewBox="0 0 24 24">
+            <defs>
+              <radialGradient id={`${uid}g`} cx="36%" cy="28%" r="78%">
+                <stop offset="0%" stopColor="#39414f" />
+                <stop offset="55%" stopColor="#1a1f28" />
+                <stop offset="100%" stopColor="#0c0f15" />
+              </radialGradient>
+              <mask id={`${uid}m`}>
+                <svg x="4.2" y="4" width="15.6" height="16" viewBox="388 110 249 348" preserveAspectRatio="xMidYMid meet">
+                  <image href={majordomeUrl} x="0" y="0" width="1024" height="544" />
+                </svg>
+              </mask>
+            </defs>
+            <circle cx="12" cy="12" r="11.2" fill={`url(#${uid}g)`} stroke="rgba(255,255,255,0.16)" strokeWidth="0.8" />
+            <rect className="house-fig" width="24" height="24" mask={`url(#${uid}m)`} />
+            <ellipse cx="8.6" cy="7.6" rx="3.4" ry="2" fill="rgba(255,255,255,0.18)" />
+          </svg>
+        </span>
+      ) : null}
       {mint ? <span className="crest-mint" aria-hidden="true">{mint}</span> : null}
     </span>
   );
