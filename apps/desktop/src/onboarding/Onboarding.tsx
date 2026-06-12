@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { H } from "../shared/harnesses";
 import { Tile, League, vars } from "../shared/ui";
@@ -136,25 +136,6 @@ const KIND_ORDER: ExpertKind[] = [
   "recruiter",
 ];
 
-// Every harness with a working logo gets a slot. Page-1 Conduit cycles the
-// engine side through this list; order is the canonical "cloud first → local
-// lane" reading order from the roster — same one used in the home menus.
-const SHOWCASE = ["claude", "codex", "gemini", "mistral-vibe", "copilot", "cursor", "qwen", "opencode", "hermes"];
-
-// Page-1 Conduit cycles the "becomes" side through these geniuses (the most
-// recognizable faces). Filtered to whatever's actually active at runtime;
-// falls back to any active genius if the curated slugs are missing.
-const CONDUIT_GENII = [
-  "genius_curie",
-  "genius_tesla",
-  "genius_ride",
-  "genius_wolfgang",
-  "genius_alfred",
-  "genius_bronte",
-  "genius_kubrick",
-  "genius_davinci",
-];
-
 // Page-3 Spotlight strip — the three cabinet wings, in hanging order.
 const STRIP_GROUPS: { cat: "genius" | "super" | "coach"; label: string }[] = [
   { cat: "genius", label: "the geniuses" },
@@ -213,9 +194,9 @@ export default function Onboarding({
   // `--brand` — which stays owned by the skin's .theme-<id> class so every
   // CTA / em / link / focus ring keeps tracking the user's skin choice.
   const engineStyle = vars({ "--engine": accent });
-  // 5 pages: welcome (0) · theme (1) · cabinet intro (2) · pick (3) · brief (4).
-  // Page 3 = picker; can't advance until at least one agent is selected.
-  const canNext = page !== 3 || picks.length > 0;
+  // 4 pages: welcome (0) · theme (1) · pick (2) · brief (3).
+  // Page 2 = picker; can't advance until at least one agent is selected.
+  const canNext = page !== 2 || picks.length > 0;
   const toggle = (id: string) => setPicks((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
   return (
@@ -296,29 +277,8 @@ export default function Onboarding({
         )}
 
         {page === 2 && (
-          <div className="ob2-wall stagger">
-            <div className="ob2-wall-text">
-              <div className="ob-eyebrow">welcome to your cabinet · 02</div>
-              <h1 className="ob2-h1">Any AI agent.<br />Now a <em>genius</em>.</h1>
-              <p className="ob2-lede">
-                Bring <b>Claude</b>, <b>Codex</b>, <b>Gemini</b>, <b>Mistral Vibe</b> — whatever AI you use.
-                <b> Split</b> wraps it in an <b>expert persona</b> so it doesn't just chat —
-                it <em>specializes, acts and ships</em>.
-              </p>
-              <p className="ob2-seed">An <b>agent</b> is a model with hands. An <b>expert</b> is that agent with a craft.</p>
-            </div>
-
-            {/* The transformation, shown in the act: a brain on the left, the
-              Split seam in the middle, the expert it becomes on the right —
-              cycling in lockstep so you WATCH Claude become @Curie instead of
-              reading "wrapped, becomes" over two disconnected marquees. */}
-            <Conduit experts={experts} />
-          </div>
-        )}
-
-        {page === 3 && (
           <div className="stagger">
-            <div className="ob-eyebrow">pick your agents · 03</div>
+            <div className="ob-eyebrow">pick your agents · 02</div>
             <h2 className="ob2-h2">Pick your <em>agents</em></h2>
             <div className="ob2-pickhint">The ones you have access to. Split shows only these; add more anytime. {picks.length > 0 && <b>{picks.length} selected</b>}</div>
             <League isSelected={(id) => picks.includes(id)} onPick={toggle} />
@@ -355,9 +315,9 @@ export default function Onboarding({
           </div>
         )}
 
-        {page === 4 && (
+        {page === 3 && (
           <div className="stagger">
-            <div className="ob-eyebrow">meet your cabinet · 04</div>
+            <div className="ob-eyebrow">meet your cabinet · 03</div>
             <h2 className="ob2-h2">Brief your first <em>expert</em></h2>
             <p className="ob2-lede" style={{ marginBottom: 18 }}>
               Pick a face. Type a topic. Get a real deliverable back —
@@ -415,14 +375,14 @@ export default function Onboarding({
 
       <div className="ob2-foot">
         <div className="dots">
-          {[0, 1, 2, 3, 4].map((i) => (
+          {[0, 1, 2, 3].map((i) => (
             <button key={i} className={"dot2" + (i === page ? " on" : "")} onClick={() => setPage(i)} aria-label={`page ${i + 1}`} />
           ))}
         </div>
         <div className="ob2-actions">
           {page > 0 && <button className="btn ghost" onClick={() => setPage((p) => p - 1)}>← back</button>}
-          {page < 4 ? (
-            <button className="btn" disabled={!canNext} onClick={() => setPage((p) => p + 1)}>{page === 3 ? "Continue →" : "Next →"}</button>
+          {page < 3 ? (
+            <button className="btn" disabled={!canNext} onClick={() => setPage((p) => p + 1)}>{page === 2 ? "Continue →" : "Next →"}</button>
           ) : (
             <button className="btn" onClick={() => onEnter(picks)}>Enter Split →</button>
           )}
@@ -464,89 +424,6 @@ function PrimaryStep({
         </button>
       )}
       {progress && !ready && <span className="ob2-step-progress">{progress}</span>}
-    </div>
-  );
-}
-
-// ---- page 1: the Conduit ----
-// One connected transformation instead of two disconnected marquees: a brain
-// on the left, the Split seam in the middle, the expert it becomes on the
-// right — engine + expert advance in lockstep every ~2.6s, paused on hover and
-// frozen entirely under prefers-reduced-motion. The point: you SEE the wrap.
-function Conduit({ experts }: { experts: ExpertMap }) {
-  const pool = useMemo(() => {
-    const curated = CONDUIT_GENII.filter((s) => experts[s] && isActiveExpert(experts, s));
-    if (curated.length) return curated;
-    return Object.keys(experts).filter((s) => experts[s]?.category === "genius" && isActiveExpert(experts, s));
-  }, [experts]);
-  const expertCount = useMemo(
-    () => Object.keys(experts).filter((s) => isActiveExpert(experts, s)).length,
-    [experts],
-  );
-
-  const [i, setI] = useState(0);
-  const [out, setOut] = useState(false);
-  const paused = useRef(false);
-
-  useEffect(() => {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    if (pool.length < 2) return;
-    const id = window.setInterval(() => {
-      if (paused.current) return;
-      setOut(true);
-      window.setTimeout(() => {
-        setI((v) => (v + 1) % pool.length);
-        setOut(false);
-      }, 380);
-    }, 2600);
-    return () => window.clearInterval(id);
-  }, [pool.length]);
-
-  if (!pool.length) return null;
-  const engineId = SHOWCASE[i % SHOWCASE.length];
-  const slug = pool[i % pool.length];
-  const e = experts[slug];
-
-  return (
-    <div
-      className="ob2-conduit"
-      onMouseEnter={() => (paused.current = true)}
-      onMouseLeave={() => (paused.current = false)}
-    >
-      <div className="ob2-cd-stage">
-        <div className="ob2-cd-side">
-          <div className="ob2-cd-engine" style={vars({ "--brand": H[engineId].brand })}>
-            <Tile id={engineId} size={84} />
-          </div>
-          <div className="ob2-cd-cap">on <b>{H[engineId].label}</b></div>
-        </div>
-
-        <div className="ob2-cd-mid" aria-hidden="true">
-          <div className="ob2-cd-seam" />
-          <div className="ob2-cd-word">split wraps it</div>
-        </div>
-
-        <div className="ob2-cd-side">
-          <div className="ob2-cd-card">
-            <Crest kind={e.kind} seed={slug} size={64} mint={e.label[0]} />
-            <span className={"ob2-cd-swap" + (out ? " out" : "")}>
-              <span className="ob2-cd-at"><span>@</span>{e.label}</span>
-              <span className="ob2-cd-role">{e.role ?? e.kind}</span>
-            </span>
-          </div>
-          <div className={"ob2-cd-craft" + (out ? " out" : "")}>{e.blurb}</div>
-        </div>
-      </div>
-
-      <div className="ob2-cd-foot">
-        <span className="ob2-cd-tally"><b>{SHOWCASE.length}</b> brains</span>
-        <span className="ob2-cd-minirow">
-          {SHOWCASE.slice(0, 6).map((id) => (
-            <span key={id} style={vars({ "--brand": H[id].brand })}><Tile id={id} size={28} /></span>
-          ))}
-        </span>
-        <span className="ob2-cd-tally"><b>{expertCount}</b> experts · <b>1</b> runtime</span>
-      </div>
     </div>
   );
 }
