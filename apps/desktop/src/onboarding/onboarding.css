@@ -57,32 +57,31 @@
 .ob2-skin-tick { flex: none; font-size: 14px; color: var(--brand); }
 
 /* ---- page 0: the welcome threshold ----
-   Full-bleed majordome in filigree (planche 01 "calm presence") behind a
-   single welcome line. The mark stays faint (~7%) so it reads as a watermark,
-   not a logo, and retints with the skin's `--brand`; a soft `--panel` scrim
-   keeps the copy legible over the torso on both dark and light skins. */
+   The majordome watches over in filigree (planche-2 "l'écran vide"): a large,
+   crisp silhouette bleeding off the bottom-right corner, inked in `--text` at
+   low opacity so it engraves itself on dark and light skins alike. Offset to
+   the corner so the copy never sits on his busy wig/face — the mistake of the
+   first centred attempt. `min-height` fills the window so the column centres in
+   real space instead of stranding a black void below. */
 .ob2-welcome {
   flex: 1; position: relative; overflow: hidden;
-  display: grid; place-items: center; text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; min-height: calc(100vh - 172px);
 }
-.ob2-welcome-mark {
-  position: absolute; inset: 0; display: grid; place-items: center;
-  opacity: 0.07; pointer-events: none;
-  animation: welcomeFloat 9s ease-in-out infinite;
+.ob2-welcome-fil {
+  position: absolute; right: -8%; bottom: -14%;
+  height: 122%; width: auto; opacity: 0.08; pointer-events: none;
+  animation: welcomeFloat 10s ease-in-out infinite;
 }
-.ob2-welcome-mark svg { filter: drop-shadow(0 0 60px color-mix(in srgb, var(--brand) 40%, transparent)); }
-@keyframes welcomeFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
-@media (prefers-reduced-motion: reduce) { .ob2-welcome-mark { animation: none; } }
-.ob2-welcome-text {
-  position: relative; z-index: 2; max-width: 42ch;
-  padding: 30px 34px; border-radius: 26px;
-  background: radial-gradient(62% 72% at 50% 46%, var(--panel), transparent 74%);
-}
-.ob2-welcome-h1 { font-size: clamp(40px, 7vw, 80px); line-height: 0.95; letter-spacing: -0.05em; font-weight: 800; margin: 0 0 12px; }
+.ob2-welcome-fil-ink { fill: var(--text); }
+@keyframes welcomeFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+@media (prefers-reduced-motion: reduce) { .ob2-welcome-fil { animation: none; } }
+.ob2-welcome-text { position: relative; z-index: 2; max-width: 46ch; }
+.ob2-welcome-h1 { font-size: clamp(40px, 6.5vw, 76px); line-height: 0.95; letter-spacing: -0.05em; font-weight: 800; margin: 0 0 10px; }
 .ob2-welcome-h1 em { font-style: normal; color: var(--brand); }
-.ob2-welcome-sub { font-size: clamp(17px, 2.6vw, 27px); color: var(--text); font-weight: 500; letter-spacing: -0.02em; margin: 0 0 18px; }
+.ob2-welcome-sub { font-size: clamp(18px, 2.6vw, 28px); color: var(--text); font-weight: 500; letter-spacing: -0.02em; margin: 0 0 14px; }
 .ob2-welcome-sub b { color: var(--brand); font-weight: 700; }
-.ob2-welcome-seed { font-size: clamp(13px, 1.6vw, 15px); color: var(--dim); line-height: 1.55; max-width: 46ch; margin: 0 auto; }
+.ob2-welcome-seed { font-size: clamp(13px, 1.6vw, 15px); color: var(--dim); line-height: 1.55; max-width: 48ch; margin: 0 auto; }
 
 
 @keyframes pageIn { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }

@@ -9,6 +9,7 @@ import { SKINS, type Skin } from "../shared/skins";
 import { DetailPane } from "../cabinet/Cabinet";
 import { Crest } from "../shared/Crest";
 import SplitMark from "../shared/SplitMark";
+import majordomeUrl from "../shared/majordome.svg";
 import "../cabinet/cabinet.css";
 import "./onboarding.css";
 
@@ -221,14 +222,20 @@ export default function Onboarding({
     <div className="ob2" style={engineStyle}>
       <div className="ob2-page" key={page}>
         {page === 0 && (
-          // The threshold: before any choice, the majordome simply presents
-          // himself. A full-bleed silhouette in filigree behind a single line
-          // of welcome — "calm presence" (planche 01) staged as the first
-          // impression. No eyebrow, no controls; the foot's "Next →" carries on.
+          // The threshold: the majordome watches over in filigree (planche-2
+          // "l'écran vide"). Large, crisp (a mask — not the padded badge that
+          // muddied the first try), bleeding off the bottom-right corner so the
+          // copy never lands on his wig/face, and inked in `--text` at low
+          // opacity so it reads as an engraving on both dark and light skins.
           <div className="ob2-welcome">
-            <div className="ob2-welcome-mark" aria-hidden="true">
-              <SplitMark size={560} />
-            </div>
+            <svg className="ob2-welcome-fil" viewBox="388 110 249 348" aria-hidden="true">
+              <defs>
+                <mask id="welcomeMask">
+                  <image href={majordomeUrl} x="0" y="0" width="1024" height="544" />
+                </mask>
+              </defs>
+              <rect className="ob2-welcome-fil-ink" x="388" y="110" width="249" height="348" mask="url(#welcomeMask)" />
+            </svg>
             <div className="ob2-welcome-text stagger">
               <h1 className="ob2-welcome-h1">Welcome to <em>Split</em>.</h1>
               <p className="ob2-welcome-sub">I am your <b>Majordome</b>.</p>

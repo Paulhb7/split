@@ -250,6 +250,11 @@
 }
 .cab-coming-note b { color: var(--text); font-weight: 600; }
 .cab-coming .btn { align-self: flex-start; }
+/* Deferred experts: just a quiet marker, no blurb, no CTA. */
+.cab-coming-soon {
+  margin: 0; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim2);
+}
 
 .cab-empty {
   padding: 60px 30px; text-align: center; color: var(--dim2);
@@ -484,8 +489,8 @@
 .gw-row-coach,
 .gw-row-next {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
-  gap: 16px; max-width: 1180px; margin: 0; align-items: stretch;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px; max-width: 1180px; margin: 0; align-items: stretch;
 }
 
 /* a portrait → a glass card (mirrors .ecard / the agent picker) */
@@ -526,11 +531,11 @@
 .gw-frame::before, .gw-frame::after { content: none; }
 .gw-pic {
   display: block; overflow: hidden; position: relative;
-  background: var(--ink2); width: 100%; aspect-ratio: 1 / 1;
+  background: var(--ink2); width: 100%; height: 84px;
 }
-/* Crest stand-in (super/coach/next wings): centered in the square frame,
-   sized as a share of it (overrides the component's --cs px width). */
-.gw-pic .crest { position: absolute; inset: 0; margin: auto; width: 58%; height: 58%; border-radius: 22%; }
+/* Crest stand-in: centered in the (now shorter) well at a fixed square size,
+   so it never distorts and the card stays compact. */
+.gw-pic .crest { position: absolute; inset: 0; margin: auto; width: 52px; height: 52px; border-radius: 22%; }
 .gw-portrait:hover .gw-pic .crest { box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 10px 26px color-mix(in srgb, var(--brand) 24%, transparent); }
 .gw-portrait-next .gw-pic .crest { opacity: 0.5; }
 .gw-portrait-img {
@@ -556,8 +561,8 @@
   color: var(--text); text-shadow: none; white-space: normal;
 }
 .gw-plaque-role {
-  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.13em;
-  text-transform: uppercase; color: var(--dim);
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--dim); line-height: 1.45;
   text-shadow: none; margin-top: 5px;
 }
 
