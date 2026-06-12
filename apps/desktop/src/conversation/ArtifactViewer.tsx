@@ -14,6 +14,24 @@ import type { Artifact } from "../shared/events";
 const SHARE_PROMO_URL = "https://split-app.dev";
 const SHARE_PROMO_TAG = "Made with Split";
 
+// Light-theme stylesheet inlined into the HTML we hand to the native PDF
+// renderer for *non-HTML* artifacts (md / csv / image). Their rendered DOM
+// carries Split's dark-theme classes, which would print white-on-black; this
+// gives the hidden export webview a clean paper look without dragging the app
+// stylesheet in. (HTML artifacts are self-contained and printed verbatim.)
+const PDF_DOC_CSS = `
+  :root { color-scheme: light; }
+  body { margin: 32px; font: 14px/1.6 -apple-system, system-ui, sans-serif; color: #111; background: #fff; }
+  h1, h2, h3, h4 { letter-spacing: -0.01em; line-height: 1.25; }
+  a { color: #04457a; }
+  img { max-width: 100%; height: auto; }
+  pre { background: #f4f4f4; padding: 12px 14px; border-radius: 8px; white-space: pre-wrap; word-break: break-word; font: 12px/1.5 ui-monospace, monospace; }
+  code { background: #f0f0f0; padding: 1px 5px; border-radius: 4px; font: 12px ui-monospace, monospace; }
+  table { border-collapse: collapse; font: 12px ui-monospace, monospace; }
+  th, td { border: 1px solid #ccc; padding: 5px 9px; text-align: left; }
+  th { background: #f4f4f4; }
+`;
+
 // Injected into the HTML edit iframe. Makes text-bearing elements
 // contentEditable, paints a discreet outline on hover/focus, exposes
 // postMessage hooks so the parent can extract the cleaned HTML, and
@@ -159,6 +177,21 @@ const PRINTABLE_EXTS = new Set([
   "png", "jpg", "jpeg", "gif", "webp", "svg",
 ]);
 
+// Cheap heuristic: does this HTML behave like an *app/game* rather than a
+// *document*? PDF export = window.print(), which captures one static frame —
+// useful for a fiche or report, nonsense for a canvas game (you get a blank or
+// a single frozen frame). Presence of a drawing surface, an animation loop,
+// pointer-lock, or audio is a strong tell that the page is interactive, so we
+// hide the PDF button for it. False positives are cheap (the user can still
+// "open in browser" + print there); false negatives just mean a document that
+// happens to use a canvas keeps the button — also fine.
+function htmlLooksInteractive(html: string): boolean {
+  return /<canvas[\s/>]/i.test(html)
+    || /requestAnimationFrame/.test(html)
+    || /requestPointerLock/.test(html)
+    || /\bnew\s+(?:webkit)?AudioContext\b/.test(html);
+}
+
 export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
   const [payload, setPayload] = useState<Payload | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -212,7 +245,15 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
   const directEdit = isText && isMarkdown;
   const inEditMode = directEdit || editing;
   const canEdit = isText && EDITABLE_EXTS.has(ext) && !directEdit;
-  const canExport = PRINTABLE_EXTS.has(ext) || payload?.kind === "image";
+  // An interactive HTML page (game/app) prints to a useless static frame —
+  // suppress PDF export for it (the bottom bar's "open in browser" is the
+  // right escape hatch if they really want to print).
+  const interactiveHtml = isHtml && payload?.kind === "text" && htmlLooksInteractive(payload.content);
+  const canExport = (PRINTABLE_EXTS.has(ext) || payload?.kind === "image") && !interactiveHtml;
+  // HTML opens in interactive preview/play: its actions live in a floating
+  // bottom bar over the page (next to Edit), not the top chrome — so the
+  // generated page's own header in the top corners stays clear.
+  const htmlBar = isHtml && payload?.kind === "text" && !inEditMode;
 
   function startEdit() {
     if (!isText) return;
@@ -304,10 +345,35 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
     // saveEdit / cancelEdit close over latest state via closures captured
     // on each render — listener re-binding per render is intentional.
   });
-  // PDF export = browser print dialog with our `@media print` rules
-  // hiding everything except `.art-print-target`. macOS surfaces a "Save
-  // as PDF" destination in the print sheet → one-click PDF, zero deps.
-  function exportPdf() { window.print(); }
+  // PDF export. WKWebView ignores `window.print()` (silent no-op), so we hand
+  // the rendered HTML to the native `export_artifact_pdf` command, which lays
+  // it out in a hidden webview and calls WKWebView's `createPDF`. The user
+  // first picks the destination via the OS save panel — closing the "where do
+  // I save it" gap the old print-dialog approach left open.
+  async function exportPdf() {
+    if (!payload || payload.kind === "binary") return;
+    // HTML artifacts are self-contained — print verbatim. Everything else
+    // (md / csv / image) is already rendered in the pane DOM; wrap that body
+    // in a clean paper stylesheet so it doesn't print Split's dark theme.
+    let doc: string;
+    if (isHtml && payload.kind === "text") {
+      doc = payload.content;
+    } else {
+      const body = document.querySelector(".art-body")?.innerHTML ?? "";
+      doc = `<!doctype html><html><head><meta charset="utf-8"><style>${PDF_DOC_CSS}</style></head><body>${body}</body></html>`;
+    }
+    const base = (artifact.rel.split("/").pop() || "artifact").replace(/\.[^.]+$/, "");
+    const target = await saveDialog({
+      defaultPath: `${base}.pdf`,
+      filters: [{ name: "PDF", extensions: ["pdf"] }],
+    });
+    if (!target) return;
+    try {
+      await invoke("export_artifact_pdf", { html: doc, targetPath: target });
+    } catch (e) {
+      setErr(String(e));
+    }
+  }
 
   // Save-a-copy flow. The OS save panel returns the user-chosen absolute path
   // (or null on cancel); the Rust side writes the content there. For text
@@ -409,6 +475,10 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
             <button className="iconbtn on" style={{ width: "auto", padding: "4px 10px" }}
                     onClick={saveEdit} disabled={saving} title="Save (⌘S)">{saving ? "Saving…" : "Save"}</button>
           </>
+        ) : htmlBar ? (
+          // HTML preview: actions live in the floating bottom bar, header is
+          // title-only.
+          null
         ) : (
           <>
             {canEdit && !isHtml && <button className="iconbtn" onClick={startEdit} title="Edit">✎</button>}
@@ -420,7 +490,7 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
           </>
         )}
       </div>
-      <div className="art-body art-print-target">
+      <div className="art-body">
         {err && <div className="art-fallback">⚠ {err}</div>}
         {!payload && !err && <div className="art-fallback">loading…</div>}
         {payload && payload.kind === "text" && (
@@ -487,19 +557,28 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
           </div>
         )}
       </div>
-      {/* Floating pencil — the only way into edit for HTML, which otherwise
-          stays in interactive preview/play mode. Parked bottom-left over the
-          preview so it never covers the agent's own UI in the top corners. */}
-      {isHtml && payload?.kind === "text" && !inEditMode && (
-        <button
-          className="art-edit-fab"
-          onClick={startEdit}
-          title="Edit this page"
-          aria-label="Edit this page"
-        >
-          <span className="art-edit-fab-ico" aria-hidden="true">✎</span>
-          <span>Edit</span>
-        </button>
+      {/* Floating action bar for HTML — the page stays in interactive
+          preview/play mode, so every action it could need (edit, open in
+          browser, export, save, share, keep) lives in one pill parked
+          bottom-left over the preview, clear of the agent's own UI in the top
+          corners. Popovers (share/keep) open upward via the `up` flag. */}
+      {htmlBar && (
+        <div className="art-actionbar">
+          <button
+            className="art-edit-fab"
+            onClick={startEdit}
+            title="Edit this page"
+            aria-label="Edit this page"
+          >
+            <span className="art-edit-fab-ico" aria-hidden="true">✎</span>
+            <span>Edit</span>
+          </button>
+          <button className="iconbtn" onClick={reveal} title="Ouvrir dans le navigateur">⤢</button>
+          {canExport && <button className="iconbtn" onClick={exportPdf} title="Export as PDF">⎙</button>}
+          {canSaveAs && <button className="iconbtn" onClick={saveAs} title="Save a copy…">⤓</button>}
+          {canShare && <ShareControl up shareRef={shareRef} open={shareOpen} setOpen={setShareOpen} onPick={shareTo} />}
+          <KeepControl up artifact={artifact} onSaved={setKept} onErr={setErr} />
+        </div>
       )}
       {kept && (
         <button
@@ -519,15 +598,16 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
 // own the open state (the parent does, so outside-click can close it from any
 // header layout) and just routes the chosen platform back via onPick.
 function ShareControl({
-  shareRef, open, setOpen, onPick,
+  shareRef, open, setOpen, onPick, up,
 }: {
   shareRef: React.RefObject<HTMLDivElement | null>;
   open: boolean;
   setOpen: (v: boolean) => void;
   onPick: (platform: "linkedin" | "x") => void;
+  up?: boolean;
 }) {
   return (
-    <div className="art-share-wrap" ref={shareRef}>
+    <div className={"art-share-wrap" + (up ? " up" : "")} ref={shareRef}>
       <button
         className={"iconbtn" + (open ? " on" : "")}
         onClick={() => setOpen(!open)}
@@ -557,11 +637,12 @@ function ShareControl({
 // `vault_tree`) and offers an inline "new project" field. The heavy lifting
 // (file vs folder copy, slugify, dir creation) is the `keep_in_vault` command.
 function KeepControl({
-  artifact, onSaved, onErr,
+  artifact, onSaved, onErr, up,
 }: {
   artifact: Artifact;
   onSaved: (path: string) => void;
   onErr: (e: string) => void;
+  up?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [projects, setProjects] = useState<string[]>([]);
@@ -627,7 +708,7 @@ function KeepControl({
   }
 
   return (
-    <div className="art-share-wrap" ref={ref}>
+    <div className={"art-share-wrap" + (up ? " up" : "")} ref={ref}>
       <button
         className={"iconbtn" + (open ? " on" : "")}
         onClick={() => setOpen(!open)}

@@ -61,3 +61,11 @@ base64 = "0.22"
 # needs no Swift toolchain, and works from the unbundled `tauri dev` binary
 # (it swizzles the bundle identity — dev banners show as Terminal).
 mac-notification-sys = "0.6"
+# Native PDF export. WKWebView ignores the JS `window.print()` path entirely,
+# so "Export as PDF" renders through the webview's own `createPDF` API on a
+# hidden window. These objc2 crates are already in the tree (pulled by wry), so
+# pinning them as direct deps adds no new build — just the bindings we call.
+objc2 = "0.6"
+objc2-web-kit = { version = "0.3", features = ["WKWebView", "WKNavigation", "WKPDFConfiguration", "block2"] }
+objc2-foundation = { version = "0.3", features = ["NSData", "NSError"] }
+block2 = "0.6"

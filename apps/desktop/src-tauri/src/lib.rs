@@ -381,6 +381,125 @@ fn save_artifact_as(target_path: String, content: String) -> Result<(), String> 
     std::fs::write(&p, content).map_err(|e| e.to_string())
 }
 
+/// Render an HTML string to a PDF file at `target_path`, using the webview's
+/// own `createPDF` API. This exists because **WKWebView ignores the JS
+/// `window.print()` path** — calling it in the renderer is a silent no-op, so
+/// the old `@media print` + `window.print()` export produced nothing and no
+/// save dialog. Instead we:
+///   1. write the HTML to a temp file,
+///   2. spin up a hidden Tauri window pointed at it (off-screen, never shown),
+///   3. on `PageLoadEvent::Finished`, ask the underlying WKWebView for a PDF
+///      via `createPDFWithConfiguration:completionHandler:` (real WebKit
+///      layout — modern CSS, multi-page, the lot),
+///   4. write the returned bytes to the user-chosen path and tear the window
+///      down.
+/// The frontend picks `target_path` with the native save panel beforehand, so
+/// the "where do I save it" gap is closed too. macOS-only; other platforms get
+/// a clear error (Windows would route through WebView2's `PrintToPdfAsync`).
+#[cfg(target_os = "macos")]
+#[tauri::command]
+async fn export_artifact_pdf(
+    app: AppHandle,
+    html: String,
+    target_path: String,
+) -> Result<(), String> {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static SEQ: AtomicU64 = AtomicU64::new(0);
+    let n = SEQ.fetch_add(1, Ordering::Relaxed);
+
+    // 1. Stage the HTML where the hidden webview can load it. file:// load
+    //    (vs loadHTMLString) means a self-contained artifact's inline styles
+    //    and data: assets resolve exactly as they do in the preview.
+    let tmp = std::env::temp_dir().join(format!("split-pdf-{n}.html"));
+    std::fs::write(&tmp, &html).map_err(|e| format!("temp write failed: {e}"))?;
+    let file_url = tauri::Url::from_file_path(&tmp)
+        .map_err(|_| "could not form file URL for temp HTML".to_string())?;
+
+    let (tx, rx) = tokio::sync::oneshot::channel::<Result<Vec<u8>, String>>();
+    // The on_page_load closure is `Fn` (may fire for Started *and* Finished),
+    // so the one-shot sender lives behind a take-once mutex.
+    let slot = std::sync::Arc::new(std::sync::Mutex::new(Some(tx)));
+    let slot_cb = slot.clone();
+
+    let label = format!("split-pdf-export-{n}");
+    let win = tauri::WebviewWindowBuilder::new(
+        &app,
+        &label,
+        tauri::WebviewUrl::External(file_url),
+    )
+    .visible(false)
+    // A4-ish at ~96dpi so the layout the user sees roughly matches the page.
+    .inner_size(794.0, 1123.0)
+    .on_page_load(move |webview, payload| {
+        if payload.event() != tauri::webview::PageLoadEvent::Finished {
+            return;
+        }
+        let slot_inner = slot_cb.clone();
+        let sink = slot_inner.clone();
+        let res = webview.with_webview(move |pw| {
+            use block2::RcBlock;
+            use objc2_web_kit::WKWebView;
+
+            // `inner()` is the raw `WKWebView*`; objc2's class is a ZST view
+            // over the object, so a reference cast is the canonical bridge.
+            let wk_ptr = pw.inner() as *const WKWebView;
+            let wk: &WKWebView = unsafe { &*wk_ptr };
+
+            let handler = RcBlock::new(
+                move |data: *mut objc2_foundation::NSData, err: *mut objc2_foundation::NSError| {
+                    let out = if !data.is_null() {
+                        Ok(unsafe { &*data }.to_vec())
+                    } else if !err.is_null() {
+                        Err(format!("createPDF: {:?}", unsafe { &*err }))
+                    } else {
+                        Err("createPDF returned neither data nor error".to_string())
+                    };
+                    if let Some(s) = sink.lock().unwrap().take() {
+                        let _ = s.send(out);
+                    }
+                },
+            );
+            // nil configuration → captures the full bounds of the page.
+            unsafe { wk.createPDFWithConfiguration_completionHandler(None, &handler) };
+        });
+        if let Err(e) = res {
+            if let Some(s) = slot_inner.lock().unwrap().take() {
+                let _ = s.send(Err(format!("with_webview failed: {e}")));
+            }
+        }
+    })
+    .build()
+    .map_err(|e| format!("hidden export window failed: {e}"))?;
+
+    // Bound the wait: if the page never loads or createPDF never calls back,
+    // don't hang the command (and the JS `invoke`) forever.
+    let waited = tokio::time::timeout(std::time::Duration::from_secs(20), rx).await;
+    let _ = win.close();
+    let _ = std::fs::remove_file(&tmp);
+    let bytes = match waited {
+        Ok(Ok(res)) => res?,
+        Ok(Err(_)) => return Err("PDF render channel dropped".to_string()),
+        Err(_) => return Err("PDF render timed out".to_string()),
+    };
+
+    if let Some(parent) = std::path::Path::new(&target_path).parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    std::fs::write(&target_path, bytes).map_err(|e| format!("PDF write failed: {e}"))
+}
+
+/// Non-macOS stub — keeps the command registered so the frontend `invoke`
+/// resolves with a clear message instead of an "unknown command" crash.
+#[cfg(not(target_os = "macos"))]
+#[tauri::command]
+async fn export_artifact_pdf(
+    _app: AppHandle,
+    _html: String,
+    _target_path: String,
+) -> Result<(), String> {
+    Err("PDF export is macOS-only for now".to_string())
+}
+
 /// Lowercase ASCII slug: alnum kept, every other run collapses to a single
 /// `-`, edges trimmed. Idempotent on existing slugs (picking an existing
 /// project passes its folder name straight through).
@@ -2212,6 +2331,7 @@ pub fn run() {
             reveal_artifact,
             write_artifact,
             save_artifact_as,
+            export_artifact_pdf,
             keep_in_vault,
             vault_tree,
             vault_create,
