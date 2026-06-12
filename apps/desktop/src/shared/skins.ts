@@ -4,9 +4,10 @@
 // kept to honour existing user picks).
 // Persisted to localStorage under `split.skin` (see App.tsx).
 //
-// Saint-Ex (`ghibli`) and Tokyo Night (`tokyo`) are kept in the registry but
-// `hidden` — pulled from the picker on purpose, parked for a future easter-egg
-// trigger (same mechanism as the four below: listed only while worn).
+// Saint-Ex (`ghibli`), Tokyo Night (`tokyo`) and Gatsby (`gatsby`) are kept in
+// the registry but `hidden` — pulled from the picker on purpose, parked for a
+// future easter-egg trigger (same mechanism as the four below: listed only
+// while worn, so you can still switch away if it's the active skin).
 //
 // Four special skins never show in the picker by default:
 // - `noir` (hidden) — the B&W gangster cut, an easter egg: 5 quick clicks on
@@ -35,7 +36,7 @@ export const SKINS: { id: Skin; label: string; hint: string; sw: [string, string
   { id: "parisian", label: "Parisian", hint: "Eiffel dusk — plum to copper, gaslit gold, Italiana", sw: ["#1d1428", "#3a1e3a", "#d4a574"], dark: true },
   { id: "", label: "Classic", hint: "Anthracite night, warm copper accent", sw: ["#0a0b0e", "#1c1f28", "#d97757"], dark: true },
   { id: "pastel", label: "Baroque", hint: "Cream salon, ornate serif, dusty rose", sw: ["#ecd9c0", "#fbf2e2", "#d97a8c"], dark: false },
-  { id: "gatsby", label: "Gatsby", hint: "Champagne gold on lacquered black — Cinzel Decorative caps", sw: ["#0a0a0a", "#1a1a1a", "#d4af37"], dark: true },
+  { id: "gatsby", label: "Gatsby", hint: "Champagne gold on lacquered black — Cinzel Decorative caps", sw: ["#0a0a0a", "#1a1a1a", "#d4af37"], dark: true, hidden: true },
   { id: "emerald", label: "Emerald", hint: "Forest-dark greens, vivid emerald accent, faint mint glass rim", sw: ["#04130d", "#0a2018", "#34d399"], dark: true },
   { id: "titanic", label: "Titanic", hint: "North Atlantic navy, brass fittings, white linen — she found you", sw: ["#0a2540", "#0d2745", "#c89c4a"], dark: true, hidden: true },
   { id: "ghibli", label: "Saint-Ex", hint: "Watercolor sky — butter biplane under asteroid B-612", sw: ["#eaf0f5", "#d9e6ee", "#4a8fb3"], dark: false, hidden: true },

@@ -68,7 +68,7 @@ export function AtelierLeft({ experts, sessions, focusedId, armedSlug, onArm, on
                 title={`@${s.expertLabel}${needs === "auth" ? " · needs sign-in" : needs === "perm" ? " · needs your approval" : ""}`}
               >
                 <span className="atelier-agent-crest">
-                  <Crest kind={experts[s.expertSlug]?.kind} seed={s.expertSlug} size={26} />
+                  <Crest kind={experts[s.expertSlug]?.kind} seed={s.expertSlug} size={34} />
                   <span className={"att-live " + live} />
                   {needs && <span className="att-badge">!</span>}
                 </span>
@@ -102,7 +102,7 @@ export function AtelierLeft({ experts, sessions, focusedId, armedSlug, onArm, on
                   onClick={() => onArm(slug)}
                   title={e?.blurb}
                 >
-                  <span className="atelier-agent-crest"><Crest kind={e?.kind} seed={slug} size={26} /></span>
+                  <span className="atelier-agent-crest"><Crest kind={e?.kind} seed={slug} size={34} /></span>
                   <span className="atelier-agent-id">
                     <span className="atelier-agent-nm">{e?.label}</span>
                     <span className="atelier-agent-kind">{e?.kind}</span>

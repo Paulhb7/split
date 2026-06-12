@@ -38,7 +38,7 @@ export function Reflet({ session, experts, onPickArtifact, onCollapse }: {
     <aside className="reflet" aria-label="Session mirror">
       {onCollapse && <button className="reflet-collapse" onClick={onCollapse} title="Collapse the reflet">›</button>}
       <div className="reflet-card">
-        <Crest kind={expert?.kind} seed={session.expertSlug} size={44} />
+        <Crest kind={expert?.kind} seed={session.expertSlug} size={34} />
         <div className="reflet-id">
           <div className="reflet-name">{session.expertLabel}</div>
           <div className="reflet-on">on <b>{H[session.harness]?.label || session.harness}</b> · {session.status}</div>

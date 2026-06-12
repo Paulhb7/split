@@ -391,10 +391,42 @@
   0%, 100% { transform: scaleX(1);    opacity: 0.85; }
   50%      { transform: scaleX(0.78); opacity: 0.55; }
 }
+/* La révérence — one-shot bow on click (see SplitMark `bowOnClick`). Ported
+   from design/majordome-planche-2.html's .bowman: the silhouette dips forward
+   from the feet, holds a beat, then rises. Short, sober — "à votre service"
+   rendered in motion. transform-origin lives inline on the <svg>. */
+.split-mark-bow {
+  animation: split-bow 1.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes split-bow {
+  0%        { transform: rotate(0)    translateY(0); }
+  34%, 56%  { transform: rotate(7deg) translateY(3px) scaleY(0.985); }
+  100%      { transform: rotate(0)    translateY(0); }
+}
 @media (prefers-reduced-motion: reduce) {
   .split-levitate,
   .split-shadow { animation: none; }
+  /* Keep the bow effectively instant so onAnimationEnd still fires (clearing
+     the React `bowing` flag) without a jarring motion. */
+  .split-mark-bow { animation-duration: 1ms; }
 }
+
+/* "Le reflet qui balaie" — a glass highlight sweeping diagonally across the
+   majordome while an agent works (SplitMark isSpeaking). The white sheen rect
+   rides the same luminance mask as the silhouette, so it only ever shows over
+   the figure — the app-icon gloss, in motion. See design/majordome-planche.html. */
+.sm-sheen {
+  transform-box: fill-box; transform-origin: center; opacity: 0;
+  animation: sm-sweep 2.6s ease-in-out infinite;
+}
+@keyframes sm-sweep {
+  0%   { transform: translateX(-150px) rotate(-16deg); opacity: 0; }
+  42%  { opacity: 0.45; }
+  58%  { opacity: 0.45; }
+  86%  { transform: translateX(150px) rotate(-16deg); opacity: 0; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .sm-sheen { animation: none; } }
 .sec { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); margin: 0 0 11px; display: flex; align-items: center; gap: 10px; }
 .sec::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .sec .muted { color: var(--dim2); letter-spacing: 0.05em; text-transform: none; font-size: 10px; }
@@ -466,6 +498,73 @@
    Teams-owned sessions running. Click → switch to Teams mode. */
 .teams-pointer { display: block; width: 100%; padding: 9px 12px; margin-top: 4px; border: 1px dashed var(--line); border-radius: 10px; background: transparent; color: var(--dim); font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; cursor: pointer; text-align: center; transition: 0.15s; }
 .teams-pointer:hover { background: color-mix(in srgb, var(--brand) 6%, transparent); border-color: color-mix(in srgb, var(--brand) 40%, var(--line)); color: var(--text); }
+
+/* ===================== HISTORY · JOURNAL (HistoryOverlay) =====================
+   A real, fully opaque page (NOT the translucent `.overlay` glass) so nothing
+   behind bleeds through. Surface tracks the skin via --ink/--ink2 + a faint
+   brand wash, the same recipe feel as the app shell. Day-grouped timeline:
+   each day is a header + a copper spine, each row a node coloured by its expert.
+   Trivial "hey" rows dim so real briefs lead the eye; resume / delete reveal on
+   hover so the resting state stays calm. */
+.histpage {
+  position: absolute; inset: 0; z-index: 60; overflow: auto;
+  display: grid; place-items: start center; padding: 30px 36px 44px;
+  background:
+    radial-gradient(760px 440px at 88% -12%, color-mix(in srgb, var(--brand) 11%, transparent), transparent 62%),
+    radial-gradient(640px 520px at -8% 110%, color-mix(in srgb, var(--brand) 6%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--ink2), var(--ink));
+}
+.histscroll { padding-right: 2px; }
+.histday { margin-bottom: 4px; }
+.histday-label {
+  display: flex; align-items: center; gap: 11px;
+  margin: 16px 2px 4px; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim2);
+}
+.histday-label::after { content: ""; flex: 1; height: 1px; background: var(--line2); }
+.histday-count {
+  color: var(--brand); background: color-mix(in srgb, var(--brand) 14%, transparent);
+  padding: 1px 7px; border-radius: 99px; letter-spacing: 0.06em;
+}
+/* The vertical spine — a feathered hairline the row nodes sit on. */
+.histspine { position: relative; padding-left: 30px; }
+.histspine::before {
+  content: ""; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 1px;
+  background: linear-gradient(180deg, transparent, var(--line), transparent);
+}
+.jrow {
+  --node: #888; position: relative; display: flex; align-items: center; gap: 13px;
+  padding: 10px 12px 10px 0; border-radius: 12px; cursor: pointer;
+  transition: background 0.15s, padding 0.15s;
+  animation: rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.jrow::before {
+  content: ""; position: absolute; left: -23px; top: 50%; transform: translateY(-50%);
+  width: 9px; height: 9px; border-radius: 50%; background: var(--node);
+  box-shadow: 0 0 0 4px var(--ink), 0 0 11px color-mix(in srgb, var(--node) 70%, transparent);
+}
+.jrow:hover { background: rgba(255, 255, 255, 0.035); padding-left: 10px; }
+.jrow .crest { flex: none; }
+.jmeta { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.jln1 { display: flex; align-items: center; gap: 9px; }
+.jrow .who { font-weight: 600; font-size: 14.5px; letter-spacing: -0.01em; }
+.jon { font-family: var(--mono); font-size: 10.5px; color: var(--dim); white-space: nowrap; }
+.jon b { color: var(--brand); font-weight: 500; }
+.jon .logo { display: inline-block; vertical-align: -0.18em; margin: 0 1px; }
+.jttl { font-size: 13px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 460px; }
+.jrow.trivial .jttl { font-style: italic; color: var(--dim2); }
+.jspacer { flex: 1; }
+.jwhen { font-family: var(--mono); font-size: 11px; color: var(--dim2); flex-shrink: 0; white-space: nowrap; }
+.jtools { display: flex; align-items: center; gap: 7px; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
+.jrow:hover .jtools { opacity: 1; }
+.jact {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em;
+  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); color: var(--dim);
+  padding: 5px 11px; border-radius: 9px; cursor: pointer; transition: 0.15s;
+}
+.jact:hover { color: var(--text); border-color: color-mix(in srgb, var(--brand) 50%, transparent); background: color-mix(in srgb, var(--brand) 14%, transparent); }
+.jx { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; color: var(--dim2); cursor: pointer; border: 1px solid transparent; background: none; font-size: 12px; transition: 0.15s; }
+.jx:hover { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, transparent); background: color-mix(in srgb, var(--bad) 10%, transparent); }
 
 /* ============================ CONVERSATION ============================ */
 .conv { max-width: 820px; margin: 0 auto; padding: 14px 35px 18px; display: flex; flex-direction: column; min-height: 100%; }
@@ -1938,7 +2037,15 @@
    A widened sibling of art-split, but the right column MIRRORS the session
    (read-only) instead of editing a deliverable. All colours come from the skin
    vars, so the azure of theme-atelier (or the copper of Classic) flows through. */
-.atelier { display: flex; flex-direction: row; height: 100%; width: 100%; min-height: 0; min-width: 0; }
+.atelier {
+  /* Section radii — generous like the classic interface. The rails float as
+     rounded glass panels (inset from the window edges by --rail-inset); cards,
+     starters, rows, chips and the composer all round off these vars so the
+     whole atelier reads soft + cohesive. Tweak here, it propagates. */
+  --r-rail: 20px; --rail-inset: 8px; --r-card: 22px; --r-starter: 22px; --r-row: 14px; --r-chip: 12px; --r-composer: 24px;
+  display: flex; flex-direction: row; height: 100%; width: 100%; min-height: 0; min-width: 0;
+  padding: var(--rail-inset); gap: var(--rail-inset);
+}
 .atelier-conv { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }
 /* Full-width reading surface — fills the centre (never a varying centred
    column), no frosted card-in-void. The head gets a simple divider instead of
@@ -1951,13 +2058,14 @@
 /* Left column — the launchable roster (Agents) + live sessions (En cours). */
 .atelier-left {
   flex: 0 0 200px; min-height: 0; overflow-y: auto;
-  border-right: 1px solid var(--line2);
+  border: 1px solid var(--rim); border-radius: var(--r-rail);
   padding: 14px 10px; display: flex; flex-direction: column; gap: 9px;
   background: color-mix(in srgb, var(--ink) 30%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 }
 .atelier-left-sec { display: flex; flex-direction: column; gap: 3px; }
 .atelier-left-h { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim2); margin: 0 8px 5px; }
-.atelier-agent { display: flex; align-items: center; gap: 10px; padding: 7px 9px; border-radius: 11px; border: 1px solid transparent; background: none; cursor: pointer; transition: background 0.15s, border-color 0.15s; text-align: left; color: var(--text); }
+.atelier-agent { display: flex; align-items: center; gap: 10px; padding: 7px 9px; border-radius: var(--r-row); border: 1px solid transparent; background: none; cursor: pointer; transition: background 0.15s, border-color 0.15s; text-align: left; color: var(--text); }
 .atelier-agent:hover { background: color-mix(in srgb, var(--brand) 7%, transparent); }
 .atelier-agent.on { background: color-mix(in srgb, var(--brand) 14%, transparent); border-color: color-mix(in srgb, var(--brand) 28%, var(--line)); }
 .atelier-agent-crest { position: relative; display: grid; place-items: center; flex: none; }
@@ -2030,6 +2138,11 @@
 @keyframes aw-halo { 0%, 100% { transform: translate(-50%, -50%) scale(0.96); opacity: 0.5; } 50% { transform: translate(-50%, -50%) scale(1.08); opacity: 0.85; } }
 .aw-crest-wrap .crest { transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1); }
 .aw-crest-wrap .crest-mark { width: 64%; height: 64%; }
+/* Fuller etched glyph for the atelier roster + reflet crests (option F): the
+   mark fills 70% of the coin instead of the global 58%, so the icon reads bold
+   at the uniform 34px size instead of floating small. Scoped — the welcome hero
+   (64%) and every crest outside the atelier (58%) are untouched. */
+.atelier-agent .crest-mark, .reflet .crest-mark { width: 70%; height: 70%; }
 .aw-crest-wrap:hover .crest { transform: translateY(-3px) rotate(-1deg); }
 @keyframes aw-crestin { 0% { opacity: 0; transform: translateY(18px) scale(0.86); } 60% { opacity: 1; } 100% { opacity: 1; transform: translateY(0) scale(1); } }
 
@@ -2043,7 +2156,7 @@
 .aw-meta { display: flex; align-items: center; justify-content: center; gap: 9px; margin-top: 16px; flex-wrap: wrap;
   opacity: 0; animation: aw-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.5s forwards; }
 .aw-chip { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.03em; color: var(--dim);
-  padding: 5px 11px; border-radius: 8px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 40%, transparent); backdrop-filter: blur(6px); }
+  padding: 5px 11px; border-radius: var(--r-chip); border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 40%, transparent); backdrop-filter: blur(6px); }
 .aw-chip .aw-k { color: var(--dim2); text-transform: uppercase; letter-spacing: 0.16em; font-size: 9.5px; }
 .aw-dot { width: 5px; height: 5px; border-radius: 50%; background: color-mix(in srgb, var(--brand) 70%, transparent); }
 .aw-chip.eng .aw-dot { background: var(--good); }
@@ -2052,12 +2165,12 @@
 .aw-starter {
   position: relative; overflow: hidden; text-align: left; cursor: pointer; color: var(--text); font-family: inherit;
   display: flex; flex-direction: column; gap: 10px; min-height: 100px; padding: 15px 15px 14px;
-  border: 1px solid var(--line); border-radius: 15px;
+  border: 1px solid var(--line); border-radius: var(--r-starter);
   background: color-mix(in srgb, var(--panel) 55%, transparent); backdrop-filter: blur(14px);
   transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.28s, border-color 0.28s, background 0.28s;
   opacity: 0; animation: aw-rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
 }
-.aw-starter::after { content: ""; position: absolute; inset: 0; border-radius: 15px; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+.aw-starter::after { content: ""; position: absolute; inset: 0; border-radius: var(--r-starter); opacity: 0; pointer-events: none; transition: opacity 0.3s;
   background: radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--brand) 15%, transparent), transparent 60%); }
 .aw-starter:nth-child(1) { animation-delay: 0.6s; }
 .aw-starter:nth-child(2) { animation-delay: 0.68s; }
@@ -2075,6 +2188,7 @@
 .aw-footer { position: relative; z-index: 1; padding: 0; display: flex; flex-direction: column; align-items: center;
   opacity: 0; animation: aw-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.88s forwards; }
 .aw-footer > * { width: 100%; max-width: 740px; }
+.aw-footer .composer { border-radius: var(--r-composer); }
 .aw-footer .composer { margin-bottom: 0; }
 
 @keyframes aw-rise { 0% { opacity: 0; transform: translateY(16px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -2113,11 +2227,11 @@
   flex: 0 0 46px; align-self: stretch; min-height: 0;
   display: flex; flex-direction: column; align-items: center; gap: 12px;
   padding: 14px 0; cursor: pointer; color: var(--dim);
-  border: none; background: color-mix(in srgb, var(--ink) 30%, transparent);
+  border: 1px solid var(--rim); border-radius: var(--r-rail);
+  background: color-mix(in srgb, var(--ink) 30%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   transition: background 0.18s, color 0.18s;
 }
-.rail-stub.left { border-right: 1px solid var(--line2); }
-.rail-stub.right { border-left: 1px solid var(--line2); }
 .rail-stub:hover { background: color-mix(in srgb, var(--brand) 9%, transparent); color: var(--text); }
 .rail-stub-x { font-size: 13px; line-height: 1; color: color-mix(in srgb, var(--brand) 60%, var(--text)); }
 .rail-stub-label { writing-mode: vertical-rl; text-orientation: mixed; font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim2); }
@@ -2144,13 +2258,14 @@
 
 .reflet {
   flex: 0 0 330px; min-height: 0; overflow-y: auto;
-  border-left: 1px solid var(--line2);
+  border: 1px solid var(--rim); border-radius: var(--r-rail);
   padding: 14px; display: flex; flex-direction: column; gap: 10px;
   background: color-mix(in srgb, var(--ink) 30%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 }
 .reflet-card {
   display: flex; align-items: center; gap: 11px;
-  padding: 13px; border-radius: 14px;
+  padding: 13px; border-radius: var(--r-card);
   border: 1px solid color-mix(in srgb, var(--brand) 24%, var(--line));
   background: color-mix(in srgb, var(--brand) 12%, var(--panel));
 }
@@ -2160,7 +2275,7 @@
 .reflet-on b { color: var(--engine); }
 .reflet-ro { margin-left: auto; font-family: var(--mono); font-size: 9px; color: var(--dim2); white-space: nowrap; }
 
-.reflet-sec { border: 1px solid var(--line2); border-radius: 12px; background: var(--panel); overflow: hidden; }
+.reflet-sec { border: 1px solid var(--line2); border-radius: var(--r-card); background: var(--panel); overflow: hidden; }
 .reflet-sec > summary { list-style: none; cursor: pointer; padding: 11px 13px; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .reflet-sec > summary::-webkit-details-marker { display: none; }
 .reflet-count { margin-left: auto; font-family: var(--mono); font-size: 9.5px; color: var(--dim2); font-weight: 500; }

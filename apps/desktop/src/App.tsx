@@ -732,7 +732,7 @@ export default function App() {
               <aside className="reflet" aria-label="About the agent">
                 <button className="reflet-collapse" onClick={() => setRefletOpen(false)} title="Collapse">›</button>
                 <div className="reflet-card">
-                  <Crest kind={experts[expertSlug]?.kind} seed={expertSlug} size={44} />
+                  <Crest kind={experts[expertSlug]?.kind} seed={expertSlug} size={34} />
                   <div className="reflet-id">
                     <div className="reflet-name">{expertLabel}</div>
                     <div className="reflet-on">{experts[expertSlug]?.role || experts[expertSlug]?.category || "agent"}</div>
@@ -858,7 +858,7 @@ export default function App() {
           <div className={"home" + (roomyHome ? " roomy" : "") + (roomyHome && classicSessions.length < 3 ? " center" : "")}>
             <div className={"home-orb" + (expanded ? " mini" : "")}>
               <div className="split-levitate">
-                <SplitMark size={expanded ? 72 : 140} isSpeaking={anyRunning} />
+                <SplitMark size={expanded ? 72 : 140} isSpeaking={anyRunning} bowOnClick />
               </div>
               <div className="split-shadow" aria-hidden="true" />
               {!expanded && <div className="home-eyebrow">one runtime · each expert on its own engine</div>}
