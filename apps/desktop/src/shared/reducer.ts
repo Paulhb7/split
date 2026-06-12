@@ -36,8 +36,13 @@ export function applyEvent(s: Session, ev: VEvt): Session {
         summary: "thinking…",
       };
 
-    case "step":
-      return { ...s, status: "running", turnStartedAt: turnStart(s), summary: `→ ${ev.title || "tool"} · ${ev.status || ""}` };
+    case "step": {
+      const step = { title: ev.title || "tool", status: ev.status || "" };
+      // Keep the last 40 steps of the turn — enough for the activity fold,
+      // bounded so a chatty agent can't grow the array without limit.
+      const steps = [...s.steps, step].slice(-40);
+      return { ...s, status: "running", turnStartedAt: turnStart(s), steps, summary: `→ ${step.title} · ${step.status}` };
+    }
 
     case "plan":
       return { ...s, plan: ev.entries };
@@ -52,11 +57,15 @@ export function applyEvent(s: Session, ev: VEvt): Session {
       if (ev.status === "running")
         return { ...s, status: "running", turnStartedAt: turnStart(s), summary: "thinking…" };
       if (ev.status === "idle") {
+        const tookMs = s.turnStartedAt != null ? Date.now() - s.turnStartedAt : undefined;
+        const steps = s.steps.length ? s.steps : undefined;
         const withThoughts = s.thoughts
           ? [...s.thread, { role: "thought" as const, text: s.thoughts }]
           : s.thread;
+        // The turn's activity (steps + duration) rides the answer turn so the
+        // collapsed "what it did" fold sits with the reply it produced.
         const committed = s.answer
-          ? [...withThoughts, { role: "agent" as const, text: s.answer }]
+          ? [...withThoughts, { role: "agent" as const, text: s.answer, steps, tookMs }]
           : withThoughts;
         return {
           ...s,
@@ -65,11 +74,12 @@ export function applyEvent(s: Session, ev: VEvt): Session {
           thread: committed,
           answer: "",
           thoughts: "",
+          steps: [],
           summary: "done · " + (head(s.answer) || "ready"),
         };
       }
       if (ev.status === "error")
-        return { ...s, status: "error", turnStartedAt: null, summary: "error · " + (ev.error || "") };
+        return { ...s, status: "error", turnStartedAt: null, steps: [], summary: "error · " + (ev.error || "") };
       // "ended" is not a VEVT status — end-of-session arrives as the wire
       // envelope's `exit` flag and is applied in useSessions directly.
       return s;

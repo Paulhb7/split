@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
 
 import { HARNESSES, H, brandOf } from "./shared/harnesses";
 import { useExperts, composeTurn, type Attachment } from "./shared/util";
@@ -18,22 +19,24 @@ import { useRailResize } from "./shared/useRailResize";
 import { League, vars } from "./shared/ui";
 import { Composer } from "./home/Composer";
 import { SessionRow } from "./home/SessionRow";
-import { Conversation } from "./conversation/Conversation";
-import { ArtifactViewer } from "./conversation/ArtifactViewer";
+import { Conversation, type PeerAlert } from "./conversation/Conversation";
+import { ArtifactViewer, ArtifactStrip } from "./conversation/ArtifactViewer";
+import { AttentionRail } from "./conversation/AttentionRail";
+import { AtelierLeft } from "./conversation/AtelierLeft";
+import { Reflet } from "./conversation/Reflet";
+import { Crest } from "./shared/Crest";
 import { HistoryOverlay } from "./history/HistoryOverlay";
 import { AuthModal } from "./auth/AuthModal";
 import Onboarding from "./onboarding/Onboarding";
-import Stage from "./stage/Stage";
 import Teams from "./teams/Teams";
 import { useTeam } from "./teams/useTeam";
 import Cabinet from "./cabinet/Cabinet";
 import { VaultOverlay } from "./vault/VaultOverlay";
 import SplitMark from "./shared/SplitMark";
-import SplitWordmark from "./shared/SplitWordmark";
 import "./app.css";
 
 const LS_DONE = "split.onboarded";
-const LS_VIEW = "split.sessionView"; // "list" | "stage"
+const LS_VIEW = "split.sessionView"; // "list" — "atelier" is a transient fullscreen mode, never persisted
 const LS_DEF = "split.defaultHarness"; // legacy single-pick (migrated to LS_ENABLED)
 const LS_ENABLED = "split.enabledHarnesses"; // the agents the user activated
 const LS_ACTIVE = "split.activeHarness"; // the armed engine for the next session
@@ -44,6 +47,20 @@ const LS_MODE = "split.mode"; // "simple" (one expert/session) | "teams" (Chief-
 // entry point is guarded. Flip to `true` to re-enable the whole path — the
 // view + state machine are kept intact underneath.
 const TEAMS_ENABLED = false;
+
+// Drifting starfield behind the atelier welcome crest. Positions are seeded once
+// at module load (deterministic — no Math.random in render) so they don't
+// re-scatter every time the welcome remounts on focus change.
+const AW_STARS = Array.from({ length: 42 }, (_, i) => {
+  const r = (n: number) => { const x = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453; return x - Math.floor(x); };
+  return {
+    left: (r(1) * 100).toFixed(2) + "%",
+    top: (r(2) * 100).toFixed(2) + "%",
+    big: r(3) > 0.8,
+    tw: (3 + r(4) * 5).toFixed(2) + "s",
+    td: (r(5) * 6).toFixed(2) + "s",
+  };
+});
 
 // The user's activated agents — only these show in the roster/menus. Falls back
 // to the legacy single default, then to claude.
@@ -83,13 +100,23 @@ export default function App() {
   const [active, setActiveState] = useState(loadActive);
   const [expertSlug, setExpertSlug] = useState("consultant");
   const [overlay, setOverlay] = useState(false);
-  const [view, setViewState] = useState<"list" | "stage">(() => (localStorage.getItem(LS_VIEW) === "stage" ? "stage" : "list"));
-  const setView = (v: "list" | "stage") => {
+  // "list" = the home sessions list. "atelier" = the fullscreen control room
+  // (AttentionRail · Conversation · Reflet). Atelier is transient by design —
+  // entered deliberately from the seg, never persisted, so the app never boots
+  // straight into fullscreen. Only "list" is written back.
+  const [view, setViewState] = useState<"list" | "atelier">("list");
+  const setView = (v: "list" | "atelier") => {
     setViewState(v);
-    localStorage.setItem(LS_VIEW, v);
+    if (v === "list") localStorage.setItem(LS_VIEW, v);
   };
 
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  // Per-session posture override. Unset = auto (expanded iff the session has a
+  // deliverable). "expanded" / "compact" let the user pin the atelier open or
+  // collapse it by hand — the hybrid-posture model. Keyed by session id.
+  const [posture, setPosture] = useState<Record<string, "expanded" | "compact">>({});
+  const togglePosture = (id: string, currentlyExpanded: boolean) =>
+    setPosture((p) => ({ ...p, [id]: currentlyExpanded ? "compact" : "expanded" }));
   const [mode, setModeState] = useState<"simple" | "teams">(() => (TEAMS_ENABLED && localStorage.getItem(LS_MODE) === "teams" ? "teams" : "simple"));
   const setMode = (m: "simple" | "teams") => {
     setModeState(m);
@@ -159,11 +186,51 @@ export default function App() {
   // stays a normal floating window the user can stretch by hand (adaptive is
   // paused, so a manual drag sticks).
   // Restored to the 680 bar when artifacts vanish or the user backs out.
-  const artMode = !!focused && focused.artifacts.length > 0;
+  // Effective posture: the per-session override wins; absent one, a deliverable
+  // auto-opens the atelier (the original behaviour). Either way `artMode` drives
+  // the wide canvas + paused adaptive height.
+  const focusedPosture = focused ? posture[focused.id] : undefined;
+  const artMode = !!focused && (
+    focusedPosture === "expanded" ||
+    (focusedPosture !== "compact" && focused.artifacts.length > 0)
+  );
+  // Atelier — the fullscreen control room (roster left · conversation centre ·
+  // reflet right). Enterable EMPTY: you launch agents from its left roster, so
+  // it never requires a pre-existing session. The centre shows the focused
+  // session's conversation, or — when nothing is focused — the armed expert's
+  // welcome + starter prompts (the pre-session launch surface).
+  const atelierMode = view === "atelier";
+  const exitAtelier = () => { setView("list"); setFocusedId(null); };
+  // Deliverable opened in the atelier centre (rel) — swaps the conversation for
+  // the ArtifactViewer. Cleared whenever the focused session changes so you
+  // never land on a stale artifact after switching agents.
+  const [atelierArt, setAtelierArt] = useState<string | null>(null);
+  useEffect(() => { setAtelierArt(null); }, [focusedId]);
+  // Atelier rail collapse. When a deliverable opens, both flanking rails (roster
+  // + reflet) fold to thin strips so the conversation|artifact split gets the
+  // full centre (the "focus" posture). Each re-expands on demand via its
+  // chevron; closing the deliverable restores both.
+  const [rosterOpen, setRosterOpen] = useState(true);
+  const [refletOpen, setRefletOpen] = useState(true);
+  // Fold both rails on the transition INTO an open deliverable, restore on the
+  // transition OUT — but not when merely switching between deliverables, so a
+  // rail you re-opened by hand stays open while you flip through them.
+  const prevArt = useRef<string | null>(null);
+  useEffect(() => {
+    const had = prevArt.current !== null, has = atelierArt !== null;
+    if (has && !had) { setRosterOpen(false); setRefletOpen(false); }
+    else if (!has && had) { setRosterOpen(true); setRefletOpen(true); }
+    prevArt.current = atelierArt;
+  }, [atelierArt]);
+  // Peer sessions blocked on the boss (auth / a permission) — surfaced as a
+  // banner in the focused conversation so attention isn't trapped in one room.
+  const peerAlerts: PeerAlert[] = classicSessions
+    .filter((s) => s.id !== focusedId && (s.status === "auth" || !!s.pendingPermission))
+    .map((s) => ({ id: s.id, label: s.expertLabel, reason: s.status === "auth" ? "auth" : "permission" }));
   // Fullscreen is only ever app-driven now (Teams, cabinet, overlays, …); the
   // user reaches it themselves through the native green traffic light, which
   // the app observes via `useNativeFullscreen` below. No window-posture toggle.
-  const isFullscreen = mode === "teams" || overlay || !!cabinet || historyOpen || !onboarded || vaultOpen;
+  const isFullscreen = mode === "teams" || overlay || !!cabinet || historyOpen || !onboarded || vaultOpen || atelierMode;
   useFullscreen(isFullscreen);
   // "Roomy" home = the user maximised the window themselves (green traffic
   // light) while on the home view. The adaptive bar never reaches this state
@@ -204,8 +271,11 @@ export default function App() {
       view,
     ],
   });
-  // Bar width: 680 normally, 1180 in art mode (deliverable side-by-side).
-  useBarWidth(artMode ? 1180 : 680);
+  // Bar width: 680 normally, 1180 in art mode (deliverable side-by-side). In
+  // native fullscreen we pass `null` so we stop forcing a width — the OS owns
+  // the geometry and the responsive `.home` column (capped + centered) takes
+  // over, so the composer + rows fill the canvas instead of sitting at 680.
+  useBarWidth(nativeFs || atelierMode ? null : artMode ? 1180 : 680);
 
   // First time a deliverable opens the side-by-side canvas, give the window a
   // sensible height ONCE (width is handled by useBarWidth above) so the split
@@ -236,6 +306,26 @@ export default function App() {
     }
   }, [experts, expertSlug]);
 
+  // Read a set of file paths through Rust and fold them into pending
+  // attachments — shared by the drag-drop handler and the 📎 paperclip picker.
+  async function attachPaths(paths: string[]) {
+    if (!paths.length) return;
+    try {
+      const raw = await invoke<string>("read_files_for_agent", { paths });
+      addAttachments(JSON.parse(raw) as Attachment[]);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // 📎 paperclip → native file picker → pending attachment(s).
+  async function pickAttachments() {
+    const picked = await openDialog({ multiple: true, directory: false });
+    if (!picked) return;
+    await attachPaths(Array.isArray(picked) ? picked : [picked]);
+    inputRef.current?.focus();
+  }
+
   // drop a file anywhere → pending attachment
   useEffect(() => {
     const un = getCurrentWebview().onDragDropEvent(async (e) => {
@@ -243,14 +333,7 @@ export default function App() {
       else if (e.payload.type === "leave") setDragging(false);
       else if (e.payload.type === "drop") {
         setDragging(false);
-        const paths = e.payload.paths ?? [];
-        if (!paths.length) return;
-        try {
-          const raw = await invoke<string>("read_files_for_agent", { paths });
-          addAttachments(JSON.parse(raw) as Attachment[]);
-        } catch {
-          /* ignore */
-        }
+        await attachPaths(e.payload.paths ?? []);
       }
     });
     return () => {
@@ -366,6 +449,7 @@ export default function App() {
       if (menu) closePickers();
       else if (cabinet) setCabinet(false);
       else if (overlay) setOverlay(false);
+      else if (atelierMode) exitAtelier();
       else if (focused) setFocusedId(null);
       else hide();
     }
@@ -378,12 +462,13 @@ export default function App() {
       {/* chrome */}
       <div className="chrome" onMouseDown={(e) => { if (!(e.target as HTMLElement).closest("button, .wm-name")) startMove(); }}>
         <span className={"wm" + (anyRunning ? " live" : "")}>
-          {/* The lockup: the majordome silhouette is the dot of the "i" — the
-              pocket signature, recognisable without the word. It stays still on
-              purpose; the working heartbeat lives in the session UI, not the
-              chrome. Excluded from window-drag (className wm-name) so its clicks
-              land — 5 quick ones flip the hidden Noir skin (see noirEgg). */}
-          <SplitWordmark className="wm-name" onClick={noirEgg} />
+          {/* The chrome mark stays still on purpose: the working heartbeat
+              lives in the session UI (TurnSpinner, rows), not in the chrome —
+              a glowing logo up here read as noise. */}
+          <SplitMark size={22} />
+          {/* The wordmark is excluded from window-drag so its clicks land —
+              5 quick ones flip the hidden Noir skin (see noirEgg). */}
+          <span className="wm-name" onClick={noirEgg}>split</span>
         </span>
         {/* The night star — only in the sky from midnight, while the bar
             wears Minuit (and kept lit inside Cosmos so you can fly back).
@@ -393,18 +478,29 @@ export default function App() {
         )}
         <span className="chrome-meta">{focused ? `on ${H[focused.harness]?.label || focused.harness}` : classicSessions.length ? `${classicSessions.length} session${classicSessions.length === 1 ? "" : "s"}` : "ready"}</span>
         <span className="spacer" />
-        {onboarded && !focused && (
+        {onboarded && (view === "atelier" || !focused) && (
           <div className="seg" style={{ marginRight: 2 }}>
-            {(["simple", "teams"] as const).map((m) => {
-              const soon = m === "teams" && !TEAMS_ENABLED;
+            {/* Top-level posture: Simple (one expert in the bar) vs Atelier (the
+                whole roster in parallel, fullscreen). Atelier replaces the old
+                Teams slot — Teams (a Chief of Staff conducting the roster) is
+                parked behind TEAMS_ENABLED and folds in here as an atelier
+                sub-mode ("conducted by the AI") later. */}
+            {/* User-facing labels describe the WINDOW: the floating bar is
+                "split" (it shares your screen with your other apps), the
+                fullscreen control room is "focus" (immersive, takes over the
+                screen). The internal codename for the fullscreen mode stays
+                "atelier" (the value of `view`) to avoid colliding with the
+                product name + the art-SPLIT deliverable view. */}
+            {(["simple", "atelier"] as const).map((m) => {
+              const isAtelier = m === "atelier";
+              const on = isAtelier ? view === "atelier" : view !== "atelier";
               return (
                 <button
                   key={m}
-                  className={mode === m ? "on" : ""}
-                  disabled={soon}
-                  onClick={() => setMode(m)}
-                  title={soon ? "Teams — coming soon" : m === "simple" ? "Simple — one expert per session" : "Teams — a Chief of Staff orchestrates the experts"}
-                >{m}</button>
+                  className={on ? "on" : ""}
+                  onClick={() => (isAtelier ? setView("atelier") : exitAtelier())}
+                  title={isAtelier ? "Focus — full screen, the whole roster, no distractions" : "Split — the companion bar, sitting on your desktop"}
+                >{isAtelier ? "focus" : "split"}</button>
               );
             })}
           </div>
@@ -490,18 +586,185 @@ export default function App() {
           fill behaviour Teams uses, so the window owns its own scroll regions
           and the adaptive ResizeObserver is paused (we want a fixed canvas). */}
       {(() => {
-        const bodyCls = "body" + (mode === "teams" || artMode ? " fill" : isFullscreen ? " tall" : "");
-        const measureCls = "measure" + (mode === "teams" || artMode ? " fill" : isFullscreen ? " tall" : "") + (roomyHome && classicSessions.length < 3 ? " center" : "");
+        const bodyCls = "body" + (mode === "teams" || artMode || atelierMode ? " fill" : isFullscreen ? " tall" : "");
+        const measureCls = "measure" + (mode === "teams" || artMode || atelierMode ? " fill" : isFullscreen ? " tall" : "") + (roomyHome && classicSessions.length < 3 ? " center" : "");
+        // A deliverable is open in the atelier → the centre splits (conversation
+        // left, artifact right) and both flanking rails fold for focus.
+        const atelierArtOpen = !!(focused && atelierArt && focused.artifacts.some((a) => a.rel === atelierArt));
         return (
       <div className={bodyCls}>
         <div ref={measureRef} className={measureCls}>
         {!onboarded ? (
           /* ============ ONBOARDING (5 pages: concept · demo · pick · @Wolfgang · @Socrates) ============ */
           <Onboarding onEnter={enterSplit} skin={skin} onPickSkin={pickSkin} />
+        ) : atelierMode ? (
+          /* ============ ATELIER (fullscreen control room: roster · centre · reflet) ============ */
+          <div className="atelier">
+            <AtelierLeft
+              experts={experts}
+              sessions={classicSessions}
+              focusedId={focusedId}
+              armedSlug={expertSlug}
+              onArm={(slug) => { setExpertSlug(slug); setFocusedId(null); }}
+              onFocus={setFocusedId}
+              collapsed={!rosterOpen}
+              onToggleCollapsed={() => setRosterOpen((v) => !v)}
+            />
+            <div className="atelier-conv">
+              {focused ? (
+                <div className={"atelier-stage" + (atelierArtOpen ? " split" : "")}>
+                  <div className="atelier-stage-conv">
+                    <Conversation
+                      session={focused}
+                      experts={experts}
+                      value={value}
+                      inputRef={inputRef}
+                      slashQuery={slashQuery}
+                      chips={chips}
+                      onBack={() => setFocusedId(null)}
+                      onStop={stop}
+                      onClose={() => { stop(focused.id); remove(focused.id); setFocusedId(null); }}
+                      onAuth={sendAuth}
+                      onPermission={sendPermission}
+                      godMode={godMode}
+                      onToggleGodMode={toggleGodMode}
+                      onCancelQueued={cancelQueued}
+                      onInputChange={handleInputChange}
+                      onKey={onKey}
+                      onReply={reply}
+                      onAttach={pickAttachments}
+                      onPickCommand={pickCommand}
+                      onPickArtifact={(_id, rel) => setAtelierArt(rel)}
+                      expanded={true}
+                      onTogglePosture={exitAtelier}
+                      peers={peerAlerts}
+                      onFocusPeer={setFocusedId}
+                    />
+                  </div>
+                  {atelierArtOpen && (
+                    <div className="atelier-split-view">
+                      <div className="atelier-art">
+                        <div className="atelier-art-bar">
+                          <button className="atelier-art-back" onClick={() => setAtelierArt(null)} title="Close deliverable — back to the conversation">✕ close</button>
+                          <ArtifactStrip artifacts={focused.artifacts} activeArtifact={atelierArt!} onPick={(rel) => setAtelierArt(rel)} />
+                        </div>
+                        <div className="atelier-art-body">
+                          <ArtifactViewer artifact={focused.artifacts.find((a) => a.rel === atelierArt)!} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="atelier-welcome">
+                  {/* atmosphere — concentrated blooms + drifting starfield behind the hero */}
+                  <div className="aw-atmos" aria-hidden="true">
+                    <i className="aw-bloom b2" /><i className="aw-bloom b3" /><i className="aw-bloom b1" />
+                    <div className="aw-stars">
+                      {AW_STARS.map((s, i) => (
+                        <span
+                          key={i}
+                          className={"aw-star" + (s.big ? " big" : "")}
+                          style={vars({ left: s.left, top: s.top, "--tw": s.tw, "--td": s.td })}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="aw-hero">
+                    <span className="aw-kicker"><span className="aw-pulse" />Atelier · new session</span>
+
+                    <div className="aw-crest-wrap">
+                      <span className="aw-crest-halo" aria-hidden="true" />
+                      <Crest kind={experts[expertSlug]?.kind} seed={expertSlug} size={120} />
+                    </div>
+
+                    <h2 className="aw-greet">Hi, I'm your <span className="aw-em">{expertLabel}</span>.</h2>
+                    {experts[expertSlug]?.blurb && <p className="aw-blurb">{experts[expertSlug]!.blurb}</p>}
+
+                    <div className="aw-meta">
+                      {experts[expertSlug]?.kind && <span className="aw-chip"><span className="aw-k">{experts[expertSlug]!.kind}</span></span>}
+                      <span className="aw-chip eng"><span className="aw-dot" /><span className="aw-k">engine</span> {H[active]?.label || active}</span>
+                    </div>
+
+                    {(experts[expertSlug]?.starters?.length ?? 0) > 0 && (
+                      <div className="aw-starters">
+                        {experts[expertSlug]!.starters!.map((s, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            className="aw-starter"
+                            onClick={() => { handleInputChange(s, null); inputRef.current?.focus(); }}
+                          >
+                            <span className="aw-idx">{String(i + 1).padStart(2, "0")}<span className="aw-arrow">→</span></span>
+                            <span className="aw-label">{s}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="aw-footer">
+                    <Composer
+                      experts={experts} expertSlug={expertSlug} expertLabel={expertLabel} active={active}
+                      engines={enabledHarnesses} onAddAgent={() => setOverlay(true)}
+                      menu={menu} setMenu={setMenu} setActive={setActive}
+                      value={value} onChange={handleInputChange} onKey={onKey} onRun={launch} chips={chips} inputRef={inputRef}
+                      expertEntries={filteredExperts} onPickExpert={pickExpert}
+                      projects={filteredProjects} onPickProject={pickProject}
+                      lockExpert onAttach={pickAttachments}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            {!refletOpen ? (
+              <button className="rail-stub right" onClick={() => setRefletOpen(true)} title="Expand the reflet">
+                <span className="rail-stub-x">‹</span>
+                <span className="rail-stub-label">Reflet</span>
+                <span className="rail-stub-dots">
+                  {(focused?.artifacts ?? []).slice(0, 4).map((a) => <span key={a.rel} className="rail-stub-dot" />)}
+                </span>
+              </button>
+            ) : focused ? (
+              <Reflet session={focused} experts={experts} onPickArtifact={(_id, rel) => setAtelierArt(rel)} onCollapse={() => setRefletOpen(false)} />
+            ) : (
+              <aside className="reflet" aria-label="About the agent">
+                <button className="reflet-collapse" onClick={() => setRefletOpen(false)} title="Collapse">›</button>
+                <div className="reflet-card">
+                  <Crest kind={experts[expertSlug]?.kind} seed={expertSlug} size={44} />
+                  <div className="reflet-id">
+                    <div className="reflet-name">{expertLabel}</div>
+                    <div className="reflet-on">{experts[expertSlug]?.role || experts[expertSlug]?.category || "agent"}</div>
+                  </div>
+                </div>
+                <details className="reflet-sec" open>
+                  <summary>About</summary>
+                  <div className="reflet-body"><p className="reflet-task">{experts[expertSlug]?.blurb}</p></div>
+                </details>
+                {(experts[expertSlug]?.skills?.length ?? 0) > 0 && (
+                  <details className="reflet-sec" open>
+                    <summary>Skills <span className="reflet-count">{experts[expertSlug]!.skills!.length}</span></summary>
+                    <div className="reflet-body reflet-pills">
+                      {experts[expertSlug]!.skills!.map((s) => <span key={s} className="reflet-pill">{s}</span>)}
+                    </div>
+                  </details>
+                )}
+              </aside>
+            )}
+          </div>
         ) : focused ? (
           /* ============ CONVERSATION (+ artifact viewer when deliverables exist) ============ */
           artMode ? (
             <div className="art-split" style={{ ["--rail-w" as string]: `${railWidth}px` }}>
+              {classicSessions.length > 1 && (
+                <AttentionRail
+                  sessions={classicSessions}
+                  focusedId={focusedId}
+                  experts={experts}
+                  onFocus={setFocusedId}
+                />
+              )}
               <div className="art-split-conv">
                 <Conversation
                   session={focused}
@@ -521,8 +784,13 @@ export default function App() {
                   onInputChange={handleInputChange}
                   onKey={onKey}
                   onReply={reply}
+                  onAttach={pickAttachments}
                   onPickCommand={pickCommand}
                   onPickArtifact={pickArtifact}
+                  expanded={true}
+                  onTogglePosture={() => togglePosture(focused.id, true)}
+                  peers={peerAlerts}
+                  onFocusPeer={setFocusedId}
                 />
               </div>
               <div
@@ -531,7 +799,7 @@ export default function App() {
                 role="separator"
                 aria-orientation="vertical"
                 aria-label="Resize conversation rail"
-                title="Glisser pour redimensionner"
+                title="Drag to resize"
               />
               <div className="art-split-view">
                 {(() => {
@@ -539,7 +807,13 @@ export default function App() {
                     ?? focused.artifacts[focused.artifacts.length - 1]?.rel
                     ?? null;
                   const art = activeRel ? focused.artifacts.find((a) => a.rel === activeRel) : null;
-                  return art ? <ArtifactViewer artifact={art} /> : null;
+                  return art ? <ArtifactViewer artifact={art} /> : (
+                    <div className="art-empty">
+                      <div className="art-empty-ic">🗒️</div>
+                      <div className="art-empty-t">Atelier open</div>
+                      <div className="art-empty-s">No deliverable yet — it'll show up here once {focused.expertLabel} produces one.</div>
+                    </div>
+                  );
                 })()}
               </div>
             </div>
@@ -562,8 +836,13 @@ export default function App() {
             onInputChange={handleInputChange}
             onKey={onKey}
             onReply={reply}
+            onAttach={pickAttachments}
             onPickCommand={pickCommand}
             onPickArtifact={pickArtifact}
+            expanded={false}
+            onTogglePosture={() => togglePosture(focused.id, false)}
+            peers={peerAlerts}
+            onFocusPeer={setFocusedId}
           />
           )
         ) : mode === "teams" ? (
@@ -591,6 +870,7 @@ export default function App() {
               value={value} onChange={handleInputChange} onKey={onKey} onRun={launch} chips={chips} inputRef={inputRef}
               expertEntries={filteredExperts} onPickExpert={pickExpert}
               projects={filteredProjects} onPickProject={pickProject}
+              onAttach={pickAttachments}
             />
 
             {/* The minimal-bar idle state shows ONLY the composer — adaptive
@@ -602,29 +882,19 @@ export default function App() {
             <div className="sec sec-row">
               <span>sessions</span>
               <span className="muted">each on its own engine</span>
-              <span className="spacer" />
-              <div className="seg">
-                {(["list", "stage"] as const).map((v) => (
-                  <button key={v} className={view === v ? "on" : ""} onClick={() => setView(v)} title={v === "list" ? "List view" : "Live stage"}>{v}</button>
-                ))}
-              </div>
             </div>
-            {view === "stage" ? (
-              <Stage sessions={classicSessions} onOpen={setFocusedId} onStop={stop} onClose={remove} />
-            ) : (
-              <div className="sessions">
-                {classicSessions.length === 0 ? (
-                  <div className="empty">No sessions yet — brief an expert above.<br />Its engine's logo shows here while it runs.</div>
-                ) : (
-                  classicSessions.map((s) => <SessionRow key={s.id} s={s} kind={experts[s.expertSlug]?.kind} onOpen={() => setFocusedId(s.id)} onStop={() => stop(s.id)} onClose={() => remove(s.id)} />)
-                )}
-                {TEAMS_ENABLED && teamSessionsCount > 0 && (
-                  <button className="teams-pointer" onClick={() => setMode("teams")}>
-                    {teamSessionsCount} team session{teamSessionsCount === 1 ? "" : "s"} running in Teams →
-                  </button>
-                )}
-              </div>
-            )}
+            <div className="sessions">
+              {classicSessions.length === 0 ? (
+                <div className="empty">No sessions yet — brief an expert above.<br />Its engine's logo shows here while it runs.</div>
+              ) : (
+                classicSessions.map((s) => <SessionRow key={s.id} s={s} kind={experts[s.expertSlug]?.kind} onOpen={() => setFocusedId(s.id)} onStop={() => stop(s.id)} onClose={() => remove(s.id)} />)
+              )}
+              {TEAMS_ENABLED && teamSessionsCount > 0 && (
+                <button className="teams-pointer" onClick={() => setMode("teams")}>
+                  {teamSessionsCount} team session{teamSessionsCount === 1 ? "" : "s"} running in Teams →
+                </button>
+              )}
+            </div>
             </>}
 
             {/* The cabinet/gallery opens only from the chrome button now — the

@@ -18,8 +18,12 @@ export function Composer(props: {
   // Vault projects for the `#` picker (already filtered by the typed query).
   projects: string[];
   onPickProject: (slug: string) => void;
+  // Atelier mode: the expert is already armed, so the `@expert` picker is hidden.
+  lockExpert?: boolean;
+  // When set, render a 📎 paperclip that opens a native file picker to attach.
+  onAttach?: () => void;
 }) {
-  const { menu, setMenu, active, setActive, engines, onAddAgent, expertSlug, experts, expertLabel, value, onChange, onKey, onRun, chips, inputRef, expertEntries, onPickExpert, projects, onPickProject } = props;
+  const { menu, setMenu, active, setActive, engines, onAddAgent, expertSlug, experts, expertLabel, value, onChange, onKey, onRun, chips, inputRef, expertEntries, onPickExpert, projects, onPickProject, lockExpert, onAttach } = props;
   return (
     <div className="composer">
       {menu === "engine" && (
@@ -39,7 +43,7 @@ export function Composer(props: {
           </button>
         </div>
       )}
-      {menu === "expert" && (
+      {!lockExpert && menu === "expert" && (
         <div className="menu">
           {expertEntries.length === 0 ? (
             <div className="mi mi-empty">No expert matches that name. Type a different prefix or press Esc.</div>
@@ -113,12 +117,17 @@ export function Composer(props: {
         <Logo id={active} size={15} themed />
         {H[active]?.label || active}
       </button>
-      <button className="pick" onClick={() => setMenu(menu === "expert" ? null : "expert")} title={`@${expertLabel} — ${experts[expertSlug]?.role ?? "Expert"}`}>
-        @{expertLabel} <span className="k pick-role">{experts[expertSlug]?.role ?? ""}</span> <span className="k">▾</span>
-      </button>
+      {!lockExpert && (
+        <button className="pick" onClick={() => setMenu(menu === "expert" ? null : "expert")} title={`@${expertLabel} — ${experts[expertSlug]?.role ?? "Expert"}`}>
+          @{expertLabel} <span className="k pick-role">{experts[expertSlug]?.role ?? ""}</span> <span className="k">▾</span>
+        </button>
+      )}
       {chips}
       <input ref={inputRef} value={value} onChange={(e) => onChange(e.target.value, e.target.selectionStart)} onKeyDown={onKey}
         placeholder={`Brief @${experts[expertSlug]?.label || "your expert"} on ${H[active]?.label || active}…`} />
+      {onAttach && (
+        <button className="clip" onClick={onAttach} title="Attach a file" aria-label="Attach a file">📎</button>
+      )}
       <button className="run" onClick={onRun} title="Run">▶</button>
     </div>
   );

@@ -133,8 +133,13 @@ export function useAdaptiveHeight(opts: {
  *  occasional views that need more room — e.g. the "Your agents" overlay or
  *  any future model-picker — can breathe. Restores to the default on unmount
  *  by re-applying it on every effect run (last write wins). */
-export function useBarWidth(width: number) {
+export function useBarWidth(width: number | null) {
   useEffect(() => {
+    // `null` = don't touch the width — used when the window is natively
+    // fullscreen, where forcing 680 just fights the OS geometry (macOS ignores
+    // the resize but the attempt still churns) and the CSS column owns the
+    // layout instead. Skipping it keeps the webview full-width and stable.
+    if (width == null) return;
     invoke("set_bar_width", { width }).catch(() => { /* ignore */ });
   }, [width]);
 }
