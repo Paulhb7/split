@@ -59,13 +59,14 @@ feed vs. an app preview).
 | Expert | Kind | What it does | Leans on |
 |---|---|---|---|
 | **Toscanini** / Chief of Staff | operator | Conducts a team: delegates, tracks work, synthesizes | built-in team orchestration |
-| **Wolfgang** / Consultant | researcher | Web research → a sharp, **cited** briefing, then slides or Word memos | `web-search`, `frontend-slides`, `docx`, `image-search`, `web-deploy` |
-| **Curie** / Scientist | researcher | Literature review, paper search, replication planning, cross-field synthesis | `web-search`, `paper-search`, `docx`, `frontend-slides`, `web-deploy` |
+| **Wolfgang** / Consultant | researcher | Web research → a sharp, **cited** briefing, then slides or Word memos | `frontend-slides`, `docx`, `image-search`, `web-deploy` |
+| **Curie** / Scientist | researcher | Literature review, paper search, replication planning, cross-field synthesis | `paper-search`, `docx`, `frontend-slides`, `web-deploy` |
 | **Buffett** / Financier | analyst | Markets, FP&A, personal finance, investor reporting | `market-data`, `dashboard`, `frontend-slides`, `docx`, `web-deploy` |
-| **Cicero** / Lawyer | advisor | Legal guidance, risk reads, contract drafts and clauses | `web-search`, `docx`, `legal-templates` |
+| **Cicero** / Lawyer | advisor | Legal guidance, risk reads, contract drafts and clauses | `docx`, `legal-templates` |
 | **Turing** / Data Analyst | analyst | CSV/Excel exploration, models, dashboards, interactive reports | `dashboard`, `ui-ux-pro-max`, `frontend-slides`, `docx`, `web-deploy` |
 | **Tesla** / Engineer | builder | Builds micro-apps and landing pages, then ships them to a public URL | `web-deploy`, `image-search`, `ui-ux-pro-max` |
-| **DaVinci** / Designer | creator | Brand identities, UI mockups, static graphics, redesigns | `web-audit`, `image-search`, `graphics`, `ui-ux-pro-max`, `frontend-slides` |
+| **Designer** / UI & prototypes | creator | Interactive app & website mockups (HTML/WebGL), handed to Engineer to build | `ui-ux-pro-max` |
+| **DaVinci** / Art Director | creator | Visual worlds, brand identities, generative graphics, redesigns | `web-audit`, `image-search`, `graphics`, `ui-ux-pro-max`, `frontend-slides` |
 | **Alfred** / Operator | operator | Drives real macOS apps in the background | `cua-driver` (background macOS app control via the AX tree) |
 | **Bach** / Musician | creator | Generates original tracks from a prompt | `music-gen` |
 | **Homer** / Podcaster | creator | Scripts, voices, scores, and edits podcast episodes | `voice-gen`, `music-gen` |
@@ -98,7 +99,7 @@ is silently skipped, so a persona may name a skill before it exists.
 
 Vendored in [`config/skills/`](config/skills/):
 
-- **Research / retrieval:** `web-search`, `paper-search`, `image-search`.
+- **Research / retrieval:** `paper-search`, `image-search`.
 - **Documents / presentations:** `docx`, `frontend-slides`.
 - **Design / frontend / dashboards:** `ui-ux-pro-max`, `web-audit`, `graphics`,
   `dashboard`, `web-deploy`.

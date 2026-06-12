@@ -151,8 +151,9 @@ in the thread as a 📎 chip. `display` (thread) vs `wire` (sent to the agent) a
   workspace's `AGENTS.md` (+ `AGENTS.md`/`GEMINI.md`/`QWEN.md` shims).
 - **Tools** — [config/tools.json](config/tools.json): MCP servers (`mcpServers` shape,
   `${VAR}` env expansion) fed to every agent via ACP `session/new`. Currently: `everything`
-  (the MCP demo server, used by the README run-loop example) and `ddg-search` (keyless
-  DuckDuckGo web search via `uvx duckduckgo-mcp-server`, exposing `search` + `fetch_content`).
+  (the MCP demo server, used by the README run-loop example) and `cua-driver` (background
+  macOS app control via the AX tree, used by the `operator` expert). Web search is **not**
+  a Split tool — experts use their harness's native grounded search (see `_discipline.md`).
 - **Skills** — [config/skills/](config/skills/)`<name>/` follow the open **[Agent Skills](https://agentskills.io)
   standard**: a folder with a required `SKILL.md` (`name` + `description` frontmatter +
   instructions) plus optional `scripts/`/`references/`/`assets/`. **Single projection,
