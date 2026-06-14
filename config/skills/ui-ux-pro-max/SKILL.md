@@ -12,7 +12,7 @@ template-generation are dropped — we wrote our own SKILL.md.
 This SKILL.md is rewritten for Split to add one rule that doesn't exist
 upstream: when working *inside* Split's own design system (slide decks
 shipped by Consultant / Financier, dashboards, the Designer's default
-brand kits), `split-default` and the `frontend-slides`/`graphics`/`dashboard`
+brand kits), `split-default` and the `frontend-slides`/`dashboard`
 preset rules **win** over recommendations from this skill. Treat this
 skill as a queryable reference, not a prescriptive default.
 -->
@@ -47,9 +47,9 @@ that system, **do not let this skill override the house style.**
 | --- | --- |
 | Slide decks shipped by Consultant / Financier / Designer | `frontend-slides` + `split-default` preset (or the user-named preset from the bold-template-pack). This skill is a side reference, not the source of truth. |
 | Dashboards from Data Analyst / Financier | `dashboard` skill with `split-default` or `terminal` preset. This skill is a side reference for chart vocabulary only. |
-| Static graphics (posters, social, banners) | `graphics` skill. This skill suggests style ideas but the `graphics` preset rules win. |
+| Static graphics (posters, social, banners) | `frontend-slides` rendered to a fixed-dimension frame. This skill suggests style ideas but the house preset rules win. |
 | Brand identities (Designer's brand kit) | The Designer's moodboard workflow (Stage 1). This skill can populate the moodboard with palette options, but the final system is hand-built. |
-| Brand-adapted Stock Pitch deck | The analyzed company's brand color comes from the company's brand guidelines (web-audit / their site), not from this skill. |
+| Brand-adapted Stock Pitch deck | The analyzed company's brand color comes from the company's brand guidelines (their live site), not from this skill. |
 | **Anything else** (Q's landing pages, ad-hoc UI mockups, mobile apps, third-party brand work, design reviews) | This skill is fully in-scope. Use it freely. |
 
 The rule of thumb: **inside Split-owned design systems**, this skill
