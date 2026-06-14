@@ -50,42 +50,42 @@ export interface ExpertContent {
 
 // Keyed by expert slug. Adding a new expert here unlocks its detail page.
 export const EXPERT_CONTENT: Record<string, ExpertContent> = {
-  // ---- GENIUS HERO — walk-in worlds ----
-  // Powered by the image-blaster skill (World Labs marble-1.1 for the
-  // gaussian splat, Hunyuan 3D for meshes, ElevenLabs SFX for sound).
-  // The signature move: one image in, a walkable 3D scene out. DaVinci
-  // still does brand identities / UI mockups / static graphics, but
-  // the world is the headline.
+  // ---- GENIUS HERO — immersive scenes ----
+  // Powered by higgsfield-generate: an establishing image (Soul Location /
+  // GPT Image) → a textured 3D model (multi_image_to_3d, .glb) + a cinematic
+  // fly-through (Seedance image-to-video) + ambient sound (Mirelo), shipped as
+  // a Three.js viewer. DaVinci still does brand identities / UI mockups /
+  // static graphics, but the scene is the headline.
   genius_davinci: {
-    tagline: "Give him an image. Step into the world it implies.",
+    tagline: "Give him an image. Explore the scene it implies.",
     useCases: [
       {
         hook: "to prototype a game level",
-        prompt: "Drop in: a screenshot of a level concept. → A walkable 3D scene with grabbable props (.glb) + ambient sound, Unity / Three.js ready.",
-        preview: { kind: "placeholder", note: "Real 3D walkthrough video coming — run @DaVinci on this brief to populate." },
+        prompt: "Drop in: a screenshot of a level concept. → A textured 3D model (.glb, Unity/Unreal/Godot-ready) + a fly-through clip + ambient sound, in a Three.js viewer.",
+        preview: { kind: "placeholder", note: "Real 3D scene coming — run @DaVinci on this brief to populate." },
       },
       {
         hook: "to revisit a memory",
-        prompt: "Drop in: a childhood photo (your bedroom, grandma's kitchen, the camp). → A walkable 3D version I can step into in the browser, with ambient sound.",
-        preview: { kind: "placeholder", note: "Real walk-in scene coming — run @DaVinci on this brief to populate." },
+        prompt: "Drop in: a childhood photo (your bedroom, grandma's kitchen, the camp). → An orbitable 3D model of the place + a slow fly-through, with ambient sound, in the browser.",
+        preview: { kind: "placeholder", note: "Real 3D scene coming — run @DaVinci on this brief to populate." },
       },
       {
         hook: "to scout a location",
-        prompt: "Drop in: a reference image of a place (Lyon 1930s street, Tokyo back alley, Mars dome). → A 3D scout + 20 framing variants + an ambient mix for the scene.",
+        prompt: "Drop in: a reference image of a place (Lyon 1930s street, Tokyo back alley, Mars dome). → A 3D scout model + a cinematic move-through + an ambient mix for the scene.",
         preview: { kind: "placeholder", note: "Real 3D scout coming — run @DaVinci on this brief to populate." },
       },
       {
         hook: "for an architecture client",
-        prompt: "Drop in: an architectural render. → A walkable Three.js demo with spatialized sound — share the URL with your client.",
-        preview: { kind: "placeholder", note: "Real walkable demo coming — run @DaVinci on this brief to populate." },
+        prompt: "Drop in: an architectural render. → An orbitable 3D model + a fly-through video with ambient sound — share the Three.js URL with your client.",
+        preview: { kind: "placeholder", note: "Real 3D demo coming — run @DaVinci on this brief to populate." },
       },
     ],
     deliverables: [
-      "Walkable 3D scene as a gaussian splat (.spz) — opens in your browser",
-      "3D meshes (.glb / .obj) for the dynamic objects, PBR materials by default",
-      "Ambient loop + per-object physics SFX (.mp3)",
+      "Textured 3D model (.glb) of the scene — orbits in your browser",
+      "Cinematic fly-through video (.mp4) through the place",
+      "Ambient sound loop (.mp3) matched to the scene",
       "Deployable Three.js viewer (public URL) — share without installing",
-      "Importable in Unity / Unreal / Godot / Blender",
+      "Model importable in Unity / Unreal / Godot / Blender",
     ],
   },
 

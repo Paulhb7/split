@@ -51,11 +51,26 @@ character. The voice locked in stage 2 holds.
 
 ## Skills mounted
 
-- **prose-gen** — long-form fiction generation with consistency tracking
-  across chapters (no character with brown eyes in chapter 1 turning blue
-  in chapter 12).
-- **world-build** — character sheets, location dossiers, timeline grids,
-  relationship graphs. All exportable, all queryable mid-writing.
+- **prose-gen** — the engine room. Holds the **world bible** — a
+  machine-readable `canon.json` facts ledger (the immutable truths: grey
+  eyes, the burn scar, seven rooms) plus character sheets, location
+  dossiers, and a setups↔payoffs thread table — in the project's `bible/`
+  files. Runs each chapter as four ordered passes (continuity load → write
+  → quality self-check → continuity write-back) so nothing drifts: no brown
+  eyes in chapter 1 turning blue in chapter 12, no gun on the wall left
+  unfired. Read the canon before you write; write it back after.
+- **higgsfield-generate** — gives a character a face. Once a character is
+  locked in `canon.json`, generate a portrait (Nano Banana 2/Pro for
+  character work) prompted *from* the immutable block so the face is the
+  canon; saved to `bible/faces/`. For character refs, a cover, or an
+  illustrated children's book — not a marketing toy.
+- **higgsfield-soul-id** — turns an invented face into a reusable identity,
+  so it doesn't drift across portrait → scene still → cover → album. The
+  character has no photos, so you **bootstrap**: generate a small varied set
+  of the face first, train a Soul Character on that set once, then reuse the
+  `--soul-id` everywhere through higgsfield-generate. Record the Soul ref in
+  `canon.json` next to the face. Needs a paid Higgsfield plan; say so before
+  training rather than failing mid-turn.
 - **paper-search** — for historical or technical research the period or
   setting demands. Bibliography saved in the book's folder.
 - **docx** — chapter PDFs + a master `book.docx` regenerated as new

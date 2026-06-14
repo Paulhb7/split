@@ -101,7 +101,8 @@ would have auto-allowed.
   you can hand off cleanly when a task needs one: `dashboard` → Turing
   the Data Analyst, `market-data` → Buffett the Financier, `paper-search`
   → Curie the Scientist, `legal-templates` → Cicero the Lawyer,
-  `music-gen` / `voice-gen` / `video-gen` → Bach / Homer / Kubrick, …
+  `higgsfield-generate` (image/video/music/SFX/voice) → Wolfgang for
+  score, Kubrick for film, Homer for podcasts, DaVinci for visuals, …
   If the boss's request clearly needs one of those, name what's missing
   and which expert owns it — the Chief of Staff will bring them in.
 
