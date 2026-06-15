@@ -256,6 +256,16 @@ fn detect_mime(path: &std::path::Path) -> &'static str {
         "webp" => "image/webp",
         "svg" => "image/svg+xml",
         "pdf" => "application/pdf",
+        "mp3" => "audio/mpeg",
+        "m4a" => "audio/mp4",
+        "aac" => "audio/aac",
+        "wav" => "audio/wav",
+        "ogg" | "oga" | "opus" => "audio/ogg",
+        "flac" => "audio/flac",
+        "mp4" | "m4v" => "video/mp4",
+        "mov" => "video/quicktime",
+        "webm" => "video/webm",
+        "ogv" => "video/ogg",
         _ => "application/octet-stream",
     }
 }
@@ -269,6 +279,11 @@ fn classify_artifact(path: &std::path::Path) -> &'static str {
     match ext.as_str() {
         "png" | "jpg" | "jpeg" | "gif" | "webp" | "svg" => "image",
         "pdf" => "pdf",
+        // Media — streamed to the webview via the asset protocol
+        // (`convertFileSrc`), not inlined: range-requests from disk so video
+        // seeks and the inline cap doesn't apply.
+        "mp3" | "m4a" | "aac" | "wav" | "ogg" | "oga" | "opus" | "flac" => "audio",
+        "mp4" | "m4v" | "mov" | "webm" | "ogv" => "video",
         // Text-like: rendered as markdown if `.md`, as a code block
         // otherwise (the React viewer picks based on extension).
         "md" | "markdown" | "txt" | "log" | "rs" | "ts" | "tsx" | "js" | "jsx" | "py" | "go"
@@ -288,6 +303,18 @@ fn read_artifact(path: String) -> Result<String, String> {
     }
     let size = meta.len();
     let kind = classify_artifact(&p);
+    // Audio/video are served straight off disk by the webview's asset protocol
+    // (the React side builds the URL with `convertFileSrc`), so we neither read
+    // the bytes here nor apply the inline cap — the player range-requests and
+    // seeks against the file directly, however big it is.
+    if matches!(kind, "audio" | "video") {
+        return Ok(json!({
+            "kind": kind,
+            "size": size,
+            "mime": detect_mime(&p),
+        })
+        .to_string());
+    }
     if size > ARTIFACT_INLINE_CAP {
         return Ok(json!({
             "kind": "binary",

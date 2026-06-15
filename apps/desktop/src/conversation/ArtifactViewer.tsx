@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { save as saveDialog } from "@tauri-apps/plugin-dialog";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -79,11 +79,14 @@ const HTML_EDIT_INJECTION = `
 
 // Server-side classification echoed back by `read_artifact`. "text" is rendered
 // by extension (md → markdown, csv → table, html → iframe, anything else → code
-// block); "image" / "pdf" use the embedded data URL; "binary" / fallthrough →
-// metadata card with an "open in default app" button.
+// block); "image" / "pdf" use the embedded data URL; "audio" / "video" stream
+// off disk via the asset protocol (no inline content — the URL is built from
+// the artifact path); "binary" / fallthrough → metadata card with an "open in
+// default app" button.
 type Payload =
   | { kind: "text"; size: number; content: string }
   | { kind: "image" | "pdf"; size: number; mime: string; content: string }
+  | { kind: "audio" | "video"; size: number; mime: string }
   | { kind: "binary"; size: number; mime: string; tooLarge?: boolean };
 
 function extOf(rel: string): string {
@@ -548,6 +551,36 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
         )}
         {payload && payload.kind === "pdf" && (
           <iframe className="art-iframe" src={payload.content} title={artifact.rel} />
+        )}
+        {payload && payload.kind === "audio" && (
+          <div className="art-media">
+            <audio
+              className="art-audio"
+              src={convertFileSrc(artifact.path)}
+              controls
+              preload="metadata"
+            />
+            <div className="art-media-meta">
+              {payload.mime} · {humanSize(payload.size)}
+              {" · "}
+              <button className="art-media-link" onClick={reveal}>open in default app</button>
+            </div>
+          </div>
+        )}
+        {payload && payload.kind === "video" && (
+          <div className="art-media">
+            <video
+              className="art-video"
+              src={convertFileSrc(artifact.path)}
+              controls
+              preload="metadata"
+            />
+            <div className="art-media-meta">
+              {payload.mime} · {humanSize(payload.size)}
+              {" · "}
+              <button className="art-media-link" onClick={reveal}>open in default app</button>
+            </div>
+          </div>
         )}
         {payload && payload.kind === "binary" && (
           <div className="art-fallback">

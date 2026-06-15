@@ -22,7 +22,10 @@ tauri-build = { version = "2", features = [] }
 # allows the NSVisualEffectView vibrancy layer (lib.rs) to show through the
 # skins' translucent gradient stacks. Paired with `macOSPrivateApi: true` +
 # `transparent: true` in tauri.conf.json.
-tauri = { version = "2", features = ["macos-private-api"] }
+# `protocol-asset` serves local files to the webview via the `asset:` protocol
+# (`convertFileSrc`) — the artifact/vault viewers use it to stream audio/video
+# off disk with range-request seeking. Scope lives in tauri.conf.json.
+tauri = { version = "2", features = ["macos-private-api", "protocol-asset"] }
 tauri-plugin-global-shortcut = "2"
 # Native file dialogs (save / open picker) for the artifact-rail "Save a copy…"
 # button. Cross-platform — wraps NSSavePanel on macOS, IFileDialog on Windows,
