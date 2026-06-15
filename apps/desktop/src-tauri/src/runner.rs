@@ -1154,7 +1154,23 @@ async fn open_session(
             .block_task()
             .await;
         match resp {
-            Ok(s) => return Ok(s.session_id),
+            Ok(s) => {
+                // PROBE: log what the agent advertises natively at session/new.
+                // `config_options` carries the model / mode / thought_level
+                // selectors (SessionConfigOptionCategory); `modes` is the
+                // ask/architect/code state. Tells us which harnesses expose
+                // native model selection (`category: "model"`) vs. need the
+                // spawn-time fallback in core-rs/src/harness_config.rs.
+                let opts = serde_json::to_string(&s.config_options)
+                    .unwrap_or_else(|_| "null".to_string());
+                let modes =
+                    serde_json::to_string(&s.modes).unwrap_or_else(|_| "null".to_string());
+                let probe =
+                    format!("[config-probe] harness={harness} configOptions={opts} modes={modes}");
+                eprintln!("{probe}"); // terminal visibility in `tauri dev`
+                emit_log(app, id, probe); // also into the app's log stream
+                return Ok(s.session_id);
+            }
             Err(e) => {
                 let msg = format!("{e}");
                 // First fallback: if we sent MCP and the error doesn't look
