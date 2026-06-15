@@ -1,0 +1,91 @@
+---
+title: "Homer"
+description: "Scripts, voices and edits full podcasts"
+---
+
+<Info>**Genius** · creator · slug `genius_homer`</Info>
+
+You bring a topic, a manuscript, or a cast of speakers. Homer handles the whole
+chain — script → voicing → music → stitching → publishing — and hands back a
+finished, mastered audio piece built for the ear.
+
+Where [Wolfgang](/experts/genius/wolfgang) composes the music itself, Homer
+**produces spoken audio** — podcasts, interviews, and audiobooks.
+
+## What it delivers
+
+A **mastered audio episode or audiobook**, publish-ready:
+
+- **scripted multi-voice audio** — podcast episodes, interviews (including
+  imagined ones — Arendt vs a 2026 AI ethicist), daily briefs: a hook, named
+  segments, distinct voices, a music bed, a sign-off,
+- **long-form single-voice audio** — audiobooks, chapter by chapter, one
+  narrator, chaptered file ready for Audible / Spotify Audiobooks / a private
+  library,
+- the **mastered episode file** (`.mp3`, loudnorm to −16 LUFS) alongside
+  **show notes + transcript** (`notes.md`, `transcript.md`),
+- for a series, an **RSS feed** (`feed.xml`) you can submit to podcast directories,
+- for audiobooks, **one MP3 per chapter** plus a chaptered master (`.m4b` with
+  markers, or `.mp3` + `chapters.txt`).
+
+## When to pick it
+
+Pick **Homer** for anything spoken — a podcast, an interview, a narrated brief,
+an audiobook. Pick [Wolfgang](/experts/genius/wolfgang) instead when you want
+the *music* itself, or [Kubrick](/experts/genius/kubrick) when the voice belongs
+inside a short film with visuals.
+
+## How to drive it
+
+Start from a topic, a script, or a manuscript:
+
+```
+Write a podcast episode on this theme
+Give this script a voice
+Edit a full episode
+```
+
+Attach the manuscript, the script, or the show brief — Homer reads it first to
+detect chapters, dialogue blocks, and the beats before voicing anything.
+
+## What comes back
+
+A single mastered file (loudnorm to −16 LUFS for podcasts), stitched with
+`ffmpeg`, with the **absolute path** reported plus a short rundown of what's in
+it. Podcasts ship with `notes.md` / `transcript.md` (the transcript is the SEO
+surface); audiobooks ship as `audiobook/<slug>/chapter-01.mp3` … `master.m4b`,
+`cover.jpg`, `manifest.json`. Each Higgsfield generation prints its **result
+media URL**; a series feed (`feed.xml`) is published via `web-deploy`. Files land
+in the session workspace; move keepers into the vault with **Keep in vault**.
+
+## Leans on
+
+One generation engine for the full audio bench — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `higgsfield-generate` | **voice** via **Inworld Text to Speech** (`inworld_text_to_speech`, `--prompt` + `--voice`); **music** via **Sonilo** for intro/outro beds; **stings / ambience** via **Mirelo** |
+
+(Plus host tools — shell + files — to stitch with `ffmpeg`, master with loudnorm
+passes, and chapterise the master file.)
+
+## Prerequisites & limits
+
+- **External engine — Higgsfield AI.** Generation runs through the `higgsfield`
+  CLI, not an in-house engine. Homer specifically drives Higgsfield's
+  **voice/audio models** (Inworld Text to Speech for narration and dialogue,
+  Sonilo for beds, Mirelo for ambience). It needs a **Higgsfield account** and
+  `higgsfield auth login`; in the app, sign in via the **Connect Higgsfield**
+  chip in the conversation header. No raw key is ever asked for in chat.
+- **Costs credits, and some models need a paid plan.** Each generation is a real
+  Higgsfield call that costs credits (~2 credits per TTS generation); certain
+  models require a **paid Higgsfield plan**. Homer is deliberate — especially on
+  long audiobooks, where re-rendering every chapter hurts; it offers to test one
+  chapter before committing.
+- **No queryable voice catalog.** There is no CLI voice list. `--voice default`
+  is the safe fallback; for specific or distinct named voices, Homer confirms the
+  names with you rather than guessing, and documents the cast (`cast.md` /
+  `narrator.md`) to keep a series consistent.
+- **Synthesised voice is not voice acting.** For emotional fiction, the result
+  will sound *competent*, not *moving* — Homer surfaces that up front. Music beds
+  can fight the talk; it ducks or drops the bed rather than muddy the voice.

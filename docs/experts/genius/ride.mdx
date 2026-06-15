@@ -1,0 +1,82 @@
+---
+title: "Ride"
+description: "Reads the sky live — NASA/ESA/JWST feeds, sky tonight, ISS passes — as gorgeous live pages"
+---
+
+<Info>**Genius** · researcher · slug `genius_ride`</Info>
+
+You bring a place, a date, or a mission. Ride connects live to NASA, ESA, JPL
+and the open astronomy data ecosystem and turns that telemetry into something
+you can *see*, *read*, or *use* — tonight, this week, this mission.
+
+## What it delivers
+
+The signature artifact is a **deployed interactive HTML page** that re-queries
+the astro APIs in the browser, not a deck that goes stale by morning:
+
+- **the sky tonight** — what's visible from your lat/lon (planets, moon phase,
+  ISS/Starlink passes, meteor showers, eclipses) with viewing windows and
+  alt-azimuth, recomputed from the device clock;
+- **mission feeds** — annotated latest photos/data from Mars rovers, JWST,
+  Hubble, the ISS, active missions, re-fetched on reload;
+- **live trackers** — ISS pass timelines, spacecraft positions, NEO asteroid
+  feeds, exoplanet/transit updates;
+- **educational explainers** — `frontend-slides` rendered to HTML with live
+  data baked in and a refresh button where the API allows.
+
+## When to pick it
+
+Pick **Ride** for anything live in the sky — observing tonight, mission status,
+trackers, exoplanet news — rendered as a page that stays current. Pick
+[Scientist](/experts/super/scientist) instead for a literature review or a
+state-of-the-art map of a research field rather than live sky data.
+
+## How to drive it
+
+Start from a question about the sky:
+
+```
+What's in the sky tonight?
+Show the latest JWST images
+When does the ISS pass over me?
+```
+
+Tell it your location once (it remembers your lat/lon locally; without it,
+defaults to Paris and flags so).
+
+## What comes back
+
+Ride announces a 3-5 bullet plan, then ships in the same turn. The page renders
+**live in the artifact pane** and is **deployed by default** via `web-deploy` to
+a public URL (a sky page is only useful if you can reopen it). Each output saves
+to `~/Desktop/ride-<topic>-<YYYYMMDD>/`: `inputs.json`, `figures/`, `report.md`,
+the deployed `index.html`, and `viewer-url.txt` with the public URL. Every
+figure is sourced and timestamped (e.g. "NASA APOD 2026-06-02").
+
+## Leans on
+
+A live + compute + render astronomy stack — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `nasa-api` | NASA Open APIs (live): APOD, Mars rover photos, NeoWs asteroids, DONKI space weather/aurora, EPIC, the image library, the Exoplanet Archive |
+| `astropy` | sky math (compute): alt-az from a lat/lon, rise/set, moon phase, sidereal time, frame transforms, FITS I/O — runs offline once installed |
+| `astro-data` | archives & tracking: `astroquery` for MAST (JWST/Hubble/TESS), SIMBAD/VizieR/Gaia, JPL Horizons, ESASky; `skyfield` for ISS/satellite passes from live TLEs |
+| `sky-viz` | the render layer (signature): single-file interactive pages — Aladin atlas, Three.js orbits/globes, D3/Plotly timelines & charts, FITS viewers |
+| `frontend-slides` | explainer decks / print briefings, deployable |
+| `docx` | printable briefs |
+| `web-deploy` | `share.sh` ships sky pages + trackers to a public URL |
+
+## Prerequisites & limits
+
+- **NASA key optional.** NASA endpoints accept a free `NASA_API_KEY` to lift the
+  rate limit; a rate-limited `DEMO_KEY` works out of the box without one.
+- **Compute skills need Python.** `astropy` and `astro-data` (`astroquery` /
+  `skyfield`) run from a Python install once their deps are present; `astropy`
+  runs offline after install.
+- **ESA via ESASky.** There's no clean ESA REST API — ESA coverage comes through
+  ESASky in `astro-data`.
+- **Honesty by design.** Ride distinguishes detection from confirmation, press
+  release from peer-reviewed paper, plausible from measured — and flags bad
+  weather or a silent mission rather than overselling. Some sources are gone
+  (e.g. no InSight Mars weather — the lander died in 2022).

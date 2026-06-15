@@ -1,0 +1,73 @@
+---
+title: "Using an expert"
+description: "Pick one, brief it, get a deliverable back — the interaction model that holds for every expert."
+---
+
+An **expert** is a *persona + skills + tools* you talk to in its own session.
+You learn the pattern once; it holds for all of them. What changes between
+experts is *who* you're talking to and *what they ship* — see
+[Choosing an expert](/experts/choosing) for the full roster.
+
+## 1. Pick one
+
+Desktop: choose an expert from the roster (or the composer's picker). Terminal:
+address it with `@<slug>` (`@consultant`, `@curie`). Each pick opens a **session**
+— the expert's persistent workspace, with its persona projected and its skills
+mounted. You can open several at once and let them **run side by side**.
+
+## 2. Brief it
+
+Type a request in plain language. Every expert ships **starters** — three
+suggested first prompts that show what it's for:
+
+```
+Investigate a rare disease            # @curie
+Build a P&L tracking dashboard         # @financier
+Mock up an app from this idea          # @designer
+```
+
+**Attach files** by dropping them on the window — they fold into your next turn
+as a 📎 chip (the content is sent to the agent; the thread shows the chip).
+
+<Note>
+First launch of a harness can lag — the agent CLI downloads on first use. After
+that the session stays open across turns (no replay), so follow-ups are fast.
+</Note>
+
+## 3. Read what comes back
+
+The answer **streams** as the expert thinks, plans, and works. Most experts
+don't just chat — they produce an **artifact** (a dashboard, a slide deck, a
+report, a 3D scene) that opens in the artifact pane. Artifacts open with a short
+exec-summary header (why / context / how / what was assumed).
+
+## 4. Keep what matters
+
+The agent's workspace is scratch — kept across runs, but not curated. Deliverables
+worth keeping move into your **vault** (`~/Documents/SplitVault`) with the
+**Keep in vault** action (🗃️). The vault is the only durable, boss-owned store;
+the [memory](/concepts/memory) doctrine (auto-mounted on every expert) governs
+what experts file there and recall later.
+
+## How experts compose
+
+- **Skills are mounted per expert** — exactly the kit that persona is allowed,
+  nothing else. See [Skills](/concepts/skills).
+- **The persona is portable** — projected into `AGENTS.md` (+ `CLAUDE.md` /
+  `GEMINI.md` / `QWEN.md` shims), so the *same* expert runs unchanged on Claude,
+  Codex, Gemini, Qwen… See [The model](/get-started/the-model).
+- **Toscanini** (Chief of Staff) conducts a team of experts: delegates, tracks,
+  synthesizes — when one request spans several experts.
+
+## What each expert page tells you
+
+Every page in this tab follows the same shape, so you always know where to look:
+
+| Section | Answers |
+|---|---|
+| **What it delivers** | the concrete artifacts you get |
+| **When to pick it** | and which neighbour to pick instead |
+| **How to drive it** | starters, good first prompts, what to attach |
+| **What comes back** | output format + where it lands |
+| **Leans on** | skills + tools it's built from |
+| **Prerequisites & limits** | keys, accounts, auth, honest edges |

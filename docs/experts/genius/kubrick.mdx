@@ -1,0 +1,94 @@
+---
+title: "Kubrick"
+description: "Directs short films — visual + score + voice, in one piece"
+---
+
+<Info>**Genius** · creator · slug `genius_kubrick`</Info>
+
+You bring an idea — a teaser, an ad, a music video, a Ken-Burns clip from a
+photo. Kubrick directs it into a finished short you can share: visuals, score,
+voice, and the cut, in one piece.
+
+Where [Wolfgang](/experts/genius/wolfgang) composes the music and
+[Homer](/experts/genius/homer) produces the spoken audio, Kubrick **directs the
+whole short** and folds those layers into a single edited film.
+
+## What it delivers
+
+A **finished short film — 15–30 seconds, exceptionally 60** — plus a re-editable
+folder:
+
+- a **logline**, then a **shot list** (3–6 shots) that locks characters,
+  setting, lighting, and style, repeated in every shot prompt for coherence,
+- the master cut as **`master-h.mp4`** (1920×1080) and a **`master-v.mp4`**
+  (1080×1920) vertical variant when the brief asks for both (social ads, TikTok /
+  Instagram),
+- the **raw shots** (`shots/01.mp4 … 06.mp4`), the **score** (`score.mp3`),
+  the **voice tracks** (`voice/*.mp3`), the **shot list** (`shot-list.md`), the
+  **style sheet** (`style.md`), and the **`ffmpeg` recipe** (`cut.sh`) — so you
+  or a human editor can re-cut without re-generating,
+- a recurring character held consistent shot to shot via a trained **Soul
+  Character** `reference_id`.
+
+## When to pick it
+
+Pick **Kubrick** when you want a complete short film — visuals, score, and voice
+cut together. Pick [Wolfgang](/experts/genius/wolfgang) instead when you only
+need the *music*, or [Homer](/experts/genius/homer) when you only need *spoken
+audio*. Kubrick will say no to "make me a 5-minute film" and counter-propose a
+stronger short — multi-shot coherence in generative video is hard, and a strong
+20-second clip beats a flat two-minute one.
+
+## How to drive it
+
+Start from an idea, a scene, or a brief:
+
+```
+Direct a short film from this idea
+Storyboard this scene
+Compose the image, music, and voice
+```
+
+Attach a reference photo, a sketch, or a written brief — Kubrick opens with the
+logline and shot list so you redirect before any shot is generated.
+
+## What comes back
+
+A re-editable **folder** with the master cut(s) at the root and every layer
+beside them (raw shots, score, voice, shot list, style sheet, `cut.sh`). Kubrick
+reports the **path of the master cut** plus one line on what to refine next
+("shot 3 loses the character — re-shoot it image-to-video from shot 2's last
+frame, with the Soul `reference_id`"). Each Higgsfield job prints its **result
+media URL** for the generated video/audio. Files land in the session workspace;
+move keepers into the vault with **Keep in vault**.
+
+## Leans on
+
+The full generative bench plus identity consistency — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `higgsfield-generate` | **video** (Seedance 2.0, Kling 3.0, Cinema Studio), **storyboard images** (GPT Image 2 / Nano Banana / Z Image), **score** (Sonilo Music), **SFX / ambience** (Mirelo), **voice** (Inworld TTS) |
+| `higgsfield-soul-id` | trains the protagonist's face **once** into a Soul Character → `reference_id` reused in every shot — the main weapon against character drift |
+
+(Plus host tools — shell + files — for the `ffmpeg` stitch, mastering, and format
+variants.)
+
+## Prerequisites & limits
+
+- **External engine — Higgsfield AI.** Generation runs through the `higgsfield`
+  CLI, not an in-house engine. Kubrick specifically drives Higgsfield's **video
+  models** (Seedance 2.0, Kling 3.0, Cinema Studio) and its **Soul ID** character
+  models, plus Sonilo/Mirelo/Inworld for score, ambience, and voice. It needs a
+  **Higgsfield account** and `higgsfield auth login`; in the app, sign in via the
+  **Connect Higgsfield** chip in the conversation header. No raw key is ever
+  asked for in chat.
+- **Costs credits, and video / Soul training need a paid plan.** Each shot is real
+  money on the Higgsfield account — video is the expensive part, **a free plan
+  won't cover it** (storyboard frames on Z Image are near-free), and **Soul
+  Character training requires a paid Higgsfield plan**. Kubrick doesn't loop — it
+  diagnoses what went wrong, refines the prompt, and re-shoots one shot.
+- **Multi-shot coherence is still hard.** A trained Soul Character holds the face
+  far better than re-prompting, but lighting and framing can still jump — Kubrick
+  catches the drift, surfaces it, and you decide whether to re-shoot or live with
+  it. It pushes back on scope creep in favour of the short that holds.

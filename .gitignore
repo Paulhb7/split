@@ -20,6 +20,12 @@ split-python/
 # generated state · vendored harness binaries · retired code (all under var/)
 var/
 
+# graphify knowledge-graph outputs (regenerated from source on demand)
+graphify-out/
+
+# ACP spec/docs mirror (reference only, re-fetchable from agentclientprotocol.com)
+acp-docs/
+
 # parked / unused files moved out of the live tree (audit cleanup)
 archive/
 

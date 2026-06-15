@@ -42,6 +42,55 @@
         ]
       },
       {
+        "tab": "Experts",
+        "groups": [
+          {
+            "group": "Start here",
+            "pages": [
+              "experts/overview",
+              "experts/choosing"
+            ]
+          },
+          {
+            "group": "Super — the jobs",
+            "pages": [
+              "experts/super/consultant",
+              "experts/super/scientist",
+              "experts/super/financier",
+              "experts/super/lawyer",
+              "experts/super/data-analyst",
+              "experts/super/engineer",
+              "experts/super/designer",
+              "experts/super/toscanini"
+            ]
+          },
+          {
+            "group": "Genius — the unlocks",
+            "pages": [
+              "experts/genius/davinci",
+              "experts/genius/curie",
+              "experts/genius/tesla",
+              "experts/genius/ride",
+              "experts/genius/maradona",
+              "experts/genius/bronte",
+              "experts/genius/wolfgang",
+              "experts/genius/homer",
+              "experts/genius/kubrick",
+              "experts/genius/socrates"
+            ]
+          },
+          {
+            "group": "Coach — the growth",
+            "pages": [
+              "experts/coach/diet",
+              "experts/coach/learning",
+              "experts/coach/sport",
+              "experts/coach/cooking"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "Concepts",
         "groups": [
           {

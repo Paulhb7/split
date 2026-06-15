@@ -1,0 +1,88 @@
+---
+title: "Wolfgang"
+description: "Composes original music — songs, scores, soundtracks"
+---
+
+<Info>**Genius** · creator · slug `genius_wolfgang`</Info>
+
+You bring a feeling, a moment, a picture, or a one-line brief. Wolfgang turns it
+into a finished, mixed track you could not prompt for yourself — cross-modal
+translation from image, poem, or video into the score it implies.
+
+Where [Homer](/experts/genius/homer) produces spoken audio (podcasts, voices),
+Wolfgang **composes the music itself** — songs, scores, ambient beds.
+
+## What it delivers
+
+A single **mixed audio file** — one finished piece, ready to drop into a project:
+
+- **songs, scores, soundtracks, audio logos, ambient beds** — 4 seconds to a few
+  minutes, with sung or spoken voice when the form asks for it,
+- **cross-modal translation**: an image (painting, photo, album cover) → the score
+  it implies; a poem → music for the words; a short video → its score, paced to
+  the cuts; a vague brief → a sharpened concept you can react to,
+- a one-line **read of the input** before generation ("you gave me a Rothko at
+  dusk; I hear cello drone + slow piano"), so you redirect *before* the audio is
+  made, not after,
+- one or two concrete next variations on delivery ("same track, +20bpm" / "no
+  vocals, strings only" / "sax replaces piano").
+
+## When to pick it
+
+Pick **Wolfgang** when you want original music — a theme, a song, a soundtrack,
+a bed. Pick [Homer](/experts/genius/homer) instead when the output is spoken
+audio (a podcast episode, narration, an audiobook), or
+[Kubrick](/experts/genius/kubrick) when you want a complete short film where the
+music is one layer among visuals and voice.
+
+## How to drive it
+
+Start from a feeling, a brief, or an attachment:
+
+```
+Compose a theme for this project
+Write a song about this topic
+Make an ambient soundtrack
+```
+
+Attach the source it should translate — an image, a poem, a video, or a written
+brief. Wolfgang reads it, states its read in one line, then writes the prompt.
+
+## What comes back
+
+A single mixed track (Sonilo returns a finished mix, **not separated stems**).
+Wolfgang reports the **absolute file path** so you can play or share it, plus one
+or two variations to ask for next. The Higgsfield job prints the **result media
+URL** for the generated audio; the file lands in the session workspace, and you
+move keepers into the vault with **Keep in vault**.
+
+## Leans on
+
+One generation engine, two audio paths — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `higgsfield-generate` | the composition engine: **Sonilo Music** (`sonilo_music`, `--prompt` + `--duration`) for songs / scores / beds / audio logos; **Mirelo Text to Audio** for non-musical SFX, foley, ambience |
+
+(Plus host tools — shell + filesystem — to receive attachments, inspect them,
+and stage the prompt.)
+
+## Prerequisites & limits
+
+- **External engine — Higgsfield AI.** Generation runs through the `higgsfield`
+  CLI, not an in-house engine. Wolfgang specifically drives Higgsfield's
+  **music/audio models** (Sonilo Music, Mirelo Text to Audio). It needs a
+  **Higgsfield account** and `higgsfield auth login`; in the app, sign in via the
+  **Connect Higgsfield** chip in the conversation header. No raw key is ever
+  asked for in chat.
+- **Costs credits, and some models need a paid plan.** Each track is a real
+  Higgsfield generation that costs credits; certain models require a **paid
+  Higgsfield plan**. Wolfgang is deliberate — one track per attempt, iterate the
+  *prompt* not the seed.
+- **No separated stems.** Sonilo returns a finished mix, not isolated
+  vocals/piano/drums. If you need stems, that isn't available from this engine —
+  Wolfgang offers prompt variations instead.
+- **No pastiche of living artists** (legal exposure). It matches a tradition, a
+  movement, or a register without naming the artist. Contradictory briefs (soft
+  poem, "aggressive industrial") are surfaced *before* generating so you pick the
+  side.

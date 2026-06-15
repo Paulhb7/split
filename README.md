@@ -50,30 +50,59 @@ config on one side; the agent's working home on the other.
 
 ---
 
-## Experts (12 so far)
+## Experts (26 in the roster — super · genius · coach)
 
-Pick one with `@` (terminal: `@consultant`; desktop: the picker). The
-**kind** is informational — it tells the UI how to render (chat panel vs. a step
-feed vs. an app preview).
+Pick one with `@` (terminal: `@consultant`; desktop: the picker). The **kind** is
+informational — it tells the UI how to render (chat panel vs. a step feed vs. an
+app preview). Three tiers: **super** agents are jobs (their label *is* the role);
+**genius** agents are historical figures unlocking outputs you couldn't produce
+alone; **coach** agents help you grow in a life domain. A few are *deferred* —
+visible in the Cabinet but off the active picker until a needed piece ships.
+
+**Super agents — the jobs**
 
 | Expert | Kind | What it does | Leans on |
 |---|---|---|---|
-| **Toscanini** / Chief of Staff | operator | Conducts a team: delegates, tracks work, synthesizes | built-in team orchestration |
-| **Wolfgang** / Consultant | researcher | Web research → a sharp, **cited** briefing, then slides or Word memos | `frontend-slides`, `docx`, `image-search`, `web-deploy` |
-| **Curie** / Scientist | researcher | Literature review, paper search, replication planning, cross-field synthesis | `paper-search`, `docx`, `frontend-slides`, `web-deploy` |
-| **Buffett** / Financier | analyst | Markets, FP&A, personal finance, investor reporting | `market-data`, `dashboard`, `frontend-slides`, `docx`, `web-deploy` |
-| **Cicero** / Lawyer | advisor | Legal guidance, risk reads, contract drafts and clauses | `docx`, `legal-templates` |
-| **Turing** / Data Analyst | analyst | CSV/Excel exploration, models, dashboards, interactive reports | `dashboard`, `ui-ux-pro-max`, `frontend-slides`, `docx`, `web-deploy` |
-| **Tesla** / Engineer | builder | Builds micro-apps and landing pages, then ships them to a public URL | `web-deploy`, `image-search`, `ui-ux-pro-max` |
-| **Designer** / UI & prototypes | creator | Interactive app & website mockups (HTML/WebGL), handed to Engineer to build | `ui-ux-pro-max` |
-| **DaVinci** / Art Director | creator | Visual worlds, brand identities, generative graphics, redesigns | `web-audit`, `image-search`, `graphics`, `ui-ux-pro-max`, `frontend-slides` |
-| **Alfred** / Operator | operator | Drives real macOS apps in the background | `cua-driver` (background macOS app control via the AX tree) |
-| **Bach** / Musician | creator | Generates original tracks from a prompt | `music-gen` |
-| **Homer** / Podcaster | creator | Scripts, voices, scores, and edits podcast episodes | `voice-gen`, `music-gen` |
-| **Kubrick** / Director | creator | Produces short videos from an idea, shot list, score, and narration | `video-gen`, `music-gen`, `voice-gen` |
+| **Toscanini** / Chief of Staff | operator | Conducts the team: delegates, drives to closure, synthesizes | built-in team orchestration |
+| **Consultant** | researcher | Web research into ready slides or markdown memos | `frontend-slides` |
+| **Scientist** | researcher | Maps the state of the art, builds idea bridges, drafts lit reviews | `paper-search`, `literature-review`, `scientific-brainstorming`, `hypothesis-generation`, `networkx`, `docx`, `frontend-slides`, `web-deploy` |
+| **Financier** | analyst | Markets, FP&A, personal finance & reporting | `market-data`, `model-audit`, `dashboard`, `ui-ux-pro-max`, `frontend-slides`, `docx`, `web-deploy` |
+| **Lawyer** | advisor | Legal guidance, risk reads & contract drafts | `docx`, `legal-templates`, `contract-review` |
+| **Data Analyst** | analyst | Explores CSV/Excel data, ships interactive dashboards | `dashboard`, `ui-ux-pro-max`, `frontend-slides`, `docx`, `web-deploy` |
+| **Engineer** | builder | Builds micro-apps & landing pages, ships them to a public URL | `web-deploy`, `ui-ux-pro-max` |
+| **Designer** / UI & prototypes | creator | Gorgeous interactive app & site mockups, ready to hand to Engineer | `ui-ux-pro-max` |
+| **Project Manager** · *deferred* | organizer | Turns "we need X by Y" into a real plan with owners, dates, status | `docx`, `frontend-slides`, `dashboard`, `web-deploy` |
+| **Sales** · *deferred* | advisor | Tracks leads, drafts outreach, closes the loop on every deal | `docx`, `frontend-slides` |
+
+**Genius agents — the unlocks**
+
+| Expert | Kind | What it does | Leans on |
+|---|---|---|---|
+| **DaVinci** / world-builder | creator | Turns an image into an immersive 3D scene; brand identities, mockups, redesigns | `higgsfield-generate` / `-soul-id` / `-product-photoshoot` / `-marketplace-cards`, `ui-ux-pro-max`, `frontend-slides`, `docx`, `web-deploy` |
+| **Wolfgang** / composer | creator | Composes original music — songs, scores, soundtracks | `higgsfield-generate` (Sonilo music, Mirelo SFX) |
+| **Homer** / audio producer | creator | Scripts, voices and edits full podcasts | `higgsfield-generate` (Inworld voice, Sonilo, Mirelo) |
+| **Kubrick** / director | creator | Directs short films — visual + score + voice, in one piece | `higgsfield-generate`, `higgsfield-soul-id` |
+| **Brontë** / novelist | creator | Writes novels — characters, arcs, world, voice, by chapter | `prose-gen`, `paper-search`, `higgsfield-generate`, `docx`, `web-deploy` |
+| **Ride** / astronomer | researcher | Reads the sky live — NASA/ESA/JWST feeds, sky tonight, ISS passes — as gorgeous live pages | `nasa-api`, `astropy`, `astro-data`, `sky-viz`, `frontend-slides`, `docx`, `web-deploy` |
+| **Curie** / scientist | researcher | Frontier scientist for orphan diseases — targets, structures, drug repurposing | `rdkit`, `esm`, `diffdock`, `medchem`, `molecular-dynamics`, `pymatgen`, `scanpy`, `biopython`, `primekg`, `pytdc`, `database-lookup`, `paper-lookup`, `paper-search` |
+| **Tesla** / mechanical engineer | builder | Designs 3D-printable parts & mechanisms — parametric CAD, animated, in a shareable report | `cad-design`, `ui-ux-pro-max`, `web-deploy`, `docx` |
+| **Maradona** / Le Diez | analyst | Live football dossiers: form, xG, the key duel, his verdict | `football-data`, `metadata`, `sports-news`, `sports-reporter`, `frontend-slides`, `docx`, `web-deploy` |
+| **Socrates** / recruiter | recruiter | Interviews you to design your own custom experts | persona-only |
+| **Alfred** / Majordome · *deferred* | operator | Drives your Mac apps with your logins, books, runs admin | `cua-driver` (background macOS app control via the AX tree) |
+| **Indie** / archive hunter · *deferred* | finder | Hunts rare manuscripts, lost archives, out-of-print texts, primary sources | `paper-search`, `docx`, `web-deploy` |
+
+**Coaches — grow in a life domain** (all on `coach-tracker`, `docx`, `frontend-slides`)
+
+| Expert | Kind | What it does |
+|---|---|---|
+| **Diet Coach** / nutrition | coach | Builds meal plans, decodes nutrition labels, holds you accountable |
+| **Learning Coach** / study | coach | Maps a syllabus for any topic, ships flashcards & weekly checks (+ `paper-search`) |
+| **Sport Coach** / training | coach | Designs your training cycle, progressive overload, recovery plan |
+| **Cooking Coach** / cuisine | coach | Teaches techniques, scales recipes, suggests substitutions live |
 
 Personas live in [`config/experts/`](config/experts/); the registry + render-kinds
-are in [`config/experts.json`](config/experts.json).
+are in [`config/experts.json`](config/experts.json). The `memory` skill (vault
+doctrine) is auto-mounted on every expert and isn't listed per-row.
 
 ---
 
@@ -97,15 +126,34 @@ on every call — adding a skill to `experts.json` makes it appear on next launc
 removing one unlinks it. A declared skill not yet vendored under `skills/<name>/`
 is silently skipped, so a persona may name a skill before it exists.
 
-Vendored in [`config/skills/`](config/skills/):
+Vendored in [`config/skills/`](config/skills/) (~40, grouped):
 
-- **Research / retrieval:** `paper-search`, `image-search`.
-- **Documents / presentations:** `docx`, `frontend-slides`.
-- **Design / frontend / dashboards:** `ui-ux-pro-max`, `web-audit`, `graphics`,
-  `dashboard`, `web-deploy`.
-- **Finance / legal:** `market-data`, `legal-templates`.
-- **Generation:** `music-gen`, `voice-gen`, `video-gen`; these call fal.ai /
-  ElevenLabs and need `FAL_KEY` / `ELEVENLABS_API_KEY` where applicable.
+- **Documents / web / design:** `docx`, `frontend-slides`, `web-deploy`,
+  `ui-ux-pro-max`, `dashboard`.
+- **Research / retrieval / writing:** `paper-search`, `paper-lookup`,
+  `literature-review`, `scientific-brainstorming`, `hypothesis-generation`,
+  `database-lookup`, `prose-gen`.
+- **Finance / legal:** `market-data`, `model-audit`, `legal-templates`,
+  `contract-review`.
+- **Science (Curie):** `rdkit`, `esm`, `diffdock`, `medchem`,
+  `molecular-dynamics`, `pymatgen`, `scanpy`, `biopython`, `primekg`, `pytdc`,
+  `networkx` — Python scientific stacks; install on first use.
+- **Astronomy (Ride):** `nasa-api` (NASA Open APIs, `DEMO_KEY` works),
+  `astropy` (sky math), `astro-data` (astroquery + skyfield), `sky-viz`
+  (WebGL star maps / orbits / trackers).
+- **Engineering (Tesla):** `cad-design` — parametric CadQuery → STL/STEP/GLB +
+  WebGL viewer, with animated-assembly output for mechanisms.
+- **Sport (Maradona):** `football-data`, `sports-news`, `sports-reporter`,
+  `metadata`.
+- **Coaching:** `coach-tracker`.
+- **Generation (DaVinci / Wolfgang / Homer / Kubrick):** `higgsfield-generate`,
+  `higgsfield-soul-id`, `higgsfield-product-photoshoot`,
+  `higgsfield-marketplace-cards` — wrap the `higgsfield` CLI (browser sign-in via
+  the **Connect Higgsfield** chip, generations cost credits). One account covers
+  image, video, 3D, music (Sonilo), SFX (Mirelo) and voice (Inworld TTS) — no
+  provider API keys.
+- **Cross-cutting:** `memory` (the $SPLIT_VAULT doctrine) — auto-mounted on
+  every expert, not declared per-expert.
 
 ---
 
@@ -320,7 +368,7 @@ var/                  # generated / vendored — gitignored, safe to delete
   sessions/           #   per-session archive (events.ndjson + meta.json), same shape both backends
   memory/             #   cross-session expert memory — survives `rm -rf workspace/`
     _user/USER.md     #     about the boss; every expert reads this
-    <expert>/MEMORY.md#     this expert's own notes (Wolfgang's, Cicero's, …)
+    <expert>/MEMORY.md#     this expert's own notes (Curie's, Tesla's, …)
   bin/                #   downloaded harness binaries (opencode, vibe-acp, cursor-agent)
   _retired/           #   parked code (the old web front: server.py + web/)
 
@@ -407,10 +455,10 @@ there's real external distribution.
   workspace instruction files still see it. This is pragmatic, but it is not a
   standardized ACP system prompt; the underlying model's own instruction stack
   can still leak through.
-- **Skills:** per-expert (`config/experts.json`), currently 15 vendored in
-  `config/skills/` (whole folders, per the Agent Skills standard). The gen-skills
-  need `FAL_KEY` / `ELEVENLABS_API_KEY`; the other skills are local or use the
-  harness's own search/tools.
+- **Skills:** per-expert (`config/experts.json`), currently 17 vendored in
+  `config/skills/` (whole folders, per the Agent Skills standard). The
+  `higgsfield-*` skills wrap the `higgsfield` CLI (browser sign-in, credits);
+  the other skills are local or use the harness's own search/tools.
 - **`terminal/*` is not implemented** (we advertise `terminal: false`). Agents
   that run tools in-process (Claude, Codex) are fine; one needing the client to
   host a terminal will degrade — itself a finding.
