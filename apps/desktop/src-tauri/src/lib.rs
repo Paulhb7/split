@@ -1215,6 +1215,61 @@ fn browser_login(harness: String) -> Result<String, String> {
     Ok(json!({ "ok": true, "cmd": argv.join(" ") }).to_string())
 }
 
+// --- third-party tool logins -------------------------------------------------
+// Some skills wrap a vendor CLI that needs its own browser sign-in — separate
+// from harness ACP auth and from provider API keys (e.g. the higgsfield-* media
+// skills mounted on the Designer). The UI surfaces a "connect" chip for these.
+// Both maps are allowlisted so the UI can't run arbitrary binaries.
+
+// Login: device-login CLIs open the user's browser themselves, so a detached
+// spawn is enough (same shape as `browser_login`). stdin null → no TTY block.
+fn tool_login_cmd(tool: &str) -> Option<&'static [&'static str]> {
+    Some(match tool {
+        "higgsfield" => &["higgsfield", "auth", "login"],
+        _ => return None,
+    })
+}
+
+// Status: a cheap, local "are we signed in?" probe — exits non-zero when not.
+// `higgsfield auth token` just reads the on-disk creds file (no network).
+fn tool_status_cmd(tool: &str) -> Option<&'static [&'static str]> {
+    Some(match tool {
+        "higgsfield" => &["higgsfield", "auth", "token"],
+        _ => return None,
+    })
+}
+
+#[tauri::command]
+fn tool_login(tool: String) -> Result<String, String> {
+    let argv = tool_login_cmd(&tool).ok_or_else(|| format!("No login for tool {tool}"))?;
+    let (program, args) = argv.split_first().expect("tool_login_cmd entries are non-empty");
+    Command::new(program)
+        .args(args)
+        .env("PATH", child_path())
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    Ok(json!({ "ok": true, "cmd": argv.join(" ") }).to_string())
+}
+
+#[tauri::command]
+fn tool_status(tool: String) -> Result<String, String> {
+    let argv = tool_status_cmd(&tool).ok_or_else(|| format!("No status for tool {tool}"))?;
+    let (program, args) = argv.split_first().expect("tool_status_cmd entries are non-empty");
+    let ok = Command::new(program)
+        .args(args)
+        .env("PATH", child_path())
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+    Ok(json!({ "tool": tool, "state": if ok { "ready" } else { "missing" } }).to_string())
+}
+
 // --- API keys ----------------------------------------------------------------
 // Provider keys the ACP harnesses may need. The bar collects them and we persist
 // to the OS secret store (macOS Keychain / Windows Credential Manager / Linux
@@ -2345,6 +2400,8 @@ pub fn run() {
             delete_archived_session,
             list_experts,
             browser_login,
+            tool_login,
+            tool_status,
             read_files_for_agent,
             save_api_key,
             harness_states,

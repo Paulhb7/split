@@ -177,7 +177,8 @@ export default function Onboarding({
   // and the launch CTA clear it. Letting users browse fiches in onboarding
   // — see the real artifact before committing — is a Big Sell moment.
   const [ficheSlug, setFicheSlug] = useState<string | null>(null);
-  const { states, progress } = useHarnessStates();
+  const lifecycle = useHarnessStates();
+  const { states, progress } = lifecycle;
   const experts = useExperts();
 
   const engineId = picks[0] || "claude"; // "primary" = the first picked agent
@@ -281,7 +282,7 @@ export default function Onboarding({
             <div className="ob-eyebrow">pick your agents · 02</div>
             <h2 className="ob2-h2">Pick your <em>agents</em></h2>
             <div className="ob2-pickhint">The ones you have access to. Split shows only these; add more anytime. {picks.length > 0 && <b>{picks.length} selected</b>}</div>
-            <League isSelected={(id) => picks.includes(id)} onPick={toggle} />
+            <League isSelected={(id) => picks.includes(id)} onPick={toggle} lifecycle={lifecycle} />
             {picks.length > 0 && primarySt && (
               <div className="ob2-primary" style={vars({ "--brand": H[engineId].brand })}>
                 <div className="ob2-primary-head">

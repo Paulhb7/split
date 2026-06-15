@@ -577,11 +577,21 @@
 .jx:hover { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, transparent); background: color-mix(in srgb, var(--bad) 10%, transparent); }
 
 /* ============================ CONVERSATION ============================ */
-.conv { max-width: 820px; margin: 0 auto; padding: 14px 35px 18px; display: flex; flex-direction: column; min-height: 100%; }
-.conv-head { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
+.conv { max-width: 820px; margin: 0 auto; padding: 14px 35px 18px; display: flex; flex-direction: column; height: 100%; min-height: 0; }
+/* The conversation is a fixed-height panel: only the thread scrolls; the header,
+   deliverables strip, logs and reply composer stay pinned (flex: none). */
+.conv-head { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; flex: none; }
+.conv > .composer, .conv .deliv-wrap, .conv .logs, .conv .slash-menu, .conv .art-strip { flex: none; }
 .conv-title { font-weight: 700; font-size: 17px; letter-spacing: -0.02em; }
 .conv-on { font-family: var(--mono); font-size: 11px; color: var(--dim); }
 .conv-on b { color: var(--engine); }
+/* vendor-CLI sign-in chip (e.g. Higgsfield) — sits in the conv-head, styled
+   like .card-act but tuned for the header row. */
+.toolchip { font-family: var(--mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 9px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--dim); cursor: pointer; transition: 0.15s; white-space: nowrap; }
+.toolchip:hover:not(:disabled) { color: var(--text); border-color: var(--text); }
+.toolchip.ok { color: var(--good); border-color: color-mix(in srgb, var(--good) 35%, var(--line)); opacity: 0.8; }
+.toolchip:disabled { cursor: default; }
+.toolchip:disabled:not(.ok) { opacity: 0.5; }
 /* small harness mark inline before its name (e.g. "on ◐ Codex · running") */
 .conv-on .logo { display: inline-block; vertical-align: -0.2em; margin-right: 4px; }
 /* Reading surface — "voile plat" (design/conv-surface-proposal.html, option D):
@@ -593,7 +603,11 @@
    whose hard rim read as too much contrast against the page. */
 .thread {
   position: relative;
-  display: flex; flex-direction: column; gap: 14px; flex: 1;
+  display: flex; flex-direction: column; gap: 14px;
+  /* The thread is the conversation's single scroll region. min-height: 0 lets
+     it shrink below its content inside the flex column so overflow engages
+     instead of pushing the pinned composer off-screen. */
+  flex: 1; min-height: 0; overflow-y: auto;
   /* Extra top/bottom padding so the prose floats inside the panel with real
      breathing room — the panel hugs this box, so its gap to the head above and
      the composer below comes from here, not from negative bleed. */
@@ -615,6 +629,10 @@
   backdrop-filter: blur(7px) saturate(1.03);
   -webkit-backdrop-filter: blur(7px) saturate(1.03);
 }
+/* In the fill layout the thread owns the scroll, so this absolute wash would
+   scroll out from under the prose. Drop it for the compact focused conversation
+   (the art-split and atelier paths already neutralise it just below). */
+.measure.fill > .conv .thread::before { display: none; }
 .turn { display: flex; flex-direction: column; gap: 4px; }
 .turn-head { display: flex; align-items: center; gap: 8px; }
 .turn .role { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim2); }
@@ -1532,7 +1550,11 @@
 .art-split-conv {
   flex: 0 0 var(--rail-w, 460px);
   min-width: 0; max-width: none;
-  min-height: 0; overflow-y: auto;
+  /* A flex column so the inner .conv fills the card and its thread owns the
+     scroll — the head + composer stay pinned inside the rounded panel rather
+     than scrolling the whole card. */
+  min-height: 0; overflow: hidden;
+  display: flex; flex-direction: column;
   margin: 12px 0 12px 12px;
   border-radius: 16px;
   border: 1px solid var(--rim);
@@ -1659,6 +1681,22 @@
 .art-md a { color: var(--brand); }
 .art-img { max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 8px; }
 .art-iframe { width: 100%; height: 100%; min-height: 480px; border: 0; background: #fff; border-radius: 6px; }
+
+/* Audio / video players — file streamed off disk via the asset protocol. The
+   wrapper centres the player and pins the tiny mime/size + open-externally line
+   beneath it (kept as a fallback for codecs WKWebView can't decode, e.g. webm). */
+.art-media { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px 0; }
+.art-audio { width: 100%; max-width: 560px; }
+.art-video {
+  max-width: 100%; max-height: 70vh; width: auto; height: auto;
+  display: block; border-radius: 10px; background: #000;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+.art-media-meta { font-family: var(--mono); font-size: 11px; color: var(--dim2); }
+.art-media-link {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font: inherit; color: var(--brand); text-decoration: underline;
+}
 
 /* Floating edit affordance for HTML artifacts. They open in preview/play mode
    (the iframe is fully interactive — a generated game is playable), so the way

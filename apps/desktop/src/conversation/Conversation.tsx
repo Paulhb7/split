@@ -11,6 +11,7 @@ import { TurnSpinner } from "../shared/TurnSpinner";
 import type { Session, Step } from "../shared/models";
 import type { Artifact } from "../shared/events";
 import { ArtifactStrip } from "./ArtifactViewer";
+import { ToolAuthChips } from "./ToolAuth";
 
 type PermissionScope = "once" | "session" | "always-allow" | "always-deny";
 
@@ -187,6 +188,7 @@ export function Conversation(props: {
           <div className="conv-on">on <Logo id={focused.harness} size={13} /><b>{H[focused.harness]?.label || focused.harness}</b> · {focused.status}</div>
         </div>
         <span className="spacer" />
+        <ToolAuthChips skills={experts[focused.expertSlug]?.skills} />
         <button
           className={"iconbtn" + (expanded ? " on" : "")}
           onClick={onTogglePosture}

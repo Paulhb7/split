@@ -227,10 +227,12 @@ export default function App() {
   const peerAlerts: PeerAlert[] = classicSessions
     .filter((s) => s.id !== focusedId && (s.status === "auth" || !!s.pendingPermission))
     .map((s) => ({ id: s.id, label: s.expertLabel, reason: s.status === "auth" ? "auth" : "permission" }));
-  // Fullscreen is only ever app-driven now (Teams, cabinet, overlays, …); the
-  // user reaches it themselves through the native green traffic light, which
-  // the app observes via `useNativeFullscreen` below. No window-posture toggle.
-  const isFullscreen = mode === "teams" || overlay || !!cabinet || historyOpen || !onboarded || vaultOpen || atelierMode;
+  // Fullscreen is app-driven (Teams, cabinet, overlays, the atelier, …) plus the
+  // user's own native green traffic light (observed via `useNativeFullscreen`).
+  // `artMode` joins the list: opening a deliverable in the simple view now takes
+  // over the whole screen (the side-by-side conversation|artifact wants the room),
+  // matching the atelier's fullscreen treatment instead of a floating split bar.
+  const isFullscreen = mode === "teams" || overlay || !!cabinet || historyOpen || !onboarded || vaultOpen || atelierMode || artMode;
   useFullscreen(isFullscreen);
   // "Roomy" home = the user maximised the window themselves (green traffic
   // light) while on the home view. The adaptive bar never reaches this state
@@ -252,11 +254,12 @@ export default function App() {
   useAdaptiveHeight({
     measureRef,
     // Pause the auto-fit whenever the OS owns the window — app-driven fullscreen
-    // (Teams/overlays), artMode's manual-resize canvas, AND native fullscreen the
-    // user reached via the green traffic light. Without `nativeFs` here the fit
-    // kept firing `set_bar_height` against a fullscreen window, shrinking the bar
-    // back to content height mid-transition ("se resize toute seule").
-    disabled: isFullscreen || artMode || nativeFs,
+    // (Teams/overlays/artMode/atelier), ANY focused conversation (it's a fixed
+    // panel now: the thread scrolls internally instead of pumping the window),
+    // AND native fullscreen the user reached via the green traffic light. Without
+    // `nativeFs` here the fit kept firing `set_bar_height` against a fullscreen
+    // window, shrinking the bar back to content height mid-transition.
+    disabled: isFullscreen || !!focused || nativeFs,
     // Streaming stops pumping the window at 55% of the screen and the thread
     // scrolls from there (was 70% — too tall to feel stable).
     maxFrac: 0.55,
@@ -271,27 +274,28 @@ export default function App() {
       view,
     ],
   });
-  // Bar width: 680 normally, 1180 in art mode (deliverable side-by-side). In
-  // native fullscreen we pass `null` so we stop forcing a width — the OS owns
-  // the geometry and the responsive `.home` column (capped + centered) takes
-  // over, so the composer + rows fill the canvas instead of sitting at 680.
-  useBarWidth(nativeFs || atelierMode ? null : artMode ? 1180 : 680);
+  // Bar width: 680 for the home + compact conversation. In any fullscreen state
+  // (app-driven OR the user's green light) we pass `null` so we stop forcing a
+  // width — the OS owns the geometry and the responsive columns fill the canvas
+  // instead of fighting a 680 set_bar_width macOS would ignore mid-transition.
+  useBarWidth(nativeFs || isFullscreen ? null : 680);
 
-  // First time a deliverable opens the side-by-side canvas, give the window a
-  // sensible height ONCE (width is handled by useBarWidth above) so the split
-  // doesn't open as a thin bar. Only the rising edge fires — after that the
-  // window is the user's to resize (adaptive is paused in artMode, nothing
-  // snaps it back), so a manual stretch is never clobbered. Skipped when an
-  // app surface owns the window (fullscreen).
-  const enteredArtRef = useRef(false);
+  // Entering a focused conversation pauses the adaptive bar (the thread scrolls
+  // internally now), so the window has no content-driven height to fall back on.
+  // Give it a sensible working height ONCE on the rising edge; after that the
+  // window is the user's to resize (adaptive stays paused, nothing snaps it
+  // back). Skipped when an app surface owns the window — artMode/atelier go
+  // fullscreen, so this only fires for the compact (no-deliverable) view.
+  const enteredConvRef = useRef(false);
   useEffect(() => {
-    const entering = artMode && !enteredArtRef.current;
-    enteredArtRef.current = artMode;
+    const inConv = !!focusedId && !atelierMode;
+    const entering = inConv && !enteredConvRef.current;
+    enteredConvRef.current = inConv;
     if (!entering || isFullscreen) return;
     const screenH = window.screen?.height ?? 900;
-    invoke("set_bar_height", { height: Math.min(840, Math.round(screenH * 0.8)) })
+    invoke("set_bar_height", { height: Math.min(760, Math.round(screenH * 0.72)) })
       .catch(() => { /* ignore */ });
-  }, [artMode, isFullscreen]);
+  }, [focusedId, atelierMode, isFullscreen]);
 
   // arm an engine for the next session (persisted)
   const setActive = (id: string) => {
@@ -586,8 +590,13 @@ export default function App() {
           fill behaviour Teams uses, so the window owns its own scroll regions
           and the adaptive ResizeObserver is paused (we want a fixed canvas). */}
       {(() => {
-        const bodyCls = "body" + (mode === "teams" || artMode || atelierMode ? " fill" : isFullscreen ? " tall" : "");
-        const measureCls = "measure" + (mode === "teams" || artMode || atelierMode ? " fill" : isFullscreen ? " tall" : "") + (roomyHome && classicSessions.length < 3 ? " center" : "");
+        // `fill` = the inner view owns its own scroll regions on a fixed canvas
+        // (no adaptive growth). Every focused conversation qualifies now — the
+        // thread scrolls internally with the header + composer pinned — alongside
+        // Teams and the atelier. Home keeps the adaptive bar (`tall` for overlays).
+        const fillMode = mode === "teams" || atelierMode || !!focused;
+        const bodyCls = "body" + (fillMode ? " fill" : isFullscreen ? " tall" : "");
+        const measureCls = "measure" + (fillMode ? " fill" : isFullscreen ? " tall" : "") + (roomyHome && !focused && classicSessions.length < 3 ? " center" : "");
         // A deliverable is open in the atelier → the centre splits (conversation
         // left, artifact right) and both flanking rails fold for focus.
         const atelierArtOpen = !!(focused && atelierArt && focused.artifacts.some((a) => a.rel === atelierArt));
