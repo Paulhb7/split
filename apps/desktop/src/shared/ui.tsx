@@ -4,6 +4,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { HARNESSES, H, logoUrl, brandOf } from "./harnesses";
 import { worstOf, type HarnessStateMap } from "./useHarnessStates";
 import { ModelPickerPanel } from "./ModelPickerPanel";
+import { SubscriptionModelPicker } from "./SubscriptionModelPicker";
+import { SUBSCRIPTION_PICKERS, loadSubConfig } from "./model-picker";
 
 export const vars = (o: Record<string, string | number>) => o as React.CSSProperties;
 
@@ -57,6 +59,7 @@ function EngineCard({
   const state = lifecycle?.states[id];
   const progress = lifecycle?.progress[id];
   const [expanded, setExpanded] = useState(false); // api-key inline form
+  const [modelOpen, setModelOpen] = useState(false); // subscription model picker
   const [keyVal, setKeyVal] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -65,6 +68,14 @@ function EngineCard({
   const hasConfigure = !!state && state.configure.kind !== "";
   const installReady = state?.install.state === "ready";
   const configureReady = state?.configure.state === "ready";
+  // Single-vendor CLIs (Claude/Codex/Gemini) get a model selector — a concern
+  // separate from `configure` (which is their oauth sign-in). The button shows
+  // the saved model so the card reads at a glance.
+  const hasModelPicker = !!SUBSCRIPTION_PICKERS[id];
+  const savedModel = hasModelPicker ? loadSubConfig(id)?.model : undefined;
+  // models[0] is the built-in default (mirrors harness_config::default_model);
+  // shown on the button when the user hasn't explicitly picked a model yet.
+  const effectiveModel = savedModel ?? SUBSCRIPTION_PICKERS[id]?.models[0]?.id;
 
   async function onInstall(e: React.MouseEvent) {
     e.stopPropagation();
@@ -120,7 +131,7 @@ function EngineCard({
   // The generic model picker panel (Local/Cloud + dropdowns + status +
   // actions) is too dense for a single grid cell; break out and span the
   // full row when expanded.
-  const wide = expanded && state?.configure.kind === "model-picker";
+  const wide = (expanded && state?.configure.kind === "model-picker") || modelOpen;
 
   return (
     <div
@@ -174,6 +185,19 @@ function EngineCard({
               {configureReady ? "✓ configure" : state.configure.kind === "external" ? "docs" : "configure"}
             </button>
           )}
+          {hasModelPicker && (
+            <button
+              className={"card-act" + (savedModel ? " done" : "")}
+              disabled={busy}
+              onClick={(e) => {
+                e.stopPropagation();
+                setModelOpen((v) => !v);
+              }}
+              title="Choose the model this agent runs"
+            >
+              {savedModel ? `✓ ${savedModel}` : (effectiveModel ?? "model")}
+            </button>
+          )}
         </div>
       )}
 
@@ -214,6 +238,15 @@ function EngineCard({
               setExpanded(false);
               lifecycle?.refresh();
             }}
+          />
+        </div>
+      )}
+
+      {modelOpen && (
+        <div className="ecard-cfg">
+          <SubscriptionModelPicker
+            harnessId={id}
+            onClose={() => setModelOpen(false)}
           />
         </div>
       )}
