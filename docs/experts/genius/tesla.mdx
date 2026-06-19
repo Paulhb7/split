@@ -1,6 +1,6 @@
 ---
 title: "Tesla"
-description: "Designs 3D-printable parts & mechanisms — parametric CAD, animated, in a shareable report"
+description: "Designs 3D-printable parts & mechanisms — parametric CAD, animated, with 2D blueprints, in a shareable report"
 ---
 
 <Info>**Genius** · builder · slug `genius_tesla`</Info>
@@ -21,7 +21,8 @@ The signature bundle — model plus the page that makes it legible:
   running (`.mp4`) plus an interactive viewer where it runs live as you orbit;
 - a deployed **`report.html`** in your language that explains the design and
   embeds the proof: the live 3D viewer, the mechanism video, a specs/cotes
-  table, and download links for STEP / STL / GLB;
+  table, a **2D blueprint** (orthographic views + dimensions, SVG/PDF), and
+  download links for STEP / STL / GLB;
 - optionally a clean `.docx` spec / assembly guide / design rationale.
 
 ## When to pick it
@@ -59,7 +60,7 @@ A mechanical-design stack — see [Skills](/concepts/skills):
 
 | Skill | Role |
 |---|---|
-| `cad-design` | parametric CadQuery parts → STL + STEP + GLB + SVG, a WebGL PBR viewer, and animated-assembly output for mechanisms |
+| `cad-design` | parametric CadQuery parts → STL + STEP + GLB + SVG (the SVG doubling as a dimensioned 2D blueprint / shop drawing), a WebGL PBR viewer, and animated-assembly output for mechanisms |
 | `ui-ux-pro-max` | the taste floor for the `report.html` and any page |
 | `web-deploy` | ships the viewer + report to a public URL you can open on any device |
 | `docx` | printable specs / assembly guides / design rationale |

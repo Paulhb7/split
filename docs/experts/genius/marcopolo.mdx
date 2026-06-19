@@ -1,0 +1,104 @@
+---
+title: "Marco Polo"
+description: "Designs trips — day-by-day itineraries, real places, a carnet you carry"
+---
+
+<Info>**Genius** · organizer · slug `genius_marcopolo`</Info>
+
+You bring a destination and a window of days. Marco Polo turns it into a
+**carnet de voyage** — a day-by-day itinerary of real, cited places, rendered as
+a multi-page carnet with embedded maps, printable for the plane and deployed to a
+page you open on your phone abroad. Off-the-beaten-path by instinct: the alley
+over the landmark, the 6am market over the queue.
+
+Where [Ride](/experts/genius/ride) makes the live **sky** as a page — tonight's
+planets, a pass timeline, a mission feed — Marco Polo makes the **ground** as a
+carnet: real places, day by day, carried in your pocket.
+
+## What it delivers
+
+A carnet de voyage you actually carry — substance first, mood second:
+
+- a **day-by-day itinerary** of real places — walking logic (clustered by
+  district, not zig-zagging the city), timing (what opens when, what's worth a
+  sunrise), what to eat, what to see, **what to skip**, and a rough running
+  budget;
+- the itinerary **rendered as a gorgeous multi-page carnet** (frontend-slides)
+  with embedded maps — one page per day, route, stops, notes;
+- **destination imagery** (Higgsfield) to set the mood — the light, the streets,
+  the food — so the plan feels like the place before you land;
+- a **printable PDF** (docx) for offline use — the plane, the no-signal valley;
+- a **deployed trip page** (web-deploy) you open on your phone abroad, on the
+  corner where you need it.
+
+Everything is grounded in real, cited facts pulled from live web search — opening
+hours, seasons, transit, neighbourhoods, rough prices. Marco Polo never invents a
+place.
+
+## When to pick it
+
+Pick **Marco Polo** for the trip itself — a day-by-day plan of real places you
+carry and follow on the ground. Pick [Consultant](/experts/super/consultant)
+instead when you want research into slides or a memo for *work* (a market, a
+competitor, a decision), and [Ride](/experts/genius/ride) when you want the live
+sky as a page rather than the ground as a carnet.
+
+## How to drive it
+
+Give a destination and a window — or just a mood:
+
+```
+Plan a 10-day trip to Japan
+Design a weekend in a city I'll love
+Build an off-the-beaten-path itinerary
+Turn this destination into a day-by-day carnet
+```
+
+Marco Polo reads the request, states the read in one line ("10 days, late
+autumn — Kyoto-heavy, temples over neon"), then grounds every fact via web search
+and ships the carnet in the same turn.
+
+## What comes back
+
+Marco Polo announces a 3-5 bullet plan, then ships in the same turn. The carnet
+renders in the artifact pane and deploys to a public URL it leads with; a
+printable PDF lands alongside for offline use. Each output is one folder with the
+itinerary, the rendered carnet, the mood imagery, the PDF, and the deployed URL.
+Every place is cited; anything time- or price-sensitive carries a **"verify
+before booking"** note, and Marco Polo offers one or two next variations (stretch
+to 14 days, swap a day to the coast, add a rainy-day plan B).
+
+## Leans on
+
+A travel-design stack — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `frontend-slides` | the carnet engine: the day-by-day rendered as a multi-page HTML carnet de voyage with embedded maps, one page per day |
+| `higgsfield-generate` | destination imagery for mood (not facts) — the light, the streets, the food — so the carnet feels like the place |
+| `web-deploy` | ships the carnet to a public URL you open on your phone abroad |
+| `docx` | a printable PDF of the carnet for offline use — the plane, the no-signal stretch |
+
+(Plus the harness's native grounded web search — how Marco Polo gets every real
+fact: hours, seasons, transit, prices. Split ships no web-search tool.)
+
+## Prerequisites & limits
+
+- **He designs the journey — he is not a booking engine.** Marco Polo does not
+  transact, reserve, or pay. He hands you a plan you book yourself; he never
+  implies a reservation was made.
+- **Web facts go stale.** Hours, prices, seasonal closures, and transit schedules
+  change. On anything time- or price-sensitive he writes **"verify before
+  booking"** — heed it.
+- **No native web search, no browsing.** A harness without grounded search (Qwen,
+  OpenCode, local) can't pull live facts. Marco Polo says so rather than inventing
+  places and hours from memory.
+- **He never invents a place.** Embodying the traveller's voice is fair (Marco
+  Polo is long dead and public domain); the discipline is **factual**. Every
+  restaurant, museum, viewpoint, market, transit line, price, and opening time
+  comes from a real, cited source pulled by live web search, or it doesn't go in
+  the carnet.
+- **Imagery costs credits.** Higgsfield shots set the mood (not photographs of the
+  exact corner) and run through the `higgsfield` CLI on a **Higgsfield account** —
+  sign in via the **Connect Higgsfield** chip in the conversation header. No raw
+  key is ever asked for in chat.

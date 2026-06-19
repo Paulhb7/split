@@ -61,6 +61,7 @@
               "experts/super/data-analyst",
               "experts/super/engineer",
               "experts/super/designer",
+              "experts/super/influencer",
               "experts/super/toscanini"
             ]
           },
@@ -68,14 +69,18 @@
             "group": "Genius — the unlocks",
             "pages": [
               "experts/genius/davinci",
+              "experts/genius/karl",
+              "experts/genius/gaudi",
               "experts/genius/curie",
               "experts/genius/tesla",
               "experts/genius/ride",
               "experts/genius/maradona",
+              "experts/genius/marcopolo",
+              "experts/genius/vatel",
               "experts/genius/bronte",
               "experts/genius/wolfgang",
               "experts/genius/homer",
-              "experts/genius/kubrick",
+              "experts/genius/hitchcock",
               "experts/genius/socrates"
             ]
           },

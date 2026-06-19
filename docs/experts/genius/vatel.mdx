@@ -1,0 +1,117 @@
+---
+title: "Vatel"
+description: "Stages events — menu, table scenography, run-of-show, an unforgettable evening"
+---
+
+<Info>**Genius** · organizer · slug `genius_vatel`</Info>
+
+You bring an occasion and a guest count. Vatel stages the whole evening — the
+menu designed, the table dressed, the room set, the night timed minute by
+minute — and hands you a flawless, executable plan you couldn't choreograph
+alone. The maître d'hôtel, the ordonnateur des fêtes: not the cook, the
+orchestrator of the experience the cooking serves.
+
+Where [Cooking Coach](/experts/coach/cooking) teaches you to cook the meal —
+technique, recipes, scaling — Vatel **stages the event around it**: the menu as
+an experience, the table, the run-of-show, the ambiance.
+
+## What it delivers
+
+The whole staged evening — substance first, not just a pretty picture:
+
+- a designed **menu** — courses, sequence, and pairing presented as an elegant,
+  printable **menu card** (this is menu *design*, not recipes to learn);
+- the **table scenography & ambiance** — a render of the table and the room as
+  the guests will find them, plus a **material board** (linens, flowers, light,
+  china, glass) to approve the look before anything is rented;
+- the **run-of-show** — arrival, seating, the courses, the toasts, the moments,
+  the close — timed, with a seating plan and the flow of the night, as a clear
+  plan a host or caterer can execute;
+- a deployed **event page** and printable **menu cards** you can send to guests
+  or a caterer, openable on any phone;
+- a one-line **read of the occasion** before anything is built ("twelve at a
+  long table, autumn, a friend's birthday — a warm candlelit dinner, three
+  courses"), so you redirect *before* the table is rendered, not after.
+
+## When to pick it
+
+Pick **Vatel** when you want the *event* staged — the menu designed, the table
+and room dressed, the run-of-show written, the evening made unforgettable. He
+owns the **evening as an experience**, not the cooking inside it and not the
+trip around it:
+
+- Want to *learn to cook the meal* — technique, recipes, scaling, substitutions?
+  That's [Cooking Coach](/experts/coach/cooking), the teacher. Vatel never tells
+  you how to braise; he decides what is served and in what order to delight.
+- Planning a *trip* — a day-by-day itinerary, real places, the journey? That's
+  [Marco Polo](/experts/genius/marcopolo). Vatel plans the **one evening**, not
+  the route to it.
+
+When a request needs a recipe taught or a journey planned, Vatel names the gap
+and the expert who owns it, and the Chief of Staff brings them in.
+
+## How to drive it
+
+Start from an occasion and a number of guests:
+
+```
+Stage a dinner party for 12
+Design the menu and the table for this event
+Plan the run-of-show for my reception
+Turn this occasion into an unforgettable evening
+```
+
+Attach what you have — a venue photo, an inspiration image, a guest list. Vatel
+reads it, states the read in one line, then stages the evening in order: menu,
+table, run-of-show, the page that ties them.
+
+## What comes back
+
+Vatel announces a short plan, then ships in the same turn. The menu card, the
+table render, the material board, and the run-of-show land as files in the
+session workspace — the menu card and run-of-show preview in the artifact pane,
+the event page is deployed to a public URL it leads with. Each artifact opens
+with an exec-summary header (the occasion, the constraints, what was assumed —
+guest count, budget band, dietary defaults), so the whole evening is legible
+weeks later. Vatel reports the absolute path or the deployed URL, plus one or
+two variations to ask for next ("swap the fish course for a vegetarian centre" /
+"ivory linen instead of slate" / "add a children's table to the seating plan").
+You move keepers into the vault with **Keep in vault**.
+
+## Leans on
+
+An event-staging stack — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `frontend-slides` | the printable pieces — the **menu card** (single elegant frame, sized for print) and the **run-of-show** as a clean multi-page document (timeline, seating plan, flow), rendered to PNG/PDF |
+| `higgsfield-generate` | the **table scenography** — a render of the table and the room dressed as the guests will find them, so the look is approved before anything is rented |
+| `taste-design` | the **material board** — a short design contract for the evening (palette, flowers, linen, light, china) that the menu, table, and page are audited against, so they read as one coherent evening |
+| `web-deploy` | ships the **event page** and printable menu cards to a public URL you can send to guests or a caterer |
+| `docx` | the run-of-show, seating plan, and logistics checklist as a clean Word document a caterer or venue can work from |
+
+(Plus host tools — shell + filesystem — to receive attachments like a venue
+photo, an inspiration image, or a guest list, and stage the work.)
+
+## Prerequisites & limits
+
+- **Vatel plans and designs — he does not cook, cater, or staff.** He hands a
+  flawless, executable plan plus the renders that sell it; a host or a caterer
+  runs the actual evening. He stages the night, he is not in the kitchen or
+  behind the bar — and he says so.
+- **External engine — Higgsfield AI.** The table/room renders run through the
+  `higgsfield` CLI, billed to a **Higgsfield account**. Sign in via the
+  **Connect Higgsfield** chip in the conversation header; no raw key is ever
+  asked for in chat. Each render costs credits — one per attempt, iterate the
+  prompt not the seed.
+- **Quantities and logistics are estimates to verify.** Portion counts, rental
+  numbers, timings, and budget bands are staging estimates, not a caterer's
+  quote — confirm them with the actual caterer and venue before ordering or
+  booking.
+- **A public-domain figure — a register, not a venue.** Vatel is a real
+  historical figure, so he embodies the Louis XIV-era maître d'hôtel fully,
+  the famous tragic devotion and all. He **evokes the register**, never claims
+  to *be* the man who lived it, and never pastiches a named living venue or
+  brand — he summons the great feast and its fireworks as a *standard*, not as a
+  place he can name. Brief tensions (a formal occasion on a picnic budget, twelve
+  guests at a table for eight) are surfaced before he builds.

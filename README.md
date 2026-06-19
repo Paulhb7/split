@@ -50,7 +50,7 @@ config on one side; the agent's working home on the other.
 
 ---
 
-## Experts (26 in the roster — super · genius · coach)
+## Experts (31 in the roster — super · genius · coach)
 
 Pick one with `@` (terminal: `@consultant`; desktop: the picker). The **kind** is
 informational — it tells the UI how to render (chat panel vs. a step feed vs. an
@@ -71,6 +71,7 @@ visible in the Cabinet but off the active picker until a needed piece ships.
 | **Data Analyst** | analyst | Explores CSV/Excel data, ships interactive dashboards | `dashboard`, `ui-ux-pro-max`, `frontend-slides`, `docx`, `web-deploy` |
 | **Engineer** | builder | Builds micro-apps & landing pages, ships them to a public URL | `web-deploy`, `ui-ux-pro-max` |
 | **Designer** / UI & prototypes | creator | Gorgeous interactive app & site mockups, ready to hand to Engineer | `ui-ux-pro-max` |
+| **Influencer** / viral social & ads | creator | Viral social content & ads — hooks, UGC video, the virality score | `higgsfield-generate` (Marketing Studio + Virality Predictor) / `-soul-id` / `-product-photoshoot`, `frontend-slides`, `web-deploy` |
 | **Project Manager** · *deferred* | organizer | Turns "we need X by Y" into a real plan with owners, dates, status | `docx`, `frontend-slides`, `dashboard`, `web-deploy` |
 | **Sales** · *deferred* | advisor | Tracks leads, drafts outreach, closes the loop on every deal | `docx`, `frontend-slides` |
 
@@ -79,14 +80,18 @@ visible in the Cabinet but off the active picker until a needed piece ships.
 | Expert | Kind | What it does | Leans on |
 |---|---|---|---|
 | **DaVinci** / world-builder | creator | Turns an image into an immersive 3D scene; brand identities, mockups, redesigns | `higgsfield-generate` / `-soul-id` / `-product-photoshoot` / `-marketplace-cards`, `ui-ux-pro-max`, `frontend-slides`, `docx`, `web-deploy` |
+| **Karl** / couturier | creator | Designs garments & footwear, dresses them on a model, builds the lookbook | `higgsfield-generate` / `-soul-id` / `-product-photoshoot`, `taste-design`, `frontend-slides`, `web-deploy` |
+| **Gaudí** / architecte | creator | Designs spaces — floor plan, explorable 3D, material board, buildable spec | `higgsfield-generate`, `cad-design`, `taste-design`, `frontend-slides`, `web-deploy`, `docx` |
 | **Wolfgang** / composer | creator | Composes original music — songs, scores, soundtracks | `higgsfield-generate` (Sonilo music, Mirelo SFX) |
 | **Homer** / audio producer | creator | Scripts, voices and edits full podcasts | `higgsfield-generate` (Inworld voice, Sonilo, Mirelo) |
-| **Kubrick** / director | creator | Directs short films — visual + score + voice, in one piece | `higgsfield-generate`, `higgsfield-soul-id` |
+| **Hitchcock** / director | creator | Directs short films — storyboard first, then visual + score + voice, in one cut | `higgsfield-generate`, `higgsfield-soul-id` |
 | **Brontë** / novelist | creator | Writes novels — characters, arcs, world, voice, by chapter | `prose-gen`, `paper-search`, `higgsfield-generate`, `docx`, `web-deploy` |
 | **Ride** / astronomer | researcher | Reads the sky live — NASA/ESA/JWST feeds, sky tonight, ISS passes — as gorgeous live pages | `nasa-api`, `astropy`, `astro-data`, `sky-viz`, `frontend-slides`, `docx`, `web-deploy` |
 | **Curie** / scientist | researcher | Frontier scientist for orphan diseases — targets, structures, drug repurposing | `rdkit`, `esm`, `diffdock`, `medchem`, `molecular-dynamics`, `pymatgen`, `scanpy`, `biopython`, `primekg`, `pytdc`, `database-lookup`, `paper-lookup`, `paper-search` |
-| **Tesla** / mechanical engineer | builder | Designs 3D-printable parts & mechanisms — parametric CAD, animated, in a shareable report | `cad-design`, `ui-ux-pro-max`, `web-deploy`, `docx` |
+| **Tesla** / mechanical engineer | builder | Designs 3D-printable parts & mechanisms — parametric CAD, animated, with 2D blueprints, in a shareable report | `cad-design`, `ui-ux-pro-max`, `web-deploy`, `docx` |
 | **Maradona** / Le Diez | analyst | Live football dossiers: form, xG, the key duel, his verdict | `football-data`, `metadata`, `sports-news`, `sports-reporter`, `frontend-slides`, `docx`, `web-deploy` |
+| **Marco Polo** / le voyageur | organizer | Designs trips — day-by-day itineraries, real places, a carnet you carry | `higgsfield-generate`, `frontend-slides`, `web-deploy`, `docx` |
+| **Vatel** / maître d'hôtel | organizer | Stages events — menu, table scenography, run-of-show, an unforgettable evening | `higgsfield-generate`, `taste-design`, `frontend-slides`, `web-deploy`, `docx` |
 | **Socrates** / recruiter | recruiter | Interviews you to design your own custom experts | persona-only |
 | **Alfred** / Majordome · *deferred* | operator | Drives your Mac apps with your logins, books, runs admin | `cua-driver` (background macOS app control via the AX tree) |
 | **Indie** / archive hunter · *deferred* | finder | Hunts rare manuscripts, lost archives, out-of-print texts, primary sources | `paper-search`, `docx`, `web-deploy` |
@@ -141,12 +146,14 @@ Vendored in [`config/skills/`](config/skills/) (~40, grouped):
 - **Astronomy (Ride):** `nasa-api` (NASA Open APIs, `DEMO_KEY` works),
   `astropy` (sky math), `astro-data` (astroquery + skyfield), `sky-viz`
   (WebGL star maps / orbits / trackers).
-- **Engineering (Tesla):** `cad-design` — parametric CadQuery → STL/STEP/GLB +
-  WebGL viewer, with animated-assembly output for mechanisms.
+- **Engineering (Tesla & Gaudí):** `cad-design` — parametric CadQuery →
+  STL/STEP/GLB + SVG + WebGL viewer, with animated-assembly output for
+  mechanisms and 2D blueprint sheets (SVG/PDF). Tesla designs objects;
+  Gaudí leans on it for floor plans of spaces.
 - **Sport (Maradona):** `football-data`, `sports-news`, `sports-reporter`,
   `metadata`.
 - **Coaching:** `coach-tracker`.
-- **Generation (DaVinci / Wolfgang / Homer / Kubrick):** `higgsfield-generate`,
+- **Generation (DaVinci / Karl / Gaudí / Wolfgang / Homer / Hitchcock / Influencer / Marco Polo / Vatel):** `higgsfield-generate`,
   `higgsfield-soul-id`, `higgsfield-product-photoshoot`,
   `higgsfield-marketplace-cards` — wrap the `higgsfield` CLI (browser sign-in via
   the **Connect Higgsfield** chip, generations cost credits). One account covers
