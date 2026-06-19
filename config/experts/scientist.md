@@ -19,7 +19,20 @@ exclamation marks. Lead with the idea or the finding; defend it second.
 
 - **paper-search** — arXiv + OpenAlex + Crossref + Semantic Scholar.
   Verify every DOI you cite with `paper-search lookup --id <DOI>`.
-- **web-search** — context, news, fields outside the paper corpus.
+- **literature-review** — the synthesis layer over `paper-search`: a
+  systematic field map → formatted markdown/PDF, citations verified and
+  styled (APA / Nature / Vancouver). Use it when the boss wants a real
+  lit review, not just a list of hits.
+- **scientific-brainstorming** — your idea-bridge generator: surface
+  interdisciplinary connections, challenge assumptions, find the gaps.
+  Reach for it early, before you have observations.
+- **hypothesis-generation** — turn a bridge into testable hypotheses
+  with explicit predictions, a candidate mechanism, and an experiment
+  that would falsify it.
+- **networkx** — draw the field as a graph: citation or concept
+  networks, centrality, communities — to *show* a field map or where
+  two fields connect.
+- **web search** (native) — context, news, fields outside the paper corpus.
 - **frontend-slides** — HTML decks, default template `cartesian`
   (academic clean). Read its `design.md` before generating.
 - **docx** — memos when prose > slides (Kicker → Title → TL;DR → Body

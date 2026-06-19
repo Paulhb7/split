@@ -17,7 +17,12 @@ pub mod runner;
 
 // Engine modules from the workspace's `split-core` crate. `lib.rs` uses
 // `harness_config` (model picker translation) + `persona` (workspace
-// projection); `runner.rs` reaches for the rest directly.
+// projection) + `detection` (the machine-scan wire types & classification);
+// `runner.rs` reaches for the rest directly.
+use split_core::detection::{
+    auth_from_state, classify_exit, classify_spawn_error, Diagnostic, DiagnosticKind,
+    DetectedHarness, VersionProbe,
+};
 use split_core::{harness_config, persona};
 
 // The repo root is resolved at RUNTIME — nothing machine-specific is baked
@@ -256,6 +261,16 @@ fn detect_mime(path: &std::path::Path) -> &'static str {
         "webp" => "image/webp",
         "svg" => "image/svg+xml",
         "pdf" => "application/pdf",
+        "mp3" => "audio/mpeg",
+        "m4a" => "audio/mp4",
+        "aac" => "audio/aac",
+        "wav" => "audio/wav",
+        "ogg" | "oga" | "opus" => "audio/ogg",
+        "flac" => "audio/flac",
+        "mp4" | "m4v" => "video/mp4",
+        "mov" => "video/quicktime",
+        "webm" => "video/webm",
+        "ogv" => "video/ogg",
         _ => "application/octet-stream",
     }
 }
@@ -269,6 +284,11 @@ fn classify_artifact(path: &std::path::Path) -> &'static str {
     match ext.as_str() {
         "png" | "jpg" | "jpeg" | "gif" | "webp" | "svg" => "image",
         "pdf" => "pdf",
+        // Media — streamed to the webview via the asset protocol
+        // (`convertFileSrc`), not inlined: range-requests from disk so video
+        // seeks and the inline cap doesn't apply.
+        "mp3" | "m4a" | "aac" | "wav" | "ogg" | "oga" | "opus" | "flac" => "audio",
+        "mp4" | "m4v" | "mov" | "webm" | "ogv" => "video",
         // Text-like: rendered as markdown if `.md`, as a code block
         // otherwise (the React viewer picks based on extension).
         "md" | "markdown" | "txt" | "log" | "rs" | "ts" | "tsx" | "js" | "jsx" | "py" | "go"
@@ -288,6 +308,18 @@ fn read_artifact(path: String) -> Result<String, String> {
     }
     let size = meta.len();
     let kind = classify_artifact(&p);
+    // Audio/video are served straight off disk by the webview's asset protocol
+    // (the React side builds the URL with `convertFileSrc`), so we neither read
+    // the bytes here nor apply the inline cap — the player range-requests and
+    // seeks against the file directly, however big it is.
+    if matches!(kind, "audio" | "video") {
+        return Ok(json!({
+            "kind": kind,
+            "size": size,
+            "mime": detect_mime(&p),
+        })
+        .to_string());
+    }
     if size > ARTIFACT_INLINE_CAP {
         return Ok(json!({
             "kind": "binary",
@@ -379,6 +411,248 @@ fn save_artifact_as(target_path: String, content: String) -> Result<(), String> 
         let _ = std::fs::create_dir_all(parent);
     }
     std::fs::write(&p, content).map_err(|e| e.to_string())
+}
+
+/// Render an HTML string to a PDF file at `target_path`, using the webview's
+/// own `createPDF` API. This exists because **WKWebView ignores the JS
+/// `window.print()` path** — calling it in the renderer is a silent no-op, so
+/// the old `@media print` + `window.print()` export produced nothing and no
+/// save dialog. Instead we:
+///   1. write the HTML to a temp file,
+///   2. spin up a hidden Tauri window pointed at it (off-screen, never shown),
+///   3. on `PageLoadEvent::Finished`, ask the underlying WKWebView for a PDF
+///      via `createPDFWithConfiguration:completionHandler:` (real WebKit
+///      layout — modern CSS, multi-page, the lot),
+///   4. write the returned bytes to the user-chosen path and tear the window
+///      down.
+/// The frontend picks `target_path` with the native save panel beforehand, so
+/// the "where do I save it" gap is closed too. macOS-only; other platforms get
+/// a clear error (Windows would route through WebView2's `PrintToPdfAsync`).
+#[cfg(target_os = "macos")]
+#[tauri::command]
+async fn export_artifact_pdf(
+    app: AppHandle,
+    html: String,
+    target_path: String,
+) -> Result<(), String> {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static SEQ: AtomicU64 = AtomicU64::new(0);
+    let n = SEQ.fetch_add(1, Ordering::Relaxed);
+
+    // 1. Stage the HTML where the hidden webview can load it. file:// load
+    //    (vs loadHTMLString) means a self-contained artifact's inline styles
+    //    and data: assets resolve exactly as they do in the preview.
+    let tmp = std::env::temp_dir().join(format!("split-pdf-{n}.html"));
+    std::fs::write(&tmp, &html).map_err(|e| format!("temp write failed: {e}"))?;
+    let file_url = tauri::Url::from_file_path(&tmp)
+        .map_err(|_| "could not form file URL for temp HTML".to_string())?;
+
+    let (tx, rx) = tokio::sync::oneshot::channel::<Result<Vec<u8>, String>>();
+    // The on_page_load closure is `Fn` (may fire for Started *and* Finished),
+    // so the one-shot sender lives behind a take-once mutex.
+    let slot = std::sync::Arc::new(std::sync::Mutex::new(Some(tx)));
+    let slot_cb = slot.clone();
+
+    let label = format!("split-pdf-export-{n}");
+    let win = tauri::WebviewWindowBuilder::new(
+        &app,
+        &label,
+        tauri::WebviewUrl::External(file_url),
+    )
+    .visible(false)
+    // A4-ish at ~96dpi so the layout the user sees roughly matches the page.
+    .inner_size(794.0, 1123.0)
+    .on_page_load(move |webview, payload| {
+        if payload.event() != tauri::webview::PageLoadEvent::Finished {
+            return;
+        }
+        let slot_inner = slot_cb.clone();
+        let sink = slot_inner.clone();
+        let res = webview.with_webview(move |pw| {
+            use block2::RcBlock;
+            use objc2_web_kit::WKWebView;
+
+            // `inner()` is the raw `WKWebView*`; objc2's class is a ZST view
+            // over the object, so a reference cast is the canonical bridge.
+            let wk_ptr = pw.inner() as *const WKWebView;
+            let wk: &WKWebView = unsafe { &*wk_ptr };
+
+            let handler = RcBlock::new(
+                move |data: *mut objc2_foundation::NSData, err: *mut objc2_foundation::NSError| {
+                    let out = if !data.is_null() {
+                        Ok(unsafe { &*data }.to_vec())
+                    } else if !err.is_null() {
+                        Err(format!("createPDF: {:?}", unsafe { &*err }))
+                    } else {
+                        Err("createPDF returned neither data nor error".to_string())
+                    };
+                    if let Some(s) = sink.lock().unwrap().take() {
+                        let _ = s.send(out);
+                    }
+                },
+            );
+            // nil configuration → captures the full bounds of the page.
+            unsafe { wk.createPDFWithConfiguration_completionHandler(None, &handler) };
+        });
+        if let Err(e) = res {
+            if let Some(s) = slot_inner.lock().unwrap().take() {
+                let _ = s.send(Err(format!("with_webview failed: {e}")));
+            }
+        }
+    })
+    .build()
+    .map_err(|e| format!("hidden export window failed: {e}"))?;
+
+    // Bound the wait: if the page never loads or createPDF never calls back,
+    // don't hang the command (and the JS `invoke`) forever.
+    let waited = tokio::time::timeout(std::time::Duration::from_secs(20), rx).await;
+    let _ = win.close();
+    let _ = std::fs::remove_file(&tmp);
+    let bytes = match waited {
+        Ok(Ok(res)) => res?,
+        Ok(Err(_)) => return Err("PDF render channel dropped".to_string()),
+        Err(_) => return Err("PDF render timed out".to_string()),
+    };
+
+    if let Some(parent) = std::path::Path::new(&target_path).parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    std::fs::write(&target_path, bytes).map_err(|e| format!("PDF write failed: {e}"))
+}
+
+/// Non-macOS stub — keeps the command registered so the frontend `invoke`
+/// resolves with a clear message instead of an "unknown command" crash.
+#[cfg(not(target_os = "macos"))]
+#[tauri::command]
+async fn export_artifact_pdf(
+    _app: AppHandle,
+    _html: String,
+    _target_path: String,
+) -> Result<(), String> {
+    Err("PDF export is macOS-only for now".to_string())
+}
+
+/// Lowercase ASCII slug: alnum kept, every other run collapses to a single
+/// `-`, edges trimmed. Idempotent on existing slugs (picking an existing
+/// project passes its folder name straight through).
+fn slugify(s: &str) -> String {
+    let mut out = String::new();
+    let mut prev_dash = false;
+    for c in s.trim().chars() {
+        if c.is_ascii_alphanumeric() {
+            out.push(c.to_ascii_lowercase());
+            prev_dash = false;
+        } else if !out.is_empty() && !prev_dash {
+            out.push('-');
+            prev_dash = true;
+        }
+    }
+    out.trim_matches('-').to_string()
+}
+
+/// Recursive copy that skips plumbing (dotfiles, build dirs) and never follows
+/// symlinks — used to bring a folder-based deliverable (game/dashboard with
+/// sibling assets) into the vault without dragging in caches or skill links.
+fn copy_dir_filtered(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let name = entry.file_name();
+        let name_s = name.to_string_lossy();
+        if name_s.starts_with('.')
+            || matches!(
+                name_s.as_ref(),
+                "node_modules" | "target" | "__pycache__" | "dist" | "build"
+            )
+        {
+            continue;
+        }
+        let ft = entry.file_type()?;
+        if ft.is_symlink() {
+            continue;
+        }
+        let to = dst.join(&name);
+        if ft.is_dir() {
+            copy_dir_filtered(&entry.path(), &to)?;
+        } else if ft.is_file() {
+            std::fs::copy(entry.path(), &to)?;
+        }
+    }
+    Ok(())
+}
+
+/// "Keep in vault": copy a deliverable from the agent's scratch workspace into
+/// the boss's curated vault. `source_path` is the artifact's absolute path,
+/// `rel` is its path relative to the session cwd (so we can find the workspace
+/// root and never copy more than the deliverable). `project`: empty/None →
+/// `notes/`; a name → `projects/<slug>/` (created on demand). Returns the
+/// absolute path of what landed in the vault.
+///
+/// A folder deliverable — an `index.html` living in its own subfolder under
+/// cwd — is copied whole (sibling css/js/assets come along). A loose file is
+/// copied on its own; an `index.*` sitting at cwd root is renamed after its
+/// folder so deliverables don't all collide on `index.html` in `notes/`.
+#[tauri::command]
+fn keep_in_vault(source_path: String, rel: String, project: Option<String>) -> Result<String, String> {
+    let src = std::path::PathBuf::from(&source_path);
+    if !src.exists() {
+        return Err(format!("source not found: {source_path}"));
+    }
+    let root = persona::vault_root();
+    persona::ensure_vault(&root);
+    let bucket = match project.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        Some(name) => root.join("projects").join(slugify(name)),
+        None => root.join("notes"),
+    };
+    std::fs::create_dir_all(&bucket).map_err(|e| e.to_string())?;
+
+    // Derive the workspace root by popping `rel`'s components off `src`; this is
+    // the cwd boundary that keeps a folder copy from ever reaching the whole
+    // expert workspace (and its projected AGENTS.md / skill symlinks).
+    let mut cwd = Some(src.clone());
+    for _ in rel.split('/').filter(|s| !s.is_empty() && *s != ".") {
+        cwd = cwd.and_then(|p| p.parent().map(|q| q.to_path_buf()));
+    }
+    let parent = src.parent();
+    let stem_is_index = src
+        .file_stem()
+        .map(|s| s.to_string_lossy().eq_ignore_ascii_case("index"))
+        .unwrap_or(false);
+    // Folder deliverable: index.* nested at least one level below cwd → copy the
+    // folder. Guard: parent must exist AND differ from the workspace root.
+    let folder_mode = stem_is_index
+        && parent.is_some()
+        && cwd.as_deref() != parent
+        && parent.and_then(|p| p.file_name()).is_some();
+
+    let dest = if folder_mode {
+        let folder = parent.unwrap();
+        let target = bucket.join(folder.file_name().unwrap());
+        copy_dir_filtered(folder, &target).map_err(|e| e.to_string())?;
+        target
+    } else {
+        let ext = src.extension().map(|e| e.to_string_lossy().into_owned());
+        // Rename a root-level index.* after its folder so multiple kept games
+        // don't all clobber `notes/index.html`.
+        let fname = if stem_is_index {
+            let base = parent
+                .and_then(|p| p.file_name())
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_else(|| "index".into());
+            match ext {
+                Some(e) => format!("{base}.{e}"),
+                None => base,
+            }
+        } else {
+            src.file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .ok_or_else(|| "source has no file name".to_string())?
+        };
+        let target = bucket.join(fname);
+        std::fs::copy(&src, &target).map_err(|e| e.to_string())?;
+        target
+    };
+    Ok(dest.to_string_lossy().into_owned())
 }
 
 // Reveal the workspace folder (or one session's subfolder) in Finder. `workspace`
@@ -605,6 +879,11 @@ fn start_session(
     // .vibe/AGENTS.md shims), and allowed skills are symlinked into the
     // harness-specific skill dirs (`.claude/skills/`, `.agents/skills/`,
     // `.vibe/skills/`). Empty `workspace` from the caller means "default".
+    //
+    // The workspace is SCRATCH — the agent's home, not the boss's vault.
+    // Deliverables worth keeping are filed into the vault deliberately by the
+    // boss via the "Keep in vault" action (`keep_in_vault`), or by the agent
+    // writing durable notes/facts to the vault per the `memory` skill.
     let var_dir = REPO_ROOT.join("var");
     let workspace_root = if workspace.is_empty() {
         var_dir.join("workspace")
@@ -941,6 +1220,61 @@ fn browser_login(harness: String) -> Result<String, String> {
     Ok(json!({ "ok": true, "cmd": argv.join(" ") }).to_string())
 }
 
+// --- third-party tool logins -------------------------------------------------
+// Some skills wrap a vendor CLI that needs its own browser sign-in — separate
+// from harness ACP auth and from provider API keys (e.g. the higgsfield-* media
+// skills mounted on the Designer). The UI surfaces a "connect" chip for these.
+// Both maps are allowlisted so the UI can't run arbitrary binaries.
+
+// Login: device-login CLIs open the user's browser themselves, so a detached
+// spawn is enough (same shape as `browser_login`). stdin null → no TTY block.
+fn tool_login_cmd(tool: &str) -> Option<&'static [&'static str]> {
+    Some(match tool {
+        "higgsfield" => &["higgsfield", "auth", "login"],
+        _ => return None,
+    })
+}
+
+// Status: a cheap, local "are we signed in?" probe — exits non-zero when not.
+// `higgsfield auth token` just reads the on-disk creds file (no network).
+fn tool_status_cmd(tool: &str) -> Option<&'static [&'static str]> {
+    Some(match tool {
+        "higgsfield" => &["higgsfield", "auth", "token"],
+        _ => return None,
+    })
+}
+
+#[tauri::command]
+fn tool_login(tool: String) -> Result<String, String> {
+    let argv = tool_login_cmd(&tool).ok_or_else(|| format!("No login for tool {tool}"))?;
+    let (program, args) = argv.split_first().expect("tool_login_cmd entries are non-empty");
+    Command::new(program)
+        .args(args)
+        .env("PATH", child_path())
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    Ok(json!({ "ok": true, "cmd": argv.join(" ") }).to_string())
+}
+
+#[tauri::command]
+fn tool_status(tool: String) -> Result<String, String> {
+    let argv = tool_status_cmd(&tool).ok_or_else(|| format!("No status for tool {tool}"))?;
+    let (program, args) = argv.split_first().expect("tool_status_cmd entries are non-empty");
+    let ok = Command::new(program)
+        .args(args)
+        .env("PATH", child_path())
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+    Ok(json!({ "tool": tool, "state": if ok { "ready" } else { "missing" } }).to_string())
+}
+
 // --- API keys ----------------------------------------------------------------
 // Provider keys the ACP harnesses may need. The bar collects them and we persist
 // to the OS secret store (macOS Keychain / Windows Credential Manager / Linux
@@ -1049,9 +1383,13 @@ fn command_on_path(cmd: &str) -> bool {
         .unwrap_or(false)
 }
 
-// `install`: "npx" → always ready (npx -y warms on first launch);
-// "binary"/"external"/"script" → check that the launch command resolves
-// (post-install the binary should be on PATH, e.g. ~/.local/bin/hermes).
+// `install`: "npx" → always ready (the ACP adapter is fetched lazily by npx on
+// first launch; the Install button just warms the npm cache). "binary"/
+// "external"/"script" → check that the launch command resolves (post-install the
+// binary should be on PATH, e.g. ~/.local/bin/hermes). The HONEST "is the vendor
+// CLI here, and signed in?" signal is a separate concern, surfaced by
+// `scan_harnesses` (see DetectedHarness / the onboarding wizard) — we keep this
+// function about adapter bootstrap so the Install button stays coherent.
 fn install_state_for(install_kind: Option<&str>, command: &str) -> &'static str {
     match install_kind {
         Some("npx") => "ready",
@@ -1398,6 +1736,177 @@ fn configure_harness(app: AppHandle, id: String) -> Result<String, String> {
         }
         other => Err(format!("configure kind not supported: {other}")),
     }
+}
+
+// --- harness scan (machine detection) ---------------------------------------
+// `scan_harnesses` probes THIS machine per harness: does the vendor CLI resolve
+// (the honest "installed?" signal — `command` is "npx" for most, which proves
+// nothing), does `--version` run (and what is it), is it signed in? Results are
+// pushed incrementally over the `scan-event` channel as each probe settles, in
+// completion order — so onboarding can
+// paint a card the moment it resolves; a final `{ "done": true }` marks the end.
+// The pure types + `--version`
+// classification live in `split_core::detection`.
+
+// Resolve the probe binary for a harness row, in this precedence:
+// explicit `<BIN>_ENV` override → `probe.bin` → `probe.fallback_bins[]` → the
+// launch `command` (correct for ./var/bin binaries). Returns the first spec that
+// actually resolves on PATH (or as a repo-relative path), else None.
+fn resolve_probe_bin(row: &serde_json::Value) -> Option<String> {
+    let probe = row.get("probe");
+    // 1. env override (e.g. CLAUDE_BIN) — only honoured if it resolves.
+    if let Some(key) = probe
+        .and_then(|p| p.get("bin_env_key"))
+        .and_then(|v| v.as_str())
+    {
+        if let Ok(val) = std::env::var(key) {
+            if !val.trim().is_empty() && command_on_path(&val) {
+                return Some(val);
+            }
+        }
+    }
+    // 2. probe.bin, then each fallback, then the launch command.
+    let mut candidates: Vec<String> = Vec::new();
+    if let Some(bin) = probe.and_then(|p| p.get("bin")).and_then(|v| v.as_str()) {
+        candidates.push(bin.to_string());
+    }
+    if let Some(fbs) = probe
+        .and_then(|p| p.get("fallback_bins"))
+        .and_then(|v| v.as_array())
+    {
+        candidates.extend(fbs.iter().filter_map(|v| v.as_str()).map(String::from));
+    }
+    if let Some(cmd) = row.get("command").and_then(|v| v.as_str()) {
+        candidates.push(cmd.to_string());
+    }
+    candidates.into_iter().find(|c| command_on_path(c))
+}
+
+// Spawn `<spec> <version_args>` with a hard timeout and classify the outcome.
+// `./var/bin`-relative specs are resolved against the repo root for the spawn.
+// Returns the probe outcome plus the resolved program path (for `path`).
+fn probe_version_spawn(
+    spec: &str,
+    version_args: &[String],
+    timeout: std::time::Duration,
+) -> (VersionProbe, String) {
+    use std::io::Read;
+    let program: String = if spec.starts_with("./") || spec.starts_with("../") {
+        REPO_ROOT.join(spec).to_string_lossy().into_owned()
+    } else {
+        spec.to_string()
+    };
+    let spawn = Command::new(&program)
+        .args(version_args)
+        .env("PATH", child_path())
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn();
+    let mut child = match spawn {
+        Ok(c) => c,
+        Err(e) => {
+            let denied = e.kind() == std::io::ErrorKind::PermissionDenied;
+            return (VersionProbe::NotInvocable(classify_spawn_error(denied)), program);
+        }
+    };
+    let start = std::time::Instant::now();
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                let mut out = String::new();
+                if let Some(mut so) = child.stdout.take() {
+                    let _ = so.read_to_string(&mut out);
+                }
+                if status.success() {
+                    let v = out
+                        .lines()
+                        .next()
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty());
+                    return (VersionProbe::Invocable(v), program);
+                }
+                // Spawned but `--version` was unhappy: exit 126/127 → not
+                // invocable; anything else → it ran, just no version string.
+                return (classify_exit(status.code()), program);
+            }
+            Ok(None) => {
+                if start.elapsed() > timeout {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    // It DID spawn — the bin is invocable, we just gave up
+                    // waiting for the version string.
+                    return (VersionProbe::Invocable(None), program);
+                }
+                std::thread::sleep(std::time::Duration::from_millis(40));
+            }
+            Err(_) => return (VersionProbe::Invocable(None), program),
+        }
+    }
+}
+
+// Detect one harness: reuse the cheap (no-spawn) credential check for `auth`,
+// resolve the vendor CLI, run `--version`, and fold it into a DetectedHarness.
+fn detect_one_harness(row: &serde_json::Value, id: &str) -> DetectedHarness {
+    let auth = auth_from_state(configure_state_for(row.get("configure")));
+    let install_kind = row
+        .get("install")
+        .and_then(|i| i.get("kind"))
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let Some(spec) = resolve_probe_bin(row) else {
+        return DetectedHarness::unavailable(
+            id,
+            Diagnostic::new(DiagnosticKind::NotOnPath, "Not found on your machine yet."),
+        )
+        .with_install_kind(install_kind);
+    };
+    let version_args: Vec<String> = row
+        .get("probe")
+        .and_then(|p| p.get("version_args"))
+        .and_then(|v| v.as_array())
+        .map(|a| a.iter().filter_map(|x| x.as_str().map(String::from)).collect())
+        .unwrap_or_else(|| vec!["--version".to_string()]);
+    let (probe, resolved) =
+        probe_version_spawn(&spec, &version_args, std::time::Duration::from_secs(3));
+    match probe {
+        VersionProbe::Invocable(version) => {
+            DetectedHarness::available(id, version, resolved, auth).with_install_kind(install_kind)
+        }
+        VersionProbe::NotInvocable(kind) => {
+            let msg = match kind {
+                DiagnosticKind::NotExecutable => "Found, but not executable — check permissions.",
+                DiagnosticKind::ShimBroken => "Found a broken launcher — reinstall the CLI.",
+                _ => "Could not run the CLI.",
+            };
+            DetectedHarness::unavailable(id, Diagnostic::new(kind, msg)).with_install_kind(install_kind)
+        }
+    }
+}
+
+#[tauri::command]
+fn scan_harnesses(app: AppHandle) -> Result<String, String> {
+    let map = read_harnesses_map()?;
+    let total = map.len();
+    if total == 0 {
+        let _ = app.emit("scan-event", json!({ "done": true }));
+        return Ok(json!({ "ok": true, "count": 0 }).to_string());
+    }
+    // One thread per harness; emit each result as it settles, and emit the
+    // terminal `{ done: true }` from whichever worker finishes last.
+    let remaining = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(total));
+    for (id, row) in map {
+        let app = app.clone();
+        let remaining = remaining.clone();
+        std::thread::spawn(move || {
+            let detected = detect_one_harness(&row, &id);
+            let _ = app.emit("scan-event", &detected);
+            if remaining.fetch_sub(1, std::sync::atomic::Ordering::SeqCst) == 1 {
+                let _ = app.emit("scan-event", json!({ "done": true }));
+            }
+        });
+    }
+    Ok(json!({ "ok": true, "count": total }).to_string())
 }
 
 // --- Model picker config persistence ----------------------------------------
@@ -1812,6 +2321,58 @@ fn open_url(target: String) -> Result<(), String> {
     open_external(&target).map_err(|e| e.to_string())
 }
 
+// --- native notifications ----------------------------------------------------
+
+/// Post a native notification for "an agent finished while Split was in the
+/// background", with an actionable "Open" button. `send()` parks a thread
+/// until the user clicks, dismisses, or the banner expires; a click (banner
+/// body or button) emits `notification-open` with the session id — the React
+/// side raises the window and focuses that conversation.
+///
+/// macOS-only today (`mac-notification-sys`, see Cargo.toml for why not the
+/// tauri plugins). Elsewhere it's a silent no-op — the in-app toasts cover it.
+///
+/// Known limit: the NSUserNotification delegate is per-process, so with
+/// several banners in flight a click is attributed to the most recent one —
+/// worst case the window raises on the wrong (newest) session. Rare enough
+/// (two agents finishing while away + clicking the older banner) to accept.
+#[tauri::command]
+fn notify_turn_done(app: AppHandle, id: String, title: String, body: String) {
+    #[cfg(target_os = "macos")]
+    {
+        // Bundled: adopt Split's identity so the banner shows our name/icon.
+        // The one-shot guard is the crate's (set_application errors on a second
+        // call); a failed adoption (app not registered with Launch Services)
+        // falls through to the crate's default identity at send() time, which
+        // is also the `tauri dev` path (unbundled → banner shows as Terminal).
+        if std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.ends_with("Contents/MacOS")))
+            .unwrap_or(false)
+        {
+            let _ = mac_notification_sys::set_application(&app.config().identifier);
+        }
+        std::thread::spawn(move || {
+            use mac_notification_sys::{MainButton, Notification, NotificationResponse};
+            let sent = Notification::new()
+                .title(&title)
+                .message(&body)
+                .main_button(MainButton::SingleAction("Open"))
+                .send();
+            if matches!(
+                sent,
+                Ok(NotificationResponse::Click) | Ok(NotificationResponse::ActionButton(_))
+            ) {
+                let _ = app.emit("notification-open", id);
+            }
+        });
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (app, id, title, body);
+    }
+}
+
 // --- file drops --------------------------------------------------------------
 #[derive(serde::Serialize)]
 struct FileAttachment {
@@ -2019,9 +2580,12 @@ pub fn run() {
             delete_archived_session,
             list_experts,
             browser_login,
+            tool_login,
+            tool_status,
             read_files_for_agent,
             save_api_key,
             harness_states,
+            scan_harnesses,
             install_harness,
             configure_harness,
             check_ollama,
@@ -2032,10 +2596,13 @@ pub fn run() {
             reveal_artifact,
             write_artifact,
             save_artifact_as,
+            export_artifact_pdf,
+            keep_in_vault,
             vault_tree,
             vault_create,
             vault_delete,
-            open_url
+            open_url,
+            notify_turn_done
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

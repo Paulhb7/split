@@ -27,15 +27,30 @@
   --mono: "JetBrains Mono", ui-monospace, monospace;
   --disp: "Bricolage Grotesque", system-ui, sans-serif;
   --r: 14px;
+  /* Luminous glass rim — the 1px translucent edge from the postures mock
+     (design/window-postures-proposal.html `.splitwin`). Drawn as the inset
+     box-shadow below, never a border+radius, so it rides the inner edge
+     without exposing the native rounded corners. White reads as glass on the
+     dark surfaces; the two light skins override it to a dark hairline. */
+  --rim: rgba(255, 255, 255, 0.13);
+  /* Shared hover elevation — ONE "floating glass" language across the UI, so
+     the lift the starter cards have is no longer a one-off. `--lift-card` for
+     cards/large surfaces, `--lift-row` for dense list rows. The inner
+     var(--brand) resolves per element, so each lift is tinted by that element's
+     own accent (skin brand, or the local grey on .srow/.rchip/.ecard). */
+  --lift-card: 0 14px 30px color-mix(in srgb, var(--brand) 13%, transparent);
+  --lift-row: 0 8px 20px color-mix(in srgb, var(--brand) 10%, transparent);
 
   position: fixed;
   inset: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* No CSS border-radius / border: the native window (decorations: true) now
-     owns the frame + rounded corners. A CSS radius here would reveal the opaque
-     window background in the four corners. */
+  /* No CSS border-radius / border: the native window (decorations: true) owns
+     the frame + rounded corners. A CSS radius here would reveal the opaque
+     window background in the four corners. The glass contour is instead the
+     inset box-shadow rim (`--rim`) below — it hugs the inner edge without a
+     radius, so the native corners stay clean. */
   /* Skin signature object (le roi et le pion, cuivre tourné) — first layer of
      the stack, opacity baked into the SVG. Themes override `background` whole,
      so each carries its own object. */
@@ -45,6 +60,7 @@
     radial-gradient(720px 620px at -6% 108%, rgba(66, 116, 244, 0.1), transparent 60%),
     radial-gradient(560px 460px at 50% 46%, rgba(124, 92, 255, 0.05), transparent 70%),
     linear-gradient(180deg, rgba(16, 19, 25, 0.72), rgba(8, 9, 12, 0.82));
+  box-shadow: inset 0 0 0 1px var(--rim);
   color: var(--text);
   font-family: var(--disp);
   -webkit-font-smoothing: antialiased;
@@ -111,13 +127,16 @@
 }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button:hover { color: var(--text); }
+/* Disabled segment option (e.g. Teams — a future feature): greyed, inert. */
+.seg button:disabled { color: var(--dim2); opacity: 0.45; cursor: not-allowed; }
+.seg button:disabled:hover { color: var(--dim2); }
 .seg button.on { color: var(--ink); background: var(--brand); }
 
 .iconbtn {
   width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px;
   border: 1px solid var(--line); background: transparent; color: var(--dim); cursor: pointer; font-size: 13px; transition: 0.15s;
 }
-.iconbtn:hover { color: var(--text); border-color: var(--text); }
+.iconbtn:hover { color: var(--text); border-color: var(--text); transform: translateY(-1px); box-shadow: var(--lift-row); }
 .iconbtn.on { color: var(--brand); border-color: color-mix(in srgb, var(--brand) 50%, var(--line)); }
 
 /* ---- body ---- */
@@ -155,6 +174,71 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+/* Expert crest — etched-glass coin (see Crest.tsx). The mark is monochrome
+   (silver on dark skins, dark on light — derived from --text) so the glow,
+   which tracks --brand (skin) or the engine colour set by the host row,
+   carries the colour. Scales from 30px (chips) to 64px+ (gallery). */
+.crest {
+  width: var(--cs, 40px); height: var(--cs, 40px); flex: none;
+  position: relative; display: grid; place-items: center; border-radius: 28%;
+  background:
+    radial-gradient(120% 120% at 30% 18%, color-mix(in srgb, var(--brand) 18%, transparent), transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  border: 1px solid var(--rim);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10),
+              inset 0 0 14px color-mix(in srgb, var(--brand) 10%, transparent),
+              0 8px 22px color-mix(in srgb, var(--brand) 16%, transparent);
+}
+.crest-mark {
+  width: 58%; height: 58%; fill: none;
+  stroke: color-mix(in srgb, var(--brand) 30%, var(--text));
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.5))
+          drop-shadow(0 0 5px color-mix(in srgb, var(--brand) 22%, transparent));
+}
+.crest-mark .dot { fill: color-mix(in srgb, var(--brand) 30%, var(--text)); stroke: none; }
+/* Mint-mark — a struck serif initial low on the coin, like a mint's mark.
+   Restores per-figure identity without leaving the etched-glass language.
+   Sized off --cs so it tracks the coin from chip (30px) to gallery (120px). */
+.crest-mint {
+  position: absolute; bottom: 9%; left: 50%; transform: translateX(-50%);
+  font-family: "Playfair Display", var(--disp), Georgia, serif;
+  font-style: italic; font-weight: 500; line-height: 1;
+  font-size: calc(var(--cs, 40px) * 0.19);
+  color: color-mix(in srgb, var(--brand) 42%, var(--text));
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+  pointer-events: none; user-select: none;
+}
+/* House signet — Split's majordome in a small glass sphere, struck bottom-right
+   of the coin like a maker's poinçon (see Crest.tsx). Overlaps the coin edge
+   (débord); the majordome tracks --brand like the rest of the mark. Only drawn
+   on hero-size crests (>= HOUSE_MIN px). */
+.crest-house {
+  position: absolute; right: -7%; bottom: -7%;
+  width: var(--orb-size, 42%); height: var(--orb-size, 42%);
+  pointer-events: none; filter: drop-shadow(var(--orb-shadow, 0 2px 4px rgba(0, 0, 0, 0.5)));
+}
+.crest-house .house-orb { display: block; width: 100%; height: 100%; }
+/* Orb visuals are CSS-driven so the house signet tracks the skin (see Crest.tsx).
+   The var() fallbacks are the dark-glass gem (the app-icon mark); light skins
+   override `--orb-*` below with a frosted "pearl" so the macaron stops reading
+   as a flat black blob on white surfaces. */
+.house-orb .orb-s0 { stop-color: var(--orb-g0, #39414f); }
+.house-orb .orb-s1 { stop-color: var(--orb-g1, #1a1f28); }
+.house-orb .orb-s2 { stop-color: var(--orb-g2, #0c0f15); }
+.crest-house .house-rim { stroke: var(--orb-stroke, rgba(255, 255, 255, 0.16)); }
+.crest-house .house-fig { fill: var(--orb-fig, color-mix(in srgb, var(--brand) 30%, var(--text))); stroke: none; }
+.crest-house .house-spec { fill: var(--orb-spec, rgba(255, 255, 255, 0.18)); }
+/* Light skins → frosted pearl: white-to-cool-grey glass, dark ink majordome. */
+.app.theme-bright, .app.theme-ember-light, .app.theme-pastel, .app.theme-ghibli {
+  --orb-g0: #ffffff; --orb-g1: #e9edf4; --orb-g2: #c3cad6;
+  --orb-stroke: color-mix(in srgb, var(--text) 14%, transparent);
+  --orb-fig: color-mix(in srgb, var(--brand) 22%, var(--text));
+  --orb-spec: rgba(255, 255, 255, 0.7);
+  --orb-size: 38%;
+  --orb-shadow: 0 1px 3px rgba(23, 26, 38, 0.18);
+}
+
 /* ---- buttons ---- */
 .btn {
   font-family: var(--disp); font-weight: 600; font-size: 14.5px; cursor: pointer; border-radius: 11px; padding: 12px 20px;
@@ -165,6 +249,14 @@
 .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
 .btn.ghost { background: transparent; color: var(--text); border-color: var(--line); box-shadow: none; }
 .btn.ghost:hover { border-color: var(--text); }
+/* Per-skin `.app.theme-* .btn { color / box-shadow }` overrides (further down)
+   dress the SOLID CTA — dark/white ink + a brand glow against the brand fill.
+   At (0,3,0) they outrank `.btn.ghost` (0,2,0) and bleed onto ghost buttons,
+   whose fill is transparent: on dark skins that paints dark ink on a dark page
+   (the invisible "← back") plus a stray glow. Re-assert the ghost surface at a
+   doubled `.app.app` specificity (0,4,0) so it clears every themed `.btn`. */
+.app.app .btn.ghost { color: var(--text); box-shadow: none; }
+.app.app .btn.ghost:hover { border-color: var(--text); }
 
 /* ============================ ONBOARDING ============================ */
 .ob { max-width: 860px; margin: 0 auto; padding: 30px 30px 40px; animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
@@ -205,6 +297,18 @@
 .ecard .vd { font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.08em; }
 .ecard .bl { font-size: 12.5px; color: var(--dim); line-height: 1.45; min-height: 36px; }
 .ecard .tag { margin-top: 10px; display: inline-flex; font-family: var(--mono); font-size: 10px; padding: 4px 8px; border-radius: 99px; color: var(--brand); background: color-mix(in srgb, var(--brand) 14%, transparent); border: 1px solid color-mix(in srgb, var(--brand) 28%, transparent); }
+/* Machine-scan badge row (onboarding wizard). The tag keeps its accent; the
+   scan badge carries the install/auth health in a neutral/good/warn register. */
+.ecard-tags { margin-top: 10px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.ecard-tags .tag { margin-top: 0; }
+.scan-badge { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 7px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
+.scan-badge.sb-ready { color: var(--good); }
+.scan-badge.sb-needs-auth { color: var(--warn); }
+.scan-badge.sb-needs-install { color: var(--dim); opacity: 0.85; }
+.scan-badge.sb-scanning { color: var(--dim); opacity: 0.7; animation: scanpulse 1.1s ease-in-out infinite; }
+.ecard.sc-scanning { opacity: 0.78; }
+.ecard.sc-needs-install:not(.sel) { opacity: 0.82; }
+@keyframes scanpulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.85; } }
 .ecard .check { position: absolute; top: 12px; right: 12px; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--line); }
 .ecard.sel .check { border-color: var(--brand); background: var(--brand); }
 .ecard.sel .check::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 10px; color: var(--ink); }
@@ -231,6 +335,40 @@
 .ecard-cfg input { background: rgba(0, 0, 0, 0.25); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; color: var(--text); font-family: var(--mono); font-size: 11.5px; outline: 0; user-select: text; -webkit-user-select: text; }
 .ecard-cfg input:focus { border-color: var(--brand); }
 .cfg-acts { display: flex; gap: 6px; justify-content: flex-end; margin-top: 1px; }
+
+/* ---- compact "Your CLIs" row card () ---- */
+.ecard-list { display: flex; flex-direction: column; gap: 9px; }
+.ecard-list .ecard { border-radius: 13px; }
+.ecard-list .ecard::after { display: none; }              /* drop the top brand bar for rows */
+.ecard-list .ecard:hover { transform: none; }             /* rows shouldn't lift like tiles */
+.ecard.open { border-color: color-mix(in srgb, var(--brand) 38%, var(--line)); }
+.ecard.open::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, var(--brand), #8a6cff); border-radius: 13px 0 0 13px; }
+.ecard-sum { display: flex; align-items: center; gap: 12px; padding: 11px 14px; cursor: pointer; }
+.ecard-sum .check { position: static; flex: none; width: 16px; height: 16px; }
+.ecard-sum .check::after { font-size: 9px; }
+.ecard-idb { min-width: 0; flex: 1; }
+.ecard-nmrow { display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; }
+.ec-nm { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+.ec-vd { font-size: 12.5px; color: var(--dim2); }
+.ecard-sub { font-family: var(--mono); font-size: 11px; color: var(--dim2); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ecard-sub .ec-ver { color: var(--dim); }
+.ecard-sub .ec-ver.dimer { text-transform: uppercase; letter-spacing: 0.06em; }
+.ecard-sub .ec-mut { color: var(--dim2); }
+.ecard-side { margin-left: auto; display: flex; align-items: center; gap: 9px; flex: none; }
+.ec-progress { font-family: var(--mono); font-size: 9.5px; color: var(--brand); }
+.ec-act { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; padding: 6px 12px; border-radius: 9px; border: 1px solid color-mix(in srgb, var(--brand) 45%, var(--line)); color: var(--brand); background: transparent; cursor: pointer; transition: 0.16s; }
+.ec-act:hover:not(:disabled) { background: color-mix(in srgb, var(--brand) 14%, transparent); border-color: var(--brand); }
+.ec-act:disabled { opacity: 0.5; cursor: default; }
+.ec-scan { font-family: var(--mono); font-size: 10px; color: var(--dim2); }
+.ec-ok { color: var(--good); font-size: 13px; line-height: 1; }
+.ec-chev { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--dim); cursor: pointer; transition: 0.16s; }
+.ec-chev:hover { color: var(--text); border-color: color-mix(in srgb, var(--text) 40%, var(--line)); }
+.ec-chev svg { transition: transform 0.2s; }
+.ecard.open .ec-chev svg { transform: rotate(180deg); }
+.ec-keyform { display: flex; flex-direction: column; gap: 8px; }
+.ec-keyform label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+.ec-keyform input { background: rgba(0, 0, 0, 0.25); border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; color: var(--text); font-family: var(--mono); font-size: 12px; outline: 0; }
+.ec-keyform input:focus { border-color: var(--brand); }
 
 /* Hermes configure panel — local/cloud toggle with provider + model pickers. */
 .hermes-panel { display: flex; flex-direction: column; gap: 9px; }
@@ -259,13 +397,39 @@
 .hermes-foot { display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px; border-top: 1px solid var(--line2); padding-top: 8px; }
 
 /* ============================ HOME ============================ */
-.home { max-width: 880px; margin: 0 auto; padding: 16px 18px 22px; }
-/* Roomy home (user-maximised window): the page widens for the gallery while
-   the working column (orb, composer, sessions) keeps the 880px measure. */
-.home.roomy { max-width: 1240px; }
-.home.roomy > *:not(.home-gallery) { max-width: 880px; margin-left: auto; margin-right: auto; }
-.home-gallery { margin-top: 36px; animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.home-gallery > .sec { margin-bottom: 30px; }
+/* The working column tracks the viewport: capped at 1040 px so a fullscreen
+   canvas doesn't leave the composer as a thin filament in the middle, but
+   it can't exceed the window (in the 680 bar `92vw` ≈ 625, unchanged). This
+   makes the home use its space WITHOUT depending on the fragile native-
+   fullscreen flag — the clamp() sizes below do the same for the controls. */
+.home { max-width: min(1480px, 96vw); margin: 0 auto; padding: 16px 18px 22px; }
+/* The composer + session rows scale with the viewport. In the narrow bar the
+   vw term is tiny so everything clamps to its floor (the original sizes); in a
+   wide/fullscreen window they grow into a confident hero bar instead of looking
+   "triste" lost in the canvas. Scoped to `.home` so the conversation/atelier
+   reply composer (narrow card) keeps its fixed size. */
+/* Brief bar = the wide hero: it fills the full (widened) `.home` column, with
+   asymmetric padding so it stays SHORT — generous left/right, tight top/bottom. */
+.home .composer { padding: clamp(7px, 0.6vw, 11px) clamp(13px, 1.3vw, 22px); gap: clamp(9px, 0.95vw, 16px); border-radius: clamp(12px, 1vw, 18px); }
+.home .composer input { font-size: clamp(14.5px, 1.4vw, 20px); }
+.home .composer .run { width: clamp(36px, 2.7vw, 44px); height: clamp(36px, 2.7vw, 44px); font-size: clamp(13px, 1vw, 16px); border-radius: clamp(9px, 0.8vw, 13px); }
+.home .composer .pick { font-size: clamp(13px, 1.2vw, 16px); padding: clamp(6px, 0.55vw, 10px) clamp(10px, 1.1vw, 18px); }
+.home .composer .pick .crest { --cs: clamp(22px, 2vw, 30px); }
+/* The sessions column does NOT track the brief bar's width — it keeps a fixed
+   width (only shrinking when the window itself is narrower), centered under the
+   wider hero above. */
+.home .sec, .home .sessions, .home .stage { max-width: min(1180px, 92vw); margin-left: auto; margin-right: auto; }
+.home .srow { padding: clamp(12px, 1.15vw, 20px) clamp(14px, 1.3vw, 24px); }
+.home .srow .who { font-size: clamp(14px, 1.25vw, 19px); }
+.home .srow .sum, .home .srow .on { font-size: clamp(12.5px, 1.05vw, 15px); }
+.home .srow .crest, .home .srow .tile { --cs: clamp(40px, 3.4vw, 56px); --t: clamp(44px, 3.6vw, 60px); }
+/* The sessions section header also grows so the column reads as one scaled
+   unit, not big controls over tiny labels. */
+.home .sec { font-size: clamp(10.5px, 0.95vw, 13px); }
+/* Accroche under the idle orb — gives the floating figure a reason and ties it
+   to the composer below. Only on the empty landing; once sessions exist the
+   "each on its own engine" sessions header carries the same line. */
+.home-eyebrow { margin-top: 12px; text-align: center; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--dim2); }
 /* Idle-state orb above the composer — full size when there's no session
    open (the bar's adaptive height grows ~110px to fit it), and a 72px
    `.mini` variant above the sessions section once the bar is expanded. */
@@ -302,17 +466,51 @@
   0%, 100% { transform: scaleX(1);    opacity: 0.85; }
   50%      { transform: scaleX(0.78); opacity: 0.55; }
 }
+/* La révérence — one-shot bow on click (see SplitMark `bowOnClick`). Ported
+   from design/majordome-planche-2.html's .bowman: the silhouette dips forward
+   from the feet, holds a beat, then rises. Short, sober — "à votre service"
+   rendered in motion. transform-origin lives inline on the <svg>. */
+.split-mark-bow {
+  animation: split-bow 1.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes split-bow {
+  0%        { transform: rotate(0)    translateY(0); }
+  34%, 56%  { transform: rotate(7deg) translateY(3px) scaleY(0.985); }
+  100%      { transform: rotate(0)    translateY(0); }
+}
 @media (prefers-reduced-motion: reduce) {
   .split-levitate,
   .split-shadow { animation: none; }
+  /* Keep the bow effectively instant so onAnimationEnd still fires (clearing
+     the React `bowing` flag) without a jarring motion. */
+  .split-mark-bow { animation-duration: 1ms; }
 }
+
+/* "Le reflet qui balaie" — a glass highlight sweeping diagonally across the
+   majordome while an agent works (SplitMark isSpeaking). The white sheen rect
+   rides the same luminance mask as the silhouette, so it only ever shows over
+   the figure — the app-icon gloss, in motion. See design/majordome-planche.html. */
+.sm-sheen {
+  transform-box: fill-box; transform-origin: center; opacity: 0;
+  animation: sm-sweep 2.6s ease-in-out infinite;
+}
+@keyframes sm-sweep {
+  0%   { transform: translateX(-150px) rotate(-16deg); opacity: 0; }
+  42%  { opacity: 0.45; }
+  58%  { opacity: 0.45; }
+  86%  { transform: translateX(150px) rotate(-16deg); opacity: 0; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .sm-sheen { animation: none; } }
 .sec { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); margin: 0 0 11px; display: flex; align-items: center; gap: 10px; }
 .sec::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .sec .muted { color: var(--dim2); letter-spacing: 0.05em; text-transform: none; font-size: 10px; }
 .sec-row::after { display: none; } /* row with a right-aligned control instead of the divider line */
 .sec-row .spacer { flex: 1; }
 
-.composer { display: flex; align-items: center; gap: 9px; padding: 9px; border-radius: var(--r); border: 1px solid var(--line); background: var(--panel2); margin-bottom: 22px; position: relative; }
+.composer { display: flex; align-items: center; gap: 9px; padding: 9px; border-radius: var(--r); border: 1px solid var(--line); background: var(--panel2); margin-bottom: 22px; position: relative; transition: border-color 0.15s, box-shadow 0.15s; }
+/* Brand focus-ring when the prompt input (or any control) is focused. */
+.composer:focus-within { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent); }
 .pick { display: inline-flex; align-items: center; gap: 7px; font-family: var(--disp); font-weight: 600; font-size: 13px; color: var(--text); border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); border-radius: 10px; padding: 7px 10px; cursor: pointer; white-space: nowrap; transition: 0.15s; }
 .pick:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); }
 .pick .k { font-family: var(--mono); color: var(--dim); font-size: 11px; }
@@ -323,6 +521,10 @@
 .composer input::placeholder { color: var(--dim2); }
 .run { width: 38px; height: 38px; border-radius: 10px; border: 0; cursor: pointer; flex: none; color: var(--ink); background: var(--brand); font-size: 14px; box-shadow: 0 6px 18px color-mix(in srgb, var(--brand) 38%, transparent); transition: transform 0.15s; }
 .run:hover { transform: translateY(-2px); }
+/* 📎 paperclip — attach a file. Subtle, input-adjacent; brand-tints on hover. */
+.clip { width: 38px; height: 38px; border-radius: 10px; flex: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 16px; line-height: 1; color: var(--dim); border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); opacity: 0.85; transition: 0.15s; }
+.clip:hover { opacity: 1; color: var(--text); border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); transform: translateY(-1px); }
 .stop { font-family: var(--mono); font-size: 12px; color: var(--text); background: rgba(224, 83, 61, 0.16); border: 1px solid rgba(224, 83, 61, 0.5); border-radius: 9px; padding: 8px 12px; cursor: pointer; }
 
 .wsbar { display: flex; align-items: center; gap: 9px; padding: 8px 12px; margin-bottom: 22px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); }
@@ -334,7 +536,7 @@
 .roster-lane { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim2); margin: 0 0 9px; }
 .roster { display: flex; flex-wrap: wrap; gap: 8px; }
 .rchip { --brand: #888; position: relative; display: flex; align-items: center; gap: 7px; padding: 7px 12px 7px 9px; border-radius: 11px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); transition: 0.16s; color: var(--text); }
-.rchip:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--brand) 50%, var(--line)); }
+.rchip:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--brand) 50%, var(--line)); box-shadow: var(--lift-row); }
 .rchip.active { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 12%, var(--panel)); box-shadow: 0 0 0 1px var(--brand); }
 .rchip .rv { font-family: var(--mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--dim); }
 .rchip .rv::after { content: "·"; margin-left: 7px; color: var(--dim2); }
@@ -343,19 +545,26 @@
 .rchip.reserve { opacity: 0.5; }
 
 .sessions { display: grid; gap: 9px; }
-.srow { --brand: #888; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r); border: 1px solid var(--line); background: var(--panel); cursor: pointer; transition: border-color 0.16s, transform 0.12s; animation: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; max-width: 100%; overflow: hidden; }
-.srow:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); transform: translateY(-1px); }
+.srow { --brand: #888; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r); border: 1px solid var(--line); background: var(--panel); cursor: pointer; transition: border-color 0.16s, transform 0.16s, box-shadow 0.18s; animation: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; max-width: 100%; overflow: hidden; }
+.srow:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); transform: translateY(-2px); box-shadow: var(--lift-row); }
 .srow .meta { flex: 1; min-width: 0; }
 .srow .ln1 { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
 .srow .who { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
 .srow .on { font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
 .srow .on b { color: var(--brand); font-weight: 500; }
+.srow .on .logo { display: inline-block; vertical-align: -0.18em; margin-right: 3px; }
 .srow .sum { font-size: 12.5px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .dot.running { background: var(--brand); animation: pulse 1.4s infinite; }
 .dot.idle { background: var(--good); } .dot.ended { background: var(--dim2); } .dot.error { background: var(--bad); } .dot.auth { background: var(--warn); }
 .badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--dim); flex-shrink: 0; white-space: nowrap; }
 .badge.running { color: var(--brand); border-color: color-mix(in srgb, var(--brand) 40%, transparent); }
+/* Status pill reads in its state colour (matching the dot), not a uniform grey. */
+.badge.idle { color: var(--good); border-color: color-mix(in srgb, var(--good) 38%, transparent); }
+.badge.error { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, transparent); }
+.badge.auth { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+/* Cost is secondary telemetry — a quiet tabular figure, not a competing pill. */
+.srow .cost { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); font-variant-numeric: tabular-nums; flex-shrink: 0; white-space: nowrap; }
 .xbtn { background: none; border: 0; color: var(--dim2); cursor: pointer; font-size: 13px; padding: 3px 6px; border-radius: 7px; }
 .xbtn:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
 .empty { padding: 30px; text-align: center; color: var(--dim2); border: 1px dashed var(--line); border-radius: var(--r); font-family: var(--mono); font-size: 12px; line-height: 1.6; }
@@ -365,13 +574,130 @@
 .teams-pointer { display: block; width: 100%; padding: 9px 12px; margin-top: 4px; border: 1px dashed var(--line); border-radius: 10px; background: transparent; color: var(--dim); font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; cursor: pointer; text-align: center; transition: 0.15s; }
 .teams-pointer:hover { background: color-mix(in srgb, var(--brand) 6%, transparent); border-color: color-mix(in srgb, var(--brand) 40%, var(--line)); color: var(--text); }
 
+/* ===================== HISTORY · JOURNAL (HistoryOverlay) =====================
+   A real, fully opaque page (NOT the translucent `.overlay` glass) so nothing
+   behind bleeds through. Surface tracks the skin via --ink/--ink2 + a faint
+   brand wash, the same recipe feel as the app shell. Day-grouped timeline:
+   each day is a header + a copper spine, each row a node coloured by its expert.
+   Trivial "hey" rows dim so real briefs lead the eye; resume / delete reveal on
+   hover so the resting state stays calm. */
+.histpage {
+  position: absolute; inset: 0; z-index: 60; overflow: auto;
+  display: grid; place-items: start center; padding: 30px 36px 44px;
+  background:
+    radial-gradient(760px 440px at 88% -12%, color-mix(in srgb, var(--brand) 11%, transparent), transparent 62%),
+    radial-gradient(640px 520px at -8% 110%, color-mix(in srgb, var(--brand) 6%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--ink2), var(--ink));
+}
+.histscroll { padding-right: 2px; }
+.histday { margin-bottom: 4px; }
+.histday-label {
+  display: flex; align-items: center; gap: 11px;
+  margin: 16px 2px 4px; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim2);
+}
+.histday-label::after { content: ""; flex: 1; height: 1px; background: var(--line2); }
+.histday-count {
+  color: var(--brand); background: color-mix(in srgb, var(--brand) 14%, transparent);
+  padding: 1px 7px; border-radius: 99px; letter-spacing: 0.06em;
+}
+/* The vertical spine — a feathered hairline the row nodes sit on. */
+.histspine { position: relative; padding-left: 30px; }
+.histspine::before {
+  content: ""; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 1px;
+  background: linear-gradient(180deg, transparent, var(--line), transparent);
+}
+.jrow {
+  --node: #888; position: relative; display: flex; align-items: center; gap: 13px;
+  padding: 10px 12px 10px 0; border-radius: 12px; cursor: pointer;
+  transition: background 0.15s, padding 0.15s;
+  animation: rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.jrow::before {
+  content: ""; position: absolute; left: -23px; top: 50%; transform: translateY(-50%);
+  width: 9px; height: 9px; border-radius: 50%; background: var(--node);
+  box-shadow: 0 0 0 4px var(--ink), 0 0 11px color-mix(in srgb, var(--node) 70%, transparent);
+}
+.jrow:hover { background: rgba(255, 255, 255, 0.035); padding-left: 10px; }
+.jrow .crest { flex: none; }
+.jmeta { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.jln1 { display: flex; align-items: center; gap: 9px; }
+.jrow .who { font-weight: 600; font-size: 14.5px; letter-spacing: -0.01em; }
+.jon { font-family: var(--mono); font-size: 10.5px; color: var(--dim); white-space: nowrap; }
+.jon b { color: var(--brand); font-weight: 500; }
+.jon .logo { display: inline-block; vertical-align: -0.18em; margin: 0 1px; }
+.jttl { font-size: 13px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 460px; }
+.jrow.trivial .jttl { font-style: italic; color: var(--dim2); }
+.jspacer { flex: 1; }
+.jwhen { font-family: var(--mono); font-size: 11px; color: var(--dim2); flex-shrink: 0; white-space: nowrap; }
+.jtools { display: flex; align-items: center; gap: 7px; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
+.jrow:hover .jtools { opacity: 1; }
+.jact {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em;
+  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); color: var(--dim);
+  padding: 5px 11px; border-radius: 9px; cursor: pointer; transition: 0.15s;
+}
+.jact:hover { color: var(--text); border-color: color-mix(in srgb, var(--brand) 50%, transparent); background: color-mix(in srgb, var(--brand) 14%, transparent); }
+.jx { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; color: var(--dim2); cursor: pointer; border: 1px solid transparent; background: none; font-size: 12px; transition: 0.15s; }
+.jx:hover { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, transparent); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+
 /* ============================ CONVERSATION ============================ */
-.conv { max-width: 820px; margin: 0 auto; padding: 14px 18px 18px; display: flex; flex-direction: column; min-height: 100%; }
-.conv-head { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
+.conv { max-width: 820px; margin: 0 auto; padding: 14px 35px 18px; display: flex; flex-direction: column; height: 100%; min-height: 0; }
+/* The conversation is a fixed-height panel: only the thread scrolls; the header,
+   deliverables strip, logs and reply composer stay pinned (flex: none). */
+.conv-head { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; flex: none; }
+.conv > .composer, .conv .deliv-wrap, .conv .logs, .conv .slash-menu, .conv .art-strip { flex: none; }
 .conv-title { font-weight: 700; font-size: 17px; letter-spacing: -0.02em; }
 .conv-on { font-family: var(--mono); font-size: 11px; color: var(--dim); }
 .conv-on b { color: var(--engine); }
-.thread { display: flex; flex-direction: column; gap: 14px; flex: 1; }
+/* vendor-CLI sign-in chip (e.g. Higgsfield) — sits in the conv-head, styled
+   like .card-act but tuned for the header row. */
+.toolchip { font-family: var(--mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 9px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--dim); cursor: pointer; transition: 0.15s; white-space: nowrap; }
+.toolchip:hover:not(:disabled) { color: var(--text); border-color: var(--text); }
+.toolchip.ok { color: var(--good); border-color: color-mix(in srgb, var(--good) 35%, var(--line)); opacity: 0.8; }
+.toolchip:disabled { cursor: default; }
+.toolchip:disabled:not(.ok) { opacity: 0.5; }
+/* small harness mark inline before its name (e.g. "on ◐ Codex · running") */
+.conv-on .logo { display: inline-block; vertical-align: -0.2em; margin-right: 4px; }
+/* Reading surface — "voile plat" (design/conv-surface-proposal.html, option D):
+   a flat uniform wash behind the prose, feathered to nothing on the left/right
+   so it has no hard card edge and no border. It calms the rich app decor (orbs,
+   grain, gradients) just under the text while letting it stay vivid all around —
+   no blur, zero GPU cost. The head/composer stay transparent over the decor for
+   layered depth. Replaces the old frosted-glass panel (border + blur + shadow),
+   whose hard rim read as too much contrast against the page. */
+.thread {
+  position: relative;
+  display: flex; flex-direction: column; gap: 14px;
+  /* The thread is the conversation's single scroll region. min-height: 0 lets
+     it shrink below its content inside the flex column so overflow engages
+     instead of pushing the pinned composer off-screen. */
+  flex: 1; min-height: 0; overflow-y: auto;
+  /* Extra top/bottom padding so the prose floats inside the panel with real
+     breathing room — the panel hugs this box, so its gap to the head above and
+     the composer below comes from here, not from negative bleed. */
+  padding: 20px 18px 22px; margin: 8px -6px 6px;
+}
+.thread::before {
+  content: ""; position: absolute; z-index: -1; inset: 0 -8px;
+  border-radius: 20px;
+  /* Soft frosted reading panel — the twin of the artifact card (.art-pane), so
+     the conversation reads as a rounded glass surface, not a hard black box.
+     Derived from --ink so the wash follows the skin (dark veil on dark themes,
+     light on theme-bright / theme-ember-light). Kept faint + softly shadowed so
+     it whispers under the prose instead of boxing it in. The panel hugs the
+     thread box (inset 0 top/bottom), so the gaps to the head and composer come
+     from the surrounding margins — no more crowding the chat bar. */
+  background: color-mix(in srgb, var(--ink) 24%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line2) 65%, transparent);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.14);
+  backdrop-filter: blur(7px) saturate(1.03);
+  -webkit-backdrop-filter: blur(7px) saturate(1.03);
+}
+/* In the fill layout the thread owns the scroll, so this absolute wash would
+   scroll out from under the prose. Drop it for the compact focused conversation
+   (the art-split and atelier paths already neutralise it just below). */
+.measure.fill > .conv .thread::before { display: none; }
 .turn { display: flex; flex-direction: column; gap: 4px; }
 .turn-head { display: flex; align-items: center; gap: 8px; }
 .turn .role { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim2); }
@@ -400,6 +726,18 @@
 .turn .text th, .turn .text td { border: 1px solid var(--line); padding: 3px 9px; }
 .thinking { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--dim); flex-wrap: wrap; }
 .thinking-line { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---- TurnSpinner: pawn→queen glyph + persona verb (glimmer) + odometer ----
+   Skin-accent surface (same as the old running dot): glyph + verb run in
+   `--brand`; the glimmer spot (.g0/.g1) brightens toward white via color-mix
+   so it follows whatever skin is active. */
+.thinking.spin { flex-wrap: nowrap; }
+.spin-glyph { min-width: 16px; text-align: center; flex: none; font-size: 14px; line-height: 1; color: var(--brand); }
+.spin-verb { color: var(--brand); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.spin-verb span { white-space: pre; transition: color 90ms linear; }
+.spin-meta { color: var(--dim2); flex: none; font-variant-numeric: tabular-nums; }
+.spin-think { animation: spin-think-breathe 2s ease-in-out infinite; }
+@keyframes spin-think-breathe { 0%, 100% { color: var(--dim2); } 50% { color: var(--dim); } }
 
 /* ---- raw logs panel (collapsible, auto-scroll while running) ---- */
 .logs { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
@@ -488,8 +826,9 @@
   --good: #16a36a;
   --warn: #b8860b;
   --bad: #d63d3d;
+  --rim: rgba(23, 26, 38, 0.10);
   background:
-    url(./assets/skins/bright-orbs.svg) no-repeat 92% 5% / 360px auto,
+    url(./assets/skins/bright-orbs.svg) no-repeat 99% 1% / 300px auto,
     radial-gradient(820px 520px at 86% -12%, rgba(0, 83, 253, 0.07), transparent 60%),
     radial-gradient(720px 620px at -6% 108%, rgba(0, 83, 253, 0.05), transparent 60%),
     linear-gradient(180deg, rgba(248, 250, 255, 0.84), rgba(241, 244, 251, 0.9));
@@ -499,6 +838,8 @@
 .app.theme-bright .seg button.on { color: #fff; }
 .app.theme-bright .btn { color: #fff; box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 24%, transparent); }
 .app.theme-bright .run { color: #fff; }
+.app.theme-bright .composer { box-shadow: 0 8px 26px rgba(23, 26, 38, 0.06); }
+.app.theme-bright .composer:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent), 0 8px 26px rgba(23, 26, 38, 0.06); }
 .app.theme-bright .stop { background: rgba(214, 61, 61, 0.10); border-color: rgba(214, 61, 61, 0.40); color: var(--bad); }
 .app.theme-bright .stream-md a,
 .app.theme-bright .turn .text a { color: var(--brand); }
@@ -530,6 +871,96 @@
   border-color: rgba(23, 26, 38, 0.10);
 }
 
+/* ============================ THEME · EMBER ============================
+   Charcoal near-black canvas, a cool blue-grey ramp, fully monochrome — a
+   crisp white accent, zero colour. The app base is already dark, so this
+   mostly retunes the vars + a faint cool vignette; the dark defaults carry
+   the rest. (Brand-filled buttons keep `color: var(--ink)` = near-black, so a
+   white brand lands the contrast for free.)
+   ====================================================================== */
+.app.theme-ember {
+  --ink: #040405;
+  --ink2: #111117;
+  --panel: rgba(17, 17, 23, 0.58);
+  --panel2: rgba(28, 28, 38, 0.72);
+  --line: rgba(255, 255, 255, 0.10);
+  --line2: rgba(255, 255, 255, 0.05);
+  --text: #dcdce4;
+  --dim: #adadbc;
+  --dim2: #7a7a8a;
+  --brand: #ffffff;
+  --mark: #ffffff; /* house silhouette: plain white on the dark canvas */
+  --good: #38a878;
+  --warn: #d8b34a;
+  --bad: #e5484d;
+  --rim: rgba(255, 255, 255, 0.07);
+  background:
+    radial-gradient(820px 520px at 88% -14%, rgba(255, 255, 255, 0.05), transparent 60%),
+    radial-gradient(720px 620px at -6% 110%, rgba(255, 255, 255, 0.03), transparent 62%),
+    linear-gradient(180deg, #050507, #09090d);
+}
+
+/* ========================= THEME · EMBER LIGHT =========================
+   The light counterpart — soft #f7f7f8 canvas, white elevated cards,
+   near-black text, fully monochrome black accent (zero colour). The app base
+   is dark, so (like Bright) this re-skins the elevated surfaces back to white.
+   ====================================================================== */
+.app.theme-ember-light {
+  --ink: #ffffff;
+  --ink2: #f2f2f5;
+  --panel: rgba(255, 255, 255, 0.84);
+  --panel2: rgba(242, 242, 245, 0.92);
+  --line: rgba(13, 13, 18, 0.10);
+  --line2: rgba(13, 13, 18, 0.05);
+  --text: #0d0d12;
+  --dim: #4a4a58;
+  --dim2: #7a7a8a;
+  --brand: #000000;
+  --mark: #000000; /* house silhouette: plain black on the light canvas */
+  --good: #18794e;
+  --warn: #b8860b;
+  --bad: #c0404a;
+  --rim: rgba(13, 13, 18, 0.10);
+  background:
+    radial-gradient(820px 520px at 88% -12%, rgba(13, 13, 18, 0.05), transparent 60%),
+    radial-gradient(720px 620px at -6% 108%, rgba(13, 13, 18, 0.03), transparent 60%),
+    linear-gradient(180deg, #fbfbfc, #f4f4f6);
+}
+.app.theme-ember-light::before { opacity: 0.4; }
+.app.theme-ember-light::after { opacity: 0.05; mix-blend-mode: multiply; }
+.app.theme-ember-light .seg button.on { color: #fff; }
+.app.theme-ember-light .btn { color: #fff; box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 24%, transparent); }
+.app.theme-ember-light .run { color: #fff; }
+.app.theme-ember-light .stop { background: rgba(192, 64, 74, 0.10); border-color: rgba(192, 64, 74, 0.40); color: var(--bad); }
+.app.theme-ember-light .stream-md a,
+.app.theme-ember-light .turn .text a { color: var(--brand); }
+.app.theme-ember-light .stream-md code,
+.app.theme-ember-light .turn .text code { background: rgba(13, 13, 18, 0.07); }
+.app.theme-ember-light .stream-md pre,
+.app.theme-ember-light .turn .text pre { background: rgba(13, 13, 18, 0.05); }
+.app.theme-ember-light .menu { background: #ffffff; box-shadow: 0 12px 32px rgba(13, 13, 18, 0.14); }
+.app.theme-ember-light .mi:hover, .app.theme-ember-light .mi.sel { background: rgba(13, 13, 18, 0.06); }
+.app.theme-ember-light .overlay, .app.theme-ember-light .modal-bg { background: rgba(13, 13, 18, 0.30); }
+.app.theme-ember-light .am { background: #ffffff; }
+.app.theme-ember-light .toast { background: #ffffff; box-shadow: 0 10px 30px rgba(13, 13, 18, 0.14); }
+.app.theme-ember-light .drop { background: rgba(242, 242, 245, 0.92); }
+.app.theme-ember-light .logs-pre { background: rgba(13, 13, 18, 0.05); color: var(--text); }
+.app.theme-ember-light .xbtn:hover { background: rgba(13, 13, 18, 0.06); }
+.app.theme-ember-light .demo,
+.app.theme-ember-light .ob2-tryout {
+  background: linear-gradient(180deg, #ffffff, #fafbfd);
+  box-shadow: 0 16px 40px rgba(13, 13, 18, 0.10);
+}
+.app.theme-ember-light .ob2-primary {
+  background: linear-gradient(180deg, #ffffff, #f4f4f6);
+}
+.app.theme-ember-light .demo-at,
+.app.theme-ember-light .ob2-tryout-prompt,
+.app.theme-ember-light .ob2-tryout-at {
+  background: rgba(13, 13, 18, 0.04);
+  border-color: rgba(13, 13, 18, 0.10);
+}
+
 /* ============================ THEME · SALON ============================
    Warm, serif, lobby-pastel skin. Re-skins the chrome via CSS vars; the
    per-harness brand tints injected inline on cards/chips/tiles still win,
@@ -549,6 +980,7 @@
   --good: #9bb088;
   --warn: #d4a847;
   --bad: #8b1e3f;
+  --rim: rgba(94, 58, 60, 0.20);
   --disp: "Cormorant Garamond", "Playfair Display", Georgia, serif;
   background:
     url(./assets/skins/baroque-column.svg) no-repeat 0 100% / auto 320px,
@@ -648,6 +1080,46 @@
 .app.theme-cyberpunk .menu { background: #0e0a1f; border-color: rgba(255, 61, 242, 0.28); }
 .app.theme-cyberpunk .overlay, .app.theme-cyberpunk .modal-bg { background: rgba(5, 4, 16, 0.6); }
 .app.theme-cyberpunk .am { background: #0e0a1f; border-color: rgba(0, 255, 209, 0.25); }
+
+/* ============================ THEME · ATELIER ==============================
+   Deep blue glass — the Beam-inspired control-room skin. Layered radial blooms
+   (azure + cyan), frosted panels, azure accent. Pure gradients, no SVG object.
+   Pairs with the fullscreen Atelier view but works as a standalone skin too. */
+.app.theme-atelier {
+  --ink: #070a12;
+  --ink2: #0a0e1a;
+  --panel: rgba(18, 24, 38, 0.6);
+  --panel2: rgba(26, 33, 52, 0.74);
+  --line: rgba(150, 180, 255, 0.14);
+  --line2: rgba(150, 180, 255, 0.07);
+  --text: #eaf0ff;
+  --dim: #9aa6c4;
+  --dim2: #5d6688;
+  --brand: #5b8cff;
+  --good: #5cc98a;
+  --warn: #e6b450;
+  --bad: #ff6b7a;
+  --rim: rgba(150, 180, 255, 0.16);
+  background:
+    radial-gradient(880px 560px at 80% -12%, rgba(91, 140, 255, 0.20), transparent 58%),
+    radial-gradient(760px 640px at -8% 110%, rgba(154, 124, 255, 0.15), transparent 58%),
+    radial-gradient(620px 520px at 50% 48%, rgba(84, 230, 255, 0.06), transparent 70%),
+    linear-gradient(180deg, rgba(10, 14, 26, 0.82) 0%, rgba(4, 6, 13, 0.9) 100%);
+}
+.app.theme-atelier::before { opacity: 0.4; }
+.app.theme-atelier::after { opacity: 0.04; }
+.app.theme-atelier .seg button.on { color: #07070d; background: var(--brand); box-shadow: 0 0 14px color-mix(in srgb, var(--brand) 45%, transparent); }
+.app.theme-atelier .btn { color: #07070d; }
+.app.theme-atelier .run { color: #07070d; }
+.app.theme-atelier .stream-md a,
+.app.theme-atelier .turn .text a { color: var(--brand); }
+.app.theme-atelier .stream-md code,
+.app.theme-atelier .turn .text code { background: rgba(91, 140, 255, 0.12); color: #bcd2ff; }
+.app.theme-atelier .stream-md pre,
+.app.theme-atelier .turn .text pre { background: rgba(18, 24, 38, 0.7); border: 1px solid var(--line); }
+.app.theme-atelier .menu { background: #0c111d; border-color: rgba(91, 140, 255, 0.28); }
+.app.theme-atelier .overlay, .app.theme-atelier .modal-bg { background: rgba(4, 6, 13, 0.6); }
+.app.theme-atelier .am { background: #0c111d; border-color: rgba(91, 140, 255, 0.25); }
 
 /* ============================ THEME · TOKYO NIGHT ===========================
    Deep indigo + violet/teal/rose. Calm, editor-grade. */
@@ -784,6 +1256,49 @@
 .app.theme-titanic .drop { background: rgba(13, 39, 69, 0.86); }
 .app.theme-titanic .logs-pre { background: rgba(200, 156, 74, 0.06); color: var(--text); }
 .app.theme-titanic .xbtn:hover { background: rgba(200, 156, 74, 0.10); }
+
+/* ============================ THEME · EMERALD =============================
+   Deep forest green — jewel-dark surfaces, a vivid emerald accent, a faint
+   mint glass rim. The green member of the dark family (set apart from the
+   blue/violet darks). Surfaces (menu/am/toast) ride `--ink2` and CTAs ride
+   `--brand`/`--ink` straight from the base rules, so only the bits the base
+   hardcodes are restated below. Per-harness brand still wins on tiles/chips. */
+.app.theme-emerald {
+  --ink: #04130d;
+  --ink2: #0a2018;
+  --panel: rgba(12, 32, 24, 0.60);
+  --panel2: rgba(18, 44, 33, 0.78);
+  --line: rgba(52, 211, 153, 0.18);
+  --line2: rgba(52, 211, 153, 0.08);
+  --text: #e6f4ec;
+  --dim: #8fb3a3;
+  --dim2: #587468;
+  --brand: #34d399;
+  --good: #7ce38b;
+  --warn: #e5c452;
+  --bad: #f0795f;
+  --rim: rgba(110, 231, 183, 0.16);
+  background:
+    radial-gradient(820px 520px at 86% -12%, rgba(52, 211, 153, 0.20), transparent 60%),
+    radial-gradient(720px 620px at -6% 108%, rgba(16, 185, 129, 0.14), transparent 60%),
+    radial-gradient(560px 460px at 50% 46%, rgba(45, 212, 191, 0.06), transparent 70%),
+    linear-gradient(180deg, rgba(6, 22, 16, 0.82) 0%, rgba(3, 12, 9, 0.92) 100%);
+}
+.app.theme-emerald::before { opacity: 0.22; }
+.app.theme-emerald::after { opacity: 0.04; }
+.app.theme-emerald .stop { background: rgba(240, 121, 95, 0.12); border-color: rgba(240, 121, 95, 0.45); color: var(--bad); }
+.app.theme-emerald .stream-md a,
+.app.theme-emerald .turn .text a { color: var(--brand); }
+.app.theme-emerald .stream-md code,
+.app.theme-emerald .turn .text code { background: rgba(52, 211, 153, 0.12); color: var(--brand); }
+.app.theme-emerald .stream-md pre,
+.app.theme-emerald .turn .text pre { background: rgba(6, 22, 16, 0.7); border: 1px solid var(--line); }
+.app.theme-emerald .menu { border-color: rgba(52, 211, 153, 0.30); }
+.app.theme-emerald .mi:hover, .app.theme-emerald .mi.sel { background: rgba(52, 211, 153, 0.10); }
+.app.theme-emerald .overlay, .app.theme-emerald .modal-bg { background: rgba(3, 12, 9, 0.62); }
+.app.theme-emerald .drop { background: rgba(12, 32, 24, 0.88); }
+.app.theme-emerald .logs-pre { background: rgba(52, 211, 153, 0.06); color: var(--text); }
+.app.theme-emerald .xbtn:hover { background: rgba(52, 211, 153, 0.10); }
 
 /* ====================== THEME · SAINT-EX (id "ghibli") =====================
    Light pastoral — watercolor sky, butter biplane under asteroid B-612.
@@ -1083,57 +1598,9 @@
 .skin-tick { color: var(--brand); font-size: 9px; flex: none; }
 
 /* ============================ ARTIFACTS ================================= */
-/* The split layout activates whenever the focused session has at least one
-   deliverable (Session.artifacts.length > 0). Conversation becomes a left
-   rail, ArtifactViewer fills the rest. Body/measure are switched to `fill`
-   mode in App.tsx so the window owns its own scroll regions. */
-.art-split {
-  display: flex; flex-direction: row;
-  height: 100%; width: 100%;
-  min-height: 0; min-width: 0;
-  gap: 0;
-}
-.art-split-conv {
-  flex: 0 0 var(--rail-w, 460px);
-  min-width: 0; max-width: none;
-  min-height: 0; overflow-y: auto;
-}
-/* Vertical divider, user-draggable. The hit area is 8px so it's easy to
-   grab; the visible line is 1px sitting in the middle. On hover/active
-   the whole strip washes with brand so the affordance is unmistakable. */
-.art-split-handle {
-  flex: 0 0 8px;
-  position: relative;
-  cursor: col-resize;
-  background: transparent;
-  transition: background 0.15s;
-  z-index: 1;
-}
-.art-split-handle::before {
-  content: "";
-  position: absolute;
-  left: 50%; top: 0; bottom: 0;
-  width: 1px;
-  background: var(--line);
-  transform: translateX(-0.5px);
-  pointer-events: none;
-}
-.art-split-handle:hover,
-.art-split-handle:active {
-  background: color-mix(in srgb, var(--brand) 18%, transparent);
-}
-.art-split-handle:hover::before,
-.art-split-handle:active::before {
-  background: var(--brand);
-}
-.art-split-view {
-  flex: 1; min-width: 0; min-height: 0;
-  display: flex; flex-direction: column;
-  background: var(--ink2);
-}
-/* In split mode the conv loses its centered max-width and gets a tighter
-   horizontal padding so it doesn't waste rail width on margins. */
-.art-split .conv { max-width: none; margin: 0; padding: 14px 14px 14px; }
+/* The old `.art-split` side-by-side shell was retired — opening a deliverable
+   now routes into the Atelier focus mode (see App.tsx), the single fullscreen
+   surface. The atelier's own split styles live under `.atelier-*` below. */
 
 /* Per-session chips strip — one per deliverable, the active one highlighted.
    Sits between the thread and the composer; clicking pilots the viewer. */
@@ -1158,7 +1625,18 @@
 }
 
 /* ArtifactViewer pane (right side of the split). */
-.art-pane { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+/* Rounded frosted-glass card floating on the decor — mirrors the left thread
+   so the split reads as two twin panels on one desk. overflow:hidden clips the
+   head/body to the radius; flex:1 fills the inset .art-split-view padding box. */
+.art-pane {
+  display: flex; flex-direction: column; flex: 1; min-height: 0; position: relative;
+  border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--rim);
+  background: color-mix(in srgb, var(--ink) 55%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.34);
+}
 .art-head {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 14px;
@@ -1187,6 +1665,157 @@
 .art-md a { color: var(--brand); }
 .art-img { max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 8px; }
 .art-iframe { width: 100%; height: 100%; min-height: 480px; border: 0; background: #fff; border-radius: 6px; }
+
+/* Audio / video players — file streamed off disk via the asset protocol. The
+   wrapper centres the player and pins the tiny mime/size + open-externally line
+   beneath it (kept as a fallback for codecs WKWebView can't decode, e.g. webm). */
+.art-media { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px 0; }
+/* The Spectre audio player gets the full body height so it sits centred in the
+   pane rather than pinned to the top with a sea of empty space beneath it
+   (`min-height: 100%` resolves against `.art-body`'s definite flex height). If
+   the player ever exceeds the pane the body's own `overflow: auto` takes over —
+   `justify-content: center` never clips because the wrapper grows to fit. */
+.art-media-spx { min-height: 100%; justify-content: center; gap: 14px; }
+.art-audio { width: 100%; max-width: 560px; }
+.art-video {
+  max-width: 100%; max-height: 70vh; width: auto; height: auto;
+  display: block; border-radius: 10px; background: #000;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+.art-media-meta { font-family: var(--mono); font-size: 11px; color: var(--dim2); }
+.art-media-link {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font: inherit; color: var(--brand); text-decoration: underline;
+}
+
+/* "Spectre" audio-reactive player — replaces the raw <audio controls> for audio
+   artifacts. Mirrored log-spaced FFT spectrum on a canvas (Web Audio analyser),
+   bass slams + a low-band RMS glow you feel. Ported from
+   design/audio-player/waves/wave-2-spectre.html; tokens reused from :root. */
+.spx {
+  position: relative; width: 100%; max-width: 760px;
+  background: linear-gradient(180deg, var(--panel2), var(--panel));
+  border: 1px solid var(--line); border-radius: calc(var(--r) + 4px);
+  box-shadow: 0 1px 0 0 var(--rim) inset, 0 24px 60px -28px rgba(0,0,0,.85), 0 2px 10px -4px rgba(0,0,0,.6);
+  backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  padding: 16px 16px 14px; overflow: hidden;
+}
+.spx::after { /* house signet — faint gold poinçon hairline */
+  content: ""; position: absolute; left: 16px; right: 16px; top: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217,176,106,.42), transparent); pointer-events: none;
+}
+.spx-head { display: flex; align-items: center; gap: 12px; margin: 2px 2px 14px; }
+.spx-sigil {
+  width: 34px; height: 34px; flex: 0 0 auto; border-radius: 10px; display: grid; place-items: center;
+  background: radial-gradient(120% 120% at 30% 20%, #1c2027, #0c0e12);
+  border: 1px solid var(--rim); box-shadow: 0 1px 0 var(--rim) inset, 0 6px 14px -8px #000;
+}
+.spx-sigil svg { display: block; }
+.spx-titles { min-width: 0; flex: 1 1 auto; }
+.spx-t { font-family: var(--disp); font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spx-s { font-family: var(--mono); font-size: 10.5px; letter-spacing: .04em; color: var(--dim); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spx-status {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--dim2); display: flex; align-items: center; gap: 6px; flex: 0 0 auto;
+  border: 1px solid var(--line); border-radius: 999px; padding: 5px 9px; white-space: nowrap;
+  transition: color .25s, border-color .25s;
+}
+.spx-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim2); transition: background .25s, box-shadow .25s; }
+.spx.playing .spx-status { color: var(--brand); border-color: rgba(217,119,87,.35); }
+.spx.playing .spx-dot { background: var(--brand); box-shadow: 0 0 10px 1px rgba(217,119,87,.65); animation: spx-pulse 1.05s ease-in-out infinite; }
+@keyframes spx-pulse { 50% { box-shadow: 0 0 14px 3px rgba(217,119,87,.85); } }
+
+.spx-viz {
+  position: relative; width: 100%; height: clamp(240px, 36vh, 340px); border-radius: var(--r);
+  background: radial-gradient(120% 90% at 50% 50%, rgba(217,119,87,.05), transparent 70%), linear-gradient(180deg, #0c0e13, #07080b);
+  border: 1px solid var(--line); box-shadow: 0 1px 0 var(--rim) inset, 0 18px 40px -26px #000 inset;
+  overflow: hidden; cursor: pointer; outline: none; touch-action: none;
+}
+.spx-viz:focus-visible { box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--brand); }
+.spx-viz canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.spx-glow { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(60% 120% at 50% 108%, rgba(217,119,87,.55), transparent 62%); opacity: 0; mix-blend-mode: screen; transition: opacity .04s linear; }
+.spx-axis { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.10), transparent); pointer-events: none; }
+.spx-playhead { position: absolute; top: 0; bottom: 0; width: 1.5px; left: 0; background: linear-gradient(180deg, transparent, rgba(217,176,106,.9), transparent); box-shadow: 0 0 8px 1px rgba(217,176,106,.5); pointer-events: none; transition: left .08s linear; }
+.spx-freqlabels { position: absolute; left: 10px; right: 10px; bottom: 6px; display: flex; justify-content: space-between; pointer-events: none; font-family: var(--mono); font-size: 8.5px; letter-spacing: .08em; color: rgba(255,255,255,.20); text-transform: uppercase; }
+
+.spx-transport { display: flex; align-items: center; gap: 14px; margin: 14px 2px 2px; }
+.spx-play {
+  position: relative; flex: 0 0 auto; width: 48px; height: 48px; border-radius: 50%;
+  border: 1px solid rgba(217,119,87,.55);
+  background: radial-gradient(120% 120% at 30% 25%, #e98c6e, var(--brand) 55%, #b85b3e);
+  color: #1a0f0a; cursor: pointer; display: grid; place-items: center;
+  box-shadow: 0 1px 0 rgba(255,255,255,.3) inset, 0 10px 22px -10px rgba(217,119,87,.7), 0 2px 6px -2px #000;
+  transition: transform .12s cubic-bezier(.2,.8,.2,1), box-shadow .2s, filter .2s;
+}
+.spx-play:hover { transform: translateY(-1px) scale(1.03); filter: brightness(1.05); }
+.spx-play:active { transform: translateY(0) scale(.96); }
+.spx-play:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--brand); }
+.spx-play svg { display: block; }
+.spx.loading .spx-play { opacity: .7; }
+
+.spx-seekwrap { flex: 1 1 auto; min-width: 0; }
+.spx-times { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--dim); margin-bottom: 8px; }
+.spx-cur { color: var(--text); }
+.spx-seek { position: relative; height: 18px; display: flex; align-items: center; cursor: pointer; touch-action: none; outline: none; }
+.spx-seek:focus-visible { box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--brand); border-radius: 999px; }
+.spx-track { position: relative; width: 100%; height: 4px; border-radius: 999px; background: rgba(255,255,255,.08); box-shadow: 0 1px 0 var(--rim) inset; }
+.spx-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; border-radius: 999px; background: linear-gradient(90deg, #b85b3e, var(--brand) 70%, #ec8d6c); box-shadow: 0 0 10px -1px rgba(217,119,87,.6); }
+.spx-knob { position: absolute; top: 50%; left: 0%; width: 13px; height: 13px; border-radius: 50%; transform: translate(-50%, -50%) scale(1); background: radial-gradient(120% 120% at 30% 25%, #fff, #f1ddd2 60%, var(--brand)); border: 1px solid rgba(217,119,87,.7); box-shadow: 0 2px 6px -1px #000; transition: transform .12s, box-shadow .2s; }
+.spx-seek:hover .spx-knob { transform: translate(-50%,-50%) scale(1.18); box-shadow: 0 2px 8px -1px #000, 0 0 0 5px rgba(217,119,87,.16); }
+
+.spx-mute { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.03); color: var(--dim); cursor: pointer; display: grid; place-items: center; transition: color .2s, border-color .2s, background .2s, transform .1s; }
+.spx-mute:hover { color: var(--text); border-color: var(--rim); background: rgba(255,255,255,.06); }
+.spx-mute:active { transform: scale(.94); }
+.spx-mute:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--brand); }
+.spx-mute.muted { color: var(--bad); border-color: rgba(224,83,61,.35); }
+.spx-mute svg { display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+  .spx.playing .spx-dot { animation: none; }
+  .spx-playhead { transition: none; }
+}
+
+/* Floating edit affordance for HTML artifacts. They open in preview/play mode
+   (the iframe is fully interactive — a generated game is playable), so the way
+   into the contentEditable editor is this pencil, parked bottom-left over the
+   preview. Pill shape + shadow so it reads as a floating control, not chrome. */
+.art-edit-fab {
+  position: absolute; left: 14px; bottom: 14px; z-index: 20;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 14px 8px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--brand) 45%, var(--line));
+  background: var(--bg); color: var(--text);
+  font-size: 12.5px; font-weight: 600; letter-spacing: -0.01em;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
+  transition: 0.15s;
+}
+.art-edit-fab:hover {
+  border-color: var(--brand); color: var(--brand);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.art-edit-fab-ico { font-size: 14px; line-height: 1; }
+
+/* Grouped HTML action bar — one floating pill holding Edit + open-in-browser +
+   export + save + share + keep, parked bottom-left over the preview. The Edit
+   pill drops its own absolute placement and shadow to sit inline in the bar. */
+.art-actionbar {
+  position: absolute; left: 14px; bottom: 14px; z-index: 20;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 7px; border-radius: 999px;
+  border: 1px solid var(--rim);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.36);
+}
+.art-actionbar .art-edit-fab {
+  position: static; left: auto; bottom: auto;
+  box-shadow: none; padding: 6px 12px 6px 10px;
+}
+.art-actionbar .art-edit-fab:hover { transform: none; box-shadow: none; }
 .art-csv-wrap { overflow: auto; }
 .art-csv { border-collapse: collapse; font-size: 12.5px; font-family: var(--mono); }
 .art-csv th, .art-csv td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; }
@@ -1223,6 +1852,8 @@
   text-align: left; transition: background 0.12s;
 }
 .art-share-item:hover { background: rgba(255, 255, 255, 0.06); }
+/* Anchored in the bottom action bar → flip the popover above the button. */
+.art-share-wrap.up .art-share-menu { top: auto; bottom: calc(100% + 6px); }
 .art-share-mark {
   width: 20px; height: 20px;
   display: grid; place-items: center;
@@ -1230,6 +1861,49 @@
   color: var(--dim);
   border: 1px solid var(--line); border-radius: 4px;
   flex: none;
+}
+
+/* "Keep in vault" popover — reuses .art-share-menu, adds a title row, a
+   "Projets" separator, and an inline new-project field. */
+.art-keep-menu { min-width: 210px; }
+.art-keep-head {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--dim); padding: 4px 10px 6px;
+}
+.art-keep-def { color: var(--dim2); font-weight: 400; }
+.art-keep-sep {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--dim2); padding: 8px 10px 3px;
+  border-top: 1px solid var(--line); margin-top: 4px;
+}
+.art-keep-new { display: flex; align-items: center; gap: 6px; padding: 6px 8px 4px; }
+.art-keep-input {
+  flex: 1; min-width: 0;
+  font-size: 12.5px; font-family: var(--mono);
+  background: rgba(255, 255, 255, 0.04); color: var(--text);
+  border: 1px solid var(--line); border-radius: 7px;
+  padding: 5px 8px; outline: none;
+}
+.art-keep-input:focus { border-color: var(--brand); }
+
+/* Transient "kept in vault" confirmation, bottom-right of the pane, clickable
+   to reveal the copy. Mirrors the edit FAB's floating-pill language in green. */
+.art-kept-toast {
+  position: absolute; right: 14px; bottom: 14px; z-index: 20;
+  display: inline-flex; align-items: center;
+  padding: 8px 14px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #22c55e 50%, var(--line));
+  background: var(--bg);
+  color: color-mix(in srgb, #22c55e 75%, var(--text));
+  font-size: 12.5px; font-weight: 600; letter-spacing: -0.01em;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
+  transition: 0.15s;
+}
+.art-kept-toast:hover {
+  border-color: #22c55e; color: #22c55e;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 /* Raw-source editor — text-class artifacts only. Monospaced so structure
@@ -1373,36 +2047,513 @@
 .md-bubble-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
 .md-bubble-btn.on { color: var(--brand); background: color-mix(in srgb, var(--brand) 16%, transparent); }
 
-/* PDF export = browser print dialog. We hide everything outside the artifact
-   body and reset the body to a clean, paginating flow so the print preview
-   (and the resulting PDF) shows ONLY the deliverable — no app chrome, no
-   conversation rail, no chips. macOS surfaces "Save as PDF" right in the
-   print sheet, so this is the whole export pipeline. */
-@media print {
-  /* Hide everything by default. */
-  body * { visibility: hidden !important; }
-  /* Reveal only the target artifact body and its descendants. */
-  .art-print-target,
-  .art-print-target * { visibility: visible !important; }
-  /* Pull the target out of its scroll container and let it flow naturally
-     across printed pages. Drop dark backgrounds — paper is white. */
-  .art-print-target {
-    position: absolute !important;
-    inset: 0 !important;
-    overflow: visible !important;
-    height: auto !important;
-    padding: 0 !important;
-    background: #fff !important;
-    color: #000 !important;
-  }
-  /* Force readable colors regardless of skin (some skins use light-on-dark). */
-  .art-print-target * { color: #000 !important; background: transparent !important; }
-  .art-print-target a { color: #04457a !important; text-decoration: underline; }
-  .art-print-target pre,
-  .art-print-target code { background: #f4f4f4 !important; }
-  .art-print-target img { max-width: 100%; }
-  .art-print-target iframe { width: 100%; border: 0; min-height: 800px; }
-  /* No page margin override — let the OS print dialog ("Margins" dropdown)
-     handle it; default macOS margins look reasonable for a deliverable. */
+/* =====================================================================
+   Conversation hierarchy (compact) — the answer is primary; "what it did"
+   collapses; the deliverable is promoted to a card. Attention layer +
+   atelier posture below.
+   ===================================================================== */
+
+/* --- secondary: collapsed "what it did" fold above an agent answer --- */
+.didfold {
+  border: 1px solid var(--line); border-radius: 11px;
+  background: rgba(0, 0, 0, 0.14); overflow: hidden; margin-bottom: 2px;
 }
+.didfold > summary {
+  list-style: none; cursor: pointer; padding: 8px 12px;
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em; color: var(--dim);
+}
+.didfold > summary::-webkit-details-marker { display: none; }
+.didfold > summary .chev { color: var(--dim2); font-size: 10px; transition: transform 0.15s; }
+.didfold[open] > summary .chev { transform: rotate(90deg); }
+.didfold > summary:hover { color: var(--text); }
+.didfold-last { color: var(--dim2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.didfold > summary .n { margin-left: auto; color: var(--dim2); flex: none; }
+.didfold-body { padding: 2px 12px 11px; display: flex; flex-direction: column; gap: 6px; }
+.didfold-step { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--dim); }
+.didfold-step .k { color: var(--good); font-size: 11px; flex: none; }
+.didfold-step-t { color: var(--text); }
+.didfold-step-s { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); }
+
+/* --- primary: promoted deliverable card (compact posture) --- */
+.deliv-wrap { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 6px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.deliv {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  padding: 12px 14px; border-radius: 13px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--brand) 32%, var(--line));
+  background: color-mix(in srgb, var(--brand) 8%, transparent);
+  color: var(--text); font: inherit; transition: transform 0.14s, border-color 0.16s, box-shadow 0.2s;
+}
+.deliv:hover { transform: translateY(-2px); border-color: var(--brand); box-shadow: 0 12px 30px color-mix(in srgb, var(--brand) 20%, transparent); }
+.deliv-ic { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: rgba(0, 0, 0, 0.25); font-size: 17px; flex: none; }
+.deliv-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.deliv-t { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deliv-s { font-family: var(--mono); font-size: 10.5px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deliv-open { margin-left: auto; flex: none; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--brand); border: 1px solid color-mix(in srgb, var(--brand) 45%, var(--line)); border-radius: 8px; padding: 6px 11px; }
+
+/* --- F6: peer attention banner (another session needs the boss) --- */
+.peerbanner { display: flex; flex-direction: column; gap: 7px; margin-bottom: 4px; }
+.peerbanner-row {
+  display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; cursor: pointer;
+  padding: 9px 13px; border-radius: 11px; font: inherit; color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line));
+  background: color-mix(in srgb, var(--warn) 7%, transparent); transition: 0.15s;
+}
+.peerbanner-row:hover { border-color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.peerbanner-tx { font-size: 13px; } .peerbanner-tx b { color: var(--warn); font-weight: 600; }
+.peerbanner-go { margin-left: auto; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--dim); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; }
+
+/* Peer-banner attention dot. NB: must NOT be named `.live` — the chrome
+   wordmark uses `.wm.live` (anyRunning), and a bare global `.live` rule
+   collapses that span to a 7px dot, overlapping the mark + wordmark. The
+   scoped name keeps the two apart. */
+.attn-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; display: inline-block; background: var(--warn); animation: pulse 1.4s infinite; }
+
+/* --- F6: permission ask — scope is a radio (exclusive), then allow/deny --- */
+.perm {
+  border: 1px solid color-mix(in srgb, var(--warn) 50%, var(--line)); border-radius: 14px;
+  background: color-mix(in srgb, var(--warn) 7%, transparent); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.perm-head { display: flex; align-items: center; gap: 10px; }
+.perm-ic { font-size: 15px; }
+.perm-t { font-weight: 600; font-size: 14px; }
+.perm-who { margin-left: auto; font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
+.perm-tool { font-family: var(--mono); font-size: 12px; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--line); border-radius: 9px; padding: 9px 12px; word-break: break-word; }
+.perm-tool code { color: var(--warn); }
+.perm-scope { display: flex; gap: 8px; }
+.perm-scope-opt {
+  flex: 1; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.02em;
+  padding: 8px 6px; border-radius: 9px; border: 1px solid var(--line);
+  color: var(--dim); background: transparent; cursor: pointer; transition: 0.15s;
+}
+.perm-scope-opt:hover { color: var(--text); }
+.perm-scope-opt.on { border-color: var(--brand); color: var(--text); background: color-mix(in srgb, var(--brand) 12%, transparent); }
+.perm-acts { display: flex; gap: 9px; }
+.perm-acts .btn { flex: 1; padding: 10px; font-size: 13.5px; }
+.perm-deny { background: transparent; color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); box-shadow: none; }
+.perm-deny:hover { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+
+/* --- F5: attention rail (leftmost column of the atelier) --- */
+.att-rail {
+  flex: 0 0 56px; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 18px 0; border-right: 1px solid var(--line2); overflow-y: auto;
+}
+.att-avatar { position: relative; background: none; border: 0; padding: 0; cursor: pointer; opacity: 0.6; transition: opacity 0.15s, transform 0.15s; }
+.att-avatar:hover { opacity: 1; transform: translateY(-1px); }
+.att-avatar.focus { opacity: 1; }
+.att-avatar.focus::before { content: ""; position: absolute; left: -12px; top: 50%; transform: translateY(-50%); width: 3px; height: 26px; border-radius: 2px; background: var(--brand); }
+.att-live { position: absolute; bottom: -1px; right: -1px; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--ink); }
+.att-live.run { background: var(--brand); animation: pulse 1.4s infinite; }
+.att-live.idle { background: var(--good); }
+.att-live.warn { background: var(--warn); animation: pulse 1.4s infinite; }
+.att-live.err { background: var(--bad); }
+.att-live.end { background: var(--dim2); }
+.att-badge { position: absolute; top: -5px; right: -5px; width: 15px; height: 15px; border-radius: 50%; background: var(--warn); color: var(--ink); font-size: 9px; font-family: var(--mono); display: grid; place-items: center; border: 2px solid var(--ink); }
+
+/* Atelier with no deliverable yet — the viewer pane's empty state. */
+.art-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 30px; color: var(--dim); }
+.art-empty-ic { font-size: 30px; opacity: 0.7; }
+.art-empty-t { font-weight: 600; font-size: 15px; color: var(--text); }
+.art-empty-s { font-size: 12.5px; color: var(--dim2); max-width: 30ch; line-height: 1.5; }
+
+/* --- Atelier: the fullscreen control room (AttentionRail · Conversation · Reflet).
+   A widened sibling of art-split, but the right column MIRRORS the session
+   (read-only) instead of editing a deliverable. All colours come from the skin
+   vars, so the azure of theme-atelier (or the copper of Classic) flows through. */
+.atelier {
+  /* Section radii — generous like the classic interface. The rails float as
+     rounded glass panels (inset from the window edges by --rail-inset); cards,
+     starters, rows, chips and the composer all round off these vars so the
+     whole atelier reads soft + cohesive. Tweak here, it propagates. */
+  --r-rail: 20px; --rail-inset: 8px; --r-card: 22px; --r-starter: 22px; --r-row: 14px; --r-chip: 12px; --r-composer: 24px;
+  display: flex; flex-direction: row; height: 100%; width: 100%; min-height: 0; min-width: 0;
+  padding: var(--rail-inset); gap: var(--rail-inset);
+}
+.atelier-conv { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }
+/* Full-width reading surface — fills the centre (never a varying centred
+   column), no frosted card-in-void. The head gets a simple divider instead of
+   the floating-panel look the bar uses. */
+.atelier-conv .conv { max-width: none; margin: 0; padding: 0 44px 16px; }
+.atelier-conv .conv-head { margin: 0; padding: 14px 0 10px; border-bottom: 1px solid var(--line2); }
+.atelier-conv .thread { margin: 0; padding: 18px 0 14px; }
+.atelier-conv .thread::before { display: none; }
+
+/* Left column — the launchable roster (Agents) + live sessions (En cours). */
+.atelier-left {
+  flex: 0 0 248px; min-height: 0; overflow: hidden;
+  border: 1px solid var(--rim); border-radius: var(--r-rail);
+  padding: 12px 12px 12px; display: flex; flex-direction: column; gap: 10px;
+  background: color-mix(in srgb, var(--ink) 30%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+}
+/* Top row: the Agents|Récents tab switch + the collapse chevron. Fixed; only
+   the scroll region below it moves, so the tabs stay put while you browse. */
+.atelier-left-top { flex: none; display: flex; align-items: center; gap: 8px; }
+.atelier-left-top .rail-collapse { align-self: center; }
+.atelier-tabs { flex: 1; display: flex; gap: 3px; padding: 3px; border-radius: 11px;
+  background: color-mix(in srgb, var(--ink2) 55%, transparent); border: 1px solid var(--line2); }
+.atelier-tab { flex: 1; font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--dim2); border: 0; background: none; padding: 7px 0; border-radius: 8px; cursor: pointer; transition: color 0.15s, background 0.15s; }
+.atelier-tab:hover { color: var(--dim); }
+.atelier-tab.on { color: var(--text); background: color-mix(in srgb, var(--ink) 75%, transparent); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); }
+/* The scroll region — owns the rail's vertical overflow so each tab gets the
+   full height (the roster is never pushed below the fold by the history list). */
+.atelier-left-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+
+/* Récents tab — resumable archive rows. */
+.atelier-recs { display: flex; flex-direction: column; gap: 1px; }
+.atelier-rec { display: flex; align-items: center; gap: 10px; padding: 8px 9px; border-radius: var(--r-row);
+  border: 1px solid transparent; background: none; cursor: pointer; width: 100%; text-align: left; color: var(--text);
+  transition: background 0.15s, border-color 0.15s; }
+.atelier-rec:hover { background: color-mix(in srgb, var(--brand) 8%, transparent); border-color: color-mix(in srgb, var(--brand) 18%, var(--line)); }
+.atelier-rec-node { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--h, var(--brand));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--h, var(--brand)) 18%, transparent); }
+.atelier-rec-id { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.atelier-rec-title { font-size: 12.5px; font-weight: 500; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.atelier-rec-meta { font-family: var(--mono); font-size: 9px; color: var(--dim2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.atelier-rec-resume { flex: none; width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center;
+  color: var(--dim2); opacity: 0; transform: translateX(-3px); transition: opacity 0.18s, transform 0.18s, color 0.18s; font-size: 13px; }
+.atelier-rec:hover .atelier-rec-resume { opacity: 1; transform: translateX(0); color: color-mix(in srgb, var(--brand) 85%, var(--text)); }
+.atelier-recs-empty { font-size: 12px; line-height: 1.45; color: var(--dim2); padding: 16px 10px; text-align: center; }
+.atelier-recs-all { width: 100%; text-align: center; font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--dim2); background: none; border: 0; cursor: pointer; padding: 10px 0 4px; transition: color 0.15s; }
+.atelier-recs-all:hover { color: var(--brand); }
+
+.atelier-left-sec { display: flex; flex-direction: column; gap: 3px; }
+.atelier-left-h { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim2); margin: 0 8px 5px; }
+.atelier-agent { display: flex; align-items: center; gap: 11px; padding: 9px 10px; border-radius: var(--r-row); border: 1px solid transparent; background: none; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s; text-align: left; color: var(--text); }
+.atelier-agent:hover { background: color-mix(in srgb, var(--brand) 9%, transparent); border-color: color-mix(in srgb, var(--brand) 20%, var(--line)); transform: translateY(-2px); box-shadow: var(--lift-row); }
+.atelier-agent.on { background: color-mix(in srgb, var(--brand) 14%, transparent); border-color: color-mix(in srgb, var(--brand) 28%, var(--line)); }
+.atelier-agent-crest { position: relative; display: grid; place-items: center; flex: none; }
+.atelier-agent-id { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.atelier-agent-nm { font-size: 13.5px; font-weight: 600; line-height: 1.15; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.atelier-agent-kind { font-family: var(--mono); font-size: 9px; letter-spacing: 0.03em; color: var(--dim2); white-space: nowrap; }
+
+/* Collapsible category groups (super / genius / coach) keep ~20 agents scannable. */
+.atelier-grp > summary { list-style: none; display: flex; align-items: center; gap: 7px; padding: 7px 9px 5px; cursor: pointer; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim2); }
+.atelier-grp > summary::-webkit-details-marker { display: none; }
+.atelier-grp > summary:hover { color: var(--dim); }
+.atelier-grp-chev { font-size: 9px; transition: transform 0.2s; }
+.atelier-grp[open] > summary .atelier-grp-chev { transform: rotate(90deg); }
+.atelier-grp-cnt { margin-left: auto; }
+
+/* Centre — pre-session welcome, "Atmospheric Hero" (design/atelier-welcome-v1.html):
+   the armed expert's crest as a luminous focal object in a concentrated bloom
+   field + drifting starfield, a refined greeting, an identity meta-row, frosted
+   starter cards, and the real Composer in a calm footer. A starter fills the
+   composer; Enter / Run launches the session (start() always carries a first
+   turn, so there's no empty session — the welcome IS the pre-session surface).
+   Every colour rides var(--brand)/--text/etc., so the atmosphere re-tints with
+   the skin (azure under Atelier, copper under Classic, …). */
+.atelier-welcome {
+  position: relative; flex: 1; min-height: 0; min-width: 0;
+  display: grid; grid-template-rows: auto auto; align-content: center;
+  row-gap: clamp(22px, 3.4vh, 40px); overflow: hidden;
+  padding: clamp(24px, 4vh, 56px) clamp(24px, 5vw, 72px);
+}
+
+/* — atmosphere layers (behind everything) — */
+.aw-atmos { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.aw-bloom { position: absolute; border-radius: 50%; filter: blur(46px); }
+/* Halo "Tamed": keeps the 3-bloom composition but ~25% smaller, lower opacity
+   and ~40% less brand saturation with tighter falloff, so the saturated-brand
+   skins (esp. theme-bright blue) read luminous-but-calm instead of violent. */
+.aw-bloom.b1 { width: 395px; height: 395px; left: 50%; top: 34%; transform: translate(-50%, -50%); opacity: 0.42;
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand) 24%, transparent), transparent 54%);
+  animation: aw-breathe 9s ease-in-out infinite; }
+.aw-bloom.b2 { width: 305px; height: 305px; left: 39%; top: 28%; transform: translate(-50%, -50%); opacity: 0.34;
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand) 19%, #9a7cff), transparent 56%);
+  animation: aw-drift 16s ease-in-out infinite; }
+.aw-bloom.b3 { width: 262px; height: 262px; left: 62%; top: 36%; transform: translate(-50%, -50%); opacity: 0.28;
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand) 16%, #54dcff), transparent 56%);
+  animation: aw-drift2 19s ease-in-out infinite; }
+.aw-stars { position: absolute; inset: 0; }
+.aw-star { position: absolute; width: 2px; height: 2px; border-radius: 50%; opacity: 0;
+  background: color-mix(in srgb, var(--brand) 34%, var(--dim));
+  animation: aw-twinkle var(--tw, 5s) ease-in-out infinite; animation-delay: var(--td, 0s); }
+.aw-star.big { width: 3px; height: 3px; }
+@keyframes aw-breathe { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.1); } }
+@keyframes aw-drift { 0%, 100% { transform: translate(-50%, -50%); } 50% { transform: translate(-46%, -54%); } }
+@keyframes aw-drift2 { 0%, 100% { transform: translate(-50%, -50%); } 50% { transform: translate(-55%, -46%); } }
+@keyframes aw-twinkle { 0%, 100% { opacity: 0; } 50% { opacity: 0.7; } }
+
+/* — hero (crest + greeting + identity + starters) — */
+.aw-hero { position: relative; z-index: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.aw-kicker {
+  display: inline-flex; align-items: center; gap: 9px; margin-bottom: 26px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--dim2);
+  padding: 6px 13px; border-radius: 999px; border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel) 45%, transparent); backdrop-filter: blur(6px);
+  opacity: 0; animation: aw-rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.05s forwards;
+}
+.aw-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--good); animation: aw-livedot 2.6s ease-out infinite; }
+@keyframes aw-livedot { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 45%, transparent); } 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+.aw-crest-wrap { position: relative; display: grid; place-items: center; opacity: 0; animation: aw-crestin 1.1s cubic-bezier(0.16, 0.8, 0.24, 1) 0.12s forwards; }
+.aw-crest-halo { position: absolute; left: 50%; top: 50%; width: 172px; height: 172px; border-radius: 50%; pointer-events: none;
+  transform: translate(-50%, -50%); filter: blur(8px);
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand) 13%, transparent), transparent 52%);
+  animation: aw-halo 5.5s ease-in-out infinite; }
+@keyframes aw-halo { 0%, 100% { transform: translate(-50%, -50%) scale(0.96); opacity: 0.5; } 50% { transform: translate(-50%, -50%) scale(1.08); opacity: 0.85; } }
+.aw-crest-wrap .crest { transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.aw-crest-wrap .crest-mark { width: 64%; height: 64%; }
+/* Fuller etched glyph for the atelier roster + reflet crests (option F): the
+   mark fills 70% of the coin instead of the global 58%, so the icon reads bold
+   at the uniform 34px size instead of floating small. Scoped — the welcome hero
+   (64%) and every crest outside the atelier (58%) are untouched. */
+.atelier-agent .crest-mark, .reflet .crest-mark { width: 70%; height: 70%; }
+.aw-crest-wrap:hover .crest { transform: translateY(-3px) rotate(-1deg); }
+@keyframes aw-crestin { 0% { opacity: 0; transform: translateY(18px) scale(0.86); } 60% { opacity: 1; } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+
+.aw-greet { margin: 32px 0 0; font-size: clamp(30px, 4.4vw, 50px); font-weight: 500; line-height: 1.04; letter-spacing: -0.022em; color: var(--text);
+  opacity: 0; animation: aw-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.32s forwards; }
+.aw-em { font-family: "Playfair Display", var(--disp), Georgia, serif; font-style: italic; font-weight: 500; padding-right: 0.05em;
+  background: linear-gradient(120deg, var(--brand), color-mix(in srgb, var(--brand) 45%, #9a7cff));
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.aw-blurb { margin: 16px auto 0; max-width: 50ch; font-size: clamp(14px, 1.4vw, 16.5px); line-height: 1.5; color: var(--dim); font-weight: 400;
+  opacity: 0; animation: aw-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.42s forwards; }
+.aw-meta { display: flex; align-items: center; justify-content: center; gap: 9px; margin-top: 16px; flex-wrap: wrap;
+  opacity: 0; animation: aw-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.5s forwards; }
+.aw-chip { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.03em; color: var(--dim);
+  padding: 5px 11px; border-radius: var(--r-chip); border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 40%, transparent); backdrop-filter: blur(6px); }
+.aw-chip .aw-k { color: var(--dim2); text-transform: uppercase; letter-spacing: 0.16em; font-size: 9.5px; }
+.aw-dot { width: 5px; height: 5px; border-radius: 50%; background: color-mix(in srgb, var(--brand) 70%, transparent); }
+.aw-chip.eng .aw-dot { background: var(--good); }
+
+.aw-starters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; width: 100%; max-width: 740px; margin: 38px auto 0; }
+.aw-starter {
+  position: relative; overflow: hidden; text-align: left; cursor: pointer; color: var(--text); font-family: inherit;
+  display: flex; flex-direction: column; gap: 10px; min-height: 100px; padding: 15px 15px 14px;
+  border: 1px solid var(--line); border-radius: var(--r-starter);
+  background: color-mix(in srgb, var(--panel) 55%, transparent); backdrop-filter: blur(14px);
+  transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.28s, border-color 0.28s, background 0.28s;
+  opacity: 0; animation: aw-rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+.aw-starter::after { content: ""; position: absolute; inset: 0; border-radius: var(--r-starter); opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  background: radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--brand) 15%, transparent), transparent 60%); }
+.aw-starter:nth-child(1) { animation-delay: 0.6s; }
+.aw-starter:nth-child(2) { animation-delay: 0.68s; }
+.aw-starter:nth-child(3) { animation-delay: 0.76s; }
+.aw-starter:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--brand) 40%, var(--line));
+  background: color-mix(in srgb, var(--panel) 72%, transparent); box-shadow: var(--lift-card); }
+.aw-starter:hover::after { opacity: 1; }
+.aw-starter:active { transform: translateY(-1px); }
+.aw-idx { display: flex; align-items: center; justify-content: space-between; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; color: var(--dim2); }
+.aw-arrow { opacity: 0; transform: translateX(-4px); transition: opacity 0.25s, transform 0.25s; color: color-mix(in srgb, var(--brand) 80%, var(--text)); }
+.aw-starter:hover .aw-arrow { opacity: 1; transform: translateX(0); }
+.aw-label { font-size: 14.5px; font-weight: 500; line-height: 1.28; letter-spacing: -0.01em; }
+
+/* — deliverable examples: the projection surface that REPLACES the starter
+   chips. "Here's what I make" — a typed preview thumbnail + the artifact's name
+   + a one-liner. Same glass family as .aw-starter; clicking fills the composer
+   with the example's launch prompt. Rendered by DeliverableExamples.tsx; the
+   .pv-* classes below tint each SVG preview by the skin vars. */
+/* max-width matches the welcome composer (.aw-footer > *, 740px) so the card
+   row never runs wider than the chat bar beneath it. */
+.dwrap { width: 100%; max-width: 740px; margin: 38px auto 0;
+  opacity: 0; animation: aw-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.62s forwards; }
+.dwrap-h { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 16px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim2); }
+.dwrap-h::before, .dwrap-h::after { content: ""; height: 1px; width: 54px; background: linear-gradient(90deg, transparent, var(--line)); }
+.dwrap-h::after { background: linear-gradient(90deg, var(--line), transparent); }
+.dgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.dcard { position: relative; overflow: hidden; text-align: left; cursor: pointer; color: var(--text); font-family: inherit;
+  display: flex; flex-direction: column; padding: 0; border: 1px solid var(--line); border-radius: var(--r-starter);
+  background: color-mix(in srgb, var(--panel) 55%, transparent); backdrop-filter: blur(14px);
+  transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.28s, border-color 0.28s, background 0.28s; }
+.dcard:hover { transform: translateY(-5px); border-color: color-mix(in srgb, var(--brand) 42%, var(--line));
+  background: color-mix(in srgb, var(--panel) 75%, transparent); box-shadow: var(--lift-card); }
+.dcard:active { transform: translateY(-2px); }
+/* Padding-bottom ratio (not `aspect-ratio`) — the WKWebview collapses an
+   aspect-ratio box whose only child is absolutely positioned, killing the
+   thumbnail height. 60% of the card width keeps the ~16:9.6 preview. */
+.dcard-prev { position: relative; width: 100%; height: 0; padding-bottom: 60%; overflow: hidden;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 10%, #121a28), #0c121d); border-bottom: 1px solid var(--line2); }
+.dcard-prev svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.dcard-prev::after { content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--brand) 12%, transparent), transparent 62%); }
+.dcard:hover .dcard-prev::after { opacity: 1; }
+.dcard-body { padding: 13px 14px 14px; display: flex; flex-direction: column; gap: 5px; }
+.dcard-top { display: flex; align-items: center; justify-content: space-between; }
+.dcard-type { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim2);
+  display: inline-flex; align-items: center; gap: 6px; }
+.dcard-type i { width: 5px; height: 5px; border-radius: 1.5px; background: color-mix(in srgb, var(--brand) 75%, transparent); }
+.dcard-open { font-family: var(--mono); font-size: 10px; color: color-mix(in srgb, var(--brand) 85%, var(--text));
+  opacity: 0; transform: translateX(-4px); transition: opacity 0.25s, transform 0.25s; }
+.dcard:hover .dcard-open { opacity: 1; transform: translateX(0); }
+.dcard-title { font-size: 14.5px; font-weight: 500; line-height: 1.25; letter-spacing: -0.01em; }
+.dcard-desc { font-size: 12px; line-height: 1.4; color: var(--dim); }
+
+/* preview palette — the preview canvas is ALWAYS dark (the .dcard-prev gradient
+   above), so these are fixed light-on-dark values for legibility under every
+   skin (incl. the two light skins, where var(--text) would be dark and vanish).
+   Only the brand accent re-tints: a deck reads copper under Classic/Minuit,
+   azure under Atelier, … via var(--brand). Cyan/violet stay fixed decoratives. */
+.pv-frame { fill: #182032; stroke: rgba(160, 180, 220, 0.17); stroke-width: 1.4; }
+.pv-panel { fill: color-mix(in srgb, var(--brand) 12%, #161d2c); }
+.pv-soft { fill: rgba(206, 219, 255, 0.30); }
+.pv-line { stroke: rgba(206, 219, 255, 0.34); stroke-width: 2; fill: none; }
+.pv-brand { fill: var(--brand); }
+.pv-brand-s { stroke: var(--brand); stroke-width: 2; fill: none; }
+.pv-cyan { fill: #54e6ff; }
+.pv-violet { fill: #9a7cff; }
+.pv-ink { fill: #eaf0ff; }
+.pv-aa { fill: #eaf0ff; opacity: 0.92; }
+.pv-serif { font-family: "Playfair Display", var(--disp), serif; font-style: italic; }
+.pv-mono { font-family: var(--mono); }
+.pv-sans { font-family: var(--disp); font-weight: 600; }
+
+/* — footer: the real Composer, floated on the atmosphere just under the hero — */
+.aw-footer { position: relative; z-index: 1; padding: 0; display: flex; flex-direction: column; align-items: center;
+  opacity: 0; animation: aw-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.88s forwards; }
+.aw-footer > * { width: 100%; max-width: 740px; }
+/* The starter cards and the composer beneath them are one glass family on the
+   Atelier launch surface — same corner, same translucent panel, same lift-and-
+   glow on hover — so the page reads as a single set, not a card grid floating
+   over an unrelated input. Scoped to `.aw-footer` so the home/conversation
+   composers keep their own (solid `--panel2`, focus-only) treatment.
+   `:focus-within` is declared after `:hover` so the typing ring still wins. */
+.aw-footer .composer {
+  margin-bottom: 0; border-radius: var(--r-starter);
+  background: color-mix(in srgb, var(--panel) 55%, transparent); backdrop-filter: blur(14px);
+  transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.28s, border-color 0.28s, background 0.28s;
+}
+.aw-footer .composer:hover {
+  transform: translateY(-4px); border-color: color-mix(in srgb, var(--brand) 40%, var(--line));
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+  box-shadow: var(--lift-card);
+}
+.aw-footer .composer:focus-within {
+  transform: translateY(-4px); border-color: color-mix(in srgb, var(--brand) 45%, var(--line));
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent), var(--lift-card);
+}
+
+@keyframes aw-rise { 0% { opacity: 0; transform: translateY(16px); } 100% { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 720px) { .aw-starters { grid-template-columns: 1fr; max-width: 420px; } .aw-greet { font-size: 30px; } }
+@media (prefers-reduced-motion: reduce) {
+  .aw-kicker, .aw-crest-wrap, .aw-greet, .aw-blurb, .aw-meta, .aw-starter, .aw-footer,
+  .aw-bloom, .aw-star, .aw-crest-halo, .aw-pulse { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; }
+}
+
+/* Artifact view inside the atelier — the centre swaps from the conversation to
+   the ArtifactViewer when a deliverable is opened (from the reflet's Livrables
+   or an inline chip). A slim bar carries the back-to-conversation action and a
+   strip to switch between deliverables. Reuses ArtifactViewer wholesale. */
+.atelier-art { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.atelier-art-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line2); flex: none; }
+.atelier-art-back { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10.5px; font-weight: 600; color: var(--dim); background: none; border: 1px solid var(--line); border-radius: 9px; padding: 5px 10px; cursor: pointer; transition: color 0.15s, background 0.15s; }
+.atelier-art-back:hover { color: var(--text); background: color-mix(in srgb, var(--brand) 8%, transparent); }
+.atelier-art-body { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 12px; }
+
+/* ── Atelier centre stage: the conversation, and the conversation|artifact SPLIT.
+   No deliverable open → the conversation fills the centre. A deliverable open
+   (atelierArtOpen) → `.split`: the conversation docks left, the artifact pane
+   (the same `.atelier-art` frame) takes the right, and the flanking rails fold
+   to strips (see `.rail-stub`) so the pair gets the room — the "focus" posture. */
+.atelier-stage { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.atelier-stage.split { flex-direction: row; }
+.atelier-stage-conv { position: relative; flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+/* No frosted "dalle" behind the conversation: the thread rests directly on the
+   atelier ground, matching the open feel of the pre-session welcome (no panel). */
+.atelier-stage.split .atelier-stage-conv { flex: 42 1 0; min-width: 340px; border-right: 1px solid var(--line2); }
+.atelier-stage.split .atelier-stage-conv .conv { padding: 0 22px 14px; }
+.atelier-split-view { flex: 58 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+
+/* Collapsed rail strip (roster left / reflet right) — a thin column with a
+   chevron, a vertical label, and a glance of live/deliverable dots. */
+.rail-stub {
+  flex: 0 0 46px; align-self: stretch; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 14px 0; cursor: pointer; color: var(--dim);
+  border: 1px solid var(--rim); border-radius: var(--r-rail);
+  background: color-mix(in srgb, var(--ink) 30%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  transition: background 0.18s, color 0.18s;
+}
+.rail-stub:hover { background: color-mix(in srgb, var(--brand) 9%, transparent); color: var(--text); }
+.rail-stub-x { font-size: 13px; line-height: 1; color: color-mix(in srgb, var(--brand) 60%, var(--text)); }
+.rail-stub-label { writing-mode: vertical-rl; text-orientation: mixed; font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim2); }
+.rail-stub.left .rail-stub-label { transform: rotate(180deg); }
+.rail-stub-dots { display: flex; flex-direction: column; gap: 5px; margin-top: 2px; }
+.rail-stub-dot { width: 6px; height: 6px; border-radius: 50%; background: color-mix(in srgb, var(--brand) 38%, var(--dim)); }
+.rail-stub-dot.run { background: var(--good); box-shadow: 0 0 6px color-mix(in srgb, var(--good) 55%, transparent); }
+
+/* Collapse chevrons on the full rails — fold them back to the strip. Sit as a
+   small control top-right (left rail) / top-left-flushed-right (reflet). */
+.rail-collapse, .reflet-collapse {
+  align-self: flex-end; flex: none;
+  width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center;
+  border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 45%, transparent);
+  color: var(--dim); font-size: 12px; line-height: 1; cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.rail-collapse:hover, .reflet-collapse:hover { color: var(--text); border-color: color-mix(in srgb, var(--brand) 40%, var(--line)); background: color-mix(in srgb, var(--brand) 8%, transparent); }
+
+@media (max-width: 900px) {
+  .atelier-stage.split { flex-direction: column; }
+  .atelier-stage.split .atelier-stage-conv { flex: 1 1 auto; min-width: 0; border-right: none; border-bottom: 1px solid var(--line2); }
+}
+
+.reflet {
+  flex: 0 0 330px; min-height: 0; overflow-y: auto;
+  border: 1px solid var(--rim); border-radius: var(--r-rail);
+  padding: 14px; display: flex; flex-direction: column; gap: 10px;
+  background: color-mix(in srgb, var(--ink) 30%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+}
+.reflet-card {
+  display: flex; align-items: center; gap: 11px;
+  padding: 13px; border-radius: var(--r-card);
+  border: 1px solid color-mix(in srgb, var(--brand) 24%, var(--line));
+  background: color-mix(in srgb, var(--brand) 12%, var(--panel));
+}
+.reflet-id { min-width: 0; }
+.reflet-name { font-weight: 700; font-size: 15px; letter-spacing: -0.02em; }
+.reflet-on { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.reflet-on b { color: var(--engine); }
+.reflet-ro { margin-left: auto; font-family: var(--mono); font-size: 9px; color: var(--dim2); white-space: nowrap; }
+
+.reflet-sec { border: 1px solid var(--line2); border-radius: var(--r-card); background: var(--panel); overflow: hidden; }
+.reflet-sec > summary { list-style: none; cursor: pointer; padding: 11px 13px; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.reflet-sec > summary::-webkit-details-marker { display: none; }
+.reflet-count { margin-left: auto; font-family: var(--mono); font-size: 9.5px; color: var(--dim2); font-weight: 500; }
+.reflet-body { padding: 4px 13px 13px; border-top: 1px solid var(--line2); }
+.reflet-muted { font-size: 11.5px; color: var(--dim2); line-height: 1.5; margin: 0; }
+.reflet-task { font-size: 12px; color: var(--text); line-height: 1.55; margin: 0; white-space: pre-wrap; }
+
+.reflet-step { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; font-size: 11.5px; color: var(--dim); }
+.reflet-step .reflet-dot { width: 7px; height: 7px; margin-top: 4px; border-radius: 50%; flex: none; border: 1px solid var(--line); }
+.reflet-step.completed { color: var(--text); }
+.reflet-step.completed .reflet-dot { background: var(--good); border-color: var(--good); }
+.reflet-step.in_progress .reflet-dot { background: var(--brand); border-color: var(--brand); animation: pulse 1.4s infinite; }
+
+.reflet-kv { display: flex; justify-content: space-between; padding: 5px 0; font-size: 11.5px; color: var(--dim); border-bottom: 1px solid var(--line2); }
+.reflet-kv:last-child { border-bottom: 0; }
+.reflet-kv b { color: var(--text); font-family: var(--mono); font-weight: 500; }
+
+.reflet-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.reflet-pill { font-family: var(--mono); font-size: 9.5px; color: var(--dim); padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--brand) 6%, transparent); }
+
+.reflet-art { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: color-mix(in srgb, var(--brand) 5%, transparent); cursor: pointer; transition: background 0.15s, border-color 0.15s; margin-top: 6px; color: inherit; }
+.reflet-art:first-child { margin-top: 0; }
+.reflet-art:hover { background: color-mix(in srgb, var(--brand) 12%, transparent); }
+.reflet-art.on { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); }
+.reflet-art-ic { font-size: 14px; flex: none; }
+.reflet-art-name { font-size: 11.5px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* --- Conversation empty state: the expert's crest, a greeting and per-expert
+   starter prompts. Shown before the first turn (and when switching to an
+   un-briefed session in the atelier). Starters fill the composer on click. */
+.conv-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding: 24px 20px; margin: auto 0; }
+.conv-empty-crest { filter: drop-shadow(0 10px 28px color-mix(in srgb, var(--brand) 30%, transparent)); }
+.conv-empty-h { font-size: 21px; font-weight: 700; letter-spacing: -0.03em; margin: 4px 0 0; }
+.conv-empty-p { max-width: 42ch; color: var(--dim); font-size: 13px; line-height: 1.55; margin: 0; }
+.conv-starters { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; width: 100%; max-width: 520px; margin-top: 6px; }
+.conv-starter { text-align: left; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: color-mix(in srgb, var(--brand) 5%, transparent); color: var(--text); font-size: 12.5px; font-weight: 600; line-height: 1.35; cursor: pointer; transition: transform 0.15s, background 0.15s, border-color 0.15s; }
+.conv-starter:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--brand) 12%, transparent); border-color: color-mix(in srgb, var(--brand) 35%, var(--line)); }
+@media (max-width: 560px) { .conv-starters { grid-template-columns: 1fr; } }
 

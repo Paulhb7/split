@@ -1,4 +1,4 @@
-import { useId, type CSSProperties } from "react";
+import { useId, useState, type CSSProperties } from "react";
 import majordomeUrl from "./majordome.svg";
 
 // Split's house mark — the majordome silhouette painted in `color`, no disc.
@@ -6,8 +6,10 @@ import majordomeUrl from "./majordome.svg";
 // Default tint is the current skin's `--brand` (via CSS `currentColor`), so
 // switching skin retints the mark automatically — Bright orange, Tokyo violet,
 // Ghibli sky, etc. Callers can still override by passing an explicit `color`
-// prop (e.g. an engine brand). Speaking state adds a subtle scale + brand
-// glow that also tracks `--brand`.
+// prop (e.g. an engine brand). Speaking state (isSpeaking) sweeps a glass
+// reflection slowly across the silhouette — the app-icon gloss in motion (the
+// `.sm-sheen` rect rides the same luminance mask, so the highlight only shows
+// over the figure). Replaces the old brand glow. See design/majordome-planche.html.
 //
 // The silhouette source is `majordome.svg` (1024×544 canvas, figure occupies
 // approximately x:388-637, y:110-458 — that bbox is what the nested <svg>
@@ -21,8 +23,14 @@ export interface SplitMarkProps {
   size?: number;
   /** Silhouette colour. Defaults to the active skin's `--brand` via currentColor. */
   color?: string;
-  /** Active state: pulse glow + tiny scale (mark goes "alive"). */
+  /** Active state: a glass reflection sweeps across the mark (it "goes alive"). */
   isSpeaking?: boolean;
+  /**
+   * Make the silhouette clickable: a click plays a one-shot bow ("la
+   * révérence" — the majordome's "à votre service" in motion). Off by
+   * default so chrome/decorative marks stay inert.
+   */
+  bowOnClick?: boolean;
   className?: string;
   style?: CSSProperties;
 }
@@ -43,20 +51,18 @@ export default function SplitMark({
   size = 96,
   color,
   isSpeaking = false,
+  bowOnClick = false,
   className,
   style,
 }: SplitMarkProps) {
   // One mask per instance — `useId` keeps refs stable across SSR/CSR and
   // prevents collisions when several SplitMarks live on the same page.
   const maskId = useId();
-  // The glow tracks the silhouette colour via CSS `var(--brand)` so it
-  // follows the skin without us needing to resolve the variable in JS.
-  // When `color` is explicitly set, the glow uses that resolved value
-  // instead (so engine-tinted callers, if any, keep their accent).
-  const glowColor = color ?? "var(--brand)";
-  const filter = isSpeaking
-    ? `drop-shadow(0 0 ${Math.max(4, size * 0.06)}px ${glowColor}) drop-shadow(0 0 ${Math.max(10, size * 0.18)}px ${glowColor})`
-    : undefined;
+  // One-shot bow on click. While bowing the CSS animation owns `transform`
+  // (overriding the inline scale below); `onAnimationEnd` clears the flag so
+  // the mark settles back to its idle/speaking transform. Re-clicks during
+  // the ~1.1s bow are ignored so it never stutters mid-incline.
+  const [bowing, setBowing] = useState(false);
 
   const inner = 200 - INSET * 2;
 
@@ -65,16 +71,22 @@ export default function SplitMark({
       width={size}
       height={size}
       viewBox="0 0 200 200"
-      className={className}
+      className={[className, bowing ? "split-mark-bow" : ""].filter(Boolean).join(" ") || undefined}
+      onClick={bowOnClick ? () => setBowing(true) : undefined}
+      onAnimationEnd={bowing ? () => setBowing(false) : undefined}
+      role={bowOnClick ? "button" : undefined}
+      aria-label={bowOnClick ? "À votre service" : undefined}
       style={{
         display: "block",
-        transition: "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease",
+        // Bow pivots at the feet (bottom-centre), like the planche-2 bowman.
+        transformOrigin: "50% 100%",
+        cursor: bowOnClick ? "pointer" : undefined,
+        transition: "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
         transform: isSpeaking ? "scale(1.06)" : "scale(1)",
         // `color` flows down to the <rect>'s `currentColor` fill. Default
-        // (no prop) → inherit from CSS, which the parent surface drives
-        // via `--brand` on the skin root.
-        color: color ?? "var(--brand)",
-        filter,
+        // (no prop) → the skin's `--mark` if it sets one (Ember paints the
+        // silhouette plain white on dark / black on light), else `--brand`.
+        color: color ?? "var(--mark, var(--brand))",
         ...style,
       }}
     >
@@ -92,7 +104,12 @@ export default function SplitMark({
           </svg>
         </mask>
       </defs>
-      <rect width="200" height="200" fill="currentColor" mask={`url(#${maskId})`} />
+      {/* Silhouette + the sweeping sheen ride the same mask, so the white
+          highlight only ever shows over the figure (see app.css .sm-sheen). */}
+      <g mask={`url(#${maskId})`}>
+        <rect width="200" height="200" fill="currentColor" />
+        {isSpeaking && <rect className="sm-sheen" x="84" y="-34" width="34" height="268" fill="#ffffff" />}
+      </g>
     </svg>
   );
 }

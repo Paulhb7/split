@@ -1,21 +1,24 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { H } from "../shared/harnesses";
 import { Tile, League, vars } from "../shared/ui";
 import { useHarnessStates } from "../shared/useHarnessStates";
+import { useHarnessScan, rankHarnesses, healthOf, type Health } from "../shared/useHarnessScan";
 import { useExperts } from "../shared/util";
-import { isActiveExpert, type ExpertKind } from "../shared/experts";
+import { isActiveExpert, type Expert, type ExpertKind, type ExpertMap } from "../shared/experts";
 import { SKINS, type Skin } from "../shared/skins";
 import { DetailPane } from "../cabinet/Cabinet";
-import GalleryWall, { type Wing } from "../shared/GalleryWall";
+import { Crest } from "../shared/Crest";
 import SplitMark from "../shared/SplitMark";
+import majordomeUrl from "../shared/majordome.svg";
 import "../cabinet/cabinet.css";
 import "./onboarding.css";
 
 // Inline Lucide-style SVG glyphs per expert kind. Single-stroke, currentColor,
 // 24×24 viewBox — pairs with the Bright skin's SaaS register. Sized in CSS
-// (see `.ob2-cabinet-icon svg`); the previous emoji set (🔬⚖️📊…) clashed
-// with the lighter, line-art aesthetic.
+// (see `.ob2-hire-ic .kind-glyph`); the previous emoji set (🔬⚖️📊…) clashed
+// with the lighter, line-art aesthetic. Today only the recruiter glyph renders
+// (the "Hire @Socrates" CTA); the rest are kept for the recruiter/teams reuse.
 const KIND_GLYPH: Record<ExpertKind, ReactNode> = {
   researcher: (
     <>
@@ -134,12 +137,30 @@ const KIND_ORDER: ExpertKind[] = [
   "recruiter",
 ];
 
-// Every harness with a working logo gets a slot in the page-1 wall carousel.
-// Order is the canonical "cloud first → local lane" reading order from the
-// roster — same one used in the home menus.
-const SHOWCASE = ["claude", "codex", "gemini", "mistral-vibe", "copilot", "cursor", "qwen", "opencode", "hermes"];
+// Page-3 Spotlight strip — the three cabinet wings, in hanging order.
+const STRIP_GROUPS: { cat: "genius" | "super" | "coach"; label: string }[] = [
+  { cat: "genius", label: "the geniuses" },
+  { cat: "super", label: "the working hands" },
+  { cat: "coach", label: "the coaches" },
+];
 
-export type EnterIntent = "test_wolfgang" | "start_recruiter" | undefined;
+// Per-kind example brief, used as the Spotlight input placeholder so the prompt
+// the user mirrors fits the expert they picked (Curie ≠ Wolfgang). Pure UI
+// flavour — the wire prompt is whatever the user actually types.
+const KIND_PLACEHOLDER: Record<ExpertKind, string> = {
+  researcher: "the EV market outlook for 2026",
+  analyst: "the trends hiding in this quarter's numbers",
+  advisor: "the risk in this NDA before I sign",
+  builder: "a landing page for my new app",
+  operator: "rebook my 9am to Thursday afternoon",
+  organizer: "a launch plan with owners and dates",
+  finder: "first editions of Borges' Ficciones",
+  creator: "a 90-second cinematic main theme",
+  recruiter: "an expert who plans my trips",
+  coach: "a 12-week plan to run my first 10k",
+};
+
+export type EnterIntent = "brief_expert" | "start_recruiter" | undefined;
 
 export default function Onboarding({
   onEnter,
@@ -152,16 +173,39 @@ export default function Onboarding({
 }) {
   const [page, setPage] = useState(0);
   const [picks, setPicks] = useState<string[]>([]);
-  const [wolfgangTopic, setWolfgangTopic] = useState("");
   // Selected expert whose fiche is open as an overlay over the cabinet on
   // page 3. null = no overlay; clicking a card sets it; the back button
   // and the launch CTA clear it. Letting users browse fiches in onboarding
   // — see the real artifact before committing — is a Big Sell moment.
   const [ficheSlug, setFicheSlug] = useState<string | null>(null);
-  const { states, progress } = useHarnessStates();
+  const lifecycle = useHarnessStates();
+  const { states, progress } = lifecycle;
+  const scan = useHarnessScan();
   const experts = useExperts();
 
-  const engineId = picks[0] || "claude"; // "primary" = the first picked agent
+  // Ranked best-first by machine-scan health (installed+signed-in wins). Drives
+  // the "Recommended" featured card and the post-scan auto-seed.
+  const ranked = useMemo(
+    () => rankHarnesses(scan.byId, scan.scanning),
+    [scan.byId, scan.scanning],
+  );
+  const recommended = ranked[0] ?? "claude";
+
+  // Auto-select the best detected agent(s) once the scan settles — but never
+  // overwrite an explicit choice (the anti-race lesson: an App-level autoselect
+  // guard). `touched` flips on the first manual toggle.
+  const [touched, setTouched] = useState(false);
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (touched || scan.scanning || seededRef.current) return;
+    seededRef.current = true;
+    const ready = ranked.filter((id) => healthOf(scan.byId[id], false) === "ready");
+    setPicks(ready.length ? ready : [recommended]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scan.scanning]);
+
+  // "primary" = the user's first explicit pick, else the recommended best.
+  const engineId = picks[0] ?? recommended;
   const primarySt = states[engineId];
   const accent = H[engineId].brand;
   // Only override `--brand` once the user has actually picked an agent. Before
@@ -175,18 +219,50 @@ export default function Onboarding({
   // `--brand` — which stays owned by the skin's .theme-<id> class so every
   // CTA / em / link / focus ring keeps tracking the user's skin choice.
   const engineStyle = vars({ "--engine": accent });
-  // 4 pages: theme (0) · cabinet intro (1) · pick (2) · brief (3).
+  // 4 pages: welcome (0) · theme (1) · pick (2) · brief (3).
   // Page 2 = picker; can't advance until at least one agent is selected.
   const canNext = page !== 2 || picks.length > 0;
-  const toggle = (id: string) => setPicks((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  const toggle = (id: string) => {
+    setTouched(true);
+    setPicks((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  };
+
+  // Featured-card health + how many CLIs the scan actually found on this machine.
+  const primaryHealth: Health = healthOf(scan.byId[engineId], scan.scanning);
+  const primaryVersion = scan.byId[engineId]?.version;
+  const foundCount = Object.values(scan.byId).filter((d) => d.available).length;
+  const isRecommended = !touched && engineId === recommended;
 
   return (
     <div className="ob2" style={engineStyle}>
       <div className="ob2-page" key={page}>
         {page === 0 && (
+          // The threshold: the majordome watches over in filigree (planche-2
+          // "l'écran vide"). Large, crisp (a mask — not the padded badge that
+          // muddied the first try), bleeding off the bottom-right corner so the
+          // copy never lands on his wig/face, and inked in `--text` at low
+          // opacity so it reads as an engraving on both dark and light skins.
+          <div className="ob2-welcome">
+            <svg className="ob2-welcome-fil" viewBox="388 110 249 348" aria-hidden="true">
+              <defs>
+                <mask id="welcomeMask">
+                  <image href={majordomeUrl} x="0" y="0" width="1024" height="544" />
+                </mask>
+              </defs>
+              <rect className="ob2-welcome-fil-ink" x="388" y="110" width="249" height="348" mask="url(#welcomeMask)" />
+            </svg>
+            <div className="ob2-welcome-text stagger">
+              <h1 className="ob2-welcome-h1">Welcome to <em>Split</em>.</h1>
+              <p className="ob2-welcome-sub">I am your <b>Majordome</b>.</p>
+              <p className="ob2-welcome-seed">A roster of experts, each in its own session — briefed by you, run on the brain of your choice.</p>
+            </div>
+          </div>
+        )}
+
+        {page === 1 && (
           <div className="ob2-hero">
             <div className="ob2-hero-text stagger">
-              <div className="ob-eyebrow">first, the room · 00</div>
+              <div className="ob-eyebrow">first, the room · 01</div>
               <h1 className="ob2-h1">Pick your <em>skin</em>.</h1>
               <p className="ob2-lede">
                 Split is a place you'll come back to often. Choose how it should feel —
@@ -234,75 +310,52 @@ export default function Onboarding({
           </div>
         )}
 
-        {page === 1 && (
-          <div className="ob2-wall stagger">
-            <div className="ob2-wall-text">
-              <div className="ob-eyebrow">welcome to your cabinet · 01</div>
-              <h1 className="ob2-h1">Any AI agent.<br />Now a <em>genius</em>.</h1>
-              <p className="ob2-lede">
-                Bring <b>Claude</b>, <b>Codex</b>, <b>Gemini</b>, <b>Mistral Vibe</b> — whatever AI you use.
-                <b> Split</b> wraps it in an <b>expert persona</b>: Wolfgang the consultant, Marie the scientist,
-                Picasso the creator… so it doesn't just chat — it <em>specializes, acts and ships</em>.
-              </p>
-              <p className="ob2-seed">An <b>agent</b> is a model with hands. An <b>expert</b> is that agent with a craft.</p>
-            </div>
-
-            {/* Row 1 — brains. Defaults to scroll-left so it reads "things coming
-             * at you". The track is rendered TWICE inside the wrap (same array
-             * mapped back-to-back) so the 0% → -50% translate loops seamlessly. */}
-            <div className="carousel-wrap" aria-label="Available agents">
-              <div className="carousel-track left">
-                {[0, 1].map((pass) => (
-                  <div key={pass} className="carousel-group" aria-hidden={pass === 1}>
-                    {SHOWCASE.map((id) => (
-                      <span key={id} className="wall-engine" style={vars({ "--brand": H[id].brand })}>
-                        <Tile id={id} size={48} />
-                        <span className="wall-engine-name">{H[id].label}</span>
-                      </span>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="cons-link">wrapped, becomes</div>
-
-            {/* Row 2 — experts. Scrolls the opposite way so the two rows feel
-             * like a weave instead of a parade. The friendly display name is
-             * the persona's `.label` field (genius_wolfgang → "Wolfgang",
-             * coach_sport → "Sport Coach", etc.) — single source of truth. */}
-            <div className="carousel-wrap" aria-label="Bundled experts">
-              <div className="carousel-track right">
-                {[0, 1].map((pass) => (
-                  <div key={pass} className="carousel-group" aria-hidden={pass === 1}>
-                    {Object.entries(experts)
-                      .filter(([slug]) => isActiveExpert(experts, slug))
-                      .map(([slug, e]) => (
-                        <span key={slug} className="wall-expert">
-                          <span className="wall-expert-at">@</span>{e.label}
-                        </span>
-                      ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
         {page === 2 && (
           <div className="stagger">
             <div className="ob-eyebrow">pick your agents · 02</div>
             <h2 className="ob2-h2">Pick your <em>agents</em></h2>
-            <div className="ob2-pickhint">The ones you have access to. Split shows only these; add more anytime. {picks.length > 0 && <b>{picks.length} selected</b>}</div>
-            <League isSelected={(id) => picks.includes(id)} onPick={toggle} />
-            {picks.length > 0 && primarySt && (
-              <div className="ob2-primary" style={vars({ "--brand": H[engineId].brand })}>
+            <div className="ob2-scanline">
+              {scan.scanning ? (
+                <span className="ob2-scanstat scanning">
+                  <span className="ob2-scandot" aria-hidden="true" />
+                  Scanning your machine for installed agents…
+                </span>
+              ) : (
+                <span className="ob2-scanstat">
+                  {foundCount > 0
+                    ? <>Found <b>{foundCount}</b> agent{foundCount > 1 ? "s" : ""} ready on your machine.</>
+                    : <>No agents detected yet — install one below, or it'll fetch on first run.</>}
+                </span>
+              )}
+              <button type="button" className="ob2-rescan" onClick={scan.rescan} disabled={scan.scanning}>
+                ↻ Rescan
+              </button>
+            </div>
+
+            {/* Recommended featured card — the best detected agent, auto-picked,
+                with its install + sign-in steps inline (a featured Connect card,
+                minus the cloud-runtime upsell). */}
+            {primarySt && (
+              <div className={"ob2-primary" + (isRecommended ? " recommended" : "")} style={vars({ "--brand": H[engineId].brand })}>
                 <div className="ob2-primary-head">
                   <Tile id={engineId} size={32} />
                   <div className="ob2-primary-id">
                     <b>{H[engineId].label}</b>
-                    <span className="ob2-primary-tag">primary — we install &amp; sign in this one now; others stay lazy</span>
+                    <span className="ob2-primary-tag">
+                      {isRecommended
+                        ? "recommended — best detected on your machine; install & sign in now, others stay lazy"
+                        : "primary — install & sign in this one now; others stay lazy"}
+                    </span>
                   </div>
+                  <span className={"ob2-primary-health sb-" + primaryHealth}>
+                    {primaryHealth === "ready"
+                      ? (primaryVersion ? `✓ ${primaryVersion}` : "✓ ready")
+                      : primaryHealth === "needs-auth"
+                        ? "needs sign-in"
+                        : primaryHealth === "needs-install"
+                          ? "needs install"
+                          : "scanning…"}
+                  </span>
                 </div>
                 <div className="ob2-primary-steps">
                   <PrimaryStep
@@ -325,6 +378,9 @@ export default function Onboarding({
                 </div>
               </div>
             )}
+
+            <div className="ob2-pickhint">The ones you have access to. Split shows only these; add more anytime. {picks.length > 0 && <b>{picks.length} selected</b>}</div>
+            <League isSelected={(id) => picks.includes(id)} onPick={toggle} lifecycle={lifecycle} scan={scan} />
           </div>
         )}
 
@@ -333,57 +389,15 @@ export default function Onboarding({
             <div className="ob-eyebrow">meet your cabinet · 03</div>
             <h2 className="ob2-h2">Brief your first <em>expert</em></h2>
             <p className="ob2-lede" style={{ marginBottom: 18 }}>
-              Start with <b>@{experts.consultant?.label || "Wolfgang"}</b> — your research consultant.
-              Type a topic, get back a structured brief.
+              Pick a face. Type a topic. Get a real deliverable back —
+              on whichever brain you just signed in.
             </p>
-            {experts.consultant && (
-              <form
-                className="ob2-wolfgang"
-                style={vars({ "--brand": H[engineId].brand })}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const t = wolfgangTopic.trim();
-                  if (!t) return;
-                  onEnter(picks, "test_wolfgang", "consultant", `Brief me on ${t}`);
-                }}
-              >
-                <div className="ob2-wolfgang-head">
-                  <KindIcon kind="researcher" />
-                  <span className="ob2-wolfgang-at">@{experts.consultant.label}</span>
-                  <span className="ob2-wolfgang-prefix">Brief me on</span>
-                </div>
-                <div className="ob2-wolfgang-row">
-                  <input
-                    type="text"
-                    className="ob2-wolfgang-input"
-                    placeholder="the EV market outlook for 2026"
-                    value={wolfgangTopic}
-                    onChange={(e) => setWolfgangTopic(e.target.value)}
-                    autoFocus
-                  />
-                  <button className="btn" type="submit" disabled={!wolfgangTopic.trim()}>Run →</button>
-                </div>
-                <p className="ob2-wolfgang-hint">runs on {H[engineId].label} · structured markdown back, no slides yet</p>
-              </form>
-            )}
-            {(() => {
-              const cabinet = Object.entries(experts)
-                .filter(([slug]) => slug !== "genius_socrates" && slug !== "consultant" && isActiveExpert(experts, slug))
-                .sort(([, a], [, b]) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
-              const supers = cabinet.filter(([, e]) => (e.category ?? "super") === "super");
-              const genii = cabinet.filter(([, e]) => e.category === "genius");
-              const coaches = cabinet.filter(([, e]) => e.category === "coach");
-              return (
-                <GalleryWall
-                  wings={[
-                    { id: "genius", eyebrow: "east wing · what only a genius could make", title: "the geniuses", entries: genii.map(([slug, expert]) => ({ slug, expert })) },
-                    { id: "super",  eyebrow: "main floor · jobs you already know",        title: "the working hands", entries: supers.map(([slug, expert]) => ({ slug, expert })) },
-                    { id: "coach",  eyebrow: "west wing · grow with them",                title: "the coaches",       entries: coaches.map(([slug, expert]) => ({ slug, expert })) },
-                  ] satisfies Wing[]}
-                  onPick={setFicheSlug}
-                />
-              );
-            })()}
+            <Spotlight
+              experts={experts}
+              engineId={engineId}
+              onBrief={(slug, topic) => onEnter(picks, "brief_expert", slug, topic)}
+              onOpenFiche={setFicheSlug}
+            />
             {experts.genius_socrates && (
               <button className="ob2-hire" onClick={() => onEnter(picks, "start_recruiter")}>
                 <span className="ob2-hire-ic"><KindIcon kind="recruiter" /></span>
@@ -437,7 +451,14 @@ export default function Onboarding({
         <div className="ob2-actions">
           {page > 0 && <button className="btn ghost" onClick={() => setPage((p) => p - 1)}>← back</button>}
           {page < 3 ? (
-            <button className="btn" disabled={!canNext} onClick={() => setPage((p) => p + 1)}>{page === 2 ? "Continue →" : "Next →"}</button>
+            <button
+              className="btn"
+              disabled={!canNext}
+              title={!canNext ? "Pick at least one agent to continue" : undefined}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              {page === 2 ? "Continue →" : "Next →"}
+            </button>
           ) : (
             <button className="btn" onClick={() => onEnter(picks)}>Enter Split →</button>
           )}
@@ -479,6 +500,112 @@ function PrimaryStep({
         </button>
       )}
       {progress && !ready && <span className="ob2-step-progress">{progress}</span>}
+    </div>
+  );
+}
+
+// ---- page 3: the Spotlight ----
+// One featured expert in a gilded frame, the brief box docked under their name,
+// and a grouped filmstrip of the whole cabinet. Clicking any face promotes it
+// to the spotlight AND retargets the brief — the thing you're looking at is the
+// thing you put to work, so the page has exactly one hero and one CTA.
+function Spotlight({
+  experts,
+  engineId,
+  onBrief,
+  onOpenFiche,
+}: {
+  experts: ExpertMap;
+  engineId: string;
+  onBrief: (slug: string, topic: string) => void;
+  onOpenFiche: (slug: string) => void;
+}) {
+  const groups = useMemo(() => {
+    const active = Object.entries(experts)
+      .filter(([slug]) => slug !== "genius_socrates" && isActiveExpert(experts, slug))
+      .sort(([, a], [, b]) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
+    return STRIP_GROUPS.map((g) => ({
+      ...g,
+      entries: active.filter(([, e]) => (e.category ?? "super") === g.cat),
+    })).filter((g) => g.entries.length > 0);
+  }, [experts]);
+
+  const defaultSlug = useMemo(() => {
+    const all = groups.flatMap((g) => g.entries.map(([slug]) => slug));
+    if (all.includes("genius_curie")) return "genius_curie";
+    if (all.includes("consultant")) return "consultant";
+    return groups.find((g) => g.cat === "genius")?.entries[0]?.[0] ?? all[0];
+  }, [groups]);
+
+  const [sel, setSel] = useState<string>(defaultSlug);
+  const [topic, setTopic] = useState("");
+  const slug = experts[sel] ? sel : defaultSlug;
+  const e: Expert | undefined = experts[slug];
+  if (!e) return null;
+  const placeholder = KIND_PLACEHOLDER[e.kind] ?? "your first task";
+
+  return (
+    <div className="ob2-sl">
+      <div className="ob2-sl-main">
+        <div className="ob2-sl-hero">
+          <span className="ob2-sl-gild" aria-hidden="true" />
+          <Crest kind={e.kind} seed={slug} size={128} mint={e.label[0]} className="ob2-sl-crest" />
+          <div className="ob2-sl-name">{e.label}</div>
+          <div className="ob2-sl-role">{e.role ?? e.kind}</div>
+          <p className="ob2-sl-craft">{e.blurb}</p>
+          <button type="button" className="ob2-sl-more" onClick={() => onOpenFiche(slug)}>
+            see full brief →
+          </button>
+        </div>
+
+        <div className="ob2-sl-right">
+          <form
+            className="ob2-sl-briefcard"
+            style={vars({ "--brand": H[engineId].brand })}
+            onSubmit={(ev) => {
+              ev.preventDefault();
+              const t = topic.trim();
+              if (t) onBrief(slug, t);
+            }}
+          >
+            <div className="ob2-sl-brief-head">brief <b>@{e.label}</b> on</div>
+            <div className="ob2-sl-brief-row">
+              <input
+                className="ob2-sl-input"
+                placeholder={placeholder}
+                value={topic}
+                onChange={(ev) => setTopic(ev.target.value)}
+                autoFocus
+              />
+              <button className="btn" type="submit" disabled={!topic.trim()}>Run →</button>
+            </div>
+            <p className="ob2-sl-runson">runs on <b>{H[engineId].label}</b> · a real deliverable back</p>
+          </form>
+        </div>
+      </div>
+
+      <div className="ob2-sl-strips">
+        {groups.map((g) => (
+          <div key={g.cat} className={"ob2-sl-group ob2-sl-group-" + g.cat}>
+            <div className="ob2-sl-group-label">{g.label}</div>
+            <div className="ob2-sl-strip">
+              {g.entries.map(([s, ex]) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={"ob2-sl-thumb" + (s === slug ? " on" : "")}
+                  onClick={() => setSel(s)}
+                  title={`@${ex.label} — ${ex.blurb}`}
+                >
+                  <Crest kind={ex.kind} seed={s} size={56} mint={ex.label[0]} />
+                  <span className="ob2-sl-thumb-nm">{ex.label}</span>
+                  <span className="ob2-sl-thumb-rl">{ex.kind}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

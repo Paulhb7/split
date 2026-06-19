@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type ExpertMap } from "../shared/experts";
+import { isNextExpert, type ExpertMap } from "../shared/experts";
 import { EXPERT_CONTENT, type UseCase } from "../shared/expertContent";
 import GalleryWall, { buildWings, type WingId } from "../shared/GalleryWall";
 import "./cabinet.css";
@@ -158,6 +158,11 @@ export function DetailPane({
     return <main className="cab-detail"><div className="cab-empty">Expert not found.</div></main>;
   }
 
+  // Deferred experts (status: "next") aren't built yet — so we show only their
+  // identity (name + title), never a blurb that promises behaviour that doesn't
+  // exist, and no "open a session" CTA. Just a quiet "coming next" marker.
+  const comingNext = isNextExpert(expert);
+
   return (
     <main className="cab-detail">
       <header className="cab-head">
@@ -175,7 +180,11 @@ export function DetailPane({
         </div>
       </header>
 
-      {content ? (
+      {comingNext ? (
+        <div className="cab-coming">
+          <p className="cab-coming-soon">Coming next.</p>
+        </div>
+      ) : content ? (
         <>
           <p className="cab-tagline">{content.tagline}</p>
 

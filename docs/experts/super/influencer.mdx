@@ -1,0 +1,89 @@
+---
+title: "Influencer"
+description: "Generates viral social content & ads — hooks, UGC video, the virality score"
+---
+
+<Info>**Super** · creator · slug `influencer`</Info>
+
+You bring a product (a photo, a URL, a line) and a goal (sell / launch / build
+awareness). Influencer turns it into social content that *travels* — hooks, UGC
+videos, ad packs, and the recurring AI face that fronts the brand — with an honest
+read on whether it'll perform.
+
+A growth marketer who knows the first second is the whole game: hook-first,
+platform-native, scored for retention.
+
+## What it delivers
+
+Post-ready creative, in packs, not singles:
+
+- **the hook** — several angles for the first ~1.5 seconds that decide everything,
+  with the strongest one named and built first,
+- **UGC + ad video** — presenter / talking-head, unboxing, how-to, product demo,
+  TV-spot (Marketing Studio), optionally fronted by a **consistent AI avatar**,
+- **static social** — ad creative packs, carousels, hero banners, Pinterest pins,
+  multi-format (feed / story / 9:16),
+- **the virality read** — a finished video scored for hook strength, attention and
+  retention, with the single fix that would raise it (Virality Predictor),
+- **the drop** — a campaign: a week of content, a calendar, a link-in-bio /
+  landing page.
+
+## When to pick it
+
+Pick **Influencer** when the goal is **selling or launching** an existing product
+with content that performs. Pick [Karl](/experts/genius/karl) instead to *design*
+the product (garments, the runway); [DaVinci](/experts/genius/davinci) to build the
+brand *identity*; [Hitchcock](/experts/genius/hitchcock) for a short film as art rather
+than an ad that converts.
+
+## How to drive it
+
+Start from a product and a goal:
+
+```
+Make a viral hook for this product
+Spin up a week of UGC ads
+Score this ad's virality
+Launch a campaign for this drop
+```
+
+Attach a product photo or a product URL. Influencer announces a plan (platform /
+format / hook angle / how many), then ships a *pack* of variants in the same turn —
+social is a numbers game, so one creative is a coin flip.
+
+## What comes back
+
+The creative URLs / paths + the **virality read** + one concrete next move ("hook B
+scored higher — want three more in that lane?"). The Higgsfield jobs print the
+**result media URLs**; files land in the session workspace, and you move keepers
+into the vault with **Keep in vault**.
+
+## Leans on
+
+Marketing Studio + virality scoring on one engine — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `higgsfield-generate` | **Marketing Studio** (UGC, presenter, unboxing, demo, TV-spot; avatars, products from a URL, hooks, settings) + the **Virality Predictor** (`brain_activity`) to score a finished video |
+| `higgsfield-soul-id` | train **one face** → the virtual creator / avatar reused across the whole content calendar |
+| `higgsfield-product-photoshoot` | static social creative — `ad_creative_pack`, `social_carousel`, `hero_banner`, `moodboard_pin` |
+| `frontend-slides` | the content calendar, post mockups, and campaign deck rendered as pages |
+| `web-deploy` | ship a campaign page / link-in-bio / landing to a public URL |
+
+(Plus host tools — shell + filesystem — to receive a product photo / brand assets
+and stage the job.)
+
+## Prerequisites & limits
+
+- **External engine — Higgsfield AI.** Generation runs through the `higgsfield`
+  CLI; it needs a **Higgsfield account** and `higgsfield auth login`. In the app,
+  sign in via the **Connect Higgsfield** chip in the conversation header — no raw
+  key is ever asked for in chat.
+- **Costs credits — video is the expensive part.** Marketing Studio video won't
+  run on a free plan; one generation per attempt, iterate the prompt.
+- **The virality score is a proxy, not a promise.** A high score means stronger
+  stimulus and attention, not guaranteed reach — it's a creative-testing signal
+  ("this hook beats that one"), reported honestly.
+- **No deceptive claims, no stolen likeness.** No fabricated testimonials, fake
+  before/afters, or health/income claims it can't back; the avatar is a *generated*
+  face, never a real creator's likeness lifted without consent.

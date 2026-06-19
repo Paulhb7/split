@@ -1,0 +1,74 @@
+---
+title: "Engineer"
+description: "Builds micro-apps & landing pages, ships them to a public URL"
+---
+
+<Info>**Super** · builder · slug `engineer`</Info>
+
+You bring an idea — *"can you make me a thing that…"*. Engineer turns it into a
+real, working web app on your machine, in one turn, with a public URL you can
+send to a friend.
+
+You don't code; it does. It builds small, useful, surprising things — and leads
+with the link.
+
+## What it delivers
+
+**Micro-apps and landing pages** — a countdown page, a habit tracker, a tip
+calculator, a links-in-bio, a small game, a landing page for a SaaS idea, a CSV
+dashboard. By default a **single-file HTML** document (HTML, CSS, JS inline) that
+opens by double-clicking — no build step, no `node_modules`, libraries pulled
+from a CDN only when they earn it.
+
+Anything you can tick, type, toggle, or drag persists in `localStorage` and
+reloads on open. Bigger projects split into `style.css` / `app.js` / `assets/`
+only when they warrant it.
+
+## When to pick it
+
+Pick **Engineer** when you want a *working* app you can use and share. Pick
+[Designer](/experts/super/designer) instead when you want the *look* first — an
+interactive mockup with fake data to react to before anything is built. Designer
+hands its mockup straight to Engineer when it's right.
+
+## How to drive it
+
+Describe the thing in plain language:
+
+```
+Build a landing page for this product
+Prototype a micro-app from this idea
+Deploy it to a public URL
+```
+
+Attach anything that grounds it — a logo or brand asset, a photo for a
+background, a CSV to power a dashboard, or a reference screenshot. With nothing
+attached it picks a sensible default theme and names it.
+
+## What comes back
+
+The app previews **live in the artifact pane** and is saved to
+`~/Documents/split-apps/<short-name>/` (`index.html` at the root). Then it offers
+the deploy you actually want — a permanent `<slug>.surge.sh` URL via the
+`web-deploy` skill, reported plainly. Changes edit the existing file in place and
+re-deploy to the same subdomain; it never starts a new folder for a tweak.
+
+## Leans on
+
+A lean ship-it stack — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `web-deploy` | publish the app to a permanent, free `surge.sh` URL |
+| `ui-ux-pro-max` | design-intelligence DB so the result feels *made*, not generated |
+
+## Prerequisites & limits
+
+- **No backend by default.** It ships self-contained static files. For anything
+  needing accounts or a database it's honest about the options — front-end + a
+  third-party backend you own (Supabase / Firebase), or a fake-data demo — and
+  never pretends it built a server it didn't.
+- **Publishing prompt:** the first `surge` deploy asks for an email + password in
+  the terminal (invent anything — it's not validated); silent after that.
+- **No secrets in the file:** if an app needs an API key, it takes it from a
+  runtime field rather than baking it into the page.

@@ -95,7 +95,7 @@ not for single questions.
 - **coach-tracker** — the shared 3-section HTML tracker (Goals /
   Program / Dashboard); the primary deliverable for any multi-week
   syllabus.
-- **web-search** — current resources (courses, books, repos).
+- **web search** (native) — current resources (courses, books, repos).
 - **paper-search** — academic sources when needed.
 - **docx** — printable resource list if the boss wants paper to bring
   to a library (secondary).

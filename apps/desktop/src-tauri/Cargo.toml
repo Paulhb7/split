@@ -1,6 +1,9 @@
 [package]
-name = "acp-desktop"
+name = "split-desktop"
 version = "0.1.0"
+# Two binaries live here (the app + the fake ACP agent used by the
+# integration tests) — `tauri dev`'s bare `cargo run` needs the tiebreak.
+default-run = "split-desktop"
 description = "Split — ACP agent league (Tauri)"
 authors = ["Paul Barbaste"]
 license = "Apache-2.0"
@@ -8,7 +11,7 @@ edition = "2021"
 
 [lib]
 # The `_lib` suffix keeps the lib name distinct from the bin name (Windows).
-name = "acp_desktop_lib"
+name = "split_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -19,7 +22,10 @@ tauri-build = { version = "2", features = [] }
 # allows the NSVisualEffectView vibrancy layer (lib.rs) to show through the
 # skins' translucent gradient stacks. Paired with `macOSPrivateApi: true` +
 # `transparent: true` in tauri.conf.json.
-tauri = { version = "2", features = ["macos-private-api"] }
+# `protocol-asset` serves local files to the webview via the `asset:` protocol
+# (`convertFileSrc`) — the artifact/vault viewers use it to stream audio/video
+# off disk with range-request seeking. Scope lives in tauri.conf.json.
+tauri = { version = "2", features = ["macos-private-api", "protocol-asset"] }
 tauri-plugin-global-shortcut = "2"
 # Native file dialogs (save / open picker) for the artifact-rail "Save a copy…"
 # button. Cross-platform — wraps NSSavePanel on macOS, IFileDialog on Windows,
@@ -47,3 +53,22 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"
 split-core = { path = "../../../core-rs" }
 # Inline image / PDF artifact bytes for the React viewer as data URLs.
 base64 = "0.22"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# Native notifications with an actionable "Open" button + click response
+# (`notify_turn_done` in lib.rs). Chosen over the tauri notification plugins:
+# the official one is display-only on desktop (actions are mobile-only), and
+# the community UNUserNotificationCenter one ships Swift typed-throws sources
+# that require Xcode 16 / Swift 6 to build. This crate is pure ObjC bindings
+# (NSUserNotification — deprecated but still delivered on Sonoma/Sequoia),
+# needs no Swift toolchain, and works from the unbundled `tauri dev` binary
+# (it swizzles the bundle identity — dev banners show as Terminal).
+mac-notification-sys = "0.6"
+# Native PDF export. WKWebView ignores the JS `window.print()` path entirely,
+# so "Export as PDF" renders through the webview's own `createPDF` API on a
+# hidden window. These objc2 crates are already in the tree (pulled by wry), so
+# pinning them as direct deps adds no new build — just the bindings we call.
+objc2 = "0.6"
+objc2-web-kit = { version = "0.3", features = ["WKWebView", "WKNavigation", "WKPDFConfiguration", "block2"] }
+objc2-foundation = { version = "0.3", features = ["NSData", "NSError"] }
+block2 = "0.6"

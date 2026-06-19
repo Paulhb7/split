@@ -45,7 +45,7 @@ hidden. Each is the first thing to revisit if the trust model ever widens.
    Nothing is sandboxed.
 3. **Skills run bundled code.** Vendored skills under
    [`config/skills/`](config/skills/) ship `scripts/*.py` that execute and reach
-   the network (e.g. `music-gen`/`video-gen` → fal.ai, `voice-gen` → ElevenLabs).
+   the network (e.g. the `higgsfield-*` skills → the `higgsfield` CLI/API).
 4. **MCP servers are mounted as declared.** Everything in
    [`config/tools.json`](config/tools.json) is launched and exposed to the agent,
    with `${VAR}` secrets expanded into its environment. Only add servers you

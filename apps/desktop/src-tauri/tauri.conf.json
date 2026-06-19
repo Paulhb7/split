@@ -29,7 +29,11 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["$HOME/**", "/tmp/**", "/private/var/folders/**"]
+      }
     }
   },
   "bundle": {

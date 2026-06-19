@@ -3,12 +3,86 @@ import { invoke } from "@tauri-apps/api/core";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { H } from "../shared/harnesses";
+import { useSmoothText, stabilizeMarkdown } from "../shared/useSmoothText";
 import { useExperts } from "../shared/util";
-import { Tile } from "../shared/ui";
-import type { Session } from "../shared/models";
-import { ArtifactStrip } from "./ArtifactViewer";
+import { Logo } from "../shared/ui";
+import { Crest } from "../shared/Crest";
+import { TurnSpinner } from "../shared/TurnSpinner";
+import type { Session, Step } from "../shared/models";
+import type { Artifact } from "../shared/events";
+import { ToolAuthChips } from "./ToolAuth";
 
 type PermissionScope = "once" | "session" | "always-allow" | "always-deny";
+
+// A peer session (not the focused one) that needs the boss — surfaced as a
+// banner at the top of the thread so attention isn't trapped in one session.
+export interface PeerAlert {
+  id: string;
+  label: string;
+  reason: "auth" | "permission";
+}
+
+// Emoji by extension for the promoted deliverable card. Keeps the card from
+// reading as a generic file row — a deck looks like a deck, data like data.
+function artIcon(rel: string): string {
+  const ext = rel.slice(rel.lastIndexOf(".") + 1).toLowerCase();
+  if (ext === "html" || ext === "htm") return "🖥️";
+  if (ext === "md" || ext === "markdown" || ext === "txt") return "📝";
+  if (ext === "csv" || ext === "tsv" || ext === "json") return "📊";
+  if (["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext)) return "🖼️";
+  if (ext === "pdf") return "📄";
+  return "📦";
+}
+
+function humanMs(ms: number): string {
+  const s = Math.round(ms / 1000);
+  if (s < 60) return `${s}s`;
+  return `${Math.floor(s / 60)}m${String(s % 60).padStart(2, "0")}`;
+}
+
+// Collapsed "what it did" fold — the secondary layer. Summarises the turn's
+// steps under one line (count + duration); expands to the step list. Closed by
+// default so the answer (primary) stays the eye's first stop.
+function ActivityFold({ steps, tookMs }: { steps: Step[]; tookMs?: number }) {
+  const last = steps[steps.length - 1];
+  return (
+    <details className="didfold">
+      <summary>
+        <span className="chev">▸</span>
+        {steps.length} step{steps.length === 1 ? "" : "s"}
+        {last?.title ? <span className="didfold-last"> · {last.title}</span> : null}
+        {tookMs != null && <span className="n">{humanMs(tookMs)}</span>}
+      </summary>
+      <div className="didfold-body">
+        {steps.map((st, i) => (
+          <div key={i} className="didfold-step">
+            <span className="k">✓</span>
+            <span className="didfold-step-t">{st.title}</span>
+            {st.status ? <span className="didfold-step-s">{st.status}</span> : null}
+          </div>
+        ))}
+      </div>
+    </details>
+  );
+}
+
+// Promoted deliverable card — the primary "here's the output" affordance shown
+// in compact posture. Clicking expands into the side-by-side atelier with the
+// file open. The most-recent artifact gets the big card; the rest sit in a
+// compact strip below.
+function DeliverableCard({ a, onOpen }: { a: Artifact; onOpen: () => void }) {
+  const name = a.rel.split("/").pop() || a.rel;
+  return (
+    <button className="deliv" onClick={onOpen} title={a.path}>
+      <span className="deliv-ic">{artIcon(a.rel)}</span>
+      <span className="deliv-meta">
+        <span className="deliv-t">{name}</span>
+        <span className="deliv-s">{a.op} · {a.rel}</span>
+      </span>
+      <span className="deliv-open">Open ▸</span>
+    </button>
+  );
+}
 
 function CopyBtn({ text }: { text: string }) {
   const [done, setDone] = useState(false);
@@ -55,15 +129,40 @@ export function Conversation(props: {
   onInputChange: (v: string, cursor: number | null) => void;
   onKey: (e: React.KeyboardEvent) => void;
   onReply: () => void;
+  // Opens the native file picker → pending attachment (📎 paperclip).
+  onAttach: () => void;
   onPickCommand: (name: string) => void;
   onPickArtifact: (id: string, rel: string) => void;
+  // The artifact the shell's viewer currently shows (atelier focus mode), so the
+  // in-thread tab strip highlights the file actually on screen. Optional — the
+  // compact view doesn't render that strip.
+  activeArtifact?: string | null;
+  // Posture: `expanded` = the side-by-side atelier (rail + thread + viewer).
+  // `onTogglePosture` flips this session between compact and expanded.
+  expanded: boolean;
+  onTogglePosture: () => void;
+  // Other sessions that need the boss right now — rendered as a banner so
+  // attention isn't trapped in the focused session. `onFocusPeer` jumps to one.
+  peers: PeerAlert[];
+  onFocusPeer: (id: string) => void;
 }) {
   const {
     session: focused, experts, value, inputRef, slashQuery, chips,
     onBack, onStop, onClose, onAuth, onPermission,
     godMode, onToggleGodMode,
-    onCancelQueued, onInputChange, onKey, onReply, onPickCommand, onPickArtifact,
+    onCancelQueued, onInputChange, onKey, onReply, onAttach, onPickCommand, onPickArtifact,
+    expanded, onTogglePosture, peers, onFocusPeer,
   } = props;
+  // Scope persistence for the next permission decision (drives both Allow and
+  // Deny — you pick how long the decision sticks, then allow or deny once).
+  const [permScope, setPermScope] = useState<"once" | "session" | "always">("session");
+
+  // Typewriter buffer: the wire's bursty chunks accumulate in
+  // `answer`/`thoughts`; what we render is the smoothed reveal. Flushed
+  // instantly when the turn ends (status leaves "running").
+  const streaming = focused.status === "running";
+  const smoothAnswer = useSmoothText(focused.answer, streaming, focused.id);
+  const smoothThoughts = useSmoothText(focused.thoughts, streaming, focused.id);
 
   const threadRef = useRef<HTMLDivElement>(null);
   const lastSessionRef = useRef<string | null>(null);
@@ -80,18 +179,24 @@ export function Conversation(props: {
     }
     const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
     if (nearBottom) el.scrollTo({ top: el.scrollHeight });
-  }, [focused.id, focused.answer, focused.thoughts, focused.thread.length]);
+  }, [focused.id, smoothAnswer, smoothThoughts, focused.thread.length]);
 
   return (
     <div className="conv">
       <div className="conv-head">
         <button className="iconbtn" onClick={onBack} title="Back">‹</button>
-        <Tile id={focused.harness} size={38} themed />
+        <Crest kind={experts[focused.expertSlug]?.kind} seed={focused.expertSlug} size={38} />
         <div>
           <div className="conv-title">@{focused.expertLabel}{experts[focused.expertSlug]?.role ? <span className="conv-role"> · {experts[focused.expertSlug]?.role}</span> : null}</div>
-          <div className="conv-on">on <b>{H[focused.harness]?.label || focused.harness}</b> · {focused.status}</div>
+          <div className="conv-on">on <Logo id={focused.harness} size={13} /><b>{H[focused.harness]?.label || focused.harness}</b> · {focused.status}</div>
         </div>
         <span className="spacer" />
+        <ToolAuthChips skills={experts[focused.expertSlug]?.skills} />
+        <button
+          className={"iconbtn" + (expanded ? " on" : "")}
+          onClick={onTogglePosture}
+          title={expanded ? "Back to compact view" : "Open in the atelier (side by side)"}
+        >{expanded ? "⊟" : "⊡"}</button>
         <button
           className={"iconbtn" + (godMode ? " on" : "")}
           onClick={onToggleGodMode}
@@ -105,6 +210,41 @@ export function Conversation(props: {
       </div>
 
       <div className="thread" ref={threadRef}>
+        {peers.length > 0 && (
+          <div className="peerbanner">
+            {peers.map((p) => (
+              <button key={p.id} className="peerbanner-row" onClick={() => onFocusPeer(p.id)}>
+                <span className="attn-dot" />
+                <span className="peerbanner-tx"><b>@{p.label}</b> {p.reason === "auth" ? "needs sign-in" : "needs your approval"}</span>
+                <span className="peerbanner-go">View ▸</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {focused.thread.length === 0 && focused.status !== "running" && (() => {
+          const starters = experts[focused.expertSlug]?.starters ?? [];
+          return (
+            <div className="conv-empty">
+              <div className="conv-empty-crest">
+                <Crest kind={experts[focused.expertSlug]?.kind} seed={focused.expertSlug} size={104} />
+              </div>
+              <h2 className="conv-empty-h">Hi, I'm your {focused.expertLabel}.</h2>
+              <p className="conv-empty-p">Ask a question, drop a document, or pick a starting point.</p>
+              {starters.length > 0 && (
+                <div className="conv-starters">
+                  {starters.map((s, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className="conv-starter"
+                      onClick={() => { onInputChange(s, null); inputRef.current?.focus(); }}
+                    >{s}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
         {focused.thread.map((turn, i) => {
           const isAgent = turn.role !== "user" && turn.role !== "thought";
           return (
@@ -115,6 +255,7 @@ export function Conversation(props: {
                 </span>
                 {isAgent && turn.text && <CopyBtn text={turn.text} />}
               </div>
+              {isAgent && turn.steps?.length ? <ActivityFold steps={turn.steps} tookMs={turn.tookMs} /> : null}
               <div className="text">
                 {turn.role === "user" ? (
                   <>
@@ -128,23 +269,29 @@ export function Conversation(props: {
             </div>
           );
         })}
-        {focused.thoughts && (
+        {smoothThoughts && (
           <div className="turn thought">
             <span className="role">{focused.expertLabel} · thinking</span>
-            <div className="text"><ReactMarkdown remarkPlugins={[remarkGfm]}>{focused.thoughts}</ReactMarkdown></div>
+            <div className="text"><ReactMarkdown remarkPlugins={[remarkGfm]}>{stabilizeMarkdown(smoothThoughts)}</ReactMarkdown></div>
           </div>
         )}
-        {focused.answer && (
+        {smoothAnswer && (
           <div className="turn agent">
             <div className="turn-head">
               <span className="role">{focused.expertLabel}</span>
               <CopyBtn text={focused.answer} />
             </div>
-            <div className="text"><ReactMarkdown remarkPlugins={[remarkGfm]}>{focused.answer}</ReactMarkdown></div>
+            <div className="text"><ReactMarkdown remarkPlugins={[remarkGfm]}>{stabilizeMarkdown(smoothAnswer)}</ReactMarkdown></div>
           </div>
         )}
         {focused.status === "running" && (
-          <div className="thinking"><span className="dot running" /> <span className="thinking-line">{focused.summary || `${focused.expertLabel} is thinking…`}</span></div>
+          <TurnSpinner
+            kind={experts[focused.expertSlug]?.kind}
+            summary={focused.summary}
+            streamedChars={focused.answer.length + focused.thoughts.length}
+            thoughtChars={focused.thoughts.length}
+            startedAt={focused.turnStartedAt}
+          />
         )}
         {focused.auth && (
           <div className="thinking">
@@ -162,28 +309,66 @@ export function Conversation(props: {
           const allowId = allowOpt?.id ?? null;
           const ask = (optionId: string | null, scope: PermissionScope) =>
             onPermission(focused.id, pp.id, optionId, scope);
+          // The radio chooses how long the decision sticks; the two buttons
+          // apply it (allow or deny) — so "always-allow" and "always-deny" can
+          // never be selected at once, they're two outcomes of one scope.
+          const SCOPES: { id: "once" | "session" | "always"; label: string }[] = [
+            { id: "once", label: "once" },
+            { id: "session", label: "this session" },
+            { id: "always", label: "always" },
+          ];
+          const allow = () => allowId && ask(allowId, permScope === "always" ? "always-allow" : permScope);
+          const deny = () => ask(null, permScope === "always" ? "always-deny" : "once");
           return (
-            <div className="thinking">
-              🔧 needs approval · <code>{pp.toolId}</code>
-              <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }}
-                      onClick={() => allowId && ask(allowId, "once")} disabled={!allowId}>Allow once</button>
-              <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }}
-                      onClick={() => allowId && ask(allowId, "session")} disabled={!allowId}>Allow session</button>
-              <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }}
-                      onClick={() => allowId && ask(allowId, "always-allow")} disabled={!allowId}>Always ({pp.expert})</button>
-              <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }}
-                      onClick={() => ask(null, "once")}>Deny</button>
+            <div className="perm">
+              <div className="perm-head">
+                <span className="perm-ic">🔐</span>
+                <span className="perm-t">Allow an action</span>
+                <span className="perm-who">{pp.expert}</span>
+              </div>
+              <div className="perm-tool"><code>{pp.toolId}</code></div>
+              <div className="perm-scope" role="radiogroup" aria-label="Decision scope">
+                {SCOPES.map((sc) => (
+                  <button
+                    key={sc.id}
+                    role="radio"
+                    aria-checked={permScope === sc.id}
+                    className={"perm-scope-opt" + (permScope === sc.id ? " on" : "")}
+                    onClick={() => setPermScope(sc.id)}
+                  >{sc.label}</button>
+                ))}
+              </div>
+              <div className="perm-acts">
+                <button className="btn perm-allow" onClick={allow} disabled={!allowId}>Allow</button>
+                <button className="btn perm-deny" onClick={deny}>{permScope === "always" ? "Block always" : "Deny"}</button>
+              </div>
             </div>
           );
         })()}
         {focused.queued && <div className="thinking">⏳ queued · {focused.queued.display || "(file)"} <button className="xbtn" onClick={() => onCancelQueued(focused.id)}>✕</button></div>}
       </div>
 
-      <ArtifactStrip
-        artifacts={focused.artifacts}
-        activeArtifact={focused.activeArtifact}
-        onPick={(rel) => onPickArtifact(focused.id, rel)}
-      />
+      {/* Deliverables live in the Reflet dock (right), not duplicated in the
+          thread. Compact posture keeps ONLY the latest one as a headline card
+          ("here's your result") + a hint to the dock for the rest; in the
+          atelier the dock + viewer own them, so the thread shows none. */}
+      {focused.artifacts.length > 0 && !expanded && (
+        <div className="deliv-wrap">
+          <DeliverableCard
+            a={focused.artifacts[focused.artifacts.length - 1]}
+            onOpen={() => { onPickArtifact(focused.id, focused.artifacts[focused.artifacts.length - 1].rel); onTogglePosture(); }}
+          />
+          {focused.artifacts.length > 1 && (
+            <button
+              className="deliv-more"
+              onClick={onTogglePosture}
+              style={{ all: "unset", cursor: "pointer", fontSize: 12.5, opacity: 0.7, padding: "4px 2px" }}
+            >
+              +{focused.artifacts.length - 1} more in the dock →
+            </button>
+          )}
+        </div>
+      )}
 
       {focused.logs.length > 0 && (
         <details className="logs" open={focused.status === "running"}>
@@ -232,6 +417,7 @@ export function Conversation(props: {
               {chips}
               <input ref={inputRef} value={value} onChange={(e) => onInputChange(e.target.value, e.target.selectionStart)} onKeyDown={onKey}
                 placeholder={focused.status === "running" ? `${focused.expertLabel} is working — queue the next…` : `Reply to ${focused.expertLabel}…`} />
+              <button className="clip" onClick={onAttach} title="Attach a file" aria-label="Attach a file">📎</button>
               {focused.status === "running" ? (
                 <button className="stop" onClick={() => onStop(focused.id)}>■</button>
               ) : (

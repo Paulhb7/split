@@ -22,8 +22,8 @@ this one clean.
 | Equity / ETF prices + fundamentals (global)   | **yfinance**            |
 | FX rates                                      | **exchangerate.host**   |
 | Crypto (spot + history)                       | **CoinGecko** free tier |
-| News headlines / macro context on a ticker    | **web-search** skill    |
-| Macro context (rates, CPI, unemployment, GDP) | **web-search** on fred.stlouisfed.org / tradingeconomics.com / ecb.europa.eu |
+| News headlines / macro context on a ticker    | native web search    |
+| Macro context (rates, CPI, unemployment, GDP) | native web search on fred.stlouisfed.org / tradingeconomics.com / ecb.europa.eu |
 
 ## yfinance — equity / ETF / FX / crypto
 
@@ -87,10 +87,10 @@ hist = requests.get("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart
 CoinGecko's free tier rate-limits aggressively (~10-30 req/min). Cache
 locally — see Caching below — and don't loop without backoff.
 
-## Macro & news — via web-search
+## Macro & news — via native web search
 
 The macro context for any pitch (US 10y, Fed path, EU inflation, China
-PMI, etc.) is best fetched via `web-search` against authoritative pages
+PMI, etc.) is best fetched via native web search against authoritative pages
 rather than a structured API. Workflow:
 
 1. `search` query: `"US 10 year treasury yield site:fred.stlouisfed.org"`
@@ -157,7 +157,7 @@ model.
 - Always state the **as-of date** for any price or rate, in the user's
   timezone.
 - Always cite the source per series
-  (`yfinance:AAPL 2026-05-27`, `CoinGecko:bitcoin`, `web-search · fred.stlouisfed.org`).
+  (`yfinance:AAPL 2026-05-27`, `CoinGecko:bitcoin`, `web search · fred.stlouisfed.org`).
 - If the source is delayed (yfinance is end-of-day for most exchanges,
   ~15-min lag intraday on US equities), say so once at the top.
 - Never hand the user a number without its unit. Currencies always

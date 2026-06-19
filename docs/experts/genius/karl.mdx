@@ -1,0 +1,96 @@
+---
+title: "Karl"
+description: "Designs garments & footwear, dresses them on a model, builds the lookbook"
+---
+
+<Info>**Genius** · creator · slug `genius_karl`</Info>
+
+You bring a mood, a fabric, a word, or a bad phone photo of a shoe. Karl — a
+couturier — gives back a finished thing you could not draw yourself: the garment
+designed, worn on a model, shot as a lookbook. Imperious, tri-lingual, never
+satisfied, tiresomely right.
+
+Where [DaVinci](/experts/genius/davinci) builds visual *worlds* and brand
+identities, Karl makes **clothes and shoes** — and shoots the **lookbook**.
+
+## What it delivers
+
+A collection, taken from sketch to lookbook:
+
+- **the piece designed** — a garment or a pair of shoes from a mood / fabric /
+  sketch / reference, with the silhouette, line, fabric story and palette stated,
+  then *rendered* (not described),
+- **the piece worn** — a lookbook frame / editorial / virtual try-on on a single
+  **house model** (one trained face) so the collection reads as a body of work,
+- **the campaign image** — the hero still: the look composed, lit and styled like
+  a campaign or editorial spread, not a catalogue snap,
+- **the lookbook** — one page (line sheet + every look on the house model)
+  deployed to a URL the boss forwards,
+- **a verdict** — an honest, cutting read of the brief before a credit is spent,
+  and one or two variations to ask next ("same coat, belted" / "same shoe,
+  oxblood").
+
+## When to pick it
+
+Pick **Karl** when the deliverable is **fashion** — a garment, a shoe, a capsule
+collection, a lookbook, a campaign image. Pick [DaVinci](/experts/genius/davinci) instead
+for a brand identity, a 3D scene, or product UI; [Designer](/experts/super/designer)
+for app/site mockups; the [Influencer](/experts/super/influencer) when the goal is
+selling an existing product with viral ads rather than designing a new one.
+
+## How to drive it
+
+Start from a mood, a fabric, or an attachment:
+
+```
+Design a capsule collection from this mood
+Put this piece on a model
+Build a lookbook for these looks
+Turn this sketch into a finished garment
+```
+
+Attach what anchors taste — a fabric photo, a sketch, a reference image. Karl
+states his read in one cutting line, then renders three directions as v1. If the
+brief is genuinely too thin to cut from — no mood, no fabric, no point of view —
+he throws it back **once** and makes you defend or sharpen it ("justify it,
+Liebling"), then ships.
+
+## What comes back
+
+Rendered looks, campaign stills, and a lookbook page. Karl reports the **absolute
+file path** (or the deployed URL) plus variations to ask for next. The Higgsfield
+jobs print the **result media URLs**; files land in the session workspace, and you
+move keepers into the vault with **Keep in vault**.
+
+## Leans on
+
+A visual atelier on one generation engine — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `higgsfield-generate` | the atelier: garment/footwear concept images and campaign stills (GPT Image 2 / Nano Banana / Soul 2.0). **Stills only — no video** (the runway clip is out; it burns credits for little) |
+| `higgsfield-soul-id` | train the **house model's** face once → a `reference_id` reused so the same model wears every look across the lookbook (the weapon against face drift) |
+| `higgsfield-product-photoshoot` | the piece **on a model** — `virtual_model_tryout`, `lifestyle_scene`, `moodboard_pin`, `restyle`; backend assembles the prompt |
+| `taste-design` | the collection's `DESIGN.md` (palette, silhouette language, fabric story, references, anti-patterns), audited before delivery |
+| `frontend-slides` | the lookbook / line sheet / fashion plates rendered as pages, exported to PNG/PDF |
+| `web-deploy` | ship the lookbook page to a public URL |
+
+(Plus host tools — shell + filesystem — to receive a fabric photo / sketch /
+reference and stage the prompt.)
+
+## Prerequisites & limits
+
+- **External engine — Higgsfield AI.** Concept images and campaign stills run
+  through the `higgsfield` CLI; it needs a **Higgsfield account** and `higgsfield
+  auth login`. In the app, sign in via the **Connect Higgsfield** chip in the
+  conversation header — no raw key is ever asked for in chat.
+- **Costs credits — stills only, no video.** Each render is a real Higgsfield
+  generation; the animated runway clip is deliberately out (it burned credits for
+  little). Karl is deliberate — one look per attempt, iterate the *prompt* not the
+  seed.
+- **The model drifts without Soul ID.** Cast the house model first; even then
+  lighting/framing can jump between shots — Karl catches it and re-shoots the one
+  frame rather than pretending it's fine.
+- **No pastiche of a living house or designer by name** (legal exposure). Karl
+  matches a tradition, a movement, a register — never the trademark. Ask for
+  "Chanel" and you get the line that house taught the world, without the name.

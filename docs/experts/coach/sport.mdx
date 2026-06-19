@@ -1,0 +1,82 @@
+---
+title: "Sport Coach"
+description: "Designs your training cycle, progressive overload, recovery plan"
+---
+
+<Info>**Coach** · coach · slug `coach_sport`</Info>
+
+You bring a goal — a 10k, a first pull-up, a 100kg squat. Sport Coach turns it
+into a structured training cycle you tick off daily: progressive overload,
+deload weeks, periodisation, dosed to protect against injury.
+
+## What it delivers
+
+For a multi-week program, a single-file **`index.html` tracker** built against
+the `coach-tracker` skill, three vertical sections:
+
+- **Goals** — the training goal, deadline, current level, time budget,
+  equipment, and friction, restated as a headline.
+- **Program** — the full 4–12 week cycle, every session an expandable card
+  (warm-up / main work / accessory / cool-down, time-boxed).
+- **Dashboard** — today's session with a checkbox per set and an RPE field per
+  lift, a PR-tracker per movement, a weekly volume chart, a deload-week
+  countdown, and a consistency streak.
+
+The dashboard renders against one of two signatures — `scoreboard` for race
+builds and event countdowns, `cockpit` for strength blocks and HR/zone work
+(never blended in one tracker). For one-offs: a form check, recovery advice, or
+race-day fuelling — plus form notes (common errors, cues) for the lifts in scope.
+
+## When to pick it
+
+Pick **Sport Coach** for training cycles, progressive overload, session design,
+and recovery. Pick [Diet Coach](/experts/coach/diet) instead when the lever is
+nutrition rather than training load — pair them when a body-composition goal
+needs both.
+
+## How to drive it
+
+Name a goal:
+
+```
+Design my training cycle
+Plan my progressive overload
+Adapt my session to my recovery
+```
+
+Attach your current routine, recent PRs, or a race date — the cycle is built
+around your real volume instead of a generic 5×5. For a multi-week program,
+expect one consolidated diagnostic question first (goal, deadline, current
+level, time budget, equipment, friction); answer it in one message and the plan
+plus tracker ship the next turn.
+
+## What comes back
+
+The tracker renders **live in the artifact pane** (Split previews the HTML
+in-app), saved to `~/Documents/split-apps/<short-name>/index.html` — the path is
+reported in plain text. It stays **local by default** (training data); AirDrop
+the `.html` to your phone, or hand off to [Engineer](/experts/super/engineer)
+for a real deploy. The tracker *is* the memory — state lives in its
+`localStorage`, no separate notes file to sync. One-off questions come back as a
+plain chat answer.
+
+## Leans on
+
+A daily-use training kit — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `coach-tracker` | the shared 3-section HTML tracker (Goals / Program / Dashboard) — the primary deliverable, `scoreboard` or `cockpit` signature |
+| `docx` | printable session cards for the gym (secondary) |
+| `frontend-slides` | explainer deck when a concept needs visuals (form cues, periodisation diagram) |
+
+## Prerequisites & limits
+
+- **Runs anywhere:** no Split-managed key. Current programs and brand-specific
+  gear come from the harness's native grounded search.
+- **Not a clinician.** Sport Coach does not diagnose physical conditions. If you
+  report pain (not soreness — pain), it stops and recommends a physio; it won't
+  sell shortcuts that risk injury.
+- **Early gains are neural.** If you're new, the first ~6 weeks are mostly neural
+  adaptation — strength jumps aren't "real" yet, and Sport Coach says so rather
+  than overselling the curve.

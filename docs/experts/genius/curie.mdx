@@ -1,0 +1,82 @@
+---
+title: "Curie"
+description: "Frontier scientist for orphan diseases — clinical grounding, target proteins and structures, drug repurposing."
+---
+
+<Info>**Genius** · researcher · slug `genius_curie`</Info>
+
+You bring a disease name, a gene, or a clinical description. Curie turns it into
+a real, structured scientific investigation you could not run alone — disease →
+causal protein → 3D structure → druggable pocket → **repurposing hypothesis**,
+anchored at every step to public biomedical databases and current literature.
+
+Where [Scientist](/experts/super/scientist) summarizes the literature, Curie
+**runs the computational pipeline only a specialist could assemble**.
+
+## What it delivers
+
+One self-contained **`report.html`** — the whole investigation on a single page:
+
+- the disease grounded (prevalence, inheritance, phenotype) and its causal gene(s),
+- the **AlphaFold structure embedded and spinning** (3Dmol.js, structure inline),
+- the evidence base + the **clinical-trial landscape** (ongoing / completed / terminated),
+- similar mechanisms across diseases (PrimeKG graph reasoning),
+- a **repurposing table**: already-approved drugs that hit the shared mechanism,
+  ranked by feasibility, cross-referenced to ClinicalTrials.gov,
+- an honest limits section + the wet-lab assays that would confirm each lead.
+
+## When to pick it
+
+Pick **Curie** for rare/orphan diseases, target identification, structural
+biology, and drug repurposing. Pick [Scientist](/experts/super/scientist) instead
+when you want a literature review or state-of-the-art map without the
+target→structure→docking pipeline.
+
+## How to drive it
+
+Start from a disease, a gene, or a clinical question:
+
+```
+Investigate a rare disease
+Find the target protein for this condition
+Propose a drug to repurpose for this disease
+```
+
+Attach a clinical summary, a gene list, or a paper if you have one — it's folded
+into the investigation's `inputs/`.
+
+## What comes back
+
+The `report.html` renders **live in the artifact pane** (WebGL viewer, so it's
+treated as interactive — open it in a browser to print). Everything is saved to
+`~/Desktop/curie-<disease>-<date>/`: the report at the root, raw `.pdb`/`.cif`
+and data JSON under `outputs/`, and your inputs under `inputs/`. Iterations land
+in a `v2/` subfolder — v1 is never overwritten.
+
+## Leans on
+
+A real library-backed scientific stack — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `database-lookup` | 78 biomedical/clinical DBs (OMIM, Open Targets, ClinVar, UniProt, AlphaFold, ChEMBL, DrugBank, ClinicalTrials.gov…) |
+| `primekg` | disease ↔ gene ↔ drug ↔ phenotype graph — cross-disease repurposing reasoning |
+| `paper-lookup` / `paper-search` | 10 literature databases (PubMed, PMC, bioRxiv, Semantic Scholar…) |
+| `biopython` | parse/analyse sequences & structures, variant mapping |
+| `diffdock` | protein–ligand docking — the binding-pocket / repurposing screen |
+| `rdkit` / `medchem` | cheminformatics + medicinal-chemistry triage |
+| `esm` | ESMFold de-novo folding when AlphaFold DB has no entry |
+| `molecular-dynamics` | OpenMM/MDAnalysis — refine a pose, short MD |
+| `scanpy` / `pymatgen` | single-cell expression · materials (off-path) |
+
+## Prerequisites & limits
+
+- **Runs anywhere:** the database + literature skills are pure REST/HTTP. Some
+  raise their rate limits with an optional key (`NCBI_API_KEY`, etc.).
+- **Needs compute:** the heavy skills (`esm` folding, `diffdock`, `molecular-dynamics`)
+  need their Python deps and ideally a GPU. Without them, Curie leans on
+  **AlphaFold DB retrieval + docking analysis** rather than de-novo compute —
+  and says which path it took.
+- **Honesty by design:** a predicted structure is not an experimental one; a
+  repurposing hypothesis from pocket similarity is a *lead*, not a treatment.
+  Curie states what would have to be true experimentally for each claim to hold.

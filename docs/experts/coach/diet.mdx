@@ -1,0 +1,82 @@
+---
+title: "Diet Coach"
+description: "Builds meal plans, decodes nutrition labels, holds you accountable"
+---
+
+<Info>**Coach** · coach · slug `coach_diet`</Info>
+
+You bring a goal, a label, or "what do I eat tonight". Diet Coach turns a
+multi-week goal into a paced meal plan you tick off daily — and answers the
+one-offs (decode a label, scale a recipe) straight in chat.
+
+## What it delivers
+
+For a multi-week plan, a single-file **`index.html` tracker** built against the
+`coach-tracker` skill (rendered with the `lab-report` signature — a clean
+clinical readout), three vertical sections:
+
+- **Goals** — the nutrition goal, time horizon, current diet shape, constraints
+  (allergies / regime), budget + prep time, and friction, restated as a headline.
+- **Program** — the week's meal grid (breakfast / lunch / dinner cards, recipes
+  collapsed below each), plus the per-week shopping list.
+- **Dashboard** — today's meal logger with notes, weight + measurements input
+  with a small chart, a water-intake counter, an optional fasting timer, and the
+  weekly check-in form.
+
+For one-offs: a label or recipe decoded to calories + macros + flags (sodium,
+added sugar, ultra-processed markers), or a recipe with substitutions for a
+constraint or what's in the fridge.
+
+## When to pick it
+
+Pick **Diet Coach** for meal plans, nutrition decoding, substitutions, and
+weekly accountability. Pick [Cooking Coach](/experts/coach/cooking) instead when
+the goal is learning to *cook* — techniques, scaling, a cuisine — rather than
+what to eat against a nutrition target.
+
+## How to drive it
+
+Name a goal, paste a label, or ask what to eat:
+
+```
+Make me a meal plan for the week
+Decode this nutrition label
+Tune my meals to my goal
+```
+
+Attach a nutrition label, a recipe, or your current week of meals — it grounds
+the plan in your real diet instead of a generic default. For a multi-week plan,
+expect one consolidated diagnostic question first (goal, horizon, current diet,
+constraints, budget/prep, friction); answer it in one message and the plan plus
+tracker ship the next turn.
+
+## What comes back
+
+The tracker renders **live in the artifact pane** (Split previews the HTML
+in-app), saved to `~/Documents/split-apps/<short-name>/index.html` — the path is
+reported in plain text. It stays **local by default** (health data); AirDrop the
+`.html` to your phone, or hand off to [Engineer](/experts/super/engineer) for a
+real deploy. The tracker *is* the memory — state lives in its `localStorage`, no
+separate notes file to sync. One-off questions come back as a plain chat answer.
+
+## Leans on
+
+A small, daily-use kit — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `coach-tracker` | the shared 3-section HTML tracker (Goals / Program / Dashboard) — the primary deliverable, `lab-report` signature |
+| `docx` | printable shopping list or recipe card for the store (secondary) |
+| `frontend-slides` | explainer deck when a concept needs visuals (macro split, food-group ratios) |
+
+## Prerequisites & limits
+
+- **Runs anywhere:** no Split-managed key. Current nutrition science and
+  brand-specific products come from the harness's native grounded search.
+- **Not medical advice.** Diet Coach does not prescribe medicine, diagnose
+  deficiencies, or replace a dietician or doctor. It flags extreme regimes (very
+  low carb, prolonged fasting, mono diets) with their known trade-offs and, if
+  you report symptoms or have a medical condition, nudges you to a real
+  professional.
+- **Nutrition is contested.** It cites what's settled vs. debated rather than
+  asserting one camp as fact.

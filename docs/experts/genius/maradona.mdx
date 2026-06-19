@@ -1,0 +1,84 @@
+---
+title: "Maradona"
+description: "Reads any match like the No.10 — live football dossiers: form, xG, the key duel, his verdict"
+---
+
+<Info>**Genius** · analyst · slug `genius_maradona`</Info>
+
+You bring a fixture, a team, or a tournament weekend. Maradona turns it into a
+**live football dossier** — form, xG, the key duel, players to watch — and then
+does the one thing a data feed won't: gives you a verdict, with reasoning.
+
+Football only. For betting lines or odds, pick [Financier](/experts/super/financier);
+for your own training, pick [Sport Coach](/experts/coach/sport).
+
+## What it delivers
+
+One **single-file interactive HTML dossier** that re-queries `football-data` in
+the browser, so it isn't stale by morning — you open it before kickoff and again
+at half-time and it tells you something new. It has two faces that flip by kickoff:
+
+- **Before** — the storyline; the **key duel** (the matchup that decides it);
+  players to watch with photos and stats; recent form (last-5 W-D-L strip); xG
+  for/against; head-to-head; and **Diego's verdict** — his call, with reasoning,
+  not a betting line.
+- **After** — it becomes the recap in his voice: what happened, who decided it,
+  what the xG says about whether the result was deserved.
+
+During a World Cup, Euro or Copa the dossier runs **daily**: the day's slate as
+fixture cards, the bracket as it fills in. Optionally a printable matchday
+programme (`.docx`).
+
+## When to pick it
+
+Pick **Maradona** for match previews, tactical breakdowns, a weekend slate, or a
+tournament tracker — anything across the 13 leagues `football-data` reaches plus
+the World Cup. Pick [Financier](/experts/super/financier) instead for odds,
+value bets, or Kelly staking — the dossier carries a verdict, never a stake.
+Other sports (basketball, F1, tennis) are out of scope.
+
+## How to drive it
+
+Start from a match, a team, or the tournament:
+
+```
+Build the dossier for tonight's match
+Break down their tactics and the key duel
+Who's lighting up the World Cup?
+```
+
+You don't need to attach anything — it pulls live data itself. Tell it which club
+you follow once and it leads the weekend slate with your team.
+
+## What comes back
+
+The dossier renders **live in the artifact pane**. It's saved to
+`~/Documents/split-apps/<slug>/index.html` (e.g. `wc26-final`, `arg-fra-qf`,
+`weekend-slate`) and the path is reported in plain text. Ask for `web-deploy` and
+it ships to a public URL so you can open the page on your phone at the bar.
+
+## Leans on
+
+A live football stack rendered with matchday taste — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `football-data` | the live layer — scores, fixtures, standings, lineups, play-by-play, xG/transfers across 13 leagues + the World Cup. Source of truth for every claim |
+| `metadata` | team crests, player photos, stadium info across 100+ leagues — makes a dossier look like a matchday programme |
+| `sports-news` | headlines, transfer rumours, injury news (RSS/Atom + search) — the pre-match noise, filtered |
+| `sports-reporter` | turns live data into the storyline and the recap, in his voice |
+| `frontend-slides` | the render layer for the `scoreboard` look; also a one-time briefing deck |
+| `docx` | a printable matchday programme on request |
+| `web-deploy` | ships the dossier to a public URL for your phone |
+
+## Prerequisites & limits
+
+- **`football-data` is free, no keys** — but it needs the `sports-skills` CLI on
+  PATH (`pip install sports-skills`, Python ≥ 3.10). Without it the live layer
+  won't run.
+- **`web-deploy` is opt-in.** Football is public, so deploying is fine; it's only
+  done when you ask.
+- **Honesty by design:** it distinguishes a rumoured transfer from a signed one,
+  and luck from quality — a team winning while bleeding xG is named as riding
+  variance, not crowned. The verdict is an opinion, never a guarantee; the game
+  humbles every prediction.

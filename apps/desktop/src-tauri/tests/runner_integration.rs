@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
-use acp_desktop_lib::runner::{self, EventSink, RunnerInput, WireEvent, PENDING_PERMS_RUST};
+use split_desktop_lib::runner::{self, EventSink, RunnerInput, WireEvent, PENDING_PERMS_RUST};
 use agent_client_protocol::schema::{McpServer, McpServerStdio};
 use serde_json::Value;
 use tokio::sync::mpsc;

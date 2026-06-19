@@ -7,12 +7,6 @@
       "args": ["-y", "@modelcontextprotocol/server-everything"],
       "env": {}
     },
-    "ddg-search": {
-      "_comment": "Keyless web search (DuckDuckGo). Exposes the `search` and `fetch_content` tools to every agent — the universal floor so even harnesses with no native web search can honor 'Search first'. Paired with the web-search SKILL (config/skills/web-search). Needs uvx on PATH.",
-      "command": "uvx",
-      "args": ["duckduckgo-mcp-server"],
-      "env": {}
-    },
     "cua-driver": {
       "_comment": "Background macOS computer-use via accessibility tree (no cursor takeover, no focus steal). Exposes launch_app, list_apps, get_window_state, click, type_text, press_key, hotkey, scroll, screenshot, page. Used by the `operator` expert (Alfred). Needs the `cua-driver` binary on PATH (typically installed to ~/.local/bin; the desktop's child_path() puts that on PATH automatically) + macOS Accessibility permission granted to CuaDriver.app on first use. Spike was Claude-only because Claude inferred the CLI from context; this entry makes it work across every harness (Mistral Vibe, Codex, …).",
       "command": "cua-driver",

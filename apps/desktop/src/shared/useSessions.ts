@@ -154,6 +154,7 @@ export function useSessions(experts: ExpertMap) {
     update(s.id, (x) => ({
       ...x,
       status: "running",
+      turnStartedAt: Date.now(),
       queued: null,
       thread: [...x.thread, { role: "user", text: q.display, files: q.files.length ? q.files : undefined }],
     }));
@@ -182,6 +183,7 @@ export function useSessions(experts: ExpertMap) {
           return {
             ...s,
             status: "running",
+            turnStartedAt: Date.now(),
             thread: [...s.thread, { role: "user", text: t.display, files: t.files.length ? t.files : undefined }],
           };
         })

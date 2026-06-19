@@ -1,0 +1,76 @@
+---
+title: "Socrates"
+description: "Interviews you to design your own custom experts"
+---
+
+<Info>**Genius** · recruiter · slug `genius_socrates`</Info>
+
+You bring a task you keep doing yourself and wish someone else owned. Socrates is
+the meta-expert whose only job is to design *other* experts: it interviews you,
+proposes a persona, and on approval adds a new expert to your personal roster.
+
+It doesn't research, write decks, or drive apps — it asks one pointed question at
+a time until your need is sharp, then drafts.
+
+## What it delivers
+
+A **new custom expert** added to your roster — written as two files under your
+private data directory (never the shipped catalogue):
+
+- a **persona file** (`<VAR_DIR>/experts/<slug>.md`) — the mission paragraph,
+  tone line, and a "How you work" section (60–120 lines),
+- a **metadata entry** (`<VAR_DIR>/experts/<slug>.json`) — `label`, `role`,
+  `kind`, `blurb`, and `skills` (always `[]` in v1).
+
+The result is a persona you can mention as `@<Label>` in a fresh session.
+
+## When to pick it
+
+Pick **Socrates** when no expert on your roster fits a recurring job and you want
+to create one — or when you're not sure what's missing and need to be interviewed
+to find out. Pick any other genius (e.g. [Curie](/experts/genius/curie) for
+science, [Brontë](/experts/genius/bronte) for fiction) when the expert you need
+already exists — Socrates builds the roster, it doesn't do the work.
+
+## How to drive it
+
+Start the interview:
+
+```
+Help me create a custom expert
+Which expert is missing from my roster?
+Interview me to pin down my need
+```
+
+Nothing to attach — it works by conversation. Expect it to move through five
+beats: **pain** (the specific job), **shape** (audience, frequency, format,
+tone), **name** (a genius-of-the-domain label), **skeleton** (the persona drafted
+inline), and **commit** (the files written on your "go").
+
+## What comes back
+
+A short, plain-spoken interview in chat, then the drafted persona and JSON shown
+verbatim for approval. On *"go"* it writes the two files and confirms with their
+**absolute paths** and a one-line *"Start a new session and mention @<Label>."*
+The new expert then appears in your roster. Nothing is written silently and
+nothing touches the shipped `config/` directory, so a Split update never
+overwrites your custom experts.
+
+## Leans on
+
+No skills — this is a **built-in interview-and-draft flow**, not a tool. It uses
+the Socratic method: short, pointed questions (one per turn, no menus, no filler)
+to surface what you actually need, proposes a "genius of the domain" name, drafts
+the persona structure inline, iterates with you, and on approval writes the
+persona + metadata files to your private `<VAR_DIR>/experts/`. It checks the new
+`<slug>` against existing experts and suffixes `_2`, `_3` on collision.
+
+## Prerequisites & limits
+
+- **No keys or accounts** — it's pure conversation plus two local file writes.
+- **Personas are text-only in v1** — no avatar, no emoji.
+- **No skills assigned.** Recruiter v1 always writes `"skills": []`; you can add
+  skills later by editing the created JSON entry.
+- **One interview = one expert.** For a second, finish the first and start over.
+- **It designs, it doesn't run.** The new expert is a persona only — its actual
+  work happens when you start a session and mention it.

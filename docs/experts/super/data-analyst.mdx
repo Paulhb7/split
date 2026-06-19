@@ -1,0 +1,82 @@
+---
+title: "Data Analyst"
+description: "Explores CSV/Excel data, ships interactive dashboards"
+---
+
+<Info>**Super** · analyst · slug `data_analyst`</Info>
+
+You bring a dataset — CSV, Excel, JSON, Parquet. Data Analyst figures out what's
+in it and turns it into an **interactive HTML dashboard** you can actually use,
+plus a short written read of what it found.
+
+It doesn't just describe what it would do — it profiles the file, builds the
+dashboard, and writes the findings in one turn.
+
+## What it delivers
+
+A self-contained **interactive HTML dashboard** as the primary artifact — chrome
+bar, KPI strip, filter bar, a curated grid of 4–6 charts, a data-preview table,
+and the coral "Made with Split" footer. It opens with an **Assumptions** panel
+(framing, time range, currency, how nulls were handled) so you always have an
+override hook.
+
+Alongside it:
+
+- `findings.md` — the short written read: headline finding, 2–3 supporting
+  observations with numbers, the data-quality caveats, one follow-up.
+- `data-quality.md` — nulls, outliers, sentinel values, duplicates flagged.
+- optional `findings.docx` (Word version) or `findings-deck.html` (slides).
+
+## When to pick it
+
+Pick **Data Analyst** to explore a dataset, surface trends and anomalies, and
+ship a dashboard you can hand around. Pick [Financier](/experts/super/financier)
+instead when the job is markets, FP&A, or budget modelling rather than
+open-ended exploration of your own data.
+
+## How to drive it
+
+Drop a file and say what you want to see:
+
+```
+Explore this CSV and surface the trends
+Build an interactive dashboard
+Find the anomalies in this data
+```
+
+Attach the dataset itself — CSV, Excel, JSON, or Parquet. It reads the whole
+file from disk (not the truncated inline preview), so the drop is the only input
+it needs.
+
+## What comes back
+
+The dashboard renders **live in the artifact pane**. The full bundle lands in a
+fresh, user-visible folder — `~/Documents/split-analyses/<dataset-slug>-<date>/`
+— with the dashboard at the root and `findings.md` / `data-quality.md` beside
+it. Your source file is never copied or overwritten; it stays where you dropped
+it. Iterations edit the existing dashboard in place.
+
+## Leans on
+
+A design-backed analytics stack — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `dashboard` | the flagship deliverable — the self-contained interactive HTML dashboard skeleton |
+| `ui-ux-pro-max` | design-intelligence DB queried for palette / chart-type / UX best practice (default brief: "data analytics professional") |
+| `frontend-slides` | promote findings to a deck (board pre-read, results presentation) |
+| `docx` | written analytical reports / one-pagers |
+| `web-deploy` | publish the dashboard to a permanent `surge.sh` URL for sharing |
+
+## Prerequisites & limits
+
+- **Runs locally:** profiling and dashboard build use the shell, filesystem,
+  and pip — no account needed.
+- **Publishing is opt-in:** `web-deploy` (surge.sh) prompts for an email +
+  password on first run (not validated). Before publishing, it flags personal
+  or commercial-confidential data and asks first — when in doubt it aggregates,
+  then publishes the aggregated view rather than raw rows.
+- **No model without metrics:** if you ask for prediction or clustering, it sets
+  up a pandas + scikit-learn workflow and ships the metrics that matter
+  (accuracy + confusion matrix, or RMSE + R² + residuals) with honest limits on
+  sample size and extrapolation — it won't claim more than the data supports.

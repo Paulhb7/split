@@ -1,0 +1,92 @@
+---
+title: "Scientist"
+description: "Maps the state of the art, builds idea bridges, drafts lit reviews"
+---
+
+<Info>**Super** · researcher · slug `scientist`</Info>
+
+You bring a field, a topic, or two domains you suspect connect. Scientist
+turns it into a rigorous, citation-verified field map — or a load-bearing
+**idea bridge** between fields that generates testable predictions, not just
+a metaphor.
+
+## What it delivers
+
+Two deliverable shapes, both citation-verified:
+
+- a **field-map deck** (8-10 slides, default template `cartesian` — academic
+  clean): What I assumed · why it matters · timeline of inflection points ·
+  an anchor-papers table (6-10 references) · consensus · live debates · open
+  questions · recommended reading,
+- an **idea-bridge deck** (7-8 slides): the puzzle · the donor mechanism ·
+  **the bridge** (a crisp 1:1 mapping — the visual heart) · anchoring papers
+  from both sides · 3-5 testable predictions · where it breaks
+  (disanalogies) · next moves,
+- optionally a **`.docx` memo** when prose beats slides, and a formatted
+  **literature review** (markdown/PDF, citations styled APA / Nature /
+  Vancouver) when you want a real review rather than a list of hits.
+
+**Slide 1 is always "What I assumed"** — for a bridge: Source · Donor ·
+Boundary · Sources; for a field map: Field · Period · Scope · Methodologies.
+
+## When to pick it
+
+Pick **Scientist** to map a literature, summarize the key papers, or hunt
+analogies between fields. Pick [Curie](/experts/genius/curie) instead when
+you want the full computational pipeline — disease → causal protein → 3D
+structure → docking → repurposing hypothesis — rather than a literature map.
+Note Scientist does **not** do single-paper peer review, GRADE assessments,
+risk-of-bias grids, or formal meta-analyses unless you specifically ask.
+
+## How to drive it
+
+Name the field, or the two fields to bridge:
+
+```
+Map the state of the art on this topic
+Summarize the 5 key papers in the field
+Find idea bridges between two fields
+```
+
+Attach a paper or a reading list if you have one; for a bridge, name both
+domains explicitly — Scientist searches each side separately so the search
+doesn't surface papers that already made the connection.
+
+## What comes back
+
+The deck renders **live in the artifact pane**, saved to
+`~/Desktop/<topic>-<YYYYMMDD>.<ext>` — Scientist reports the absolute path
+and offers to `open` it. After v1 is open it leads with publishing: `share.sh
+<folder> <slug>` ships the deck to surge.sh and returns a permanent
+`<slug>.surge.sh` URL you can post or send. Iterating edits v1 in place; a
+new file only on "redo".
+
+## Leans on
+
+A literature-backed research stack — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `paper-search` | arXiv + OpenAlex + Crossref + Semantic Scholar; every DOI verified before it's cited |
+| `literature-review` | the synthesis layer — systematic field map → styled markdown/PDF (APA / Nature / Vancouver) |
+| `scientific-brainstorming` | the idea-bridge generator: interdisciplinary connections, challenged assumptions, gaps |
+| `hypothesis-generation` | turn a bridge into testable hypotheses — predictions, candidate mechanism, falsifying experiment |
+| `networkx` | draw the field as a graph — citation/concept networks, centrality, communities |
+| `frontend-slides` | the HTML decks (template `cartesian`, academic) |
+| `docx` | memos when prose beats slides |
+| `web-deploy` | `share.sh` → a permanent `<slug>.surge.sh` public URL |
+
+## Prerequisites & limits
+
+- **Web search is the harness's native grounded search** — used for context,
+  news, and fields outside the paper corpus; no Split-managed key.
+- **Citations are verified, not trusted.** A fabricated citation is treated
+  as a firing offence — DOIs are checked with `paper-search lookup` and the
+  PDF is read before a result is quoted.
+- **Preprint ≠ peer-reviewed.** Scientist always flags arXiv / bioRxiv /
+  medRxiv so you can calibrate, and separates fact from inference.
+- **Most cross-domain bridges are wrong** — that's the point of working one
+  explicitly: you find out fast via predictions. If there's no clean 1:1
+  mapping, the bridge isn't real and Scientist says so.
+- **Publishing** (`web-deploy`) ships to surge.sh; the deck must be public to
+  get a shareable link.

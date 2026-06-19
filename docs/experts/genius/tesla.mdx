@@ -1,0 +1,82 @@
+---
+title: "Tesla"
+description: "Designs 3D-printable parts & mechanisms — parametric CAD, animated, with 2D blueprints, in a shareable report"
+---
+
+<Info>**Genius** · builder · slug `genius_tesla`</Info>
+
+You bring a part to make, an enclosure to fit, or a mechanism you want to see
+move. Tesla turns it into a real, manufacturable 3D model you couldn't produce
+alone — a parametric CAD part, animated if it moves, explained in a report you
+can act on.
+
+## What it delivers
+
+The signature bundle — model plus the page that makes it legible:
+
+- a **parametric 3D model** (CadQuery code, every dimension a named constant)
+  exported to **STL** (print), **STEP** (CAD interop) and **GLB** (web), with a
+  live WebGL viewer you can orbit;
+- for a mechanism (engine, linkage, gearbox, cam) — an **animation** of it
+  running (`.mp4`) plus an interactive viewer where it runs live as you orbit;
+- a deployed **`report.html`** in your language that explains the design and
+  embeds the proof: the live 3D viewer, the mechanism video, a specs/cotes
+  table, a **2D blueprint** (orthographic views + dimensions, SVG/PDF), and
+  download links for STEP / STL / GLB;
+- optionally a clean `.docx` spec / assembly guide / design rationale.
+
+## When to pick it
+
+Pick **Tesla** for the physical object — enclosures, brackets, mounts,
+adapters, jigs, knobs, gears, mechanisms, FDM-printable parts. Pick
+[Engineer](/experts/super/engineer) instead when the deliverable is software —
+a web app, landing page, or shipped code — not a part you print.
+
+## How to drive it
+
+Describe the part or mechanism:
+
+```
+Model this part in 3D
+Design an enclosure for this board
+Animate this mechanism
+```
+
+Attach a photo or a product page of a part to reverse-engineer — Tesla infers
+its probable dimensions and rebuilds it as an editable parametric model.
+
+## What comes back
+
+Tesla announces a 3-5 bullet design plan, then ships in the same turn. The
+`report.html` + WebGL viewer render in the artifact pane (served over HTTP —
+browsers block `file://` GLB fetches), and the page is deployed to a public URL
+it leads with. Everything saves to `~/Desktop/tesla-<topic>-<YYYYMMDD>/`:
+`model.py`, the `build/` exports (STL/STEP/GLB/SVG), the viewer + any MP4, and
+the report. Iterations keep a `v1/` so you can compare.
+
+## Leans on
+
+A mechanical-design stack — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `cad-design` | parametric CadQuery parts → STL + STEP + GLB + SVG (the SVG doubling as a dimensioned 2D blueprint / shop drawing), a WebGL PBR viewer, and animated-assembly output for mechanisms |
+| `ui-ux-pro-max` | the taste floor for the `report.html` and any page |
+| `web-deploy` | ships the viewer + report to a public URL you can open on any device |
+| `docx` | printable specs / assembly guides / design rationale |
+
+## Prerequisites & limits
+
+- **Python for CAD.** `cad-design` builds the model in a Python 3.10–3.12 venv;
+  viewers must be served over HTTP (`web-deploy` or a local server), since
+  browsers block `file://` GLB fetches.
+- **Form and kinematics — not full physics.** Tesla designs geometry and
+  motion. A mechanism demo shows *motion*, not load, stress, or combustion — an
+  animated "engine" is a form-and-kinematics maquette, not a running powertrain,
+  and Tesla says so.
+- **No electronics, FEA, or simulation.** Tesla does **not** do schematics, PCB,
+  or firmware; no structural FEA; no thermal/EM simulation. If a brief needs
+  those, it names the gap rather than implying the part is production hardware.
+- **Print-aware, but verify before fabbing.** It bakes in FDM assumptions
+  (nozzle, clearances, orientation) and states them; confirm real tolerances and
+  material before sending a file to a printer.

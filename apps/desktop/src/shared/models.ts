@@ -4,10 +4,22 @@ import type { Artifact, AuthMethod, PermissionOption, PlanEntry, SlashCommand } 
 // "auth" = blocked on sign-in; "error" = last turn failed; "ended" = process gone.
 export type SessionStatus = "running" | "idle" | "auth" | "error" | "ended";
 
+// One activity step the agent reported during a turn (a tool call / phase).
+// Retained so a finished turn can show a collapsed "what it did" fold.
+export interface Step {
+  title: string;
+  status: string;
+}
+
 export interface ThreadTurn {
   role: "user" | "agent" | "thought";
   text: string;
   files?: string[]; // attachment names, for the 📎 chip
+  // Agent turns only: the steps the agent ran this turn + how long it took.
+  // Drives the collapsed activity fold above the answer. Absent on old
+  // archives (replayed turns simply show no fold).
+  steps?: Step[];
+  tookMs?: number;
 }
 
 // A pending auth_required surfaced by the agent (drives the AuthModal).
@@ -45,7 +57,18 @@ export interface Session {
   answer: string; // currently-streaming agent answer (uncommitted)
   thoughts: string; // currently-streaming COT thoughts (uncommitted) — committed before `answer` at idle
 
+  // Steps reported during the CURRENT turn (live). Accumulated by the reducer
+  // on each `step` event, attached to the committed agent turn at idle, then
+  // cleared for the next turn.
+  steps: Step[];
   summary: string; // live one-line status (thinking / writing / → tool / done)
+  // Epoch ms of the current turn's start — set by the reducer on the
+  // transition into "running", cleared at idle/error. The TurnSpinner anchors
+  // its elapsed clock here so navigating away and back (component remount)
+  // doesn't reset the counter mid-turn. null = no turn in flight (or a
+  // session hydrated mid-turn from another window — spinner falls back to
+  // its mount time).
+  turnStartedAt: number | null;
   plan: PlanEntry[];
   // Slash commands advertised by the agent via `available_commands_update`.
   // Drives the autocomplete palette in the composer; empty = no agent commands.
@@ -103,11 +126,13 @@ export function newSession(
     expertSlug,
     expertLabel,
     status: "running",
+    turnStartedAt: Date.now(),
     thread: firstUserText || files.length
       ? [{ role: "user", text: firstUserText, files: files.length ? files : undefined }]
       : [],
     answer: "",
     thoughts: "",
+    steps: [],
     summary: "briefing…",
     plan: [],
     commands: [],

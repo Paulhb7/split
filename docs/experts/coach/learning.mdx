@@ -1,0 +1,81 @@
+---
+title: "Learning Coach"
+description: "Maps a syllabus for any topic, ships flashcards & weekly checks"
+---
+
+<Info>**Coach** · coach · slug `coach_learning`</Info>
+
+You bring "I want to learn X". Learning Coach turns it into a real, paced
+program with checkpoints — a week-by-week syllabus you tick off daily — and
+keeps you moving with reviews and recalibration.
+
+## What it delivers
+
+For a multi-week syllabus, a single-file **`index.html` tracker** built against
+the `coach-tracker` skill (rendered with the `coursepack` signature — a
+scholarly serif-body, §-section layout), three vertical sections:
+
+- **Goals** — the learning goal, deadline, current level, time budget, learning
+  style, and friction, restated as a headline.
+- **Program** — the week-by-week syllabus with a checkbox per block, resources
+  linked per week, and exit criteria spelled out.
+- **Dashboard** — a spaced-repetition flashcard reviewer (deck + due dates baked
+  in), today's review queue, a weekly checkpoint quiz, a study-streak counter,
+  and a concept-graph you tick off as topics click.
+
+For one-offs: a concept explained, a resource recommended, or a stuck point
+debugged — plus Anki-style flashcard decks and short Feynman-style explainer
+decks when a concept needs visuals.
+
+## When to pick it
+
+Pick **Learning Coach** to learn a subject, prep an exam, or build a study
+habit. Pick [Cooking Coach](/experts/coach/cooking) instead when the skill you
+want is in the kitchen, or [Sport Coach](/experts/coach/sport) when it's
+physical training rather than study.
+
+## How to drive it
+
+Name what you want to learn:
+
+```
+Draft me a syllabus for this subject
+Create flashcards on this topic
+Plan my reviews for the week
+```
+
+Attach a PDF, a course outline, or a reading list — flashcards and the syllabus
+are built from it instead of a generic default. For a multi-week syllabus,
+expect one consolidated diagnostic question first (goal, deadline, current
+level, time budget, learning style, friction); answer it in one message and the
+plan plus tracker ship the next turn.
+
+## What comes back
+
+The tracker renders **live in the artifact pane** (Split previews the HTML
+in-app), saved to `~/Documents/split-apps/<short-name>/index.html` — the path is
+reported in plain text. It stays **local by default**; AirDrop the `.html` to
+your phone, or hand off to [Engineer](/experts/super/engineer) for a real
+deploy. The tracker *is* the memory — state lives in its `localStorage`, no
+separate notes file to sync. One-off questions come back as a plain chat answer.
+
+## Leans on
+
+A study kit with an academic source — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `coach-tracker` | the shared 3-section HTML tracker (Goals / Program / Dashboard) — the primary deliverable, `coursepack` signature |
+| `paper-search` | academic sources when a topic needs the literature, not just web resources |
+| `docx` | printable resource list to bring to a library (secondary) |
+| `frontend-slides` | Feynman-style explainer deck when a concept needs visuals |
+
+## Prerequisites & limits
+
+- **Runs anywhere:** no Split-managed key. Current resources (courses, books,
+  repos) come from the harness's native grounded search; `paper-search` adds
+  academic sources.
+- **Learning is slower than you think.** A 3-month claim usually needs 6 months
+  for real mastery — Learning Coach says so, distinguishes "exposed to" from
+  "can use", and resets an unrealistic goal (five languages in a year) honestly
+  rather than selling the timeline.

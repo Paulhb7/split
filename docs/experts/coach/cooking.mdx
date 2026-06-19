@@ -1,0 +1,86 @@
+---
+title: "Cooking Coach"
+description: "Teaches techniques, scales recipes, suggests substitutions live"
+---
+
+<Info>**Coach** · coach · slug `coach_cooking`</Info>
+
+You bring a craving, a recipe, or "teach me to cook X". Cooking Coach teaches
+technique, scales recipes to whoever's at the table, and swaps ingredients when
+something's missing — answering one-offs in chat, building a cookbook page for a
+journey.
+
+## What it delivers
+
+For a cooking journey or multi-week menu, a single-file **`index.html`
+page** built against the `coach-tracker` skill (rendered with the
+`service-ticket` signature — an editorial-serif, numbered-ticket layout), three
+vertical sections:
+
+- **Goals** — the cuisine / technique focus, time horizon, current skill level,
+  kitchen kit, household + constraints, and friction, restated as a headline.
+- **Program** — the recipe ladder or week-by-week menu, each recipe a card with
+  timed steps collapsed below, plus technique walkthroughs for the cuts / sauces
+  / doughs in scope.
+- **Dashboard** — today's planned meal, a "recipes I've made" log with notes +
+  ratings, a techniques-mastered checklist, a weekly menu planner, a pantry
+  inventory, and a "tried-this-week" streak.
+
+For one-offs: a clean timed recipe, a scaled quantity (spices included — ratios
+aren't linear past a threshold), a substitution that preserves the result, a
+technique card with cue tables (color, sound, smell), or three meals from what's
+in the fridge.
+
+## When to pick it
+
+Pick **Cooking Coach** to learn technique, scale recipes, or follow a cuisine.
+Pick [Diet Coach](/experts/coach/diet) instead when the goal is hitting a
+nutrition target (macros, weight, labels) rather than cooking skill — they pair
+well when you want meals that are both good and on-plan.
+
+## How to drive it
+
+Name a technique, a recipe, or an ingredient:
+
+```
+Teach me a core technique
+Scale this recipe for 6 people
+Suggest substitutions for an ingredient
+```
+
+Attach a recipe or a photo of what's in the fridge — scaling, substitutions, and
+the menu are built from it. For a cooking journey, expect one consolidated
+diagnostic question first (focus, horizon, skill level, kitchen kit, household +
+constraints, friction); answer it in one message and the plan plus page ship the
+next turn.
+
+## What comes back
+
+The page renders **live in the artifact pane** (Split previews the HTML in-app),
+saved to `~/Documents/split-apps/<short-name>/index.html` — the path is reported
+in plain text. **Local by default**; AirDrop the `.html` to your phone, or — since
+recipes aren't private the way diet/training data is — send it to
+[Engineer](/experts/super/engineer) for a public, shareable cookbook URL. The
+page *is* the memory — state lives in its `localStorage`, no separate notes file
+to sync. One-off questions come back as a plain chat answer.
+
+## Leans on
+
+A kitchen-side kit — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `coach-tracker` | the shared 3-section HTML page (Goals / Program / Dashboard) — the primary deliverable, `service-ticket` signature |
+| `docx` | printable recipe for the kitchen counter (secondary) |
+| `frontend-slides` | visual technique walkthrough when a step needs a deck (knife cuts, dough shaping, plating) |
+
+## Prerequisites & limits
+
+- **Runs anywhere:** no Split-managed key. Current recipes and brand-specific
+  products come from the harness's native grounded search.
+- **Food safety is non-negotiable.** For anything risky — raw fish, undercooked
+  egg, canning, fermentation — Cooking Coach spells out the safety boundaries
+  rather than glossing them, and it's a kitchen guide, not a food-safety
+  authority.
+- **No faking equipment.** If a recipe needs kit you don't have, it recommends
+  the swap or the recipe shift instead of pretending the result will hold.

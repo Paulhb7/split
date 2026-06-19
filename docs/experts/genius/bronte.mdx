@@ -1,0 +1,88 @@
+---
+title: "Brontë"
+description: "Writes novels — characters, arcs, world, voice, a real book by chapter"
+---
+
+<Info>**Genius** · creator · slug `genius_bronte`</Info>
+
+You bring a premise, a character, an obsession, or a fragment of memory. Brontë
+turns it into a real novel — not a synopsis or a treatment, but a book written
+chapter by chapter, with voice, stakes, and a world that holds together.
+
+It works in a fixed order: the world, then the voice, then the chapters.
+
+## What it delivers
+
+A novel built in three stages, each landing as concrete files in the project folder:
+
+- **The world bible** — character sheets (background, voice, desire,
+  contradiction), location dossiers (weather, smell, light), the rules of the
+  world, the historical layer, plus a **chapter-by-chapter outline** in `outline.md`.
+- **The voice** — 2 or 3 distinct opening drafts (600–1000 words each) side by
+  side; you pick one, and it's locked in `voice.md` and held across every chapter.
+- **The chapters** — real finished prose, one per turn, never overwritten
+  (`chapters/01-v1.md`, `01-v2.md`), each paired with a 3-line author's note.
+- Chapter PDFs and a master `book.docx` regenerated as chapters land; optional
+  character portraits / a cover; an optional private read-along site.
+
+It also does **short-story and children's-book one-shots**, compressing world +
+voice + draft into one turn.
+
+## When to pick it
+
+Pick **Brontë** for long-form fiction — a novel, a short story, an illustrated
+children's book — where character, arc, voice and world continuity matter. For
+non-fiction visual storytelling (brand worlds, 3D scenes, mockups) pick
+[DaVinci](/experts/genius/davinci); for music and scores pick
+[Wolfgang](/experts/genius/wolfgang).
+
+## How to drive it
+
+Start at the stage you're on — world, first chapter, or a character:
+
+```
+Build the world of this novel
+Write the first chapter
+Develop this character and their arc
+```
+
+Attach any premise, notes, or reference material you have; for a period or
+technical setting it will research first and save the bibliography in the book's
+`research/` folder.
+
+## What comes back
+
+Prose and bible files in **`~/Desktop/bronte-<title>-<YYYYMMDD>/`** —
+`bible/` (characters, places, timeline, rules), `voice.md`, `outline.md`,
+`chapters/`, `research/`, `spine.md`, and `book.docx`. The current chapter and
+the deck/docx preview render in the **artifact pane**; iterations are kept (v1 is
+never overwritten).
+
+## Leans on
+
+A continuity-aware fiction stack — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `prose-gen` | the engine room — holds the world bible (`canon.json` facts ledger + character/location sheets + setups↔payoffs table); each chapter runs four ordered passes (continuity load → write → self-check → write-back) so nothing drifts |
+| `higgsfield-generate` | gives a locked character a face — portraits prompted from the immutable canon block; for character refs, a cover, or an illustrated children's book |
+| `higgsfield-soul-id` | turns an invented face into a reusable identity so it doesn't drift across portrait → scene → cover; bootstraps from a generated set, trains a Soul Character once, reuses the `--soul-id` |
+| `paper-search` | historical or technical research the period/setting demands; bibliography saved in the book's folder |
+| `docx` | chapter PDFs + the master `book.docx`, print-ready typography |
+| `web-deploy` | a private read-along site for phone/tablet between sessions |
+
+## Prerequisites & limits
+
+- **Higgsfield account required for art.** `higgsfield-generate` and
+  `higgsfield-soul-id` call the Higgsfield service; **Soul-ID training needs a
+  paid Higgsfield plan** — it says so before training rather than failing
+  mid-turn. The novel's prose itself doesn't need it; portraits/covers are
+  optional.
+- **The order is enforced.** World before voice, voice before chapters, one
+  chapter per turn — skip a stage and the work collapses. It holds the order
+  even if you're impatient.
+- **Honesty by design:** it will tell you when a chapter doesn't work or when a
+  plot move requires breaking a setup (and offer the patch). It **won't pastiche
+  a living writer**, only match a tradition or register without naming the
+  author. To publish, it routes you to a human editor at the manuscript stage —
+  it's the engine room, not the bridge.

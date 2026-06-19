@@ -14,7 +14,7 @@
 //! pick and fall back to whatever each harness defaults to.
 
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde_json::{json, Value};
 
@@ -25,7 +25,111 @@ pub fn apply(repo_root: &Path, var_dir: &Path, harness: &str) -> HarnessAdjustme
     match harness {
         "hermes" => apply_hermes(repo_root, var_dir),
         "opencode" => apply_opencode(repo_root, var_dir),
+        // Single-vendor subscription CLIs. They're launched via `npx`, so we
+        // CANNOT prepend CLI args (those would hit `npx`, not the agent) — the
+        // model is selected through env / a managed config home instead.
+        // Config shape: `{ "model": "<id>", "reasoning": "<level>"? }`.
+        "claude" => apply_env_model(var_dir, "claude", "ANTHROPIC_MODEL"),
+        "gemini" => apply_env_model(var_dir, "gemini", "GEMINI_MODEL"),
+        "codex" => apply_codex(var_dir),
         _ => (Vec::new(), HashMap::new()),
+    }
+}
+
+/// Built-in default model per subscription harness, applied when the user
+/// hasn't picked one — so a fresh Split runs these without any config (e.g.
+/// Claude defaults to Opus rather than the CLI's own Sonnet). Keep in sync
+/// with `models[0]` in apps/desktop/src/shared/model-picker.ts.
+fn default_model(harness: &str) -> &'static str {
+    match harness {
+        "claude" => "opus",
+        "codex" => "gpt-5.5-codex",
+        "gemini" => "gemini-3.5-flash",
+        _ => "",
+    }
+}
+
+/// The model to run for a subscription harness: the user's saved choice if
+/// any, else the built-in default. Empty only for an unknown harness.
+fn configured_model(var_dir: &Path, harness: &str) -> String {
+    load_model_config(var_dir, harness)
+        .and_then(|c| c.get("model").and_then(|v| v.as_str()).map(str::to_string))
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| default_model(harness).to_string())
+}
+
+/// Subscription CLIs whose model is selected by a single env var
+/// (Claude → `ANTHROPIC_MODEL`, Gemini → `GEMINI_MODEL`). Auth lives in a
+/// separate file, so setting the model env is non-invasive.
+fn apply_env_model(var_dir: &Path, harness: &str, env_key: &str) -> HarnessAdjustments {
+    let model = configured_model(var_dir, harness);
+    if model.is_empty() {
+        return (Vec::new(), HashMap::new());
+    }
+    let mut env = HashMap::new();
+    env.insert(env_key.to_string(), model);
+    (Vec::new(), env)
+}
+
+/// Codex has no model env var; its model lives in `$CODEX_HOME/config.toml`.
+/// We write a managed home with the chosen model (+ optional reasoning effort)
+/// and link the user's real `auth.json` in so the session stays signed in
+/// (hijacking `CODEX_HOME` without it would log the agent out).
+fn apply_codex(var_dir: &Path) -> HarnessAdjustments {
+    let model = configured_model(var_dir, "codex");
+    if model.is_empty() {
+        return (Vec::new(), HashMap::new());
+    }
+    let cfg = load_model_config(var_dir, "codex");
+    let home = var_dir.join("state").join("codex-home");
+    let _ = std::fs::create_dir_all(&home);
+
+    let mut toml = format!("model = \"{model}\"\n");
+    if let Some(r) = cfg
+        .as_ref()
+        .and_then(|c| c.get("reasoning").and_then(|v| v.as_str()))
+    {
+        if !r.is_empty() {
+            toml.push_str(&format!("model_reasoning_effort = \"{r}\"\n"));
+        }
+    }
+    let _ = std::fs::write(home.join("config.toml"), toml);
+    link_codex_auth(&home);
+
+    let mut env = HashMap::new();
+    env.insert(
+        "CODEX_HOME".to_string(),
+        home.to_string_lossy().into_owned(),
+    );
+    (Vec::new(), env)
+}
+
+/// Link the real `~/.codex/auth.json` into the managed Codex home so the
+/// session stays authenticated. Refreshed each spawn; no-op if the user
+/// hasn't signed in to Codex yet.
+fn link_codex_auth(home: &Path) {
+    let Some(real) = home_dir().map(|h| h.join(".codex").join("auth.json")) else {
+        return;
+    };
+    if !real.exists() {
+        return;
+    }
+    let dest = home.join("auth.json");
+    let _ = std::fs::remove_file(&dest);
+    #[cfg(unix)]
+    let _ = std::os::unix::fs::symlink(&real, &dest);
+    #[cfg(windows)]
+    let _ = std::fs::copy(&real, &dest);
+}
+
+fn home_dir() -> Option<PathBuf> {
+    #[cfg(windows)]
+    {
+        std::env::var_os("USERPROFILE").map(PathBuf::from)
+    }
+    #[cfg(not(windows))]
+    {
+        std::env::var_os("HOME").map(PathBuf::from)
     }
 }
 
@@ -228,5 +332,89 @@ mod tests {
         let cfg: serde_json::Value =
             serde_json::from_str(&fs::read_to_string(cfg_path).unwrap()).unwrap();
         assert_eq!(cfg["model"], "openai/gpt-4o");
+    }
+
+    #[test]
+    fn claude_model_emits_anthropic_env() {
+        let var = tmpdir();
+        fs::write(
+            var.join("state").join("claude.config.json"),
+            r#"{ "model": "claude-opus-4-8" }"#,
+        )
+        .unwrap();
+        let (args, env) = apply(Path::new("/repo"), &var, "claude");
+        assert!(args.is_empty(), "claude is npx-launched; no CLI args");
+        assert_eq!(
+            env.get("ANTHROPIC_MODEL").map(String::as_str),
+            Some("claude-opus-4-8")
+        );
+    }
+
+    #[test]
+    fn gemini_model_emits_gemini_env() {
+        let var = tmpdir();
+        fs::write(
+            var.join("state").join("gemini.config.json"),
+            r#"{ "model": "gemini-2.5-pro" }"#,
+        )
+        .unwrap();
+        let (args, env) = apply(Path::new("/repo"), &var, "gemini");
+        assert!(args.is_empty());
+        assert_eq!(
+            env.get("GEMINI_MODEL").map(String::as_str),
+            Some("gemini-2.5-pro")
+        );
+    }
+
+    #[test]
+    fn no_config_applies_default_model() {
+        let var = tmpdir();
+        let (_, claude) = apply(Path::new("/repo"), &var, "claude");
+        assert_eq!(
+            claude.get("ANTHROPIC_MODEL").map(String::as_str),
+            Some("opus")
+        );
+        let (_, gemini) = apply(Path::new("/repo"), &var, "gemini");
+        assert_eq!(
+            gemini.get("GEMINI_MODEL").map(String::as_str),
+            Some("gemini-3.5-flash")
+        );
+    }
+
+    #[test]
+    fn empty_model_falls_back_to_default() {
+        let var = tmpdir();
+        fs::write(
+            var.join("state").join("claude.config.json"),
+            r#"{ "model": "" }"#,
+        )
+        .unwrap();
+        let (_, env) = apply(Path::new("/repo"), &var, "claude");
+        assert_eq!(env.get("ANTHROPIC_MODEL").map(String::as_str), Some("opus"));
+    }
+
+    #[test]
+    fn codex_no_config_uses_default_model() {
+        let var = tmpdir();
+        let (_, env) = apply(Path::new("/repo"), &var, "codex");
+        let home = env.get("CODEX_HOME").expect("CODEX_HOME should be set");
+        let toml = fs::read_to_string(PathBuf::from(home).join("config.toml")).unwrap();
+        assert!(toml.contains("model = \"gpt-5.5-codex\""));
+    }
+
+    #[test]
+    fn codex_writes_managed_home_with_model_and_reasoning() {
+        let var = tmpdir();
+        fs::write(
+            var.join("state").join("codex.config.json"),
+            r#"{ "model": "gpt-5-codex", "reasoning": "high" }"#,
+        )
+        .unwrap();
+        let (args, env) = apply(Path::new("/repo"), &var, "codex");
+        assert!(args.is_empty(), "codex is npx-launched; no CLI args");
+        let home = env.get("CODEX_HOME").expect("CODEX_HOME should be set");
+        let toml = fs::read_to_string(PathBuf::from(home).join("config.toml")).unwrap();
+        assert!(toml.contains("model = \"gpt-5-codex\""));
+        assert!(toml.contains("model_reasoning_effort = \"high\""));
     }
 }

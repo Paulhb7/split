@@ -1,0 +1,96 @@
+---
+title: "Lawyer"
+description: "Legal guidance, risk reads & contract drafts"
+---
+
+<Info>**Super** · advisor · slug `lawyer`</Info>
+
+You bring a contract to review, a document to draft, or a legal question.
+Lawyer answers in the bar — clear written guidance, risk reads, draft
+clauses — and, when you need a document, ships a clean `.docx` from a
+clean-room template library, filled with your facts and ready for sign-review.
+
+## What it delivers
+
+Depending on the request type:
+
+- a **chat answer** to a legal question or a single drafted clause — lead with
+  the answer, then the reasoning, cited to article + code + link,
+- a **contract review** — a structured 🔴 blocker / 🟡 negotiate / 🟢
+  acceptable risk map with the wording to counter, optionally a `.docx`
+  redline memo (reads a house playbook from
+  `$SPLIT_VAULT/_meta/legal-playbook.md` if present),
+- a **drafted document** — a real **`.docx`** from the templates library
+  (NDAs, service agreements, ToS, GDPR privacy policy, IP assignment, LOI,
+  founders' agreement), FR / US variants, placeholders filled, clauses
+  renumbered cleanly, the non-legal-advice disclaimer baked in,
+- an **advisory memo** on request — `.docx` on the Split memo structure
+  (Kicker → Title → TL;DR → Findings → Why it matters → Recommendations →
+  Risks → Sources).
+
+Documents follow fixed conventions: 2.5 cm margins, Calibri 11 body,
+13/bold clause titles, `1.` `1.1` `1.1.1` numbering, a per-party signature block.
+
+## When to pick it
+
+Pick **Lawyer** to review a contract and surface the risks, draft an NDA or
+other common agreement, or get plain-language guidance on an obligation.
+Pick [Consultant](/experts/super/consultant) instead for a regulatory market
+study or a business deck — Lawyer's library is ~8 common contracts and
+written advisory work, not litigation or bespoke instruments.
+
+## How to drive it
+
+Say what you need, and paste the contract if it's a review:
+
+```
+Review this contract and list the risks
+Draft an NDA for this context
+Explain my obligations on this point
+```
+
+For a review, paste or attach the clauses. For a draft, have the parties,
+purpose, jurisdiction, and numerical terms ready — Lawyer asks only the
+questions whose answer would change the document, then stops at a gate
+before drafting.
+
+## What comes back
+
+A drafted or redlined document ships as a **`.docx`** saved to
+`~/Desktop/<template-slug>-<short-purpose>-<YYYYMMDD>.docx` (e.g.
+`~/Desktop/nda-mutual-acme-talks-26may.docx`). Lawyer reports the absolute
+path, the template + jurisdiction used, which optional clauses it kept vs
+dropped, and any field it had to default — then offers to `open`. For
+advisory work and risk reads the deliverable **is the chat answer**; no file
+unless you ask for a memo.
+
+## Leans on
+
+A small, focused legal stack — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| web search (native) | current laws, recent jurisprudence, regulators (CNIL, AMF, SEC, EUR-Lex); never answers a changing legal question from memory |
+| `docx` | every formal document ships as `.docx` — memos, advisory notes, contracts, mises en demeure |
+| `legal-templates` | the *outbound* skill — a clean-room library of ~8 common contracts (FR / US variants, disclaimer baked in) |
+| `contract-review` | the *inbound* skill — reads a received contract into a 🔴🟡🟢 risk map + counter-wording + optional redline memo |
+
+## Prerequisites & limits
+
+- **Web search is the harness's native grounded search** — no Split-managed
+  key; used for statutes, recent case law, and regulated-industry questions.
+- **Not a substitute for a licensed attorney.** Lawyer says so once when
+  stakes are real (above €/$100k, regulated industry, ongoing dispute,
+  cross-border) and suggests attorney review before signing. The disclaimer
+  is **non-negotiable on every shipped contract** — it lives in the template
+  and stays.
+- **Library, not bespoke.** It covers ~8 common contracts; off-library work
+  is named as such, shipped as a memo, or referred to a licensed attorney.
+- **Validation gates are hard for documents.** Stage 1 → 2 requires your
+  go-ahead — silence is not consent — to avoid a wrong-jurisdiction draft.
+  Say "just do it" to short-circuit.
+- **Refuses cleanly** to draft anything that helps defraud, hide assets,
+  evade tax, or harm a third party — states the concern, declines, offers an
+  honest alternative.
+- **Never fabricates a citation** — article number, code/regulation name,
+  year, and link, or it doesn't cite.

@@ -1,0 +1,98 @@
+---
+title: "Financier"
+description: "Markets, FP&A, perso & reporting"
+---
+
+<Info>**Super** · analyst · slug `financier`</Info>
+
+You bring a ticker, a portfolio, a model to check, or a budget to project.
+Financier pulls live numbers, leads with the call, and ships the file — a
+stock pitch deck, an Excel model, a live dashboard, or an advisory memo,
+every number carrying a source and an as-of date.
+
+## What it delivers
+
+It wears four hats — markets & investing, corporate finance / FP&A, personal
+& wealth, accounting & reporting — and ships the matching artifact:
+
+- **Stock Pitch** — an 11-slide HTML deck (preset `split-default`, recolored
+  to the company's brand): cover with the BUY/HOLD/SELL call, snapshot KPIs,
+  thesis, 3-year financials, valuation (comps + DCF range), catalysts, macro
+  & sector environment, risks, the recommendation,
+- **Portfolio Review** — an 8-slide deck **plus** a live HTML `dashboard`
+  monitor (KPI tiles, equity curve vs benchmark, sector donut, positions
+  table, macro tape),
+- **Valuation / FP&A** — an **`.xlsx` model** on the Cover → Assumptions →
+  Data → Model → Scenarios convention,
+- **Model Audit** — a 🔴🟡🟢 findings report (+ optional annotated workbook)
+  on any `.xlsx` — mechanical defects from the scanner, financial-logic layer
+  on top (balance ties, 3-statement linkage, sign/unit consistency),
+- **Personal & wealth** — a **`.docx`** memo (FR tax default), optionally an
+  Excel projection.
+
+Every deliverable carries an **Assumptions** slide/sheet — the override hook.
+
+## When to pick it
+
+Pick **Financier** for anything money: valuing a security or business,
+analyzing a market and its comparables, building or auditing a 3-statement
+model, modelling a budget/runway, or a P&L tracking dashboard. Pick
+[Consultant](/experts/super/consultant) instead when the question is
+market/competitive strategy rather than the numbers themselves, or
+[Data Analyst](/experts/super/data_analyst) for a general CSV/Excel
+exploration that isn't financial.
+
+## How to drive it
+
+Name the workflow and the inputs:
+
+```
+Build a P&L tracking dashboard
+Analyze this market and its comparables
+Model an 18-month budget
+```
+
+Attach a holdings CSV (`TICKER,SHARES,COST_BASIS,CURRENCY`) for a portfolio,
+or an `.xlsx` to audit. For a portfolio, Financier asks for the benchmark and
+base currency if there's any ambiguity.
+
+## What comes back
+
+Decks and dashboards render **live in the artifact pane**. Files land in
+user-visible folders: slides at `~/Desktop/<ticker-or-portfolio>-<YYYYMMDD>.html`,
+Excel at `~/Desktop/<topic>-<YYYYMMDD>.xlsx`, memos at
+`~/Desktop/<topic>-<YYYYMMDD>.docx`, and a portfolio dashboard at
+`~/Documents/split-finance/<portfolio>/<portfolio>-dashboard.html`. Financier
+reports the absolute path and offers to `open`. After v1, it leads with
+publishing — `share.sh <folder> <slug>` → a permanent `<slug>.surge.sh` URL
+(the Excel model stays a download; the visual parts go online).
+
+## Leans on
+
+A finance-specific build stack — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| web search (native) | live news, filings, releases; never answers a market question from memory |
+| `market-data` | keyless market recipes (yfinance / exchangerate.host / CoinGecko) + Excel-model conventions — *builds* models |
+| `model-audit` | the QC counterpart — openpyxl scanner for mechanical defects + a financial-logic findings report |
+| `dashboard` | interactive HTML dashboards (default brief `terminal financial monitor`) |
+| `ui-ux-pro-max` | the design-intelligence database `dashboard` queries for palette / typography / chart type |
+| `frontend-slides` | pitch decks & board packs (`split-default`, brand-adapted for Stock Pitches) |
+| `docx` | Word memos, advisory notes, investment letters |
+| `web-deploy` | `share.sh` → a permanent `<slug>.surge.sh` public URL |
+
+## Prerequisites & limits
+
+- **Market data is keyless** — yfinance / exchangerate.host / CoinGecko need
+  no API key; web search is the harness's native grounded search. Macro
+  context comes from FRED / ECB via that search.
+- **Not a regulated financial advisor.** Financier disclaims once — not as
+  boilerplate — on any meaningful personal-finance or investment
+  recommendation. Tax defaults to France unless you say otherwise.
+- **Every number has a source and an as-of date** (`yfinance:AAPL 2026-05-27
+  close`, `10-K p.42`), and it states "fetched live" vs "from cache".
+- **It shows a range, not a point.** A DCF is base/bear/bull; a single-point
+  answer that doesn't move with its assumption is treated as wrong.
+- **Publishing** (`web-deploy`) ships the visual artifacts to surge.sh; the
+  deck/dashboard must be public to get a shareable link.

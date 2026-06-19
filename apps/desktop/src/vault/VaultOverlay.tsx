@@ -6,7 +6,7 @@
 // deliverable). The filesystem is the source of truth on both sides: a save
 // here is what the agents read at their next session boot.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import type { Editor } from "@tiptap/react";
 import { MarkdownEditor } from "../conversation/MarkdownEditor";
 import "./vault.css";
@@ -28,7 +28,7 @@ interface VaultPayload {
 }
 
 interface FilePayload {
-  kind: "text" | "image" | "pdf" | "binary";
+  kind: "text" | "image" | "pdf" | "audio" | "video" | "binary";
   size: number;
   mime?: string;
   content?: string;
@@ -344,9 +344,14 @@ export function VaultOverlay({ onClose }: { onClose: () => void }) {
             />
           )}
           {!err && sel && payload?.kind === "text" && !isMd && isHtml && (
+            // Same sandbox as the ArtifactViewer preview: vault HTML is the
+            // user's own expert-produced deliverables (interactive dashboards,
+            // games), so scripts must run, storage must have a real origin,
+            // and pointer lock must be grantable (first-person games gate on
+            // it — without the token the "click to play" silently no-ops).
             <iframe
               className="vault-html"
-              sandbox=""
+              sandbox="allow-scripts allow-same-origin allow-pointer-lock"
               srcDoc={payload.content ?? ""}
               title={sel.name}
             />
@@ -359,6 +364,16 @@ export function VaultOverlay({ onClose }: { onClose: () => void }) {
           )}
           {!err && sel && payload?.kind === "pdf" && (
             <iframe className="vault-html" src={payload.content} title={sel.name} />
+          )}
+          {!err && sel && payload?.kind === "audio" && (
+            <div className="vault-media">
+              <audio className="vault-audio" src={convertFileSrc(sel.path)} controls preload="metadata" />
+            </div>
+          )}
+          {!err && sel && payload?.kind === "video" && (
+            <div className="vault-media">
+              <video className="vault-video" src={convertFileSrc(sel.path)} controls preload="metadata" />
+            </div>
           )}
           {!err && sel && payload?.kind === "binary" && (
             <div className="vault-empty">

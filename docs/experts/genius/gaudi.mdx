@@ -1,0 +1,112 @@
+---
+title: "Gaudí"
+description: "Designs spaces — floor plan, explorable 3D, material board, buildable spec"
+---
+
+<Info>**Genius** · creator · slug `genius_gaudi`</Info>
+
+You bring a space and a feeling about it — a living room that fights you, a bare
+plot you own, an apartment you want to gut, a façade, a garden. Gaudí turns it
+into a real design **package** you couldn't produce alone: a floor plan to live
+by, the place explorable in 3D, a shoppable material board, and a written brief
+you hand to a contractor. The render is the hook; the plan, the board, and the
+spec are the substance.
+
+Where [Tesla](/experts/genius/tesla) designs the physical **object** — a part, an
+enclosure, a printable mechanism — Gaudí designs the **livable, buildable space**
+that holds objects: a plan and a spec, a place you walk through.
+
+## What it delivers
+
+A design package, not a single pretty render:
+
+- a **floor plan** — 2D, dimensioned, with circulation and zoning (where you
+  walk, what each zone is for, where the light falls), drawn as clean SVG/HTML or
+  built parametrically with `cad-design`;
+- the space **explorable in 3D** — photoreal renders (Higgsfield **Soul
+  Location** for environments) plus an image-to-3D model in a **deployed web
+  viewer** you orbit and walk;
+- a **shoppable material & furniture board** — real references (*this* sofa,
+  *this* paint, *this* tile, *this* pendant) with prices and roles, so you can buy
+  the room, not just admire it;
+- **before / after renders** — the room as it is beside the room as it could be;
+- a written **brief / spec** (`.docx`) — design intent, materials schedule, zones
+  and dimensions — the document you hand to a real architect or contractor.
+
+## When to pick it
+
+Pick **Gaudí** for the livable, buildable **space** — rooms, apartments, houses,
+interiors, façades, renovations, gardens — when you want a plan, a 3D walk, a
+material board, and a buildable brief. Pick a sibling instead when:
+
+- the deliverable is the physical **object** — a part, enclosure, mount, or
+  printable mechanism → [Tesla](/experts/genius/tesla);
+- you want a **visual world or brand identity** — a 3D scene conjured from a
+  single reference image, a logo, a moodboard, a campaign (a *scene*, not a
+  buildable space) → [DaVinci](/experts/genius/davinci);
+- the deliverable is **product UI** — an app screen, a website, a product flow
+  (pixels on a screen, not square metres on a floor) → [Designer](/experts/super/designer).
+
+## How to drive it
+
+Describe the space, or attach a photo, a plot survey, or an inspiration board:
+
+```
+Redesign my living room
+Imagine a house from this plot
+Build a material & furniture board for this space
+Turn my apartment into a 3D walk-through
+```
+
+Gaudí reads the input — the volume, the light, the bones, what fights the room —
+states its read in one line, then ships the package in the same turn.
+
+## What comes back
+
+Gaudí announces a short plan, then ships in the same turn — no gate. The 3D
+walk-through viewer and the material board render in the artifact pane (served
+over HTTP and deployed to a **public URL** it leads with, so you can forward it to
+your architect or contractor). Every artifact opens with an exec-summary header
+(why / context / how / assumed) — its memory across sessions. Gaudí reports the
+**absolute folder path** plus one or two concrete next variations ("same plan,
+kitchen and living swapped" / "darker material board" / "oak instead of walnut").
+Higgsfield renders print a **result media URL**; keepers move into the vault with
+**Keep in vault**.
+
+## Leans on
+
+A space-design stack — see [Skills](/concepts/skills):
+
+| Skill | Role |
+|---|---|
+| `higgsfield-generate` | the rendering engine for the space: photoreal interior/exterior renders, **Soul Location** for environments, before/after image-to-image, and the image-to-3D model that feeds the walk-through viewer |
+| `cad-design` | parametric geometry when a plan or built element wants real named dimensions — a dimensioned floor plan, a built-in, a stair → SVG (the drawn plan) + GLB (orbitable) |
+| `taste-design` | the design contract for the space (material palette, light strategy, finishes, anti-patterns) as a `DESIGN.md`, audited against the rendered board before delivery |
+| `frontend-slides` | renders the shoppable material & furniture board and any multi-page document — swatches, products, prices, roles, the before/after spread |
+| `web-deploy` | ships the 3D walk-through viewer and the board to a public URL you open on any device |
+| `docx` | the written brief / spec / materials schedule you hand to a real architect or contractor |
+
+## Prerequisites & limits
+
+- **External engine — Higgsfield AI.** Renders run through the `higgsfield` CLI.
+  It needs a **Higgsfield account**; in the app, sign in via the **Connect
+  Higgsfield** chip in the conversation header. No raw key is ever asked for in
+  chat. Each render costs **credits**, and some models need a **paid plan** —
+  Gaudí is deliberate, iterating the prompt, not the seed.
+- **The construction plan is the weak part.** The dimensioned plan is a
+  **hand-to-a-real-architect** design drawing for reasoning and briefing — **not
+  stamped, not-to-scale construction documents**. The strong outputs are the 3D
+  walk, the material board, the before/after renders, and the written brief.
+- **Intent and look — not structural engineering.** Gaudí designs layout, light,
+  materials, and feel — **not** load-bearing structural engineering, MEP
+  (mechanical / electrical / plumbing), permits, or building-code / fire
+  compliance. Whether a wall is load-bearing is an engineer's call; Gaudí names
+  that gap rather than implying the package is permit-ready.
+- **Renders are intent, not measured reality.** A photoreal render shows the
+  *look* of the space; the plan carries the dimensions. When the two could drift,
+  Gaudí says so.
+- **Evokes the register, doesn't impersonate.** Gaudí channels the sensibility of
+  the visionary organic architect — the catenary, the load-bearing curve, light as
+  a material — but never claims to *be* Antoni Gaudí and never pastiches a named
+  building by trademark ("make me the Sagrada Família"). It matches the tradition,
+  not the trademark; it designs *your* space.

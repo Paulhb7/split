@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NASA Eyes — TRAPPIST-1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<!-- nasa-eyes skill · exoplanet variant. Same fixed UI as eyes-viewer.html;
+     only EYES_DATA changes. Planet data is REAL (NASA Exoplanet Archive, TAP). -->
+<style>
+  :root{
+    --void:#05060a; --void2:#120a16;
+    --accent:#ffb454; --star:#eaf0ff;
+    --dim:rgba(234,240,255,.58); --dim2:rgba(234,240,255,.34);
+    --grotesk:"Space Grotesk",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{min-height:100%;background:var(--void);color:var(--star);font-family:var(--grotesk);overflow-x:hidden}
+  body{background:radial-gradient(140% 100% at 50% -10%, var(--void2), var(--void) 60%)}
+  #stars{position:fixed;inset:0;z-index:0;display:block}
+  main{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:clamp(20px,4vw,46px)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.36em;text-transform:uppercase;color:var(--dim);
+    display:flex;align-items:center;gap:12px}
+  .eyebrow .tick{width:26px;height:1px;background:linear-gradient(90deg,var(--accent),transparent)}
+  h1{font-weight:600;font-size:clamp(28px,5vw,52px);line-height:1.02;margin:.28em 0 .14em;
+    text-shadow:0 2px 50px rgba(255,180,84,.22)}
+  .sub{font-family:var(--mono);font-size:12.5px;color:var(--dim)}
+  .sub b{color:var(--accent)}
+  .viewer{display:grid;grid-template-columns:1fr;gap:20px;margin-top:26px}
+  @media(min-width:920px){ .viewer{grid-template-columns:1.7fr 1fr} }
+  .hero{position:relative;border-radius:16px;overflow:hidden;min-height:60vh;
+    box-shadow:0 30px 90px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05), 0 0 70px rgba(255,180,84,.07)}
+  .hero iframe{width:100%;height:100%;min-height:60vh;border:0;display:block;background:#000}
+  .hatch{position:absolute;right:12px;bottom:12px;font-family:var(--mono);font-size:11px;color:var(--star);
+    text-decoration:none;background:rgba(5,6,10,.66);border:1px solid rgba(255,255,255,.14);padding:7px 11px;
+    border-radius:9px;backdrop-filter:blur(6px)}
+  .hatch:hover{border-color:var(--accent);color:var(--accent)}
+  aside{display:flex;flex-direction:column;gap:22px}
+  .panel-h{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim2);margin-bottom:12px}
+  .fact{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .fact .k{font-size:13px;color:var(--dim)}
+  .fact.hz .k{color:var(--accent)}
+  .fact .v{font-family:var(--mono);font-size:12px;color:var(--star);text-align:right;font-variant-numeric:tabular-nums}
+  .papers{display:flex;flex-direction:column;gap:12px}
+  .paper{display:block;text-decoration:none;color:inherit;padding-left:14px;border-left:2px solid rgba(255,180,84,.4);transition:.15s}
+  .paper:hover{border-left-color:var(--accent)}
+  .paper .t{font-size:13px;line-height:1.4;color:var(--star)}
+  .paper .m{font-family:var(--mono);font-size:10.5px;color:var(--dim2);margin-top:3px}
+  footer{margin-top:26px;font-family:var(--mono);font-size:10.5px;color:var(--dim2);letter-spacing:.04em;
+    display:flex;flex-wrap:wrap;gap:6px 16px}
+  footer .cite{color:var(--dim)}
+  .demoflag{color:var(--accent);opacity:.85}
+</style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+  <main>
+    <div class="eyebrow"><span class="tick"></span><span id="eyebrow"></span></div>
+    <h1 id="title"></h1>
+    <div class="sub" id="sub"></div>
+    <div class="viewer">
+      <div class="hero">
+        <iframe id="frame" title="NASA Eyes" loading="lazy" allow="fullscreen" allowfullscreen
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <a class="hatch" id="hatch" target="_blank" rel="noopener">Ouvrir dans NASA Eyes ↗</a>
+      </div>
+      <aside>
+        <div><div class="panel-h">Le système · R⊕ · M⊕ · période</div><div id="facts"></div></div>
+        <div><div class="panel-h">La littérature</div><div class="papers" id="papers"></div></div>
+      </aside>
+    </div>
+    <footer><span class="cite" id="cite"></span><span class="demoflag" id="demoflag"></span></footer>
+  </main>
+
+<script>
+  /* ───── only this block changes per scene ───── */
+  const EYES_DATA = {
+    eyebrow: "Ride · NASA Eyes · Exoplanètes",
+    title: "TRAPPIST-1 — sept mondes",
+    instant: "7 planètes telluriques autour d'une naine M ultra-froide · ~40,7 al",
+    embedUrl: "https://eyes.nasa.gov/apps/exo/?embed=true",
+    facts: [
+      { k: "Étoile hôte",        v: "Naine M ultra-froide" },
+      { k: "Distance",           v: "~40,7 al" },
+      { k: "TRAPPIST-1 b",       v: "1.12 · 1.37 · 1.51 j" },
+      { k: "TRAPPIST-1 c",       v: "1.10 · 1.31 · 2.42 j" },
+      { k: "TRAPPIST-1 d",       v: "0.79 · 0.39 · 4.05 j" },
+      { k: "TRAPPIST-1 e ★",     v: "0.92 · 0.69 · 6.10 j", hz: true },
+      { k: "TRAPPIST-1 f ★",     v: "1.05 · 1.04 · 9.21 j", hz: true },
+      { k: "TRAPPIST-1 g ★",     v: "1.13 · 1.32 · 12.35 j", hz: true },
+      { k: "TRAPPIST-1 h",       v: "0.76 · 0.33 · 18.77 j" }
+    ],
+    papers: [
+      { t: "Seven temperate terrestrial planets around the nearby ultracool dwarf star TRAPPIST-1",
+        m: "Gillon et al. · Nature · 2017", url: "https://www.nature.com/articles/nature21360" },
+      { t: "Refining the transit-timing and photometric analysis of TRAPPIST-1 (masses & densities)",
+        m: "Agol et al. · Planetary Science Journal · 2021", url: "https://iopscience.iop.org/article/10.3847/PSJ/abd022" }
+    ],
+    cite: "Données : NASA Exoplanet Archive (TAP, default_flag=1) · Visualisation : NASA Eyes",
+    demo: "Données planétaires réelles · embed app-root (★ = zone habitable ; hash par-système à capturer) · papiers à re-vérifier live."
+  };
+
+  const $ = id => document.getElementById(id);
+  $("eyebrow").textContent = EYES_DATA.eyebrow;
+  $("title").textContent = EYES_DATA.title;
+  $("sub").innerHTML = "<b>▸</b> " + EYES_DATA.instant;
+  $("frame").src = EYES_DATA.embedUrl;
+  $("hatch").href = EYES_DATA.embedUrl;
+  $("cite").textContent = EYES_DATA.cite;
+  $("demoflag").textContent = EYES_DATA.demo;
+  $("facts").innerHTML = EYES_DATA.facts
+    .map(f => `<div class="fact${f.hz?' hz':''}"><span class="k">${f.k}</span><span class="v">${f.v}</span></div>`).join("");
+  $("papers").innerHTML = EYES_DATA.papers
+    .map(p => `<a class="paper" href="${p.url}" target="_blank" rel="noopener"><div class="t">${p.t}</div><div class="m">${p.m}</div></a>`).join("");
+
+  /* slow parallax starfield — the one ambient motion */
+  const cv = $("stars"), g = cv.getContext("2d"); let W,H,stars;
+  function resize(){ W=cv.width=innerWidth; H=cv.height=innerHeight;
+    stars=Array.from({length:Math.round(W*H/9000)},()=>({x:Math.random()*W,y:Math.random()*H,z:Math.random()*0.8+0.2,r:Math.random()*1.2+0.2,p:Math.random()*6.28})); }
+  addEventListener("resize",resize); resize();
+  let t=0;
+  (function draw(){ requestAnimationFrame(draw); t+=0.006; g.clearRect(0,0,W,H);
+    for(const s of stars){ s.y+=s.z*0.12; if(s.y>H)s.y=0; const tw=0.5+0.5*Math.sin(t*2+s.p);
+      g.beginPath(); g.arc(s.x,s.y,s.r,0,6.2832); g.fillStyle=`rgba(234,240,255,${(0.18+tw*0.55*s.z).toFixed(3)})`; g.fill(); }
+  })();
+</script>
+</body>
+</html>

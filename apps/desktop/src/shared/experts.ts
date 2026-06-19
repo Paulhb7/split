@@ -44,6 +44,35 @@ export interface Expert {
    *    promises something we haven't shipped yet (e.g. Sales / Project Manager
    *    need the Cartographer's machine-context mapping to deliver). */
   status?: "active" | "next";
+  /** Mounted SKILLs (names under config/skills/<name>/). Surfaced read-only in
+   * the atelier reflet's "Compétences" section. Authoritative copy lives in
+   * experts.json; the frontend only displays them. */
+  skills?: string[];
+  /** Per-expert starter prompts — suggestion chips shown in the conversation
+   * empty state. Clicking one fills the composer. Optional; experts without
+   * them simply show the greeting. */
+  starters?: string[];
+  /** Sample deliverables — the projection surface on the atelier welcome.
+   * Each renders as a card with a typed preview thumbnail ("here's what I
+   * make"); clicking one fills the composer with `prompt`. When present they
+   * REPLACE the starter chips; experts without them fall back to `starters`.
+   * Authoritative copy lives in experts.json; the frontend only displays. */
+  examples?: DeliverableExample[];
+}
+
+/** One sample deliverable shown as a card on the atelier welcome. */
+export interface DeliverableExample {
+  /** Preview-thumbnail key (see PREVIEWS in DeliverableExamples.tsx — app /
+   * site / board / deck / dashboard / chart / doc / track / scene / part /
+   * sky / molecule / pitch / map / table / plan / film / book / garment /
+   * space / reel …). Unknown keys fall back to a generic glyph. */
+  type: string;
+  /** Card heading — the concrete artifact ("3 visual directions"). */
+  title: string;
+  /** One-line projection copy under the title (≤ ~5 words). */
+  desc: string;
+  /** Launch-ready instruction filled into the composer on click. */
+  prompt: string;
 }
 
 /** True when the expert is hidden from the active picker (composer, @-mention,
@@ -79,6 +108,7 @@ export const DEFAULT_EXPERTS: ExpertMap = {
   lawyer: { label: "Lawyer", category: "super", kind: "advisor", blurb: "Legal guidance, risk & clauses" },
   data_analyst: { label: "Data Analyst", category: "super", kind: "analyst", blurb: "CSV analysis, charts & dashboards" },
   engineer: { label: "Engineer", category: "super", kind: "builder", blurb: "Builds micro-apps & landing pages, ships them to a public URL" },
+  designer: { label: "Designer", role: "UI & prototypes", category: "super", kind: "creator", blurb: "Designs gorgeous interactive app & site mockups, ready to hand to Engineer" },
   genius_davinci: { label: "DaVinci", category: "genius", kind: "creator", blurb: "Builds entire visual universes — worlds, brand identities, scene direction" },
   genius_wolfgang: { label: "Wolfgang", category: "genius", kind: "creator", blurb: "Composes original music — songs, scores, soundtracks" },
   genius_kubrick: { label: "Kubrick", category: "genius", kind: "creator", blurb: "Directs short films — visual + score + voice, in one piece" },

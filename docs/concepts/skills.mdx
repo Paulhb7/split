@@ -35,11 +35,26 @@ catalogue sees exactly the expert's allowed kit, nothing else.
 
 ## Vendored skills
 
-Found in `config/skills/`:
+Found in `config/skills/`, grouped by domain:
 
-- **Research / retrieval:** `web-search`, `paper-search`, `image-search`.
 - **Documents / presentations:** `docx`, `frontend-slides`.
-- **Design / frontend / dashboards:** `ui-ux-pro-max`, `web-audit`, `graphics`, `dashboard`, `web-deploy`.
-- **Finance / legal:** `market-data`, `legal-templates`.
-- **Generation:** `music-gen`, `voice-gen`, `video-gen` — these call fal.ai /
-  ElevenLabs and need `FAL_KEY` / `ELEVENLABS_API_KEY` where applicable.
+- **Design / frontend / dashboards:** `ui-ux-pro-max`, `dashboard`, `web-deploy`.
+- **Research / literature:** `paper-search`, `paper-lookup`, `literature-review`,
+  `scientific-brainstorming`, `hypothesis-generation`, `networkx`.
+- **Finance / legal:** `market-data`, `model-audit`, `legal-templates`, `contract-review`.
+- **Creative generation:** the `higgsfield-*` skills (`higgsfield-generate`,
+  `-soul-id`, `-product-photoshoot`, `-marketplace-cards`) wrap the external
+  `higgsfield` CLI — they need a **Higgsfield account** (`higgsfield auth login`),
+  and some models require a paid plan.
+- **Frontier science** (Curie's stack): `database-lookup`, `primekg`, `pytdc`,
+  `biopython`, `diffdock`, `rdkit`, `medchem`, `esm`, `molecular-dynamics`,
+  `scanpy`, `pymatgen`. REST/lookup skills run anywhere; the heavy-compute ones
+  want Python deps and ideally a GPU.
+- **Astronomy** (`nasa-api`, `astropy`, `astro-data`, `sky-viz`), **engineering**
+  (`cad-design`), **sport** (`football-data`, `sports-news`, `sports-reporter`,
+  `metadata`), **writing** (`prose-gen`), **coaching** (`coach-tracker`).
+
+Many lookup skills accept an optional API key to raise rate limits
+(`NASA_API_KEY`, `NCBI_API_KEY`, `FRED_API_KEY`, …); without one they fall back to
+public/demo access. The `memory` skill (vault doctrine) is auto-mounted on every
+expert.
