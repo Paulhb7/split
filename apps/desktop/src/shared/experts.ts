@@ -52,6 +52,27 @@ export interface Expert {
    * empty state. Clicking one fills the composer. Optional; experts without
    * them simply show the greeting. */
   starters?: string[];
+  /** Sample deliverables — the projection surface on the atelier welcome.
+   * Each renders as a card with a typed preview thumbnail ("here's what I
+   * make"); clicking one fills the composer with `prompt`. When present they
+   * REPLACE the starter chips; experts without them fall back to `starters`.
+   * Authoritative copy lives in experts.json; the frontend only displays. */
+  examples?: DeliverableExample[];
+}
+
+/** One sample deliverable shown as a card on the atelier welcome. */
+export interface DeliverableExample {
+  /** Preview-thumbnail key (see PREVIEWS in DeliverableExamples.tsx — app /
+   * site / board / deck / dashboard / chart / doc / track / scene / part /
+   * sky / molecule / pitch / map / table / plan / film / book / garment /
+   * space / reel …). Unknown keys fall back to a generic glyph. */
+  type: string;
+  /** Card heading — the concrete artifact ("3 visual directions"). */
+  title: string;
+  /** One-line projection copy under the title (≤ ~5 words). */
+  desc: string;
+  /** Launch-ready instruction filled into the composer on click. */
+  prompt: string;
 }
 
 /** True when the expert is hidden from the active picker (composer, @-mention,
