@@ -102,7 +102,10 @@ would have auto-allowed.
   the Data Analyst, `market-data` → Buffett the Financier, `paper-search`
   → Curie the Scientist, `legal-templates` → Cicero the Lawyer,
   `higgsfield-generate` (image/video/music/SFX/voice) → Wolfgang for
-  score, Kubrick for film, Homer for podcasts, DaVinci for visuals, …
+  score, Hitchcock for film, Homer for podcasts, DaVinci for visuals, Karl
+  for fashion (lookbooks, stills), Influencer for viral ads, Gaudí for spaces &
+  interiors, Vatel for staged events, Marco Polo for trips; `cad-design`
+  → Tesla (objects / printable parts) & Gaudí (spaces), …
   If the boss's request clearly needs one of those, name what's missing
   and which expert owns it — the Chief of Staff will bring them in.
 

@@ -1,32 +1,286 @@
 {
-  "_comment": "Expert registry. Three categories: 'super' agents are jobs (Consultant, Lawyer, Engineer…) — their `label` IS the role, designed for productivity gains on existing tasks. 'genius' agents are historical figures unlocking creative or service outputs the user couldn't produce alone (DaVinci builds visual universes, Wolfgang composes music, Alfred runs your Mac as your majordome, Socrates interviews you to draft new experts) — their `label` is the genius's name. 'coach' agents help you grow in a life domain (diet, learning, sport, cooking) — their `label` is 'X Coach'. Sub-fields: `role` (optional subtitle for tooltips), `kind` (informational taxonomy), `category` (drives roster UX), `skills` (mounted SKILLs — a name not yet vendored under skills/<name>/SKILL.md is silently skipped), `status` ('active' by default; 'next' = visible in the Cabinet's deferred section but hidden from the active picker/composer surfaces, used when the persona needs a piece we haven't shipped yet — Sales/PM need the Cartographer's machine-context mapping to be worth using). The slug (key) is the stable identifier used in personas/skills and never changes. User-created custom experts live in <VAR_DIR>/experts/<slug>.{md,json}. The `memory` skill (the vault doctrine — $SPLIT_VAULT) is auto-mounted globally on every expert; it is not listed per-expert.",
+  "_comment": "Expert registry. Three categories: 'super' agents are jobs (Consultant, Lawyer, Engineer…) — their `label` IS the role, designed for productivity gains on existing tasks. 'genius' agents are historical figures unlocking creative or service outputs the user couldn't produce alone (DaVinci builds visual universes, Wolfgang composes music, Alfred runs your Mac as your majordome, Socrates interviews you to draft new experts) — their `label` is the genius's name. 'coach' agents help you grow in a life domain (diet, learning, sport, cooking) — their `label` is 'X Coach'. Sub-fields: `role` (optional subtitle for tooltips), `kind` (informational taxonomy), `category` (drives roster UX), `skills` (mounted SKILLs — a name not yet vendored under skills/<name>/SKILL.md is silently skipped), `starters` (suggestion prompts; fallback when `examples` is absent), `examples` (sample deliverables shown as cards on the atelier welcome — each {type,title,desc,prompt}; `type` keys a preview thumbnail in DeliverableExamples.tsx; clicking fills the composer with `prompt`; when present they REPLACE the starter chips), `status` ('active' by default; 'next' = visible in the Cabinet's deferred section but hidden from the active picker/composer surfaces, used when the persona needs a piece we haven't shipped yet — Sales/PM need the Cartographer's machine-context mapping to be worth using). The slug (key) is the stable identifier used in personas/skills and never changes. User-created custom experts live in <VAR_DIR>/experts/<slug>.{md,json}. The `memory` skill (the vault doctrine — $SPLIT_VAULT) is auto-mounted globally on every expert; it is not listed per-expert.",
 
-  "toscanini":       {"label": "Toscanini", "role": "Chief of Staff", "category": "super", "kind": "operator", "skills": [],                                                                                                     "blurb": "Conducts the team: delegates, drives to closure, synthesizes"},
-  "consultant":      {"label": "Consultant",                          "category": "super", "kind": "researcher", "skills": ["frontend-slides"],                                                                    "starters": ["Assess our EU market entry", "Compare 3 pricing strategies", "Build a competitive review in slides"], "blurb": "Web research into ready slides or markdown memos"},
-  "scientist":       {"label": "Scientist",                           "category": "super", "kind": "researcher", "skills": ["paper-search", "literature-review", "scientific-brainstorming", "hypothesis-generation", "networkx", "docx", "frontend-slides", "web-deploy"], "starters": ["Map the state of the art on this topic", "Summarize the 5 key papers in the field", "Find idea bridges between two fields"], "blurb": "Maps the state of the art, builds idea bridges, drafts lit reviews"},
-  "financier":       {"label": "Financier",                           "category": "super", "kind": "analyst",  "skills": ["market-data", "model-audit", "dashboard", "ui-ux-pro-max", "frontend-slides", "docx", "web-deploy"], "starters": ["Build a P&L tracking dashboard", "Analyze this market and its comparables", "Model an 18-month budget"], "blurb": "Markets, FP&A, perso & reporting"},
-  "lawyer":          {"label": "Lawyer",                              "category": "super", "kind": "advisor",  "skills": ["docx", "legal-templates", "contract-review"],                                           "starters": ["Review this contract and list the risks", "Draft an NDA for this context", "Explain my obligations on this point"], "blurb": "Legal guidance, risk reads & contract drafts"},
-  "data_analyst":    {"label": "Data Analyst",                        "category": "super", "kind": "analyst",  "skills": ["dashboard", "ui-ux-pro-max", "frontend-slides", "docx", "web-deploy"],                  "starters": ["Explore this CSV and surface the trends", "Build an interactive dashboard", "Find the anomalies in this data"], "blurb": "Explores CSV/Excel data, ships interactive dashboards"},
-  "engineer":        {"label": "Engineer",                            "category": "super", "kind": "builder",  "skills": ["web-deploy", "ui-ux-pro-max"],                                                        "starters": ["Build a landing page for this product", "Prototype a micro-app from this idea", "Deploy it to a public URL"], "blurb": "Builds micro-apps & landing pages, ships them to a public URL"},
-  "designer":        {"label": "Designer", "role": "UI & prototypes",  "category": "super", "kind": "creator",  "skills": ["ui-ux-pro-max"],                                                                                      "starters": ["Mock up an app from this idea", "Redesign this screen", "Propose 3 visual directions"], "blurb": "Designs gorgeous interactive app & site mockups, ready to hand to Engineer"},
-  "project_manager": {"label": "Project Manager",                     "category": "super", "kind": "organizer", "skills": ["docx", "frontend-slides", "dashboard", "web-deploy"], "status": "next",                "blurb": "Turns 'we need X by Y' into a real plan with owners, dates, status"},
-  "sales":           {"label": "Sales",                               "category": "super", "kind": "advisor",  "skills": ["docx", "frontend-slides"], "status": "next",                                            "blurb": "Tracks leads, drafts outreach, closes the loop on every deal"},
+  "toscanini": {
+    "label": "Toscanini", "role": "Chief of Staff", "category": "super", "kind": "operator", "skills": [],
+    "blurb": "Conducts the team: delegates, drives to closure, synthesizes"
+  },
+  "consultant": {
+    "label": "Consultant", "category": "super", "kind": "researcher", "skills": ["frontend-slides", "ui-ux-pro-max", "docx"],
+    "starters": ["Assess our EU market entry", "Compare 3 pricing strategies", "Build a competitive review in slides"],
+    "examples": [
+      {"type": "deck", "title": "Market-entry deck", "desc": "Sourced, ready to present", "prompt": "Assess our EU market entry"},
+      {"type": "deck", "title": "Pricing strategy deck", "desc": "3 options, scored", "prompt": "Compare 3 pricing strategies in slides"},
+      {"type": "doc", "title": "Competitive review memo", "desc": "Markdown, citation-backed", "prompt": "Build a competitive review memo"}
+    ],
+    "blurb": "Web research into ready slides or markdown memos"
+  },
+  "scientist": {
+    "label": "Scientist", "category": "super", "kind": "researcher", "skills": ["paper-search", "literature-review", "scientific-brainstorming", "hypothesis-generation", "networkx", "docx", "frontend-slides", "web-deploy"],
+    "starters": ["Map the state of the art on this topic", "Summarize the 5 key papers in the field", "Find idea bridges between two fields"],
+    "examples": [
+      {"type": "doc", "title": "Literature review", "desc": "5 key papers, synthesized", "prompt": "Summarize the 5 key papers in the field"},
+      {"type": "deck", "title": "State-of-the-art deck", "desc": "The field, mapped", "prompt": "Map the state of the art on this topic"},
+      {"type": "graph", "title": "Idea-bridge map", "desc": "Two fields, connected", "prompt": "Find idea bridges between two fields"}
+    ],
+    "blurb": "Maps the state of the art, builds idea bridges, drafts lit reviews"
+  },
+  "financier": {
+    "label": "Financier", "category": "super", "kind": "analyst", "skills": ["market-data", "model-audit", "dashboard", "ui-ux-pro-max", "frontend-slides", "docx", "web-deploy"],
+    "starters": ["Build a P&L tracking dashboard", "Analyze this market and its comparables", "Model an 18-month budget"],
+    "examples": [
+      {"type": "dashboard", "title": "P&L dashboard", "desc": "Live, interactive", "prompt": "Build a P&L tracking dashboard"},
+      {"type": "deck", "title": "Market & comps deck", "desc": "Valuation, benchmarked", "prompt": "Analyze this market and its comparables"},
+      {"type": "dashboard", "title": "18-month budget model", "desc": "Scenarios, charted", "prompt": "Model an 18-month budget"}
+    ],
+    "blurb": "Markets, FP&A, perso & reporting"
+  },
+  "lawyer": {
+    "label": "Lawyer", "category": "super", "kind": "advisor", "skills": ["docx", "legal-templates", "contract-review"],
+    "starters": ["Review this contract and list the risks", "Draft an NDA for this context", "Explain my obligations on this point"],
+    "examples": [
+      {"type": "doc", "title": "Contract risk review", "desc": "Clause-by-clause flags", "prompt": "Review this contract and list the risks"},
+      {"type": "doc", "title": "NDA draft", "desc": "Ready to send", "prompt": "Draft an NDA for this context"},
+      {"type": "doc", "title": "Obligations brief", "desc": "Plain-English", "prompt": "Explain my obligations on this point"}
+    ],
+    "blurb": "Legal guidance, risk reads & contract drafts"
+  },
+  "data_analyst": {
+    "label": "Data Analyst", "category": "super", "kind": "analyst", "skills": ["dashboard", "ui-ux-pro-max", "frontend-slides"],
+    "starters": ["Explore this CSV and surface the trends", "Build an interactive dashboard", "Find the anomalies in this data"],
+    "examples": [
+      {"type": "dashboard", "title": "Interactive dashboard", "desc": "Filter, drill, export", "prompt": "Build an interactive dashboard"},
+      {"type": "chart", "title": "Trend exploration", "desc": "Signals surfaced", "prompt": "Explore this CSV and surface the trends"},
+      {"type": "chart", "title": "Anomaly report", "desc": "Outliers flagged", "prompt": "Find the anomalies in this data"}
+    ],
+    "blurb": "Explores CSV/Excel data, ships interactive dashboards"
+  },
+  "engineer": {
+    "label": "Engineer", "category": "super", "kind": "builder", "skills": ["web-deploy", "ui-ux-pro-max"],
+    "starters": ["Build a landing page for this product", "Prototype a micro-app from this idea", "Deploy it to a public URL"],
+    "examples": [
+      {"type": "site", "title": "Landing page", "desc": "Live public URL", "prompt": "Build a landing page for this product"},
+      {"type": "app", "title": "Micro-app prototype", "desc": "Working, deployable", "prompt": "Prototype a micro-app from this idea"},
+      {"type": "site", "title": "Deployed site", "desc": "Shipped to a URL", "prompt": "Deploy it to a public URL"}
+    ],
+    "blurb": "Builds micro-apps & landing pages, ships them to a public URL"
+  },
+  "designer": {
+    "label": "Designer", "role": "UI & prototypes", "category": "super", "kind": "creator", "skills": ["ui-ux-pro-max", "taste-design"],
+    "starters": ["Mock up an app from this idea", "Redesign this screen", "Propose 3 visual directions"],
+    "examples": [
+      {"type": "app", "title": "App mockup", "desc": "Clickable iOS screens", "prompt": "Mock up an app from this idea"},
+      {"type": "site", "title": "Screen redesign", "desc": "Cleaner, on-brand", "prompt": "Redesign this screen"},
+      {"type": "board", "title": "3 visual directions", "desc": "Palette · type · tone", "prompt": "Propose 3 visual directions"}
+    ],
+    "blurb": "Designs gorgeous interactive app & site mockups, ready to hand to Engineer"
+  },
+  "influencer": {
+    "label": "Influencer", "role": "viral social & ads", "category": "super", "kind": "creator", "skills": ["higgsfield-generate", "higgsfield-soul-id", "higgsfield-product-photoshoot", "frontend-slides", "web-deploy"],
+    "starters": ["Make a viral hook for this product", "Spin up a week of UGC ads", "Score this ad's virality", "Launch a campaign for this drop"],
+    "examples": [
+      {"type": "reel", "title": "Viral hook", "desc": "First 3 seconds", "prompt": "Make a viral hook for this product"},
+      {"type": "reel", "title": "A week of UGC ads", "desc": "7 posts, scheduled", "prompt": "Spin up a week of UGC ads"},
+      {"type": "reel", "title": "Campaign launch", "desc": "Hooks + UGC, scored", "prompt": "Launch a campaign for this drop"}
+    ],
+    "blurb": "Generates viral social content & ads — hooks, UGC video, the virality score"
+  },
+  "project_manager": {
+    "label": "Project Manager", "category": "super", "kind": "organizer", "skills": ["docx", "frontend-slides", "dashboard", "web-deploy"], "status": "next",
+    "blurb": "Turns 'we need X by Y' into a real plan with owners, dates, status"
+  },
+  "sales": {
+    "label": "Sales", "category": "super", "kind": "advisor", "skills": ["docx", "frontend-slides"], "status": "next",
+    "blurb": "Tracks leads, drafts outreach, closes the loop on every deal"
+  },
 
-  "genius_davinci":  {"label": "DaVinci",                             "category": "genius", "kind": "creator", "skills": ["ui-ux-pro-max", "frontend-slides", "docx", "web-deploy", "higgsfield-generate", "higgsfield-soul-id", "higgsfield-product-photoshoot", "higgsfield-marketplace-cards"], "starters": ["Turn this image into a 3D scene", "Create a full brand identity", "Reimagine this visual universe"], "blurb": "Turns an image into an immersive 3D scene — also brand identities, mockups, redesigns"},
-  "genius_wolfgang": {"label": "Wolfgang",                            "category": "genius", "kind": "creator", "skills": ["higgsfield-generate"],                                                                                          "starters": ["Compose a theme for this project", "Write a song about this topic", "Make an ambient soundtrack"], "blurb": "Composes original music — songs, scores, soundtracks"},
-  "genius_homer":    {"label": "Homer",                               "category": "genius", "kind": "creator", "skills": ["higgsfield-generate"],                                                                             "starters": ["Write a podcast episode on this theme", "Give this script a voice", "Edit a full episode"], "blurb": "Scripts, voices and edits full podcasts"},
-  "genius_kubrick":  {"label": "Kubrick",                             "category": "genius", "kind": "creator", "skills": ["higgsfield-generate", "higgsfield-soul-id"],                                                                "starters": ["Direct a short film from this idea", "Storyboard this scene", "Compose the image, music, and voice"], "blurb": "Directs short films — visual + score + voice, in one piece"},
-  "genius_bronte":   {"label": "Brontë",                              "category": "genius", "kind": "creator", "skills": ["prose-gen", "paper-search", "higgsfield-generate", "higgsfield-soul-id", "docx", "web-deploy"], "starters": ["Build the world of this novel", "Write the first chapter", "Develop this character and their arc"], "blurb": "Writes novels — characters, arcs, world, voice, a real book by chapter"},
-  "genius_ride":     {"label": "Ride",                                "category": "genius", "kind": "researcher", "skills": ["nasa-api", "astropy", "astro-data", "sky-viz", "frontend-slides", "docx", "web-deploy"],      "starters": ["What's in the sky tonight?", "Show the latest JWST images", "When does the ISS pass over me?"], "blurb": "Reads the sky live — NASA/ESA/JWST feeds, sky tonight, ISS passes — as gorgeous live pages"},
-  "genius_curie":    {"label": "Curie",                               "category": "genius", "kind": "researcher", "skills": ["database-lookup", "primekg", "pytdc", "paper-lookup", "biopython", "diffdock", "rdkit", "medchem", "esm", "molecular-dynamics", "scanpy", "pymatgen", "paper-search"],                  "starters": ["Investigate a rare disease", "Find the target protein for this condition", "Propose a drug to repurpose for this disease"], "blurb": "Frontier scientist for orphan diseases — clinical grounding, target proteins & structures, drug repurposing"},
-  "genius_tesla":    {"label": "Tesla",                               "category": "genius", "kind": "builder", "skills": ["cad-design", "ui-ux-pro-max", "web-deploy", "docx"],                    "starters": ["Model this part in 3D", "Design an enclosure for this board", "Animate this mechanism"], "blurb": "Designs 3D-printable parts & mechanisms — parametric CAD, animated, in a shareable report"},
-  "genius_alfred":   {"label": "Alfred", "role": "Majordome",         "category": "genius", "kind": "operator", "skills": [], "status": "next",                                                                                  "blurb": "Your majordome — drives your apps with your logins, books, runs admin"},
-  "genius_socrates": {"label": "Socrates",                            "category": "genius", "kind": "recruiter", "skills": [],                                                                                                   "starters": ["Help me create a custom expert", "Which expert is missing from my roster?", "Interview me to pin down my need"], "blurb": "Interviews you to design your own custom experts"},
-  "genius_indiana":  {"label": "Indie", "role": "Archive hunter",     "category": "genius", "kind": "finder",  "skills": ["paper-search", "docx", "web-deploy"], "status": "next",                 "blurb": "Hunts rare manuscripts, lost archives, out-of-print texts and forgotten primary sources"},
-  "genius_maradona": {"label": "Maradona", "role": "Le Diez",          "category": "genius", "kind": "analyst", "skills": ["football-data", "metadata", "sports-news", "sports-reporter", "frontend-slides", "docx", "web-deploy"], "starters": ["Build the dossier for tonight's match", "Break down their tactics and the key duel", "Who's lighting up the World Cup?"], "blurb": "Reads any match like the No.10 — live football dossiers: form, xG, the key duel, his verdict"},
+  "genius_davinci": {
+    "label": "DaVinci", "category": "genius", "kind": "creator", "skills": ["ui-ux-pro-max", "taste-design", "frontend-slides", "docx", "web-deploy", "higgsfield-generate", "higgsfield-soul-id", "higgsfield-product-photoshoot", "higgsfield-marketplace-cards"],
+    "starters": ["Turn this image into a 3D scene", "Create a full brand identity", "Reimagine this visual universe"],
+    "examples": [
+      {"type": "scene", "title": "Image → 3D scene", "desc": "Immersive, explorable", "prompt": "Turn this image into a 3D scene"},
+      {"type": "board", "title": "Brand identity", "desc": "Logo, palette, type", "prompt": "Create a full brand identity"},
+      {"type": "scene", "title": "Visual universe", "desc": "A world, reimagined", "prompt": "Reimagine this visual universe"}
+    ],
+    "blurb": "Turns an image into an immersive 3D scene — also brand identities, mockups, redesigns"
+  },
+  "genius_karl": {
+    "label": "Karl", "role": "couturier", "category": "genius", "kind": "creator", "skills": ["higgsfield-generate", "higgsfield-soul-id", "higgsfield-product-photoshoot", "taste-design", "frontend-slides", "web-deploy"],
+    "starters": ["Design a capsule collection from this mood", "Put this piece on a model", "Build a lookbook for these looks", "Turn this sketch into a finished garment"],
+    "examples": [
+      {"type": "garment", "title": "Capsule collection", "desc": "From a mood", "prompt": "Design a capsule collection from this mood"},
+      {"type": "garment", "title": "On-model lookbook", "desc": "Dressed, shot", "prompt": "Build a lookbook for these looks"},
+      {"type": "board", "title": "Sketch → finished piece", "desc": "Garment, realized", "prompt": "Turn this sketch into a finished garment"}
+    ],
+    "blurb": "Designs garments & footwear, dresses them on a model, builds the lookbook"
+  },
+  "genius_gaudi": {
+    "label": "Gaudí", "role": "architecte", "category": "genius", "kind": "creator", "skills": ["higgsfield-generate", "cad-design", "taste-design", "frontend-slides", "web-deploy", "docx"],
+    "starters": ["Redesign my living room", "Imagine a house from this plot", "Build a material & furniture board for this space", "Turn my apartment into a 3D walk-through"],
+    "examples": [
+      {"type": "space", "title": "Room redesign", "desc": "Floor plan + look", "prompt": "Redesign my living room"},
+      {"type": "scene", "title": "3D walk-through", "desc": "Explore the space", "prompt": "Turn my apartment into a 3D walk-through"},
+      {"type": "board", "title": "Material & furniture board", "desc": "Sourced, costed", "prompt": "Build a material & furniture board for this space"}
+    ],
+    "blurb": "Designs spaces — floor plan, explorable 3D, material board, buildable spec"
+  },
+  "genius_wolfgang": {
+    "label": "Wolfgang", "category": "genius", "kind": "creator", "skills": ["higgsfield-generate", "audio-to-score", "compose-score"],
+    "starters": ["Compose a theme for this project", "Write a song about this topic", "Make an ambient soundtrack", "Transcribe this audio into a score", "Turn my whistling into a score", "Compose a piano piece — free, with the score"],
+    "examples": [
+      {"type": "track", "title": "Original theme", "desc": "Composed for you", "prompt": "Compose a theme for this project"},
+      {"type": "track", "title": "Song with score", "desc": "Lyrics + notation", "prompt": "Write a song about this topic"},
+      {"type": "track", "title": "Audio → score", "desc": "Transcribed to notation", "prompt": "Transcribe this audio into a score"}
+    ],
+    "blurb": "Composes original music — songs, scores, soundtracks; transcribes audio to notation"
+  },
+  "genius_homer": {
+    "label": "Homer", "category": "genius", "kind": "creator", "skills": ["higgsfield-generate"],
+    "starters": ["Write a podcast episode on this theme", "Give this script a voice", "Edit a full episode"],
+    "examples": [
+      {"type": "podcast", "title": "Podcast episode", "desc": "Scripted + voiced", "prompt": "Write a podcast episode on this theme"},
+      {"type": "podcast", "title": "Voiced read", "desc": "Your script, spoken", "prompt": "Give this script a voice"},
+      {"type": "podcast", "title": "Edited episode", "desc": "Full cut", "prompt": "Edit a full episode"}
+    ],
+    "blurb": "Scripts, voices and edits full podcasts"
+  },
+  "genius_hitchcock": {
+    "label": "Hitchcock", "role": "le suspense", "category": "genius", "kind": "creator", "skills": ["higgsfield-generate", "higgsfield-soul-id"],
+    "starters": ["Direct a short film from this idea", "Storyboard this scene", "Compose the image, music, and voice"],
+    "examples": [
+      {"type": "film", "title": "Short film", "desc": "From an idea", "prompt": "Direct a short film from this idea"},
+      {"type": "film", "title": "Storyboard", "desc": "Shot by shot", "prompt": "Storyboard this scene"},
+      {"type": "film", "title": "Image + score + voice", "desc": "In one cut", "prompt": "Compose the image, music, and voice"}
+    ],
+    "blurb": "Directs short films — storyboard first, then visual + score + voice, in one cut"
+  },
+  "genius_bronte": {
+    "label": "Brontë", "category": "genius", "kind": "creator", "skills": ["prose-gen", "paper-search", "higgsfield-generate", "higgsfield-soul-id", "docx", "web-deploy"],
+    "starters": ["Build the world of this novel", "Write the first chapter", "Develop this character and their arc"],
+    "examples": [
+      {"type": "book", "title": "Novel world", "desc": "Built from scratch", "prompt": "Build the world of this novel"},
+      {"type": "book", "title": "First chapter", "desc": "In your voice", "prompt": "Write the first chapter"},
+      {"type": "book", "title": "Character & arc", "desc": "Developed", "prompt": "Develop this character and their arc"}
+    ],
+    "blurb": "Writes novels — characters, arcs, world, voice, a real book by chapter"
+  },
+  "genius_ride": {
+    "label": "Ride", "category": "genius", "kind": "researcher", "skills": ["nasa-api", "astropy", "astro-data", "sky-viz", "nasa-eyes", "frontend-slides", "web-deploy"],
+    "starters": ["What's in the sky tonight?", "Fly me through the Cassini Grand Finale", "When does the ISS pass over me?"],
+    "examples": [
+      {"type": "sky", "title": "Sky tonight", "desc": "Live, where you are", "prompt": "What's in the sky tonight?"},
+      {"type": "sky", "title": "Cassini fly-through", "desc": "The Grand Finale", "prompt": "Fly me through the Cassini Grand Finale"},
+      {"type": "site", "title": "ISS pass page", "desc": "Live, gorgeous", "prompt": "When does the ISS pass over me?"}
+    ],
+    "blurb": "Reads the sky live — NASA/ESA/JWST feeds, sky tonight, ISS passes — as gorgeous live pages"
+  },
+  "genius_curie": {
+    "label": "Curie", "category": "genius", "kind": "researcher", "skills": ["database-lookup", "primekg", "pytdc", "paper-lookup", "biopython", "diffdock", "rdkit", "medchem", "esm", "molecular-dynamics", "scanpy", "pymatgen", "paper-search"],
+    "starters": ["Investigate a rare disease", "Find the target protein for this condition", "Propose a drug to repurpose for this disease"],
+    "examples": [
+      {"type": "molecule", "title": "Target protein", "desc": "Found & structured", "prompt": "Find the target protein for this condition"},
+      {"type": "molecule", "title": "Drug to repurpose", "desc": "A docked candidate", "prompt": "Propose a drug to repurpose for this disease"},
+      {"type": "doc", "title": "Rare-disease dossier", "desc": "Clinically grounded", "prompt": "Investigate a rare disease"}
+    ],
+    "blurb": "Frontier scientist for orphan diseases — clinical grounding, target proteins & structures, drug repurposing"
+  },
+  "genius_tesla": {
+    "label": "Tesla", "category": "genius", "kind": "builder", "skills": ["cad-design", "ui-ux-pro-max", "web-deploy", "docx"],
+    "starters": ["Model this part in 3D", "Design an enclosure for this board", "Animate this mechanism"],
+    "examples": [
+      {"type": "part", "title": "3D-printable part", "desc": "Parametric, exportable", "prompt": "Model this part in 3D"},
+      {"type": "part", "title": "Board enclosure", "desc": "Fitted, vented", "prompt": "Design an enclosure for this board"},
+      {"type": "part", "title": "Animated mechanism", "desc": "Motion, blueprinted", "prompt": "Animate this mechanism"}
+    ],
+    "blurb": "Designs 3D-printable parts & mechanisms — parametric CAD, animated, with 2D blueprints, in a shareable report"
+  },
+  "genius_alfred": {
+    "label": "Alfred", "role": "Majordome", "category": "genius", "kind": "operator", "skills": [], "status": "next",
+    "blurb": "Your majordome — drives your apps with your logins, books, runs admin"
+  },
+  "genius_socrates": {
+    "label": "Socrates", "category": "genius", "kind": "recruiter", "skills": [],
+    "starters": ["Help me create a custom expert", "Which expert is missing from my roster?", "Interview me to pin down my need"],
+    "examples": [
+      {"type": "doc", "title": "Custom expert spec", "desc": "Persona + skills", "prompt": "Help me create a custom expert"},
+      {"type": "board", "title": "Roster gap analysis", "desc": "What's missing", "prompt": "Which expert is missing from my roster?"},
+      {"type": "doc", "title": "Needs interview", "desc": "Your need, pinned down", "prompt": "Interview me to pin down my need"}
+    ],
+    "blurb": "Interviews you to design your own custom experts"
+  },
+  "genius_indiana": {
+    "label": "Indie", "role": "Archive hunter", "category": "genius", "kind": "finder", "skills": ["paper-search", "docx", "web-deploy"], "status": "next",
+    "blurb": "Hunts rare manuscripts, lost archives, out-of-print texts and forgotten primary sources"
+  },
+  "genius_maradona": {
+    "label": "Maradona", "role": "Le Diez", "category": "genius", "kind": "analyst", "skills": ["football-data", "metadata", "sports-news", "sports-reporter", "frontend-slides", "docx", "web-deploy"],
+    "starters": ["Build the dossier for tonight's match", "Break down their tactics and the key duel", "Who's lighting up the World Cup?"],
+    "examples": [
+      {"type": "pitch", "title": "Match dossier", "desc": "Form, xG, key duel", "prompt": "Build the dossier for tonight's match"},
+      {"type": "pitch", "title": "Tactical breakdown", "desc": "The key duel", "prompt": "Break down their tactics and the key duel"},
+      {"type": "deck", "title": "World Cup watch", "desc": "Who's on fire", "prompt": "Who's lighting up the World Cup?"}
+    ],
+    "blurb": "Reads any match like the No.10 — live football dossiers: form, xG, the key duel, his verdict"
+  },
+  "genius_marcopolo": {
+    "label": "Marco Polo", "role": "le voyageur", "category": "genius", "kind": "organizer", "skills": ["higgsfield-generate", "frontend-slides", "web-deploy", "docx"], "status": "next",
+    "starters": ["Plan a 10-day trip to Japan", "Design a weekend in a city I'll love", "Build an off-the-beaten-path itinerary", "Turn this destination into a day-by-day carnet"],
+    "examples": [
+      {"type": "map", "title": "10-day Japan trip", "desc": "Day by day", "prompt": "Plan a 10-day trip to Japan"},
+      {"type": "map", "title": "Off-beat itinerary", "desc": "Real places", "prompt": "Build an off-the-beaten-path itinerary"},
+      {"type": "map", "title": "Day-by-day carnet", "desc": "Carry it with you", "prompt": "Turn this destination into a day-by-day carnet"}
+    ],
+    "blurb": "Designs trips — day-by-day itineraries, real places, a carnet you carry"
+  },
+  "genius_vatel": {
+    "label": "Vatel", "role": "maître d'hôtel", "category": "genius", "kind": "organizer", "skills": ["higgsfield-generate", "taste-design", "frontend-slides", "web-deploy", "docx"],
+    "starters": ["Stage a dinner party for 12", "Design the menu and the table for this event", "Plan the run-of-show for my reception", "Turn this occasion into an unforgettable evening"],
+    "examples": [
+      {"type": "table", "title": "Dinner for 12", "desc": "Staged end to end", "prompt": "Stage a dinner party for 12"},
+      {"type": "table", "title": "Menu & table design", "desc": "Scenography", "prompt": "Design the menu and the table for this event"},
+      {"type": "plan", "title": "Run-of-show", "desc": "Minute by minute", "prompt": "Plan the run-of-show for my reception"}
+    ],
+    "blurb": "Stages events — menu, table scenography, run-of-show, an unforgettable evening"
+  },
 
-  "coach_diet":      {"label": "Diet Coach",                          "category": "coach", "kind": "coach", "role": "nutrition", "skills": ["coach-tracker", "docx", "frontend-slides"],                           "starters": ["Make me a meal plan for the week", "Decode this nutrition label", "Tune my meals to my goal"], "blurb": "Builds meal plans, decodes nutrition labels, holds you accountable"},
-  "coach_learning":  {"label": "Learning Coach",                      "category": "coach", "kind": "coach", "role": "study", "skills": ["coach-tracker", "paper-search", "docx", "frontend-slides"],               "starters": ["Draft me a syllabus for this subject", "Create flashcards on this topic", "Plan my reviews for the week"], "blurb": "Maps a syllabus for any topic, ships flashcards & weekly checks"},
-  "coach_sport":     {"label": "Sport Coach",                         "category": "coach", "kind": "coach", "role": "training", "skills": ["coach-tracker", "docx", "frontend-slides"],                            "starters": ["Design my training cycle", "Plan my progressive overload", "Adapt my session to my recovery"], "blurb": "Designs your training cycle, progressive overload, recovery plan"},
-  "coach_cooking":   {"label": "Cooking Coach",                       "category": "coach", "kind": "coach", "role": "cuisine", "skills": ["coach-tracker", "docx", "frontend-slides"],             "starters": ["Teach me a core technique", "Scale this recipe for 6 people", "Suggest substitutions for an ingredient"], "blurb": "Teaches techniques, scales recipes, suggests substitutions live"}
+  "coach_diet": {
+    "label": "Diet Coach", "category": "coach", "kind": "coach", "role": "nutrition", "skills": ["coach-tracker", "docx", "frontend-slides"],
+    "starters": ["Make me a meal plan for the week", "Decode this nutrition label", "Tune my meals to my goal"],
+    "examples": [
+      {"type": "plan", "title": "Weekly meal plan", "desc": "Macro-balanced", "prompt": "Make me a meal plan for the week"},
+      {"type": "doc", "title": "Label decode", "desc": "What's really in it", "prompt": "Decode this nutrition label"},
+      {"type": "plan", "title": "Goal-tuned meals", "desc": "Adjusted to you", "prompt": "Tune my meals to my goal"}
+    ],
+    "blurb": "Builds meal plans, decodes nutrition labels, holds you accountable"
+  },
+  "coach_learning": {
+    "label": "Learning Coach", "category": "coach", "kind": "coach", "role": "study", "skills": ["coach-tracker", "paper-search", "docx", "frontend-slides"],
+    "starters": ["Draft me a syllabus for this subject", "Create flashcards on this topic", "Plan my reviews for the week"],
+    "examples": [
+      {"type": "plan", "title": "Subject syllabus", "desc": "Week by week", "prompt": "Draft me a syllabus for this subject"},
+      {"type": "board", "title": "Flashcard deck", "desc": "Spaced repetition", "prompt": "Create flashcards on this topic"},
+      {"type": "plan", "title": "Weekly review plan", "desc": "Scheduled recalls", "prompt": "Plan my reviews for the week"}
+    ],
+    "blurb": "Maps a syllabus for any topic, ships flashcards & weekly checks"
+  },
+  "coach_sport": {
+    "label": "Sport Coach", "category": "coach", "kind": "coach", "role": "training", "skills": ["coach-tracker", "docx", "frontend-slides"],
+    "starters": ["Design my training cycle", "Plan my progressive overload", "Adapt my session to my recovery"],
+    "examples": [
+      {"type": "plan", "title": "Training cycle", "desc": "Periodized", "prompt": "Design my training cycle"},
+      {"type": "plan", "title": "Progressive overload", "desc": "Week by week", "prompt": "Plan my progressive overload"},
+      {"type": "dashboard", "title": "Recovery-tuned session", "desc": "Adapted to today", "prompt": "Adapt my session to my recovery"}
+    ],
+    "blurb": "Designs your training cycle, progressive overload, recovery plan"
+  },
+  "coach_cooking": {
+    "label": "Cooking Coach", "category": "coach", "kind": "coach", "role": "cuisine", "skills": ["coach-tracker", "docx", "frontend-slides"],
+    "starters": ["Teach me a core technique", "Scale this recipe for 6 people", "Suggest substitutions for an ingredient"],
+    "examples": [
+      {"type": "doc", "title": "Technique lesson", "desc": "Step by step", "prompt": "Teach me a core technique"},
+      {"type": "doc", "title": "Scaled recipe", "desc": "For 6 people", "prompt": "Scale this recipe for 6 people"},
+      {"type": "doc", "title": "Substitution guide", "desc": "What swaps for what", "prompt": "Suggest substitutions for an ingredient"}
+    ],
+    "blurb": "Teaches techniques, scales recipes, suggests substitutions live"
+  }
 }

@@ -14,6 +14,10 @@ exclamation marks. Lead with what the screen does; defend the design second.
 
 ## Skills mounted
 - **ui-ux-pro-max** — your taste floor. Read its system before generating.
+- **taste-design** — author a `DESIGN.md` (the project's design contract) at
+  the start, then audit your rendered mockup against it before handoff
+  (`python3 scripts/audit.py <file>`). It decides the system; `ui-ux-pro-max`
+  fills it.
 
 ## Context first — good design is never from scratch
 Ask for real material before mocking: a codebase to match, a UI kit, brand

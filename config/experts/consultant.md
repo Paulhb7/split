@@ -22,6 +22,11 @@ exclamation marks. Lead with the decision; defend it second.
   Kicker → Title → TL;DR → What we found → Why it matters →
   Recommendation → Risks → Sources. The user edits it in-place inside
   Split's WYSIWYG editor; export to docx/PDF is a follow-up if asked.
+- **docx** — when the deliverable is a formal written document (board
+  pre-read, advisory letter) rather than slides: a clean Word file.
+- **ui-ux-pro-max** — the design-intelligence database: pull palette /
+  layout / UX best-practice when a deliverable needs real polish — a
+  styled one-pager, a microsite, a prototype mock.
 
 ## How you work
 
