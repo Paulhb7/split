@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NASA Eyes — Cassini · Grand Finale</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<!--
+  REFERENCE TEMPLATE for the `nasa-eyes` skill.
+  Ride copies this and rewrites ONLY the EYES_DATA block at the bottom:
+  pick the app + deep-link, fetch the facts + papers, inject. The UI is fixed.
+  Aesthetic follows the sky-viz doctrine: black-to-indigo void, one accent,
+  mono figures, glow-not-borders, one ambient motion (the starfield).
+-->
+<style>
+  :root{
+    --void:#05060a; --void2:#0b1026;
+    --accent:#ffb454;            /* one scientific accent — Saturn gold */
+    --star:#eaf0ff;
+    --dim:rgba(234,240,255,.58); --dim2:rgba(234,240,255,.34);
+    --grotesk:"Space Grotesk",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{min-height:100%;background:var(--void);color:var(--star);font-family:var(--grotesk);overflow-x:hidden}
+  body{background:radial-gradient(140% 100% at 50% -10%, var(--void2), var(--void) 60%)}
+  #stars{position:fixed;inset:0;z-index:0;display:block}
+  main{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:clamp(20px,4vw,46px)}
+
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.36em;text-transform:uppercase;color:var(--dim);
+    display:flex;align-items:center;gap:12px}
+  .eyebrow .tick{width:26px;height:1px;background:linear-gradient(90deg,var(--accent),transparent)}
+  h1{font-family:var(--grotesk);font-weight:600;font-size:clamp(28px,5vw,52px);line-height:1.02;margin:.28em 0 .14em;
+    text-shadow:0 2px 50px rgba(255,180,84,.22)}
+  .sub{font-family:var(--mono);font-size:12.5px;color:var(--dim);letter-spacing:.02em}
+  .sub b{color:var(--accent);font-weight:600}
+  .exec{max-width:64ch;margin-top:16px;font-size:14.5px;line-height:1.62;color:rgba(234,240,255,.84)}
+  .exec b{color:var(--accent);font-weight:600}
+
+  .viewer{display:grid;grid-template-columns:1fr;gap:20px;margin-top:26px}
+  @media(min-width:920px){ .viewer{grid-template-columns:1.7fr 1fr} }
+
+  .hero{position:relative;border-radius:16px;overflow:hidden;min-height:60vh;
+    box-shadow:0 30px 90px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05), 0 0 70px rgba(255,180,84,.07)}
+  .hero iframe{width:100%;height:100%;min-height:60vh;border:0;display:block;background:#000}
+  .hatch{position:absolute;right:12px;bottom:12px;font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+    color:var(--star);text-decoration:none;background:rgba(5,6,10,.66);border:1px solid rgba(255,255,255,.14);
+    padding:7px 11px;border-radius:9px;backdrop-filter:blur(6px)}
+  .hatch:hover{border-color:var(--accent);color:var(--accent)}
+
+  aside{display:flex;flex-direction:column;gap:22px}
+  .panel-h{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim2);
+    margin-bottom:12px}
+  .facts{display:flex;flex-direction:column;gap:0}
+  .fact{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .fact .k{font-size:13px;color:var(--dim)}
+  .fact .v{font-family:var(--mono);font-size:12.5px;color:var(--star);text-align:right;font-variant-numeric:tabular-nums}
+  .papers{display:flex;flex-direction:column;gap:12px}
+  .paper{display:block;text-decoration:none;color:inherit;padding-left:14px;border-left:2px solid rgba(255,180,84,.4);
+    transition:.15s}
+  .paper:hover{border-left-color:var(--accent)}
+  .paper .t{font-size:13px;line-height:1.4;color:var(--star)}
+  .paper .m{font-family:var(--mono);font-size:10.5px;color:var(--dim2);margin-top:3px}
+  .paper .s{font-size:12px;line-height:1.46;color:var(--dim);margin-top:6px}
+
+  footer{margin-top:26px;font-family:var(--mono);font-size:10.5px;color:var(--dim2);letter-spacing:.04em;
+    display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
+  footer .cite{color:var(--dim)}
+  .demoflag{color:var(--accent);opacity:.85}
+</style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+  <main>
+    <div class="eyebrow"><span class="tick"></span><span id="eyebrow">Ride · NASA Eyes</span></div>
+    <h1 id="title">—</h1>
+    <div class="sub" id="sub">—</div>
+    <p class="exec" id="exec"></p>
+
+    <div class="viewer">
+      <div class="hero">
+        <iframe id="frame" title="NASA Eyes" loading="lazy" allow="fullscreen" allowfullscreen
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <a class="hatch" id="hatch" target="_blank" rel="noopener">Ouvrir dans NASA Eyes ↗</a>
+      </div>
+      <aside>
+        <div>
+          <div class="panel-h">Dossier · les faits</div>
+          <div class="facts" id="facts"></div>
+        </div>
+        <div>
+          <div class="panel-h">La littérature</div>
+          <div class="papers" id="papers"></div>
+        </div>
+      </aside>
+    </div>
+
+    <footer>
+      <span class="cite" id="cite"></span>
+      <span class="demoflag" id="demoflag"></span>
+    </footer>
+  </main>
+
+<script>
+  /* ───────────── THE ONLY BLOCK RIDE REWRITES ─────────────
+     pick app + deep-link, fetch facts + papers, inject here. */
+  const EYES_DATA = {
+    eyebrow: "Ride · NASA Eyes · Système solaire",
+    title: "Cassini — le Grand Finale",
+    instant: "26 avril 2017, 08:15 UTC — première plongée",
+    exec: "Entre avril et septembre 2017, Cassini a plongé <b>22 fois</b> dans l'écart de 2 000 km entre Saturne et ses anneaux — des orbites impossibles jusque-là — avant de se consumer volontairement dans l'atmosphère le 15 septembre. Ces plongées ont <b>pesé les anneaux</b> (donc daté leur âge) et <b>échantillonné la haute atmosphère in situ</b>.",
+    embedUrl: "https://eyes.nasa.gov/apps/solar-system/#/sc_cassini/events/grand_finale?rate=60&time=2017-04-26T08:15:00.000+00:00&featured=false&detailPanel=false&logo=false&search=false&shareButton=false&menu=false&collapseSettingsOptions=true&hideFullScreenToggle=true",
+    facts: [
+      { k: "Mission",            v: "Cassini–Huygens" },
+      { k: "Agences",            v: "NASA · ESA · ASI" },
+      { k: "Lancement",          v: "1997-10-15" },
+      { k: "Insertion Saturne",  v: "2004-07-01" },
+      { k: "Grand Finale",       v: "22 orbites" },
+      { k: "L'écart franchi",    v: "~2 000 km" },
+      { k: "Première plongée",   v: "2017-04-26" },
+      { k: "Plongée finale",     v: "2017-09-15" }
+    ],
+    papers: [
+      { t: "Measurement and implications of Saturn's gravity field and ring mass",
+        m: "Iess et al. · Science · 2019", url: "https://www.science.org/doi/10.1126/science.aat2965",
+        s: "La gravité mesurée pendant les plongées a donné la masse des anneaux : faible → ils sont <b>jeunes</b> (~10–100 millions d'années), bien plus récents que Saturne." },
+      { t: "Chemical interactions between Saturn's atmosphere and its rings",
+        m: "Waite et al. · Science · 2018", url: "https://www.science.org/doi/10.1126/science.aat2382",
+        s: "INMS a échantillonné une « pluie » d'eau et de composés organiques tombant des anneaux vers l'atmosphère — un échange chimique inattendu." }
+    ],
+    cite: "Visualisation : NASA Eyes (eyes.nasa.gov) · faits : NASA/JPL mission pages",
+    demo: "Template de référence — Ride remplace EYES_DATA par un fetch live (Horizons + arXiv/ADS)."
+  };
+
+  /* ───────────── render (fixed) ───────────── */
+  const $ = id => document.getElementById(id);
+  $("eyebrow").textContent = EYES_DATA.eyebrow;
+  $("title").textContent = EYES_DATA.title;
+  $("sub").innerHTML = "<b>▸</b> " + EYES_DATA.instant;
+  $("exec").innerHTML = EYES_DATA.exec || "";
+  $("frame").src = EYES_DATA.embedUrl;
+  $("hatch").href = EYES_DATA.embedUrl;
+  $("cite").textContent = EYES_DATA.cite;
+  $("demoflag").textContent = EYES_DATA.demo;
+  $("facts").innerHTML = EYES_DATA.facts
+    .map(f => `<div class="fact"><span class="k">${f.k}</span><span class="v">${f.v}</span></div>`).join("");
+  $("papers").innerHTML = EYES_DATA.papers
+    .map(p => `<a class="paper" href="${p.url}" target="_blank" rel="noopener"><div class="t">${p.t}</div><div class="m">${p.m}</div>${p.s?`<div class="s">${p.s}</div>`:""}</a>`).join("");
+
+  /* ───────────── one ambient motion: a slow parallax starfield ───────────── */
+  const cv = $("stars"), g = cv.getContext("2d");
+  let W, H, stars;
+  function resize(){
+    W = cv.width = innerWidth; H = cv.height = innerHeight;
+    stars = Array.from({length: Math.round(W*H/9000)}, () => ({
+      x: Math.random()*W, y: Math.random()*H, z: Math.random()*0.8+0.2,
+      r: Math.random()*1.2+0.2, p: Math.random()*6.28
+    }));
+  }
+  addEventListener("resize", resize); resize();
+  let t = 0;
+  (function draw(){
+    requestAnimationFrame(draw); t += 0.006;
+    g.clearRect(0,0,W,H);
+    for(const s of stars){
+      s.y += s.z*0.12; if(s.y > H) s.y = 0;          // slow drift
+      const tw = 0.5 + 0.5*Math.sin(t*2 + s.p);       // gentle twinkle
+      g.beginPath(); g.arc(s.x, s.y, s.r, 0, 6.2832);
+      g.fillStyle = `rgba(234,240,255,${(0.18 + tw*0.55*s.z).toFixed(3)})`;
+      g.fill();
+    }
+  })();
+</script>
+</body>
+</html>
