@@ -1,8 +1,9 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { H } from "../shared/harnesses";
 import { Tile, League, vars } from "../shared/ui";
 import { useHarnessStates } from "../shared/useHarnessStates";
+import { useHarnessScan, rankHarnesses, healthOf, type Health } from "../shared/useHarnessScan";
 import { useExperts } from "../shared/util";
 import { isActiveExpert, type Expert, type ExpertKind, type ExpertMap } from "../shared/experts";
 import { SKINS, type Skin } from "../shared/skins";
@@ -179,9 +180,32 @@ export default function Onboarding({
   const [ficheSlug, setFicheSlug] = useState<string | null>(null);
   const lifecycle = useHarnessStates();
   const { states, progress } = lifecycle;
+  const scan = useHarnessScan();
   const experts = useExperts();
 
-  const engineId = picks[0] || "claude"; // "primary" = the first picked agent
+  // Ranked best-first by machine-scan health (installed+signed-in wins). Drives
+  // the "Recommended" featured card and the post-scan auto-seed.
+  const ranked = useMemo(
+    () => rankHarnesses(scan.byId, scan.scanning),
+    [scan.byId, scan.scanning],
+  );
+  const recommended = ranked[0] ?? "claude";
+
+  // Auto-select the best detected agent(s) once the scan settles — but never
+  // overwrite an explicit choice (the anti-race lesson: an App-level autoselect
+  // guard). `touched` flips on the first manual toggle.
+  const [touched, setTouched] = useState(false);
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (touched || scan.scanning || seededRef.current) return;
+    seededRef.current = true;
+    const ready = ranked.filter((id) => healthOf(scan.byId[id], false) === "ready");
+    setPicks(ready.length ? ready : [recommended]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scan.scanning]);
+
+  // "primary" = the user's first explicit pick, else the recommended best.
+  const engineId = picks[0] ?? recommended;
   const primarySt = states[engineId];
   const accent = H[engineId].brand;
   // Only override `--brand` once the user has actually picked an agent. Before
@@ -198,7 +222,16 @@ export default function Onboarding({
   // 4 pages: welcome (0) · theme (1) · pick (2) · brief (3).
   // Page 2 = picker; can't advance until at least one agent is selected.
   const canNext = page !== 2 || picks.length > 0;
-  const toggle = (id: string) => setPicks((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  const toggle = (id: string) => {
+    setTouched(true);
+    setPicks((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  };
+
+  // Featured-card health + how many CLIs the scan actually found on this machine.
+  const primaryHealth: Health = healthOf(scan.byId[engineId], scan.scanning);
+  const primaryVersion = scan.byId[engineId]?.version;
+  const foundCount = Object.values(scan.byId).filter((d) => d.available).length;
+  const isRecommended = !touched && engineId === recommended;
 
   return (
     <div className="ob2" style={engineStyle}>
@@ -281,16 +314,48 @@ export default function Onboarding({
           <div className="stagger">
             <div className="ob-eyebrow">pick your agents · 02</div>
             <h2 className="ob2-h2">Pick your <em>agents</em></h2>
-            <div className="ob2-pickhint">The ones you have access to. Split shows only these; add more anytime. {picks.length > 0 && <b>{picks.length} selected</b>}</div>
-            <League isSelected={(id) => picks.includes(id)} onPick={toggle} lifecycle={lifecycle} />
-            {picks.length > 0 && primarySt && (
-              <div className="ob2-primary" style={vars({ "--brand": H[engineId].brand })}>
+            <div className="ob2-scanline">
+              {scan.scanning ? (
+                <span className="ob2-scanstat scanning">
+                  <span className="ob2-scandot" aria-hidden="true" />
+                  Scanning your machine for installed agents…
+                </span>
+              ) : (
+                <span className="ob2-scanstat">
+                  {foundCount > 0
+                    ? <>Found <b>{foundCount}</b> agent{foundCount > 1 ? "s" : ""} ready on your machine.</>
+                    : <>No agents detected yet — install one below, or it'll fetch on first run.</>}
+                </span>
+              )}
+              <button type="button" className="ob2-rescan" onClick={scan.rescan} disabled={scan.scanning}>
+                ↻ Rescan
+              </button>
+            </div>
+
+            {/* Recommended featured card — the best detected agent, auto-picked,
+                with its install + sign-in steps inline (a featured Connect card,
+                minus the cloud-runtime upsell). */}
+            {primarySt && (
+              <div className={"ob2-primary" + (isRecommended ? " recommended" : "")} style={vars({ "--brand": H[engineId].brand })}>
                 <div className="ob2-primary-head">
                   <Tile id={engineId} size={32} />
                   <div className="ob2-primary-id">
                     <b>{H[engineId].label}</b>
-                    <span className="ob2-primary-tag">primary — we install &amp; sign in this one now; others stay lazy</span>
+                    <span className="ob2-primary-tag">
+                      {isRecommended
+                        ? "recommended — best detected on your machine; install & sign in now, others stay lazy"
+                        : "primary — install & sign in this one now; others stay lazy"}
+                    </span>
                   </div>
+                  <span className={"ob2-primary-health sb-" + primaryHealth}>
+                    {primaryHealth === "ready"
+                      ? (primaryVersion ? `✓ ${primaryVersion}` : "✓ ready")
+                      : primaryHealth === "needs-auth"
+                        ? "needs sign-in"
+                        : primaryHealth === "needs-install"
+                          ? "needs install"
+                          : "scanning…"}
+                  </span>
                 </div>
                 <div className="ob2-primary-steps">
                   <PrimaryStep
@@ -313,6 +378,9 @@ export default function Onboarding({
                 </div>
               </div>
             )}
+
+            <div className="ob2-pickhint">The ones you have access to. Split shows only these; add more anytime. {picks.length > 0 && <b>{picks.length} selected</b>}</div>
+            <League isSelected={(id) => picks.includes(id)} onPick={toggle} lifecycle={lifecycle} scan={scan} />
           </div>
         )}
 
@@ -383,7 +451,14 @@ export default function Onboarding({
         <div className="ob2-actions">
           {page > 0 && <button className="btn ghost" onClick={() => setPage((p) => p - 1)}>← back</button>}
           {page < 3 ? (
-            <button className="btn" disabled={!canNext} onClick={() => setPage((p) => p + 1)}>{page === 2 ? "Continue →" : "Next →"}</button>
+            <button
+              className="btn"
+              disabled={!canNext}
+              title={!canNext ? "Pick at least one agent to continue" : undefined}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              {page === 2 ? "Continue →" : "Next →"}
+            </button>
           ) : (
             <button className="btn" onClick={() => onEnter(picks)}>Enter Split →</button>
           )}

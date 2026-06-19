@@ -15,6 +15,9 @@
 //! * [`harness_config`] — Hermes/OpenCode model-picker translation
 //!   (CLI args + managed config dir). Mirrors
 //!   `split.core.apply_{hermes,opencode}_config`.
+//! * [`detection`] — portable wire types + pure `--version`-probe
+//!   classification behind the desktop "scan your machine" onboarding
+//!   (the I/O lives in the desktop crate's `scan_harnesses`).
 //!
 //! What is NOT here, intentionally:
 //!   * The ACP runner itself — it depends on the `agent-client-protocol`
@@ -24,6 +27,7 @@
 //!   * Tauri commands / IPC plumbing.
 
 pub mod archive;
+pub mod detection;
 pub mod harness_config;
 pub mod permissions;
 pub mod persona;

@@ -1,5 +1,5 @@
 {
-  "_comment": "ACP agent launch configs. Commands/versions come from the ACP registry (registry-main/<id>/agent.json). skill_dir is where THAT agent looks for project skills relative to the session cwd (workspace/) — this is the per-harness 'mounting glue' that differs even though the SKILL.md itself is identical. `install` + `configure` declare how the desktop UI bootstraps each agent (Install/Configure buttons on the harness card).",
+  "_comment": "ACP agent launch configs. Commands/versions come from the ACP registry (registry-main/<id>/agent.json). skill_dir is where THAT agent looks for project skills relative to the session cwd (workspace/) — this is the per-harness 'mounting glue' that differs even though the SKILL.md itself is identical. `install` + `configure` declare how the desktop UI bootstraps each agent (Install/Configure buttons on the harness card). `probe` declares how `scan_harnesses` detects whether the agent is really present on THIS machine: `bin` is the vendor CLI the user signs in with (NOT `npx`, which is always present and proves nothing — the ACP adapter package itself is fetched lazily by npx at launch). `bin_env_key` lets a power user pin an explicit path (e.g. CLAUDE_BIN). When `probe` is omitted, detection falls back to the launch `command` (correct for ./var/bin binaries).",
 
   "claude": {
     "name": "Claude Code (claude-acp)",
@@ -8,6 +8,7 @@
     "skill_dir": ".claude/skills",
     "auth": "Run `claude login` first (Pro/Max), or set ANTHROPIC_API_KEY. The agent handles its own auth (ACP 'Agent Auth').",
     "install": { "kind": "npx" },
+    "probe": { "bin": "claude", "version_args": ["--version"], "bin_env_key": "CLAUDE_BIN" },
     "configure": { "kind": "oauth", "check_file": "~/.claude/.credentials.json", "check_env": "ANTHROPIC_API_KEY" }
   },
 
@@ -18,6 +19,7 @@
     "skill_dir": ".agents/skills",
     "auth": "Run `codex login` first (ChatGPT/Codex subscription), or set OPENAI_API_KEY.",
     "install": { "kind": "npx" },
+    "probe": { "bin": "codex", "version_args": ["--version"], "bin_env_key": "CODEX_BIN" },
     "configure": { "kind": "oauth", "check_file": "~/.codex/auth.json", "check_env": "OPENAI_API_KEY" }
   },
 
@@ -28,6 +30,7 @@
     "skill_dir": ".agents/skills",
     "auth": "Google login via the gemini CLI (free tier) or GEMINI_API_KEY. The agent handles its own auth.",
     "install": { "kind": "npx" },
+    "probe": { "bin": "gemini", "version_args": ["--version"], "bin_env_key": "GEMINI_BIN" },
     "configure": { "kind": "oauth", "check_file": "~/.gemini/oauth_creds.json", "check_env": "GEMINI_API_KEY" }
   },
 
@@ -39,6 +42,7 @@
     "auth": "DASHSCOPE_API_KEY in .env (Qwen OAuth free tier ended Apr 15 2026). Gemini-CLI fork; native --experimental-skills.",
     "note": "Qwen brain — pairs with your local Ollama qwen3.5.",
     "install": { "kind": "npx" },
+    "probe": { "bin": "qwen", "version_args": ["--version"], "bin_env_key": "QWEN_BIN" },
     "configure": { "kind": "api-key", "key": "DASHSCOPE_API_KEY" }
   },
 
@@ -49,6 +53,7 @@
     "skill_dir": ".agents/skills",
     "auth": "Model-agnostic (75+ providers incl. local). For a zero-key local brain, configure an Ollama provider (http://localhost:11434/v1). Cloud providers via `opencode auth login`.",
     "install": { "kind": "external", "docUrl": "https://opencode.ai/docs/install" },
+    "probe": { "bin": "opencode", "version_args": ["--version"], "fallback_bins": ["./var/bin/opencode"], "bin_env_key": "OPENCODE_BIN" },
     "configure": {
       "kind": "model-picker",
       "docUrl": "https://opencode.ai/docs/providers"
@@ -62,6 +67,7 @@
     "skill_dir": ".agents/skills",
     "auth": "GitHub Copilot subscription (gh auth login with Copilot enabled) or GH_TOKEN.",
     "install": { "kind": "npx" },
+    "probe": { "bin": "copilot", "version_args": ["--version"], "fallback_bins": ["gh"], "bin_env_key": "COPILOT_BIN" },
     "configure": { "kind": "oauth", "check_file": "~/.config/gh/hosts.yml", "check_env": "GH_TOKEN" }
   },
 
@@ -72,6 +78,7 @@
     "skill_dir": ".agents/skills",
     "auth": "Cursor subscription — `cursor-agent login` or CURSOR_API_KEY (proprietary).",
     "install": { "kind": "external", "docUrl": "https://cursor.com/cli" },
+    "probe": { "bin": "cursor-agent", "version_args": ["--version"], "fallback_bins": ["./var/bin/dist-package/cursor-agent"], "bin_env_key": "CURSOR_AGENT_BIN" },
     "configure": { "kind": "oauth", "check_file": "~/.cursor/credentials.json", "check_env": "CURSOR_API_KEY" }
   },
 
@@ -83,6 +90,7 @@
     "auth": "Set MISTRAL_API_KEY (cloud). Download the vibe-acp binary into var/bin/ first — see README.",
     "note": "No npx distribution; ships as a platform binary. Vibe scans its own `.vibe/` config dir for skills + agent instructions, so `skill_dir = .vibe/skills` and `install_persona` also projects the persona into `<ws>/.vibe/AGENTS.md` (in addition to the universal `<ws>/AGENTS.md`). See split/core.py:install_persona.",
     "install": { "kind": "external", "docUrl": "https://docs.mistral.ai/agents/vibe/" },
+    "probe": { "bin": "./var/bin/vibe-acp", "version_args": ["--version"] },
     "configure": { "kind": "api-key", "key": "MISTRAL_API_KEY" }
   },
 
@@ -98,6 +106,7 @@
       "url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh",
       "binary": "hermes"
     },
+    "probe": { "bin": "hermes", "version_args": ["--version"], "bin_env_key": "HERMES_BIN" },
     "configure": {
       "kind": "model-picker",
       "docUrl": "https://github.com/NousResearch/hermes-agent"

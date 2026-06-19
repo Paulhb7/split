@@ -3,9 +3,11 @@ import type { ExpertKind } from "./experts";
 import { vars } from "./ui";
 import majordomeUrl from "./majordome.svg";
 
-// Below this coin size (px) the house signet is hidden: the majordome inside a
-// ~16px sphere collapses to a blob, so chrome-size crests (rails, rows) stay
-// clean and only the showcase crests (gallery, hero, onboarding) get signed.
+// Showcase threshold (px). Below it, crests are chrome — just the etched glyph,
+// no ornaments. The house signet (majordome in a ~16px sphere) collapses to a
+// blob at chrome size, and the milled rim (rimDots) becomes sub-pixel grit
+// around the mark, so both are reserved for showcase crests (gallery, hero,
+// onboarding). At chrome size (roster rows, picker, chips) only the glyph shows.
 const HOUSE_MIN = 44;
 
 // Expert crest — a generative sigil per expert `kind`, etched silver inside a
@@ -314,8 +316,10 @@ function hashSeed(s: string): number {
 
 // Generative rim: a milled coin edge whose dot-count and rotation come from the
 // seed. This is what makes two same-`kind` experts (e.g. four "creator"
-// geniuses) distinct without changing the central archetype. Fades to nothing
-// at small sizes (dots become sub-pixel) — distinctness matters at gallery size.
+// geniuses) distinct without changing the central archetype. Only drawn at
+// showcase size (>= HOUSE_MIN, see the render gate): at chrome size the dots go
+// sub-pixel and just read as grit around the mark, and the per-expert seal +
+// engine glow already carry identity there.
 function rimDots(seed: string): ReactNode {
   const h = hashSeed(seed);
   const count = 9 + (h % 5); // 9..13
@@ -363,7 +367,7 @@ export function Crest({
       title={title}
     >
       <svg className="crest-mark" viewBox="0 0 48 48" aria-hidden="true">
-        {seed ? rimDots(seed) : null}
+        {seed && size >= HOUSE_MIN ? rimDots(seed) : null}
         <g transform="translate(24 24) scale(0.84) translate(-24 -24)">{arch}</g>
       </svg>
       {/* House signet — Split's majordome in a small glass sphere, struck
@@ -374,9 +378,12 @@ export function Crest({
           <svg className="house-orb" viewBox="0 0 24 24">
             <defs>
               <radialGradient id={`${uid}g`} cx="36%" cy="28%" r="78%">
-                <stop offset="0%" stopColor="#39414f" />
-                <stop offset="55%" stopColor="#1a1f28" />
-                <stop offset="100%" stopColor="#0c0f15" />
+                {/* Stops/stroke/specular are CSS-driven (--orb-*) so the orb
+                    tracks the skin: dark glass on dark skins (fallbacks), a
+                    light "pearl" on light skins (see .crest-house in app.css). */}
+                <stop className="orb-s0" offset="0%" />
+                <stop className="orb-s1" offset="55%" />
+                <stop className="orb-s2" offset="100%" />
               </radialGradient>
               <mask id={`${uid}m`}>
                 <svg x="4.2" y="4" width="15.6" height="16" viewBox="388 110 249 348" preserveAspectRatio="xMidYMid meet">
@@ -384,9 +391,9 @@ export function Crest({
                 </svg>
               </mask>
             </defs>
-            <circle cx="12" cy="12" r="11.2" fill={`url(#${uid}g)`} stroke="rgba(255,255,255,0.16)" strokeWidth="0.8" />
+            <circle className="house-rim" cx="12" cy="12" r="11.2" fill={`url(#${uid}g)`} strokeWidth="0.8" />
             <rect className="house-fig" width="24" height="24" mask={`url(#${uid}m)`} />
-            <ellipse cx="8.6" cy="7.6" rx="3.4" ry="2" fill="rgba(255,255,255,0.18)" />
+            <ellipse className="house-spec" cx="8.6" cy="7.6" rx="3.4" ry="2" />
           </svg>
         </span>
       ) : null}

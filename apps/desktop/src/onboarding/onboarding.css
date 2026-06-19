@@ -151,6 +151,25 @@
 .ob2-step-progress { font-family: var(--mono); font-size: 10.5px; color: var(--brand); }
 .ob2-step .btn { padding: 5px 11px; font-size: 12px; }
 
+/* --- machine scan (wizard page 2) --- */
+.ob2-scanline { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; min-height: 22px; }
+.ob2-scanstat { font-family: var(--mono); font-size: 11.5px; color: var(--dim2); }
+.ob2-scanstat b { color: var(--text); }
+.ob2-scanstat.scanning { display: inline-flex; align-items: center; gap: 8px; color: var(--brand); }
+.ob2-scandot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); animation: scanping 1.1s ease-out infinite; }
+@keyframes scanping { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 55%, transparent); } 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.ob2-rescan { margin-left: auto; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 11px; border-radius: 99px; border: 1px solid var(--line); background: transparent; color: var(--dim); cursor: pointer; transition: 0.15s; }
+.ob2-rescan:hover:not(:disabled) { color: var(--text); border-color: var(--text); }
+.ob2-rescan:disabled { opacity: 0.4; cursor: default; }
+
+/* Recommended featured card — a touch more presence than a plain primary. */
+.ob2-primary.recommended { border-color: color-mix(in srgb, var(--brand) 48%, var(--line)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 22%, transparent), 0 14px 40px color-mix(in srgb, var(--brand) 14%, transparent); }
+.ob2-primary-health { margin-left: auto; align-self: flex-start; font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 8px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
+.ob2-primary-health.sb-ready { color: var(--good); }
+.ob2-primary-health.sb-needs-auth { color: var(--warn); }
+.ob2-primary-health.sb-needs-install { color: var(--dim); }
+.ob2-primary-health.sb-scanning { color: var(--dim); opacity: 0.7; }
+
 /* ---- page 3: fiche overlay (Cabinet's DetailPane shown over the cards) ---- */
 .ob2-fiche-overlay {
   position: fixed; inset: 0;

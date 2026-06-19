@@ -17,7 +17,12 @@ pub mod runner;
 
 // Engine modules from the workspace's `split-core` crate. `lib.rs` uses
 // `harness_config` (model picker translation) + `persona` (workspace
-// projection); `runner.rs` reaches for the rest directly.
+// projection) + `detection` (the machine-scan wire types & classification);
+// `runner.rs` reaches for the rest directly.
+use split_core::detection::{
+    auth_from_state, classify_exit, classify_spawn_error, Diagnostic, DiagnosticKind,
+    DetectedHarness, VersionProbe,
+};
 use split_core::{harness_config, persona};
 
 // The repo root is resolved at RUNTIME — nothing machine-specific is baked
@@ -1378,9 +1383,13 @@ fn command_on_path(cmd: &str) -> bool {
         .unwrap_or(false)
 }
 
-// `install`: "npx" → always ready (npx -y warms on first launch);
-// "binary"/"external"/"script" → check that the launch command resolves
-// (post-install the binary should be on PATH, e.g. ~/.local/bin/hermes).
+// `install`: "npx" → always ready (the ACP adapter is fetched lazily by npx on
+// first launch; the Install button just warms the npm cache). "binary"/
+// "external"/"script" → check that the launch command resolves (post-install the
+// binary should be on PATH, e.g. ~/.local/bin/hermes). The HONEST "is the vendor
+// CLI here, and signed in?" signal is a separate concern, surfaced by
+// `scan_harnesses` (see DetectedHarness / the onboarding wizard) — we keep this
+// function about adapter bootstrap so the Install button stays coherent.
 fn install_state_for(install_kind: Option<&str>, command: &str) -> &'static str {
     match install_kind {
         Some("npx") => "ready",
@@ -1727,6 +1736,177 @@ fn configure_harness(app: AppHandle, id: String) -> Result<String, String> {
         }
         other => Err(format!("configure kind not supported: {other}")),
     }
+}
+
+// --- harness scan (machine detection) ---------------------------------------
+// `scan_harnesses` probes THIS machine per harness: does the vendor CLI resolve
+// (the honest "installed?" signal — `command` is "npx" for most, which proves
+// nothing), does `--version` run (and what is it), is it signed in? Results are
+// pushed incrementally over the `scan-event` channel as each probe settles, in
+// completion order — so onboarding can
+// paint a card the moment it resolves; a final `{ "done": true }` marks the end.
+// The pure types + `--version`
+// classification live in `split_core::detection`.
+
+// Resolve the probe binary for a harness row, in this precedence:
+// explicit `<BIN>_ENV` override → `probe.bin` → `probe.fallback_bins[]` → the
+// launch `command` (correct for ./var/bin binaries). Returns the first spec that
+// actually resolves on PATH (or as a repo-relative path), else None.
+fn resolve_probe_bin(row: &serde_json::Value) -> Option<String> {
+    let probe = row.get("probe");
+    // 1. env override (e.g. CLAUDE_BIN) — only honoured if it resolves.
+    if let Some(key) = probe
+        .and_then(|p| p.get("bin_env_key"))
+        .and_then(|v| v.as_str())
+    {
+        if let Ok(val) = std::env::var(key) {
+            if !val.trim().is_empty() && command_on_path(&val) {
+                return Some(val);
+            }
+        }
+    }
+    // 2. probe.bin, then each fallback, then the launch command.
+    let mut candidates: Vec<String> = Vec::new();
+    if let Some(bin) = probe.and_then(|p| p.get("bin")).and_then(|v| v.as_str()) {
+        candidates.push(bin.to_string());
+    }
+    if let Some(fbs) = probe
+        .and_then(|p| p.get("fallback_bins"))
+        .and_then(|v| v.as_array())
+    {
+        candidates.extend(fbs.iter().filter_map(|v| v.as_str()).map(String::from));
+    }
+    if let Some(cmd) = row.get("command").and_then(|v| v.as_str()) {
+        candidates.push(cmd.to_string());
+    }
+    candidates.into_iter().find(|c| command_on_path(c))
+}
+
+// Spawn `<spec> <version_args>` with a hard timeout and classify the outcome.
+// `./var/bin`-relative specs are resolved against the repo root for the spawn.
+// Returns the probe outcome plus the resolved program path (for `path`).
+fn probe_version_spawn(
+    spec: &str,
+    version_args: &[String],
+    timeout: std::time::Duration,
+) -> (VersionProbe, String) {
+    use std::io::Read;
+    let program: String = if spec.starts_with("./") || spec.starts_with("../") {
+        REPO_ROOT.join(spec).to_string_lossy().into_owned()
+    } else {
+        spec.to_string()
+    };
+    let spawn = Command::new(&program)
+        .args(version_args)
+        .env("PATH", child_path())
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn();
+    let mut child = match spawn {
+        Ok(c) => c,
+        Err(e) => {
+            let denied = e.kind() == std::io::ErrorKind::PermissionDenied;
+            return (VersionProbe::NotInvocable(classify_spawn_error(denied)), program);
+        }
+    };
+    let start = std::time::Instant::now();
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                let mut out = String::new();
+                if let Some(mut so) = child.stdout.take() {
+                    let _ = so.read_to_string(&mut out);
+                }
+                if status.success() {
+                    let v = out
+                        .lines()
+                        .next()
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty());
+                    return (VersionProbe::Invocable(v), program);
+                }
+                // Spawned but `--version` was unhappy: exit 126/127 → not
+                // invocable; anything else → it ran, just no version string.
+                return (classify_exit(status.code()), program);
+            }
+            Ok(None) => {
+                if start.elapsed() > timeout {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    // It DID spawn — the bin is invocable, we just gave up
+                    // waiting for the version string.
+                    return (VersionProbe::Invocable(None), program);
+                }
+                std::thread::sleep(std::time::Duration::from_millis(40));
+            }
+            Err(_) => return (VersionProbe::Invocable(None), program),
+        }
+    }
+}
+
+// Detect one harness: reuse the cheap (no-spawn) credential check for `auth`,
+// resolve the vendor CLI, run `--version`, and fold it into a DetectedHarness.
+fn detect_one_harness(row: &serde_json::Value, id: &str) -> DetectedHarness {
+    let auth = auth_from_state(configure_state_for(row.get("configure")));
+    let install_kind = row
+        .get("install")
+        .and_then(|i| i.get("kind"))
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let Some(spec) = resolve_probe_bin(row) else {
+        return DetectedHarness::unavailable(
+            id,
+            Diagnostic::new(DiagnosticKind::NotOnPath, "Not found on your machine yet."),
+        )
+        .with_install_kind(install_kind);
+    };
+    let version_args: Vec<String> = row
+        .get("probe")
+        .and_then(|p| p.get("version_args"))
+        .and_then(|v| v.as_array())
+        .map(|a| a.iter().filter_map(|x| x.as_str().map(String::from)).collect())
+        .unwrap_or_else(|| vec!["--version".to_string()]);
+    let (probe, resolved) =
+        probe_version_spawn(&spec, &version_args, std::time::Duration::from_secs(3));
+    match probe {
+        VersionProbe::Invocable(version) => {
+            DetectedHarness::available(id, version, resolved, auth).with_install_kind(install_kind)
+        }
+        VersionProbe::NotInvocable(kind) => {
+            let msg = match kind {
+                DiagnosticKind::NotExecutable => "Found, but not executable — check permissions.",
+                DiagnosticKind::ShimBroken => "Found a broken launcher — reinstall the CLI.",
+                _ => "Could not run the CLI.",
+            };
+            DetectedHarness::unavailable(id, Diagnostic::new(kind, msg)).with_install_kind(install_kind)
+        }
+    }
+}
+
+#[tauri::command]
+fn scan_harnesses(app: AppHandle) -> Result<String, String> {
+    let map = read_harnesses_map()?;
+    let total = map.len();
+    if total == 0 {
+        let _ = app.emit("scan-event", json!({ "done": true }));
+        return Ok(json!({ "ok": true, "count": 0 }).to_string());
+    }
+    // One thread per harness; emit each result as it settles, and emit the
+    // terminal `{ done: true }` from whichever worker finishes last.
+    let remaining = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(total));
+    for (id, row) in map {
+        let app = app.clone();
+        let remaining = remaining.clone();
+        std::thread::spawn(move || {
+            let detected = detect_one_harness(&row, &id);
+            let _ = app.emit("scan-event", &detected);
+            if remaining.fetch_sub(1, std::sync::atomic::Ordering::SeqCst) == 1 {
+                let _ = app.emit("scan-event", json!({ "done": true }));
+            }
+        });
+    }
+    Ok(json!({ "ok": true, "count": total }).to_string())
 }
 
 // --- Model picker config persistence ----------------------------------------
@@ -2405,6 +2585,7 @@ pub fn run() {
             read_files_for_agent,
             save_api_key,
             harness_states,
+            scan_harnesses,
             install_harness,
             configure_harness,
             check_ollama,
