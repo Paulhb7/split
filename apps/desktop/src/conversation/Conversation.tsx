@@ -10,7 +10,6 @@ import { Crest } from "../shared/Crest";
 import { TurnSpinner } from "../shared/TurnSpinner";
 import type { Session, Step } from "../shared/models";
 import type { Artifact } from "../shared/events";
-import { ArtifactStrip } from "./ArtifactViewer";
 import { ToolAuthChips } from "./ToolAuth";
 
 type PermissionScope = "once" | "session" | "always-allow" | "always-deny";
@@ -134,6 +133,10 @@ export function Conversation(props: {
   onAttach: () => void;
   onPickCommand: (name: string) => void;
   onPickArtifact: (id: string, rel: string) => void;
+  // The artifact the shell's viewer currently shows (atelier focus mode), so the
+  // in-thread tab strip highlights the file actually on screen. Optional — the
+  // compact view doesn't render that strip.
+  activeArtifact?: string | null;
   // Posture: `expanded` = the side-by-side atelier (rail + thread + viewer).
   // `onTogglePosture` flips this session between compact and expanded.
   expanded: boolean;
@@ -345,32 +348,26 @@ export function Conversation(props: {
         {focused.queued && <div className="thinking">⏳ queued · {focused.queued.display || "(file)"} <button className="xbtn" onClick={() => onCancelQueued(focused.id)}>✕</button></div>}
       </div>
 
-      {focused.artifacts.length > 0 && (
-        expanded ? (
-          // Atelier: the viewer is shown side-by-side by the shell, so here we
-          // only need the tab strip to switch which file it shows.
-          <ArtifactStrip
-            artifacts={focused.artifacts}
-            activeArtifact={focused.activeArtifact}
-            onPick={(rel) => onPickArtifact(focused.id, rel)}
+      {/* Deliverables live in the Reflet dock (right), not duplicated in the
+          thread. Compact posture keeps ONLY the latest one as a headline card
+          ("here's your result") + a hint to the dock for the rest; in the
+          atelier the dock + viewer own them, so the thread shows none. */}
+      {focused.artifacts.length > 0 && !expanded && (
+        <div className="deliv-wrap">
+          <DeliverableCard
+            a={focused.artifacts[focused.artifacts.length - 1]}
+            onOpen={() => { onPickArtifact(focused.id, focused.artifacts[focused.artifacts.length - 1].rel); onTogglePosture(); }}
           />
-        ) : (
-          // Compact: promote the latest deliverable to a real card; the rest
-          // sit in a quiet strip. Opening either lifts into the atelier.
-          <div className="deliv-wrap">
-            <DeliverableCard
-              a={focused.artifacts[focused.artifacts.length - 1]}
-              onOpen={() => { onPickArtifact(focused.id, focused.artifacts[focused.artifacts.length - 1].rel); onTogglePosture(); }}
-            />
-            {focused.artifacts.length > 1 && (
-              <ArtifactStrip
-                artifacts={focused.artifacts.slice(0, -1)}
-                activeArtifact={null}
-                onPick={(rel) => { onPickArtifact(focused.id, rel); onTogglePosture(); }}
-              />
-            )}
-          </div>
-        )
+          {focused.artifacts.length > 1 && (
+            <button
+              className="deliv-more"
+              onClick={onTogglePosture}
+              style={{ all: "unset", cursor: "pointer", fontSize: 12.5, opacity: 0.7, padding: "4px 2px" }}
+            >
+              +{focused.artifacts.length - 1} more in the dock →
+            </button>
+          )}
+        </div>
       )}
 
       {focused.logs.length > 0 && (

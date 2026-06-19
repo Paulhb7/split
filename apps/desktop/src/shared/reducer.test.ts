@@ -107,4 +107,19 @@ describe("applyEvent", () => {
     expect(s.artifacts.map((a) => a.rel)).toEqual(["notes.md"]);
     expect(s.activeArtifact).toBe("notes.md");
   });
+
+  it("filters out working files (logs/scripts/manifests), keeping only deliverables", () => {
+    let s = base();
+    s = applyEvent(s, { type: "artifact", rel: "trailer.mp4", path: "/ws/trailer.mp4", op: "created", size: 999, mtime: 1 });
+    // working files are ignored entirely — no entry, and they don't steal `activeArtifact`
+    for (const rel of ["gen_video.sh", "make_cards.py", "score/score.json", "shots/shot-1.log", "narration.txt"]) {
+      s = applyEvent(s, { type: "artifact", rel, path: "/ws/" + rel, op: "created", size: 10, mtime: 2 });
+    }
+    expect(s.artifacts.map((a) => a.rel)).toEqual(["trailer.mp4"]);
+    expect(s.activeArtifact).toBe("trailer.mp4");
+    // another media deliverable still lands and becomes active
+    s = applyEvent(s, { type: "artifact", rel: "score/score.mp3", path: "/ws/score/score.mp3", op: "created", size: 999, mtime: 3 });
+    expect(s.artifacts.map((a) => a.rel)).toEqual(["trailer.mp4", "score/score.mp3"]);
+    expect(s.activeArtifact).toBe("score/score.mp3");
+  });
 });

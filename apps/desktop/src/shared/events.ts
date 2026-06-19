@@ -39,6 +39,27 @@ export interface Artifact {
   mtime: number; // unix epoch seconds
 }
 
+// Artifact panels show DELIVERABLES, not the working files a pipeline leaves
+// behind (logs, scripts, manifests, configs). A long video/music run can drop
+// 50+ of these — they drown the actual output. These extensions are treated as
+// scaffolding and filtered out of every artifact surface (strip, atelier grid,
+// Reflet, dots) at the reducer, so a `.log` write also can't steal the active
+// selection. Media (mp4/mp3/png…), pages (html), and docs (md/pdf/csv/docx)
+// all pass through.
+const WORKING_FILE_EXTS = new Set([
+  "log", "sh", "bash", "zsh", "fish",
+  "py", "pyc", "pyo",
+  "json", "jsonl", "ndjson",
+  "txt", "yaml", "yml", "toml", "ini", "cfg", "conf", "lock", "env",
+]);
+
+export function isDeliverableArtifact(rel: string): boolean {
+  const base = rel.slice(rel.lastIndexOf("/") + 1);
+  const dot = base.lastIndexOf(".");
+  if (dot < 0) return true; // no extension → not obviously scaffolding, show it
+  return !WORKING_FILE_EXTS.has(base.slice(dot + 1).toLowerCase());
+}
+
 export type VEvt =
   | { type: "ready"; harness: string; expert: string }
   | { type: "say"; text: string }

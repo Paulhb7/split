@@ -1,4 +1,5 @@
 import type { VEvt } from "./events";
+import { isDeliverableArtifact } from "./events";
 import type { Session } from "./models";
 
 const clip = (s: string, n = 90) => (s.length > n ? s.slice(s.length - n) : s);
@@ -105,6 +106,10 @@ export function applyEvent(s: Session, ev: VEvt): Session {
         : { ...s, status: "error", auth: null, summary: "sign-in failed · " + (ev.error || "") };
 
     case "artifact": {
+      // Only deliverables reach the panels — working files (logs, scripts,
+      // manifests: .log/.sh/.py/.json/.txt…) are ignored entirely, so they
+      // neither clutter the strip nor steal the active selection.
+      if (!isDeliverableArtifact(ev.rel)) return s;
       const others = s.artifacts.filter((a) => a.rel !== ev.rel);
       if (ev.op === "deleted") {
         // Drop the entry and clear the viewer if it was the active one.

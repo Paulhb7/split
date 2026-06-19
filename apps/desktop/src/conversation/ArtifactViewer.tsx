@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Editor } from "@tiptap/react";
 import { MarkdownEditor } from "./MarkdownEditor";
+import { SpectrePlayer } from "./SpectrePlayer";
 import type { Artifact } from "../shared/events";
 
 // Tagline carried by the Share intent when the artifact has no public URL yet.
@@ -553,19 +554,12 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
           <iframe className="art-iframe" src={payload.content} title={artifact.rel} />
         )}
         {payload && payload.kind === "audio" && (
-          <div className="art-media">
-            <audio
-              className="art-audio"
-              src={convertFileSrc(artifact.path)}
-              controls
-              preload="metadata"
-            />
-            <div className="art-media-meta">
-              {payload.mime} · {humanSize(payload.size)}
-              {" · "}
-              <button className="art-media-link" onClick={reveal}>open in default app</button>
-            </div>
-          </div>
+          <SpectrePlayer
+            src={convertFileSrc(artifact.path)}
+            name={artifact.rel.split("/").pop() || artifact.rel}
+            metaText={`${payload.mime} · ${humanSize(payload.size)}`}
+            onReveal={reveal}
+          />
         )}
         {payload && payload.kind === "video" && (
           <div className="art-media">
