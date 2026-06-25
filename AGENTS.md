@@ -232,24 +232,19 @@ SPLIT_REPO_ROOT=$PWD/.. uv run python -m split.terminal Codex   # CLI smoke
   Deliverables worth keeping move into the vault deliberately via the **"Keep in vault"** action
   (`keep_in_vault` in [lib.rs](apps/desktop/src-tauri/src/lib.rs), 🗃️ button in the
   ArtifactViewer) — `notes/` by default, or a chosen `projects/<slug>/`. The agent's cwd is NOT
-  the vault; curation is user-driven (or the agent files durable notes/facts per the `memory` skill).
+  the vault; curation is user-driven (or the agent files durable notes/facts per the `vault` skill).
 - **The boss's vault = `$SPLIT_VAULT`** (default `~/Documents/SplitVault`, deliberately
   OUTSIDE `var/`) — plain-markdown folder where experts file durable deliverables + facts:
   `INDEX.md` (scope list, inlined into every persona at boot), `_meta/boss-profile.md`,
   `notes/` (default bucket), `projects/<slug>/` (+ per-project `MEMORY.md` index). Doctrine =
-  the auto-mounted `memory` skill ([config/skills/memory/SKILL.md](config/skills/memory/SKILL.md));
+  the auto-mounted `vault` skill ([config/skills/vault/SKILL.md](config/skills/vault/SKILL.md));
   session block = `vault_text` in [core-rs/src/persona.rs](core-rs/src/persona.rs); UI = the
   Vault overlay ([apps/desktop/src/vault/VaultOverlay.tsx](apps/desktop/src/vault/VaultOverlay.tsx),
   🗃️ chrome button) reusing `read_artifact`/`write_artifact` + the `vault_tree` command. The
   retired Obsidian/Notion workspace backends (picker, `workspaces.json`, `obsidian`/`notion`
-  skills) were removed in favour of this native vault.
-- **`var/memory/` = cross-session expert memory** (separate from workspace, survives a workspace wipe).
-  `_user/USER.md` shared by every expert, `<expert>/MEMORY.md` per-expert. Read by
-  [core-rs/src/persona.rs](core-rs/src/persona.rs)::`memory_text` (Rust) at session start and prepended to
-  the persona via `persona_text` (so it lands in both the projected `AGENTS.md`/`AGENTS.md`/`.vibe/AGENTS.md`
-  and the runner's first-turn injection — one helper, two channels). Frozen snapshot: in-session writes only appear at the NEXT session
-  boot. Agent writes are manual today (boss says "remember X" or the agent decides); automatic post-turn
-  extraction is future work for the planned `split-memory` MCP server.
+  skills) were removed in favour of this native vault. A per-expert cross-session
+  memory (`var/memory/`) was prototyped and **removed** — too thin to be useful;
+  it'll be reimplemented properly later. The vault is the only durable store today.
 - **Permissions are auto-approved** (bench posture); `fs/read_text_file`/`fs/write_text_file`
   are served from the real filesystem.
 - **Operator UI narration** — the `operator` expert (Alfred) drives real macOS apps via the
