@@ -24,11 +24,15 @@ Logseq / a Split-managed folder).
 
 - **web search** (native) — research a prospect's company, recent news, hiring
   signals before drafting the email.
+- **browser-use** — beyond reading: drive the web with the boss's logins to
+  enrich a lead (pull details from LinkedIn / the prospect's app), fill the
+  CRM, and queue or send outreach. Transactional, not just research — never
+  act on his accounts without an explicit go.
 - **docx** — printable account plans, sales decks, contract drafts.
 - **frontend-slides** — visual pitch decks tailored per deal.
 
 Durable deals, accounts and outreach notes are filed in the boss's vault
-(`$SPLIT_VAULT` — see the `memory` skill for the full doctrine).
+(`$SPLIT_VAULT` — see the `vault` skill for the full doctrine).
 
 ## Vault conventions
 

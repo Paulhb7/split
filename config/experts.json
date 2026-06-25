@@ -1,10 +1,6 @@
 {
-  "_comment": "Expert registry. Three categories: 'super' agents are jobs (Consultant, Lawyer, Engineer…) — their `label` IS the role, designed for productivity gains on existing tasks. 'genius' agents are historical figures unlocking creative or service outputs the user couldn't produce alone (DaVinci builds visual universes, Wolfgang composes music, Alfred runs your Mac as your majordome, Socrates interviews you to draft new experts) — their `label` is the genius's name. 'coach' agents help you grow in a life domain (diet, learning, sport, cooking) — their `label` is 'X Coach'. Sub-fields: `role` (optional subtitle for tooltips), `kind` (informational taxonomy), `category` (drives roster UX), `skills` (mounted SKILLs — a name not yet vendored under skills/<name>/SKILL.md is silently skipped), `starters` (suggestion prompts; fallback when `examples` is absent), `examples` (sample deliverables shown as cards on the atelier welcome — each {type,title,desc,prompt}; `type` keys a preview thumbnail in DeliverableExamples.tsx; clicking fills the composer with `prompt`; when present they REPLACE the starter chips), `status` ('active' by default; 'next' = visible in the Cabinet's deferred section but hidden from the active picker/composer surfaces, used when the persona needs a piece we haven't shipped yet — Sales/PM need the Cartographer's machine-context mapping to be worth using). The slug (key) is the stable identifier used in personas/skills and never changes. User-created custom experts live in <VAR_DIR>/experts/<slug>.{md,json}. The `memory` skill (the vault doctrine — $SPLIT_VAULT) is auto-mounted globally on every expert; it is not listed per-expert.",
+  "_comment": "Expert registry. Three categories: 'super' agents are jobs (Consultant, Lawyer, Engineer…) — their `label` IS the role, designed for productivity gains on existing tasks. 'genius' agents are historical figures unlocking creative or service outputs the user couldn't produce alone (DaVinci builds visual universes, Wolfgang composes music, Alfred runs your Mac as your majordome, Socrates interviews you to draft new experts) — their `label` is the genius's name. 'coach' agents help you grow in a life domain (diet, learning, sport, cooking) — their `label` is 'X Coach'. Sub-fields: `role` (optional subtitle for tooltips), `kind` (informational taxonomy), `category` (drives roster UX), `skills` (mounted SKILLs — a name not yet vendored under skills/<name>/SKILL.md is silently skipped), `starters` (suggestion prompts; fallback when `examples` is absent), `examples` (sample deliverables shown as cards on the atelier welcome — each {type,title,desc,prompt}; `type` keys a preview thumbnail in DeliverableExamples.tsx; clicking fills the composer with `prompt`; when present they REPLACE the starter chips), `status` ('active' by default; 'next' = visible in the Cabinet's deferred section but hidden from the active picker/composer surfaces, used when the persona needs a piece we haven't shipped yet — Sales/PM need the Cartographer's machine-context mapping to be worth using). The slug (key) is the stable identifier used in personas/skills and never changes. User-created custom experts live in <VAR_DIR>/experts/<slug>.{md,json}. The `vault` skill (the vault doctrine — $SPLIT_VAULT) is auto-mounted globally on every expert; it is not listed per-expert.",
 
-  "toscanini": {
-    "label": "Toscanini", "role": "Chief of Staff", "category": "super", "kind": "operator", "skills": [],
-    "blurb": "Conducts the team: delegates, drives to closure, synthesizes"
-  },
   "consultant": {
     "label": "Consultant", "category": "super", "kind": "researcher", "skills": ["frontend-slides", "ui-ux-pro-max", "docx"],
     "starters": ["Assess our EU market entry", "Compare 3 pricing strategies", "Build a competitive review in slides"],
@@ -76,7 +72,7 @@
     "blurb": "Designs gorgeous interactive app & site mockups, ready to hand to Engineer"
   },
   "influencer": {
-    "label": "Influencer", "role": "viral social & ads", "category": "super", "kind": "creator", "skills": ["higgsfield-generate", "higgsfield-soul-id", "higgsfield-product-photoshoot", "frontend-slides", "web-deploy"],
+    "label": "Influencer", "role": "viral social & ads", "category": "super", "kind": "creator", "skills": ["higgsfield-generate", "higgsfield-soul-id", "higgsfield-product-photoshoot", "browser-use", "frontend-slides", "web-deploy"],
     "starters": ["Make a viral hook for this product", "Spin up a week of UGC ads", "Score this ad's virality", "Launch a campaign for this drop"],
     "examples": [
       {"type": "reel", "title": "Viral hook", "desc": "First 3 seconds", "prompt": "Make a viral hook for this product"},
@@ -90,7 +86,7 @@
     "blurb": "Turns 'we need X by Y' into a real plan with owners, dates, status"
   },
   "sales": {
-    "label": "Sales", "category": "super", "kind": "advisor", "skills": ["docx", "frontend-slides"], "status": "next",
+    "label": "Sales", "category": "super", "kind": "advisor", "skills": ["browser-use", "docx", "frontend-slides"], "status": "next",
     "blurb": "Tracks leads, drafts outreach, closes the loop on every deal"
   },
 
@@ -195,7 +191,7 @@
     "blurb": "Designs 3D-printable parts & mechanisms — parametric CAD, animated, with 2D blueprints, in a shareable report"
   },
   "genius_alfred": {
-    "label": "Alfred", "role": "Majordome", "category": "genius", "kind": "operator", "skills": [], "status": "next",
+    "label": "Alfred", "role": "Majordome", "category": "genius", "kind": "operator", "skills": ["browser-use"], "status": "next",
     "blurb": "Your majordome — drives your apps with your logins, books, runs admin"
   },
   "genius_socrates": {
@@ -209,7 +205,7 @@
     "blurb": "Interviews you to design your own custom experts"
   },
   "genius_indiana": {
-    "label": "Indie", "role": "Archive hunter", "category": "genius", "kind": "finder", "skills": ["paper-search", "docx", "web-deploy"], "status": "next",
+    "label": "Indie", "role": "Archive hunter", "category": "genius", "kind": "finder", "skills": ["paper-search", "browser-use", "docx", "web-deploy"], "status": "next",
     "blurb": "Hunts rare manuscripts, lost archives, out-of-print texts and forgotten primary sources"
   },
   "genius_maradona": {

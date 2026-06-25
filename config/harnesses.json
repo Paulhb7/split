@@ -6,10 +6,10 @@
     "command": "npx",
     "args": ["-y", "@agentclientprotocol/claude-agent-acp@0.37.0"],
     "skill_dir": ".claude/skills",
-    "auth": "Run `claude login` first (Pro/Max), or set ANTHROPIC_API_KEY. The agent handles its own auth (ACP 'Agent Auth').",
+    "auth": "Run `claude auth login` first (Pro/Max), or set ANTHROPIC_API_KEY. The agent handles its own auth (ACP 'Agent Auth').",
     "install": { "kind": "npx" },
     "probe": { "bin": "claude", "version_args": ["--version"], "bin_env_key": "CLAUDE_BIN" },
-    "configure": { "kind": "oauth", "check_file": "~/.claude/.credentials.json", "check_env": "ANTHROPIC_API_KEY" }
+    "configure": { "kind": "oauth", "check_file": "~/.claude/.credentials.json", "check_env": "ANTHROPIC_API_KEY", "check_cmd": ["claude", "auth", "status"] }
   },
 
   "codex": {
