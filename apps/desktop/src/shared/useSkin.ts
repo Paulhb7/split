@@ -10,19 +10,14 @@ const LS_PRETITANIC = "split.skin.preTitanic"; // skin to refloat when the Titan
 const LS_PRECOSMOS = "split.skin.preCosmos"; // skin to come back down to when the Cosmos easter egg is toggled off
 
 // The whole wardrobe in one hook: the day-skin pick (persisted), the
-// auto-Minuit night rule, the native window-theme pin, and the four easter
-// eggs — Noir (wordmark clicks), Titanic (cabinet iceberg), Cosmos (the
-// midnight star) and the Fashion-Week runway (Konami code / indecision /
-// the patient 30 s offer). App.tsx consumes the result; `shownSkin` is what
-// the window actually wears right now.
+// auto-Minuit night rule, the native window-theme pin, and the three easter
+// eggs — Noir (wordmark clicks), Titanic (cabinet iceberg) and Cosmos (the
+// midnight star). App.tsx consumes the result; `shownSkin` is what the window
+// actually wears right now.
 export function useSkin(opts: {
-  onboarded: boolean;
-  // True while the chrome ⋯ menu sits on its skins page — arms the 30 s
-  // "still undecided?" runway offer.
-  skinPickerOpen: boolean;
   pushToast: (text: string, ttl?: number) => void;
 }) {
-  const { onboarded, skinPickerOpen, pushToast } = opts;
+  const { pushToast } = opts;
 
   const [skin, setSkinState] = useState<Skin>(() => {
     const raw = localStorage.getItem(LS_SKIN);
@@ -49,12 +44,8 @@ export function useSkin(opts: {
   useEffect(() => {
     if (night) setNightOptOut(localStorage.getItem(LS_NIGHT_OPTOUT) === nightId());
   }, [night]);
-  // Fashion-Week easter egg (Konami code): while the runway is live this
-  // override dresses the window, beating even the auto-Minuit night rule.
-  const [runwaySkin, setRunwaySkin] = useState<Skin | null>(null);
-  // What the window actually wears right now (runway look, else the day skin,
-  // else Minuit after dark).
-  const shownSkin: Skin = runwaySkin ?? (night && !nightOptOut ? "minuit" : skin);
+  // What the window actually wears right now — the day skin, or Minuit after dark.
+  const shownSkin: Skin = night && !nightOptOut ? "minuit" : skin;
   const withSkinTransition = (commit: () => void) => {
     // Cross-fade the whole window between skins (View Transitions API,
     // WebKit ≥ Safari 18). flushSync commits the new theme class inside the
@@ -63,17 +54,7 @@ export function useSkin(opts: {
     if (vt) vt.call(document, () => flushSync(commit));
     else commit();
   };
-  // Easter egg #3, the mainstream one — indecision: 4 skin picks within 6 s
-  // reads as "can't choose", so the bar shows the whole wardrobe itself
-  // (runway(), below) before settling on the user's last pick.
-  const pickTimes = useRef<number[]>([]);
   const pickSkin = (s: Skin) => {
-    const now = Date.now();
-    pickTimes.current = [...pickTimes.current.filter((t) => now - t < 6000), now];
-    if (pickTimes.current.length >= 4) {
-      pickTimes.current = [];
-      runway();
-    }
     if (s === "minuit") {
       // Only offered at night, never persisted as the day skin — picking it
       // just re-arms the auto rule for tonight.
@@ -145,65 +126,5 @@ export function useSkin(opts: {
       pushToast("🔭 Welcome to the observatory.");
     }
   };
-  // Easter egg #2 — the Konami code (↑↑↓↓←→←→ B A) sends the whole wardrobe
-  // down the runway: every skin for ~1 s, Noir closes the show, then the bar
-  // goes back to whatever it was wearing. Nothing is persisted.
-  const runwayLive = useRef(false);
-  const runwayTimers = useRef<number[]>([]);
-  useEffect(() => () => runwayTimers.current.forEach(clearTimeout), []);
-  const startRunway = () => {
-    if (runwayLive.current) return;
-    runwayLive.current = true;
-    pushToast("✨ Fashion Week — le vestiaire au complet.");
-    const lineup = SKINS.map((s) => s.id);
-    runwayTimers.current = lineup.map((id, i) => window.setTimeout(() => setRunwaySkin(id), 400 + 900 * i));
-    runwayTimers.current.push(
-      window.setTimeout(() => {
-        setRunwaySkin(null);
-        runwayLive.current = false;
-      }, 400 + 900 * lineup.length),
-    );
-  };
-  // Mid-onboarding the show isn't forced on the user — the egg asks first
-  // (runwayAsk popup) instead of stealing the guided tour's screen.
-  const [runwayAsk, setRunwayAsk] = useState(false);
-  const runway = () => {
-    if (runwayLive.current) return;
-    if (!onboarded) {
-      setRunwayAsk(true);
-      return;
-    }
-    startRunway();
-  };
-  useEffect(() => {
-    // e.key (not e.code) so the sequence survives AZERTY & friends.
-    const seq = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
-    let pos = 0;
-    const onKey = (e: KeyboardEvent) => {
-      const k = e.key.toLowerCase();
-      pos = k === seq[pos] ? pos + 1 : k === seq[0] ? 1 : 0;
-      if (pos === seq.length) {
-        pos = 0;
-        runway();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // `runway` only touches refs and stable setters — safe to bind once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  // Easter egg #3b — the patient cousin of the indecision trigger: linger in
-  // the skin picker for 30 s without committing and a gentle offer slides in
-  // at the top of the list to run the Fashion Week for you.
-  const [runwayOffer, setRunwayOffer] = useState(false);
-  useEffect(() => {
-    if (!skinPickerOpen) {
-      setRunwayOffer(false);
-      return;
-    }
-    const t = window.setTimeout(() => setRunwayOffer(true), 30_000);
-    return () => window.clearTimeout(t);
-  }, [skinPickerOpen]);
-
-  return { skin, shownSkin, night, smallHours, pickSkin, noirEgg, titanicEgg, cosmosEgg, startRunway, runwayAsk, setRunwayAsk, runwayOffer };
+  return { skin, shownSkin, night, smallHours, pickSkin, noirEgg, titanicEgg, cosmosEgg };
 }

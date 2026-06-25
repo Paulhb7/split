@@ -178,13 +178,6 @@ const SEALS: Record<string, ReactNode> = {
     </>
   ),
   // — working hands —
-  toscanini: (
-    <>
-      <path d="M14 35 L32 16" />
-      <circle className="dot" cx="13.5" cy="35.5" r="2.6" />
-      <path d="M33 12 q4 3 1 7 M37 14 q3 3 0 6" strokeWidth="1.5" />
-    </>
-  ),
   consultant: (
     <>
       <rect x="11" y="12" width="26" height="19" rx="2" />

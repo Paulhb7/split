@@ -67,9 +67,6 @@ export interface StartArgs {
   display: string;
   wire: string;
   files?: string[];
-  // Teams channelId — non-empty marks this session as Teams-owned, so the
-  // classic home filters it out (Teams UI owns its rendering).
-  teamId?: string;
   // Vault project pinned on this session (composer `#project` chip) — the
   // persona's write target becomes projects/<slug>/ instead of notes/.
   project?: string;
@@ -164,7 +161,7 @@ export function useSessions(experts: ExpertMap) {
   const start = useCallback(async (a: StartArgs) => {
     const id = uid();
     const files = a.files ?? [];
-    const s = newSession(id, a.harness, a.expertSlug, labelFor(expertsRef.current, a.expertSlug), a.display, files, a.teamId);
+    const s = newSession(id, a.harness, a.expertSlug, labelFor(expertsRef.current, a.expertSlug), a.display, files);
     setSessions((prev) => [...prev, s]);
     const workspace = localStorage.getItem("split.workspace") || ""; // empty → default root
     await invoke("start_session", { id, harness: a.harness, expert: a.expertSlug, workspace, project: a.project ?? null });

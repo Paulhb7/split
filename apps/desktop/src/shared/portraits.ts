@@ -28,7 +28,6 @@ const PORTRAITS: Record<string, string> = {
   genius_alfred:    "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=500&q=80",
 
   // ---- Super wing (working hands — stylized portraits TBD) ----
-  toscanini:        "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=500&q=80",
   consultant:       "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=500&q=80",
   scientist:        "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=500&q=80",
   financier:        "https://images.unsplash.com/photo-1556157382-97eda2d62296?w=500&q=80",

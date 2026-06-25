@@ -81,12 +81,6 @@ export interface Session {
   // true = materialised from `var/sessions/<id>/` (a past conversation, read-only).
   // Used by the UI to hide the composer and show a "PAST" badge.
   archived?: boolean;
-  // Non-empty = this session was spawned by Teams mode (the value is the
-  // Teams channelId). Classic home filters these out; Teams owns them. Tagged
-  // in-memory at start time only — sessions hydrated from `var/sessions/` on
-  // app boot won't have it (we accept that team sessions are dead after a
-  // restart and the user closes them from classic UI).
-  teamId?: string;
   // Files the agent produced in its workspace during this session — detected
   // by the Rust runner's snapshot/diff at each `status:idle`. Upserted by
   // `rel`; entries with op:"deleted" are removed (not kept as tombstones).
@@ -118,7 +112,6 @@ export function newSession(
   expertLabel: string,
   firstUserText: string,
   files: string[] = [],
-  teamId?: string,
 ): Session {
   return {
     id,
@@ -141,7 +134,6 @@ export function newSession(
     auth: null,
     pendingPermission: null,
     queued: null,
-    teamId,
     artifacts: [],
     activeArtifact: null,
   };
