@@ -370,6 +370,91 @@
 .ec-keyform input { background: rgba(0, 0, 0, 0.25); border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; color: var(--text); font-family: var(--mono); font-size: 12px; outline: 0; }
 .ec-keyform input:focus { border-color: var(--brand); }
 
+/* ── Agents grid ("Pick your agents") ────────────────────────────────────
+   4-up grid grouped by the machine scan: detected vs suggested-to-install.
+   Each card carries both lifecycle steps (install + sign-in) and a model
+   field. Replaces the full-width .ecard-list rows. */
+.alane { display: flex; align-items: center; gap: 9px; margin: 26px 2px 13px; max-width: 1180px; }
+.alane > svg { flex: none; }
+.alane .at { font-family: var(--disp); font-weight: 700; font-size: 14.5px; letter-spacing: -0.01em; color: var(--text); white-space: nowrap; }
+.alane .as { font-family: var(--mono); font-size: 11px; color: var(--dim2); white-space: nowrap; }
+.alane .ar { flex: 1; height: 1px; }
+.alane .ac { font-family: var(--mono); font-size: 10px; letter-spacing: 0.05em; color: var(--dim2); border: 1px solid var(--line); border-radius: 99px; padding: 3px 9px; white-space: nowrap; }
+.alane.ok > svg { color: var(--good); }
+.alane.ok .ar { background: linear-gradient(90deg, color-mix(in srgb, var(--good) 36%, transparent), transparent); }
+.alane.add > svg { color: #5b8bff; }
+.alane.add .at { color: color-mix(in srgb, #5b8bff 30%, var(--text)); }
+.alane.add .ar { background: repeating-linear-gradient(90deg, color-mix(in srgb, #5b8bff 42%, transparent) 0 5px, transparent 5px 11px); }
+
+/* minmax(0,1fr) (not 1fr) lets the tracks shrink below their content's
+   min-width — without it the <select>'s long option text + version strings force
+   each column wider than 1fr and the 4th column overflows the page. The cap
+   keeps a 4-up at a sane card width even when the onboarding renders wide. */
+.ecard-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; max-width: 1180px; }
+@media (max-width: 1140px) { .ecard-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 860px)  { .ecard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px)  { .ecard-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.gcard { position: relative; min-width: 0; border-radius: 13px; border: 1px solid var(--line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 6%, var(--panel)), var(--panel));
+  transition: transform 0.16s, border-color 0.16s, box-shadow 0.16s, background 0.16s; cursor: pointer; }
+.gcard:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--brand) 38%, var(--line));
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--brand) 15%, transparent); }
+.gcard.sel { border-color: color-mix(in srgb, var(--brand) 60%, var(--line));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 12%, var(--panel)), color-mix(in srgb, var(--brand) 4%, var(--panel)));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 34%, transparent), 0 14px 30px color-mix(in srgb, var(--brand) 15%, transparent); }
+.gcard::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 3px; background: var(--brand); opacity: 0; transition: 0.16s; }
+.gcard.sel::before, .gcard:hover::before { opacity: 0.9; box-shadow: 0 0 12px var(--brand); }
+.gcard.sc-scanning { opacity: 0.8; }
+
+/* ghost treatment for the "suggested to install" group */
+.ecard-grid.suggest .gcard { border-style: dashed; border-color: color-mix(in srgb, #5b8bff 22%, var(--line));
+  background: linear-gradient(180deg, rgba(20, 23, 30, 0.34), rgba(14, 16, 22, 0.3)); }
+.ecard-grid.suggest .gcard:hover { border-style: solid; }
+.ecard-grid.suggest .gcard .gc-nm { color: color-mix(in srgb, var(--text) 86%, transparent); }
+
+.gc-head { display: flex; align-items: flex-start; gap: 9px; padding: 11px 12px 0; }
+.gc-idb { min-width: 0; flex: 1; }
+.gc-nm { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.12; }
+.gc-sub { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gc-pill { font-family: var(--mono); font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 6px; border-radius: 99px; white-space: nowrap; flex: none; display: inline-flex; align-items: center; gap: 4px; }
+.gc-pill i { width: 5px; height: 5px; border-radius: 50%; }
+.gc-pill.ready { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+.gc-pill.ready i { background: var(--good); box-shadow: 0 0 7px var(--good); }
+.gc-pill.auth { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.gc-pill.auth i { background: var(--warn); box-shadow: 0 0 7px var(--warn); }
+.gc-pill.inst { color: #5b8bff; background: color-mix(in srgb, #5b8bff 16%, transparent); }
+.gc-pill.inst i { background: #5b8bff; box-shadow: 0 0 7px #5b8bff; }
+.gc-pill.scan { color: var(--dim2); }
+.gc-pill.scan i { background: var(--dim2); }
+
+.gc-ctl { margin-top: 9px; padding: 9px 12px 11px; border-top: 1px solid var(--line2); display: grid; gap: 7px; cursor: default; min-width: 0; }
+.gc-life { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.gc-seg { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; color: var(--dim2); text-transform: uppercase; }
+.gc-ok { color: var(--good); display: inline-flex; }
+.gc-ok svg { width: 12px; height: 12px; }
+.gc-wait { color: var(--dim2); text-transform: none; letter-spacing: 0; opacity: 0.8; }
+.gc-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--line); flex: none; }
+.gc-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; border-radius: 7px; padding: 4px 9px; cursor: pointer; transition: 0.15s; border: 1px solid; white-space: nowrap; }
+.gc-btn.primary { color: var(--ink); background: var(--brand); border-color: var(--brand); }
+.gc-btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+.gc-btn.ghost { color: var(--text); background: color-mix(in srgb, var(--brand) 12%, transparent); border-color: color-mix(in srgb, var(--brand) 40%, var(--line)); }
+.gc-btn.ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--brand) 20%, transparent); }
+.gc-btn:disabled { opacity: 0.5; cursor: default; }
+
+.gc-mfield { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.gc-mlbl { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim2); flex: none; }
+.gc-mfield select, .gc-mbtn { flex: 1; min-width: 0; font-family: var(--mono); font-size: 11px; color: var(--text);
+  background: color-mix(in srgb, var(--brand) 7%, rgba(0, 0, 0, 0.25)); border: 1px solid color-mix(in srgb, var(--brand) 22%, var(--line));
+  border-radius: 7px; padding: 5px 9px; cursor: pointer; transition: 0.15s; -webkit-appearance: none; appearance: none; text-align: left; }
+.gc-mfield select { padding-right: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239395a1' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+.gc-mfield select:hover, .gc-mbtn:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); }
+.gc-mfield select:focus { outline: none; border-color: color-mix(in srgb, var(--brand) 65%, var(--line)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 14%, transparent); }
+.gc-mstatic { font-family: var(--mono); font-size: 11px; color: var(--dim2); }
+.gc-mph { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); opacity: 0.7; border: 1px dashed var(--line); border-radius: 7px; padding: 5px 9px; }
+.gc-cfg { padding: 0 12px 12px; cursor: default; }
+
 /* Hermes configure panel — local/cloud toggle with provider + model pickers. */
 .hermes-panel { display: flex; flex-direction: column; gap: 9px; }
 .hermes-tabs { display: flex; gap: 6px; padding: 2px; background: rgba(0, 0, 0, 0.22); border-radius: 10px; }
@@ -430,6 +515,46 @@
    to the composer below. Only on the empty landing; once sessions exist the
    "each on its own engine" sessions header carries the same line. */
 .home-eyebrow { margin-top: 12px; text-align: center; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--dim2); }
+
+/* ── Enter-the-atelier invite (AtelierInvite.tsx) — the home bar's pull toward
+   the fullscreen studio: a breathing aura ("wants to expand"), a fanned peek of
+   the work waiting inside, and a one-shot soft pulse after the user lingers. */
+.atelier-invite { position: relative; overflow: hidden; width: 100%; margin-top: 12px;
+  display: flex; align-items: center; gap: 16px; text-align: left; cursor: pointer; font-family: inherit; color: var(--text);
+  padding: 13px 16px; border: 1px solid var(--line); border-radius: 16px;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--brand) 10%, transparent), color-mix(in srgb, var(--panel) 48%, transparent));
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.3s, box-shadow 0.3s; }
+.atelier-invite:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--brand) 45%, var(--line));
+  box-shadow: 0 18px 44px -22px color-mix(in srgb, var(--brand) 50%, transparent); }
+.atelier-invite:active { transform: translateY(0); }
+.ai-glow { position: absolute; inset: -40% -10%; pointer-events: none; opacity: 0.5;
+  background: radial-gradient(50% 60% at 18% 50%, color-mix(in srgb, var(--brand) 22%, transparent), transparent 70%);
+  animation: ai-breathe 4.5s ease-in-out infinite; }
+@keyframes ai-breathe { 0%, 100% { opacity: 0.32; transform: translateX(0); } 50% { opacity: 0.6; transform: translateX(6%); } }
+.ai-main { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ai-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; display: inline-flex; align-items: center; gap: 8px; }
+.ai-arrow { font-size: 13px; color: color-mix(in srgb, var(--brand) 85%, var(--text)); transition: transform 0.25s; }
+.atelier-invite:hover .ai-arrow { transform: translate(2px, -2px); }
+.ai-sub { font-size: 12px; color: var(--dim); line-height: 1.4; }
+.ai-peek { position: relative; flex: none; display: flex; align-items: center; padding-left: 6px; }
+.ai-thumb { width: 52px; height: 36px; border-radius: 7px; overflow: hidden; flex: none; margin-left: -16px;
+  border: 1px solid var(--line2); background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 12%, #121a28), #0c121d);
+  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.7); transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.ai-thumb:first-child { margin-left: 0; }
+.ai-thumb svg { width: 100%; height: 100%; display: block; }
+.ai-thumb:nth-child(odd) { transform: rotate(-4deg); }
+.ai-thumb:nth-child(even) { transform: rotate(3deg); }
+.atelier-invite:hover .ai-thumb { transform: rotate(0deg) translateY(-2px); }
+.atelier-invite.nudge { animation: ai-nudge 2.2s cubic-bezier(0.2, 0.7, 0.2, 1); }
+@keyframes ai-nudge {
+  0% { box-shadow: 0 0 0 0 transparent; }
+  28% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 28%, transparent), 0 18px 44px -22px color-mix(in srgb, var(--brand) 55%, transparent);
+        border-color: color-mix(in srgb, var(--brand) 55%, var(--line)); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@media (max-width: 560px) { .ai-peek { display: none; } }
+@media (prefers-reduced-motion: reduce) { .ai-glow, .atelier-invite.nudge { animation: none; } }
 /* Idle-state orb above the composer — full size when there's no session
    open (the bar's adaptive height grows ~110px to fit it), and a 72px
    `.mini` variant above the sessions section once the bar is expanded. */
@@ -568,11 +693,6 @@
 .xbtn { background: none; border: 0; color: var(--dim2); cursor: pointer; font-size: 13px; padding: 3px 6px; border-radius: 7px; }
 .xbtn:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
 .empty { padding: 30px; text-align: center; color: var(--dim2); border: 1px dashed var(--line); border-radius: var(--r); font-family: var(--mono); font-size: 12px; line-height: 1.6; }
-
-/* Discrete pointer at the bottom of the classic sessions list when there are
-   Teams-owned sessions running. Click → switch to Teams mode. */
-.teams-pointer { display: block; width: 100%; padding: 9px 12px; margin-top: 4px; border: 1px dashed var(--line); border-radius: 10px; background: transparent; color: var(--dim); font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; cursor: pointer; text-align: center; transition: 0.15s; }
-.teams-pointer:hover { background: color-mix(in srgb, var(--brand) 6%, transparent); border-color: color-mix(in srgb, var(--brand) 40%, var(--line)); color: var(--text); }
 
 /* ===================== HISTORY · JOURNAL (HistoryOverlay) =====================
    A real, fully opaque page (NOT the translucent `.overlay` glass) so nothing
@@ -1573,12 +1693,6 @@
 }
 .skin-item:hover { background: rgba(255, 255, 255, 0.04); }
 .skin-item.on { background: rgba(255, 255, 255, 0.06); }
-/* The 30-second "still undecided?" Fashion-Week offer — slides in at the top
-   of the skin list after lingering in the picker (see runwayOffer, App.tsx). */
-.skin-item.runway-offer { animation: offer-in 0.5s cubic-bezier(.22, 1, .36, 1); }
-.skin-item.runway-offer .skin-sw { animation: offer-spin 4s linear infinite; }
-@keyframes offer-in { from { opacity: 0; transform: translateY(-7px); } }
-@keyframes offer-spin { to { filter: hue-rotate(360deg); } }
 /* Light skins: a white-alpha wash is invisible on a light --ink2, so flip the
    hover/selected feedback to a dark wash there. */
 .app.theme-bright .skin-item:hover, .app.theme-pastel .skin-item:hover,
@@ -2194,10 +2308,13 @@
 .atelier-left-top .rail-collapse { align-self: center; }
 .atelier-tabs { flex: 1; display: flex; gap: 3px; padding: 3px; border-radius: 11px;
   background: color-mix(in srgb, var(--ink2) 55%, transparent); border: 1px solid var(--line2); }
-.atelier-tab { flex: 1; font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+.atelier-tab { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.04em; text-transform: uppercase;
   color: var(--dim2); border: 0; background: none; padding: 7px 0; border-radius: 8px; cursor: pointer; transition: color 0.15s, background 0.15s; }
 .atelier-tab:hover { color: var(--dim); }
 .atelier-tab.on { color: var(--text); background: color-mix(in srgb, var(--ink) 75%, transparent); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); }
+.atelier-tab-ct { font-size: 8.5px; font-weight: 600; color: var(--brand); background: color-mix(in srgb, var(--brand) 16%, transparent);
+  border-radius: 6px; padding: 1px 4px; line-height: 1.4; }
 /* The scroll region — owns the rail's vertical overflow so each tab gets the
    full height (the roster is never pushed below the fold by the history list). */
 .atelier-left-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
@@ -2303,7 +2420,7 @@
    mark fills 70% of the coin instead of the global 58%, so the icon reads bold
    at the uniform 34px size instead of floating small. Scoped — the welcome hero
    (64%) and every crest outside the atelier (58%) are untouched. */
-.atelier-agent .crest-mark, .reflet .crest-mark { width: 70%; height: 70%; }
+.atelier-agent .crest-mark { width: 70%; height: 70%; }
 .aw-crest-wrap:hover .crest { transform: translateY(-3px) rotate(-1deg); }
 @keyframes aw-crestin { 0% { opacity: 0; transform: translateY(18px) scale(0.86); } 60% { opacity: 1; } 100% { opacity: 1; transform: translateY(0) scale(1); } }
 
@@ -2448,6 +2565,64 @@
 .atelier-art-back { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10.5px; font-weight: 600; color: var(--dim); background: none; border: 1px solid var(--line); border-radius: 9px; padding: 5px 10px; cursor: pointer; transition: color 0.15s, background 0.15s; }
 .atelier-art-back:hover { color: var(--text); background: color-mix(in srgb, var(--brand) 8%, transparent); }
 .atelier-art-body { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 12px; }
+/* Deliverable switcher — the strip that replaced the retired Reflet's list.
+   Shown in the project bar only when the session has produced 2+ deliverables. */
+.atelier-art-spacer { flex: 1; }
+.atelier-deliv-tabs { display: flex; align-items: center; gap: 6px; min-width: 0; overflow-x: auto; }
+.atelier-deliv-tabs::-webkit-scrollbar { height: 0; }
+.atelier-deliv-tab { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); padding: 5px 11px; border-radius: 8px;
+  border: 1px solid var(--line); background: none; cursor: pointer; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis;
+  transition: color 0.15s, background 0.15s, border-color 0.15s; }
+.atelier-deliv-tab:hover { color: var(--dim); }
+.atelier-deliv-tab.on { color: var(--text); background: color-mix(in srgb, var(--brand) 12%, transparent); border-color: color-mix(in srgb, var(--brand) 30%, var(--line)); }
+
+/* ── Atelier empty canvas: the right pane BEFORE a deliverable exists. Instead
+   of a dead void, it projects what this expert makes — the same example cards
+   the welcome shows (DeliverableExamples), or starters / crest as fallback.
+   Mirrors the .atelier-art frame (slim bar + scrolling body) so swapping in the
+   real viewer on delivery is seamless. Rendered by AtelierCanvasEmpty.tsx. */
+.canvas-empty { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.canvas-empty-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line2); flex: none; }
+.canvas-empty-title { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: lowercase; color: var(--dim2); }
+.canvas-empty-live { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; color: color-mix(in srgb, var(--brand) 78%, var(--text)); }
+.canvas-empty-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 55%, transparent); animation: ce-pulse 1.5s ease-out infinite; }
+@keyframes ce-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 50%, transparent); } 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.canvas-empty-body { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 24px 24px 32px; }
+/* one rotating spotlight card, vertically centred in the canvas */
+.dspot { width: 100%; max-width: 480px; margin: auto; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.dspot .dwrap-h { margin-bottom: 4px; }
+.dspot-card { position: relative; overflow: hidden; width: 100%; text-align: left; cursor: pointer; color: var(--text); font-family: inherit;
+  display: flex; flex-direction: column; padding: 0; border: 1px solid var(--line); border-radius: var(--r-starter);
+  background: color-mix(in srgb, var(--panel) 55%, transparent); backdrop-filter: blur(14px); box-shadow: var(--lift-card);
+  animation: dspot-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.28s, background 0.28s; }
+.dspot-card:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--brand) 42%, var(--line)); background: color-mix(in srgb, var(--panel) 75%, transparent); }
+.dspot-card:active { transform: translateY(-1px); }
+.dspot-prev { position: relative; width: 100%; height: 0; padding-bottom: 56%; overflow: hidden;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 10%, #121a28), #0c121d); border-bottom: 1px solid var(--line2); }
+.dspot-prev svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.dspot-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 6px; }
+.dspot-title { font-size: 17px; font-weight: 500; line-height: 1.25; letter-spacing: -0.01em; }
+.dspot-desc { font-size: 13px; line-height: 1.4; color: var(--dim); }
+@keyframes dspot-in { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.dspot-dots { display: flex; gap: 8px; }
+.dspot-dot { width: 7px; height: 7px; border-radius: 50%; padding: 0; cursor: pointer; border: none;
+  background: color-mix(in srgb, var(--brand) 22%, var(--dim)); opacity: 0.55; transition: opacity 0.2s, transform 0.2s, background 0.2s; }
+.dspot-dot:hover { opacity: 0.85; }
+.dspot-dot.on { background: var(--brand); opacity: 1; transform: scale(1.25); }
+.canvas-empty-foot { margin: 22px auto 0; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim2); opacity: 0.8; }
+/* starter fallback (expert with no examples) */
+.canvas-empty-starters { width: 100%; max-width: 520px; margin: auto auto 0; display: flex; flex-direction: column; gap: 10px; }
+.canvas-empty-starter { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer; color: var(--text); font-family: inherit; font-size: 14px;
+  padding: 13px 15px; border: 1px solid var(--line); border-radius: var(--r-starter); background: color-mix(in srgb, var(--panel) 55%, transparent);
+  transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.22s, background 0.22s; }
+.canvas-empty-starter:hover { transform: translateX(3px); border-color: color-mix(in srgb, var(--brand) 42%, var(--line)); background: color-mix(in srgb, var(--panel) 75%, transparent); }
+.canvas-empty-starter .ce-idx { font-family: var(--mono); font-size: 11px; color: var(--dim2); display: inline-flex; align-items: center; gap: 4px; }
+.canvas-empty-starter .ce-arrow { opacity: 0; transform: translateX(-3px); transition: opacity 0.2s, transform 0.2s; color: color-mix(in srgb, var(--brand) 85%, var(--text)); }
+.canvas-empty-starter:hover .ce-arrow { opacity: 1; transform: translateX(0); }
+/* crest fallback (no examples, no starters) */
+.canvas-empty-hero { margin: auto; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+.canvas-empty-blurb { max-width: 360px; font-size: 13.5px; line-height: 1.5; color: var(--dim); }
 
 /* ── Atelier centre stage: the conversation, and the conversation|artifact SPLIT.
    No deliverable open → the conversation fills the centre. A deliverable open
@@ -2456,12 +2631,21 @@
    to strips (see `.rail-stub`) so the pair gets the room — the "focus" posture. */
 .atelier-stage { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .atelier-stage.split { flex-direction: row; }
-.atelier-stage-conv { position: relative; flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 /* No frosted "dalle" behind the conversation: the thread rests directly on the
-   atelier ground, matching the open feel of the pre-session welcome (no panel). */
-.atelier-stage.split .atelier-stage-conv { flex: 42 1 0; min-width: 340px; border-right: 1px solid var(--line2); }
+   atelier ground, matching the open feel of the pre-session welcome (no panel).
+   PROGRESSIVE LAYOUT: by default the conversation dominates and the project is a
+   narrow teaser docked right ("what this expert makes"). When a deliverable
+   opens (`.delivered`) the project grows to ~62% and the conversation becomes a
+   companion column — the left rail simultaneously folds to its stub (rosterOpen),
+   so the document gets the room. flex-basis transitions for a smooth pivot. */
+.atelier-stage-conv { position: relative; flex: 0 1 64%; min-width: 340px; min-height: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line2); transition: flex-basis 0.42s cubic-bezier(0.2, 0.7, 0.2, 1); }
 .atelier-stage.split .atelier-stage-conv .conv { padding: 0 22px 14px; }
-.atelier-split-view { flex: 58 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+/* The project fills whatever the conversation doesn't — so the smooth pivot is
+   driven by ONE animated value (the conversation's flex-basis, %→% so it
+   interpolates), and the project follows in lockstep. Empty → conv 64% / project
+   teaser ~36%; delivered → conv 34% companion / project ~66% dominant. */
+.atelier-project { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.atelier-stage.delivered .atelier-stage-conv { flex-basis: 34%; min-width: 320px; }
 
 /* Collapsed rail strip (roster left / reflet right) — a thin column with a
    chevron, a vertical label, and a glance of live/deliverable dots. */
@@ -2482,68 +2666,20 @@
 .rail-stub-dot { width: 6px; height: 6px; border-radius: 50%; background: color-mix(in srgb, var(--brand) 38%, var(--dim)); }
 .rail-stub-dot.run { background: var(--good); box-shadow: 0 0 6px color-mix(in srgb, var(--good) 55%, transparent); }
 
-/* Collapse chevrons on the full rails — fold them back to the strip. Sit as a
-   small control top-right (left rail) / top-left-flushed-right (reflet). */
-.rail-collapse, .reflet-collapse {
+/* Collapse chevron on the roster rail — folds it back to the strip. */
+.rail-collapse {
   align-self: flex-end; flex: none;
   width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center;
   border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 45%, transparent);
   color: var(--dim); font-size: 12px; line-height: 1; cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-.rail-collapse:hover, .reflet-collapse:hover { color: var(--text); border-color: color-mix(in srgb, var(--brand) 40%, var(--line)); background: color-mix(in srgb, var(--brand) 8%, transparent); }
+.rail-collapse:hover { color: var(--text); border-color: color-mix(in srgb, var(--brand) 40%, var(--line)); background: color-mix(in srgb, var(--brand) 8%, transparent); }
 
 @media (max-width: 900px) {
   .atelier-stage.split { flex-direction: column; }
   .atelier-stage.split .atelier-stage-conv { flex: 1 1 auto; min-width: 0; border-right: none; border-bottom: 1px solid var(--line2); }
 }
-
-.reflet {
-  flex: 0 0 330px; min-height: 0; overflow-y: auto;
-  border: 1px solid var(--rim); border-radius: var(--r-rail);
-  padding: 14px; display: flex; flex-direction: column; gap: 10px;
-  background: color-mix(in srgb, var(--ink) 30%, transparent);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-}
-.reflet-card {
-  display: flex; align-items: center; gap: 11px;
-  padding: 13px; border-radius: var(--r-card);
-  border: 1px solid color-mix(in srgb, var(--brand) 24%, var(--line));
-  background: color-mix(in srgb, var(--brand) 12%, var(--panel));
-}
-.reflet-id { min-width: 0; }
-.reflet-name { font-weight: 700; font-size: 15px; letter-spacing: -0.02em; }
-.reflet-on { font-family: var(--mono); font-size: 10px; color: var(--dim); }
-.reflet-on b { color: var(--engine); }
-.reflet-ro { margin-left: auto; font-family: var(--mono); font-size: 9px; color: var(--dim2); white-space: nowrap; }
-
-.reflet-sec { border: 1px solid var(--line2); border-radius: var(--r-card); background: var(--panel); overflow: hidden; }
-.reflet-sec > summary { list-style: none; cursor: pointer; padding: 11px 13px; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-.reflet-sec > summary::-webkit-details-marker { display: none; }
-.reflet-count { margin-left: auto; font-family: var(--mono); font-size: 9.5px; color: var(--dim2); font-weight: 500; }
-.reflet-body { padding: 4px 13px 13px; border-top: 1px solid var(--line2); }
-.reflet-muted { font-size: 11.5px; color: var(--dim2); line-height: 1.5; margin: 0; }
-.reflet-task { font-size: 12px; color: var(--text); line-height: 1.55; margin: 0; white-space: pre-wrap; }
-
-.reflet-step { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; font-size: 11.5px; color: var(--dim); }
-.reflet-step .reflet-dot { width: 7px; height: 7px; margin-top: 4px; border-radius: 50%; flex: none; border: 1px solid var(--line); }
-.reflet-step.completed { color: var(--text); }
-.reflet-step.completed .reflet-dot { background: var(--good); border-color: var(--good); }
-.reflet-step.in_progress .reflet-dot { background: var(--brand); border-color: var(--brand); animation: pulse 1.4s infinite; }
-
-.reflet-kv { display: flex; justify-content: space-between; padding: 5px 0; font-size: 11.5px; color: var(--dim); border-bottom: 1px solid var(--line2); }
-.reflet-kv:last-child { border-bottom: 0; }
-.reflet-kv b { color: var(--text); font-family: var(--mono); font-weight: 500; }
-
-.reflet-pills { display: flex; flex-wrap: wrap; gap: 6px; }
-.reflet-pill { font-family: var(--mono); font-size: 9.5px; color: var(--dim); padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--brand) 6%, transparent); }
-
-.reflet-art { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: color-mix(in srgb, var(--brand) 5%, transparent); cursor: pointer; transition: background 0.15s, border-color 0.15s; margin-top: 6px; color: inherit; }
-.reflet-art:first-child { margin-top: 0; }
-.reflet-art:hover { background: color-mix(in srgb, var(--brand) 12%, transparent); }
-.reflet-art.on { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); }
-.reflet-art-ic { font-size: 14px; flex: none; }
-.reflet-art-name { font-size: 11.5px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* --- Conversation empty state: the expert's crest, a greeting and per-expert
    starter prompts. Shown before the first turn (and when switching to an

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
@@ -23,14 +23,13 @@ import { Conversation, type PeerAlert } from "./conversation/Conversation";
 import { ArtifactViewer } from "./conversation/ArtifactViewer";
 import { AtelierLeft } from "./conversation/AtelierLeft";
 import { DeliverableExamples } from "./conversation/DeliverableExamples";
-import { Reflet } from "./conversation/Reflet";
+import { AtelierCanvasEmpty } from "./conversation/AtelierCanvasEmpty";
 import { Crest } from "./shared/Crest";
 import { HistoryOverlay } from "./history/HistoryOverlay";
 import { AuthModal } from "./auth/AuthModal";
 import Onboarding from "./onboarding/Onboarding";
-import Teams from "./teams/Teams";
-import { useTeam } from "./teams/useTeam";
-import Cabinet from "./cabinet/Cabinet";
+import Gallery from "./cabinet/Gallery";
+import { AtelierInvite } from "./home/AtelierInvite";
 import { VaultOverlay } from "./vault/VaultOverlay";
 import SplitMark from "./shared/SplitMark";
 import "./app.css";
@@ -39,13 +38,6 @@ const LS_DONE = "split.onboarded";
 const LS_DEF = "split.defaultHarness"; // legacy single-pick (migrated to LS_ENABLED)
 const LS_ENABLED = "split.enabledHarnesses"; // the agents the user activated
 const LS_ACTIVE = "split.activeHarness"; // the armed engine for the next session
-const LS_MODE = "split.mode"; // "simple" (one expert/session) | "teams" (Chief-of-Staff)
-
-// Teams mode (a Chief-of-Staff orchestrating the roster) is a future feature.
-// Gated off for now: the chrome toggle is shown greyed/disabled and every
-// entry point is guarded. Flip to `true` to re-enable the whole path — the
-// view + state machine are kept intact underneath.
-const TEAMS_ENABLED = false;
 
 // Drifting starfield behind the atelier welcome crest. Positions are seeded once
 // at module load (deterministic — no Math.random in render) so they don't
@@ -89,8 +81,6 @@ function loadActive(): string {
 export default function App() {
   const experts = useExperts();
   const { sessions, start, send, sendAuth, sendPermission, stop, remove, cancelQueued, openArchive, resumeArchive } = useSessions(experts);
-  const teamApi = useMemo(() => ({ start, send, stop }), [start, send, stop]);
-  const { project, channels, activeChannel, activeRoster, setActiveChannel, newChannel, stopChannel, removeChannel } = useTeam(teamApi, experts);
   const { startMove, hide } = useWindowChrome();
   const lifecycle = useHarnessStates();
 
@@ -100,7 +90,7 @@ export default function App() {
   const [expertSlug, setExpertSlug] = useState("consultant");
   const [overlay, setOverlay] = useState(false);
   // "list" = the floating bar (home or compact conversation). "atelier" = the
-  // fullscreen control room (roster · conversation · reflet). The window SIZE is
+  // fullscreen control room (roster · conversation · project). The window SIZE is
   // the mode: maximising (the green traffic light, a delivery, the expand
   // chevron) → atelier; shrinking → bar. Never persisted — the app always boots
   // small, and the OS fullscreen state is the source of truth (see the effect
@@ -108,20 +98,14 @@ export default function App() {
   const [view, setView] = useState<"list" | "atelier">("list");
 
   const [focusedId, setFocusedId] = useState<string | null>(null);
-  const [mode, setModeState] = useState<"simple" | "teams">(() => (TEAMS_ENABLED && localStorage.getItem(LS_MODE) === "teams" ? "teams" : "simple"));
-  const setMode = (m: "simple" | "teams") => {
-    setModeState(m);
-    localStorage.setItem(LS_MODE, m);
-    if (m === "teams") setFocusedId(null);
-  };
   // Chrome overflow menu (⋯) — gathers the rare actions (skin, workspace,
   // replay onboarding) behind one glyph. "skins" is the drill-down page.
   const [moreMenu, setMoreMenu] = useState<false | "root" | "skins">(false);
   const { toasts, push: pushToast } = useToasts();
-  // The whole wardrobe — day skin, auto-Minuit, the four easter eggs — lives
+  // The whole wardrobe — day skin, auto-Minuit, the three easter eggs — lives
   // in shared/useSkin.ts; `shownSkin` is what the window wears right now.
-  const { skin, shownSkin, night, smallHours, pickSkin, noirEgg, titanicEgg, cosmosEgg, startRunway, runwayAsk, setRunwayAsk, runwayOffer } =
-    useSkin({ onboarded, skinPickerOpen: moreMenu === "skins", pushToast });
+  const { skin, shownSkin, night, smallHours, pickSkin, noirEgg, titanicEgg, cosmosEgg } =
+    useSkin({ pushToast });
   const [historyOpen, setHistoryOpen] = useState(false);
   // God Mode: auto-approve every pending permission ask — shared/useGodMode.ts.
   const { godMode, toggleGodMode } = useGodMode(sessions, sendPermission);
@@ -140,13 +124,7 @@ export default function App() {
   const measureRef = useRef<HTMLDivElement>(null);
   const prevStatus = useRef<Record<string, string>>({});
 
-  // Classic UI surfaces (sessions list, stage, chrome counter) hide Teams-owned
-  // sessions — Teams mode owns its own rendering. authSession and anyRunning
-  // stay on the unfiltered list so auth modals + the global running indicator
-  // surface regardless of origin.
-  const classicSessions = useMemo(() => sessions.filter((s) => !s.teamId), [sessions]);
-  const teamSessionsCount = sessions.length - classicSessions.length;
-  const focused = classicSessions.find((s) => s.id === focusedId) ?? null;
+  const focused = sessions.find((s) => s.id === focusedId) ?? null;
   const authSession = sessions.find((s) => s.auth) ?? null;
   const anyRunning = sessions.some((s) => s.status === "running");
   // The composer brain — input value, attachments, `@`/`#`/`/` pickers and
@@ -163,11 +141,11 @@ export default function App() {
 
   // Two geometries, full stop: a 680px-wide adaptive bar (height fits content)
   // for the home/composer/conversation flow, and native macOS fullscreen for
-  // any "serious" surface — Teams orchestration, onboarding, Add Agent,
-  // Cabinet, History, and art mode (focused session with deliverables).
+  // any "serious" surface — onboarding, Add Agent, Cabinet, History, and art
+  // mode (focused session with deliverables).
   // Fullscreen pauses the adaptive fit so the OS owns the window; on exit
   // the ResizeObserver re-fits whatever the body now shows.
-  const expanded = !!focused || classicSessions.length > 0 || !!authSession;
+  const expanded = !!focused || sessions.length > 0 || !!authSession;
   // The window SIZE is the split/atelier switch (see the nativeFs effect below).
   // Maximising routes into the Atelier focus mode — the single fullscreen
   // surface; a fresh deliverable maximises automatically. Shrinking returns to
@@ -198,35 +176,33 @@ export default function App() {
     // only — `focused` is read fresh, intentionally not a dep.
     setAtelierArt((cur) => (cur && focused?.artifacts.some((a) => a.rel === cur) ? cur : null));
   }, [focusedId]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Atelier rail collapse. When a deliverable opens, both flanking rails (roster
-  // + reflet) fold to thin strips so the conversation|artifact split gets the
-  // full centre (the "focus" posture). Each re-expands on demand via its
-  // chevron; closing the deliverable restores both.
+  // Atelier left rail. It's the navigator (Agents · Sessions · History) and
+  // stays OPEN while you brief — it only folds to a thin strip when a deliverable
+  // opens, so the conversation|document split gets the full centre (the "focus"
+  // posture). It re-expands on demand via its stub, and closing the deliverable
+  // restores it. The reflet (a separate right mirror) was retired: the right
+  // pane is now the progressive "project" surface, not a status mirror.
   const [rosterOpen, setRosterOpen] = useState(true);
-  // Reflet starts FOLDED — the first-launch welcome reads cleaner without the
-  // right mirror; the user expands it on demand via its stub (and opening a
-  // deliverable still auto-folds/restores both rails via the effect below).
-  const [refletOpen, setRefletOpen] = useState(false);
-  // Fold both rails on the transition INTO an open deliverable, restore on the
+  // Fold the rail on the transition INTO an open deliverable, restore on the
   // transition OUT — but not when merely switching between deliverables, so a
   // rail you re-opened by hand stays open while you flip through them.
   const prevArt = useRef<string | null>(null);
   useEffect(() => {
     const had = prevArt.current !== null, has = atelierArt !== null;
-    if (has && !had) { setRosterOpen(false); setRefletOpen(false); }
-    else if (!has && had) { setRosterOpen(true); setRefletOpen(true); }
+    if (has && !had) setRosterOpen(false);
+    else if (!has && had) setRosterOpen(true);
     prevArt.current = atelierArt;
   }, [atelierArt]);
   // Peer sessions blocked on the boss (auth / a permission) — surfaced as a
   // banner in the focused conversation so attention isn't trapped in one room.
-  const peerAlerts: PeerAlert[] = classicSessions
+  const peerAlerts: PeerAlert[] = sessions
     .filter((s) => s.id !== focusedId && (s.status === "auth" || !!s.pendingPermission))
     .map((s) => ({ id: s.id, label: s.expertLabel, reason: s.status === "auth" ? "auth" : "permission" }));
   // Two layers of fullscreen. `overlayFullscreen` = a surface that owns the whole
-  // screen on its own terms (Teams, cabinet, history, vault, onboarding). The
-  // atelier is the OTHER layer — driven by the window size. Together they decide
-  // whether the OS window is fullscreen.
-  const overlayFullscreen = mode === "teams" || overlay || !!cabinet || historyOpen || !onboarded || vaultOpen;
+  // screen on its own terms (cabinet, history, vault, onboarding). The atelier is
+  // the OTHER layer — driven by the window size. Together they decide whether the
+  // OS window is fullscreen.
+  const overlayFullscreen = overlay || !!cabinet || historyOpen || !onboarded || vaultOpen;
   const isFullscreen = overlayFullscreen || atelierMode;
   useFullscreen(isFullscreen);
   const nativeFs = useNativeFullscreen();
@@ -258,7 +234,7 @@ export default function App() {
   useAdaptiveHeight({
     measureRef,
     // Pause the auto-fit whenever the OS owns the window — app-driven fullscreen
-    // (Teams/overlays/atelier), ANY focused conversation (it's a fixed
+    // (overlays/atelier), ANY focused conversation (it's a fixed
     // panel now: the thread scrolls internally instead of pumping the window),
     // AND native fullscreen the user reached via the green traffic light. Without
     // `nativeFs` here the fit kept firing `set_bar_height` against a fullscreen
@@ -360,19 +336,16 @@ export default function App() {
   // background — clicking it raises the window and opens that conversation.
   // Works in `tauri dev` too (the unbundled banner just shows as Terminal).
   const notifyNative = useNativeNotify((sid) => {
-    setMode("simple");
     setFocusedId(sid);
     // The notification means "an agent finished" — surface its work full-screen,
     // the same posture a live delivery routes into (see the auto-atelier effect).
     setView("atelier");
   });
 
-  // toast a session that finished while you weren't watching it — only for
-  // classic-UI sessions; Teams members complete inside the Teams view and
-  // their state changes shouldn't toast the global home.
+  // toast a session that finished while you weren't watching it.
   useEffect(() => {
     const prev = prevStatus.current;
-    for (const s of classicSessions) {
+    for (const s of sessions) {
       const was = prev[s.id];
       if (was === "running" && s.status !== "running") {
         const verb = s.status === "ended" ? "ended" : s.status === "error" ? "errored" : "is ready";
@@ -386,8 +359,8 @@ export default function App() {
       }
       prev[s.id] = s.status;
     }
-    for (const id of Object.keys(prev)) if (!classicSessions.some((s) => s.id === id)) delete prev[id];
-  }, [classicSessions, focusedId, pushToast, notifyNative]);
+    for (const id of Object.keys(prev)) if (!sessions.some((s) => s.id === id)) delete prev[id];
+  }, [sessions, focusedId, pushToast, notifyNative]);
 
   // Auto-atelier on delivery. When a session produces a NEW deliverable, surface
   // it full-screen in the atelier — but only if you're already watching that
@@ -397,7 +370,7 @@ export default function App() {
   // artifacts doesn't trigger — only deliveries that land while we watch count.
   const prevArtCount = useRef<Record<string, number>>({});
   useEffect(() => {
-    for (const s of classicSessions) {
+    for (const s of sessions) {
       const seen = s.id in prevArtCount.current;
       const before = prevArtCount.current[s.id] ?? 0;
       const now = s.artifacts.length;
@@ -410,9 +383,9 @@ export default function App() {
       }
     }
     for (const id of Object.keys(prevArtCount.current)) {
-      if (!classicSessions.some((s) => s.id === id)) delete prevArtCount.current[id];
+      if (!sessions.some((s) => s.id === id)) delete prevArtCount.current[id];
     }
-  }, [classicSessions, focusedId]);
+  }, [sessions, focusedId]);
 
   // toggle an agent in/out of the activated set (manage overlay)
   function toggleEnabled(id: string) {
@@ -427,7 +400,7 @@ export default function App() {
       return final;
     });
   }
-  function enterSplit(ids: string[], intent?: "brief_expert" | "start_recruiter", expertSlug?: string, customPrompt?: string) {
+  function enterSplit(ids: string[], intent?: "brief_expert" | "start_recruiter" | "open_gallery", expertSlug?: string, customPrompt?: string) {
     const list = ids.length ? ids : ["claude"];
     setEnabled(list);
     setActiveState(list[0]);
@@ -439,8 +412,9 @@ export default function App() {
     // - clicking an expert card → expertSlug set, no auto-launch (user types
     //   their own prompt in the home composer with that expert pre-selected)
     // - "Hire @Socrates" → auto-launches a recruiter session straight away
-    // - brief_expert auto-launches the spotlighted expert (page-3 Spotlight)
-    //   with the typed topic; falls back to consultant + a sample brief.
+    // - brief_expert auto-launches the pinned expert from the page-4 work
+    //   gallery with its brief; falls back to consultant + a sample brief.
+    // - open_gallery enters and lands on the in-app work Gallery.
     if (expertSlug) {
       setExpertSlug(expertSlug);
     }
@@ -456,6 +430,9 @@ export default function App() {
       const turn = composeTurn(prompt, []);
       setExpertSlug(slug);
       start({ harness: list[0], expertSlug: slug, display: turn.display, wire: turn.wire, files: turn.files }).then(setFocusedId);
+    } else if (intent === "open_gallery") {
+      // "See the complete gallery" → land straight on the in-app work Gallery.
+      setCabinet(true);
     }
   }
 
@@ -519,7 +496,7 @@ export default function App() {
         {((shownSkin === "minuit" && smallHours) || skin === "cosmos") && (
           <button className={"wm-star" + (skin === "cosmos" ? " in" : "")} onClick={cosmosEgg} type="button">✦</button>
         )}
-        <span className="chrome-meta">{focused ? `on ${H[focused.harness]?.label || focused.harness}` : classicSessions.length ? `${classicSessions.length} session${classicSessions.length === 1 ? "" : "s"}` : "ready"}</span>
+        <span className="chrome-meta">{focused ? `on ${H[focused.harness]?.label || focused.harness}` : sessions.length ? `${sessions.length} session${sessions.length === 1 ? "" : "s"}` : "ready"}</span>
         <span className="spacer" />
         {/* The window SIZE is the mode — no split/atelier segment anymore. This
             single chevron toggles it: ⊡ maximise → atelier, ⊟ shrink → the
@@ -535,7 +512,7 @@ export default function App() {
             aria-label={atelierMode ? "Collapse to the bar" : "Expand to the atelier"}
           >{atelierMode ? "⊟" : "⊡"}</button>
         )}
-        <button className="iconbtn" onClick={() => setCabinet(true)} title="Browse cabinet — use cases & examples per expert" aria-label="Browse cabinet">
+        <button className="iconbtn" onClick={() => setCabinet(true)} title="The gallery — browse the work your studio makes" aria-label="Open the gallery">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <rect x="3" y="3" width="7" height="7" rx="1.5" />
             <rect x="14" y="3" width="7" height="7" rx="1.5" />
@@ -543,7 +520,8 @@ export default function App() {
             <rect x="14" y="14" width="7" height="7" rx="1.5" />
           </svg>
         </button>
-        <button className="iconbtn" onClick={() => setHistoryOpen(true)} title="Past conversations">🕰️</button>
+        {/* History lives in the atelier rail's History tab now (one entry, no
+            redundant chrome button) — see AtelierLeft + "Tout l'historique →". */}
         <button className="iconbtn" onClick={() => setVaultOpen(true)} title="Vault — everything your experts know & produce">🗃️</button>
         <div className="skin-wrap">
           <button className="iconbtn" onClick={() => setMoreMenu((v) => (v ? false : "root"))} title="More — skin, onboarding">⋯</button>
@@ -582,15 +560,6 @@ export default function App() {
                       <span className="more-ic">‹</span>
                       <span className="more-meta"><b>Skin</b></span>
                     </button>
-                    {runwayOffer && (
-                      <button className="skin-item runway-offer" onClick={() => { setMoreMenu(false); startRunway(); }} role="menuitem">
-                        <span className="skin-sw" style={{ background: "conic-gradient(from 20deg, #0053fd, #d4a574, #d4af37, #c89c4a, #ff3df2, #8e7bff, #0053fd)" }} />
-                        <span className="skin-meta">
-                          <b>Toujours pas décidé ?</b>
-                          <small>Lancer la Fashion Week — tout le vestiaire défile</small>
-                        </span>
-                      </button>
-                    )}
                     {/* Hidden skins (Noir) only list while worn — so you can
                         leave; night skins (Minuit) only exist after dark. */}
                     {SKINS.filter((s) => (!s.hidden || skin === s.id) && (!s.night || night)).map((s) => (
@@ -612,15 +581,15 @@ export default function App() {
       </div>
 
       {/* When the focused session has at least one artifact, the conversation
-          becomes a left rail and a viewer fills the rest — same fullscreen
-          fill behaviour Teams uses, so the window owns its own scroll regions
-          and the adaptive ResizeObserver is paused (we want a fixed canvas). */}
+          becomes a left rail and a viewer fills the rest, so the window owns its
+          own scroll regions and the adaptive ResizeObserver is paused (we want a
+          fixed canvas). */}
       {(() => {
         // `fill` = the inner view owns its own scroll regions on a fixed canvas
         // (no adaptive growth). Every focused conversation qualifies now — the
         // thread scrolls internally with the header + composer pinned — alongside
-        // Teams and the atelier. Home keeps the adaptive bar (`tall` for overlays).
-        const fillMode = mode === "teams" || atelierMode || !!focused;
+        // the atelier. Home keeps the adaptive bar (`tall` for overlays).
+        const fillMode = atelierMode || !!focused;
         const bodyCls = "body" + (fillMode ? " fill" : isFullscreen ? " tall" : "");
         const measureCls = "measure" + (fillMode ? " fill" : isFullscreen ? " tall" : "");
         // A deliverable is open in the atelier → the centre splits (conversation
@@ -630,14 +599,14 @@ export default function App() {
       <div className={bodyCls}>
         <div ref={measureRef} className={measureCls}>
         {!onboarded ? (
-          /* ============ ONBOARDING (5 pages: concept · demo · pick · @Wolfgang · @Socrates) ============ */
+          /* ============ ONBOARDING (6 pages: welcome · skin · agents · vault · gallery · cast) ============ */
           <Onboarding onEnter={enterSplit} skin={skin} onPickSkin={pickSkin} />
         ) : atelierMode ? (
-          /* ============ ATELIER (fullscreen control room: roster · centre · reflet) ============ */
+          /* ============ ATELIER (fullscreen control room: roster · centre · project) ============ */
           <div className="atelier">
             <AtelierLeft
               experts={experts}
-              sessions={classicSessions}
+              sessions={sessions}
               focusedId={focusedId}
               armedSlug={expertSlug}
               onArm={(slug) => { setExpertSlug(slug); setFocusedId(null); }}
@@ -649,7 +618,7 @@ export default function App() {
             />
             <div className="atelier-conv">
               {focused ? (
-                <div className={"atelier-stage" + (atelierArtOpen ? " split" : "")}>
+                <div className={"atelier-stage split" + (atelierArtOpen ? " delivered" : "")}>
                   <div className="atelier-stage-conv">
                     <Conversation
                       session={focused}
@@ -679,19 +648,43 @@ export default function App() {
                       onFocusPeer={setFocusedId}
                     />
                   </div>
-                  {atelierArtOpen && (
-                    <div className="atelier-split-view">
+                  {/* The PROJECT pane: a narrow teaser of "what this expert makes"
+                      until a deliverable lands; on delivery the rail folds and this
+                      grows to dominate (see `.delivered`), showing the viewer + a
+                      deliverable switcher (the strip that replaced the Reflet list). */}
+                  <div className="atelier-project">
+                    {atelierArtOpen ? (
                       <div className="atelier-art">
                         <div className="atelier-art-bar">
-                          <button className="atelier-art-back" onClick={() => setAtelierArt(null)} title="Close deliverable — back to the conversation">✕ close</button>
-                          {/* The deliverable picker is the Reflet dock (right) — no redundant strip here. */}
+                          {focused.artifacts.length > 1 && (
+                            <div className="atelier-deliv-tabs" role="tablist">
+                              {focused.artifacts.map((a) => (
+                                <button
+                                  key={a.rel}
+                                  role="tab"
+                                  aria-selected={a.rel === atelierArt}
+                                  className={"atelier-deliv-tab" + (a.rel === atelierArt ? " on" : "")}
+                                  onClick={() => setAtelierArt(a.rel)}
+                                  title={a.rel}
+                                >{a.rel.split("/").pop()}</button>
+                              ))}
+                            </div>
+                          )}
+                          <span className="atelier-art-spacer" />
+                          <button className="atelier-art-back" onClick={() => setAtelierArt(null)} title="Close deliverable — back to the project">✕ close</button>
                         </div>
                         <div className="atelier-art-body">
                           <ArtifactViewer artifact={focused.artifacts.find((a) => a.rel === atelierArt)!} />
                         </div>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <AtelierCanvasEmpty
+                        session={focused}
+                        experts={experts}
+                        onPick={(p) => { handleInputChange(p, null); inputRef.current?.focus(); }}
+                      />
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="atelier-welcome">
@@ -757,40 +750,6 @@ export default function App() {
                 </div>
               )}
             </div>
-            {!refletOpen ? (
-              <button className="rail-stub right" onClick={() => setRefletOpen(true)} title="Expand the reflet">
-                <span className="rail-stub-x">‹</span>
-                <span className="rail-stub-label">Reflet</span>
-                <span className="rail-stub-dots">
-                  {(focused?.artifacts ?? []).slice(0, 4).map((a) => <span key={a.rel} className="rail-stub-dot" />)}
-                </span>
-              </button>
-            ) : focused ? (
-              <Reflet session={focused} experts={experts} onPickArtifact={(_id, rel) => setAtelierArt(rel)} onCollapse={() => setRefletOpen(false)} />
-            ) : (
-              <aside className="reflet" aria-label="About the agent">
-                <button className="reflet-collapse" onClick={() => setRefletOpen(false)} title="Collapse">›</button>
-                <div className="reflet-card">
-                  <Crest kind={experts[expertSlug]?.kind} seed={expertSlug} size={34} />
-                  <div className="reflet-id">
-                    <div className="reflet-name">{expertLabel}</div>
-                    <div className="reflet-on">{experts[expertSlug]?.role || experts[expertSlug]?.category || "agent"}</div>
-                  </div>
-                </div>
-                <details className="reflet-sec" open>
-                  <summary>About</summary>
-                  <div className="reflet-body"><p className="reflet-task">{experts[expertSlug]?.blurb}</p></div>
-                </details>
-                {(experts[expertSlug]?.skills?.length ?? 0) > 0 && (
-                  <details className="reflet-sec" open>
-                    <summary>Skills <span className="reflet-count">{experts[expertSlug]!.skills!.length}</span></summary>
-                    <div className="reflet-body reflet-pills">
-                      {experts[expertSlug]!.skills!.map((s) => <span key={s} className="reflet-pill">{s}</span>)}
-                    </div>
-                  </details>
-                )}
-              </aside>
-            )}
           </div>
         ) : focused ? (
           /* ====== CONVERSATION (compact; deliverables open into the Atelier focus mode) ====== */
@@ -820,14 +779,6 @@ export default function App() {
             peers={peerAlerts}
             onFocusPeer={setFocusedId}
           />
-        ) : mode === "teams" ? (
-          /* ============ TEAMS (Chief-of-Staff orchestration) ============ */
-          <Teams
-            project={project} channels={channels} activeChannel={activeChannel} activeRoster={activeRoster}
-            sessions={sessions}
-            onNewChannel={(g) => newChannel(g, active)} onSelectChannel={setActiveChannel}
-            onStopChannel={stopChannel} onRemoveChannel={removeChannel}
-          />
         ) : (
           /* ============ HOME ============ */
           <div className="home">
@@ -848,6 +799,12 @@ export default function App() {
               onAttach={pickAttachments}
             />
 
+            {/* Pull to fullscreen: the home bar is a doorway, the atelier is the
+                studio. This invite makes the door inviting (breathing aura, a
+                peek of the work inside, a soft idle pulse) and is the main push
+                toward fullscreen the bar was missing. */}
+            <AtelierInvite onEnter={() => setView("atelier")} idleSignal={value} />
+
             {/* The minimal-bar idle state shows ONLY the composer — adaptive
                 window auto-fits to ~150 px. The roster + sessions surface only
                 once the bar is "expanded" (sessions exist, overlay opened, etc).
@@ -859,15 +816,10 @@ export default function App() {
               <span className="muted">each on its own engine</span>
             </div>
             <div className="sessions">
-              {classicSessions.length === 0 ? (
+              {sessions.length === 0 ? (
                 <div className="empty">No sessions yet — brief an expert above.<br />Its engine's logo shows here while it runs.</div>
               ) : (
-                classicSessions.map((s) => <SessionRow key={s.id} s={s} kind={experts[s.expertSlug]?.kind} onOpen={() => setFocusedId(s.id)} onStop={() => stop(s.id)} onClose={() => remove(s.id)} />)
-              )}
-              {TEAMS_ENABLED && teamSessionsCount > 0 && (
-                <button className="teams-pointer" onClick={() => setMode("teams")}>
-                  {teamSessionsCount} team session{teamSessionsCount === 1 ? "" : "s"} running in Teams →
-                </button>
+                sessions.map((s) => <SessionRow key={s.id} s={s} kind={experts[s.expertSlug]?.kind} onOpen={() => setFocusedId(s.id)} onStop={() => stop(s.id)} onClose={() => remove(s.id)} />)
               )}
             </div>
             </>}
@@ -891,14 +843,18 @@ export default function App() {
       )}
 
       {cabinet && (
-        <Cabinet
+        <Gallery
           experts={experts}
           initialSlug={typeof cabinet === "string" ? cabinet : null}
           onIceberg={titanicEgg}
           onClose={() => setCabinet(false)}
           onLaunch={(slug, prompt) => {
+            // Launching a piece of work pushes straight into the atelier (the
+            // fullscreen studio) — the gallery's highest-intent click is also
+            // the strongest pull toward fullscreen.
             setCabinet(false);
             setExpertSlug(slug);
+            setView("atelier");
             if (!prompt) return;
             const turn = composeTurn(prompt, []);
             start({ harness: active, expertSlug: slug, display: turn.display, wire: turn.wire, files: turn.files }).then(setFocusedId);
@@ -930,21 +886,6 @@ export default function App() {
       {vaultOpen && <VaultOverlay onClose={() => setVaultOpen(false)} />}
 
       {authSession && <AuthModal session={authSession} onPick={(m) => sendAuth(authSession.id, m)} />}
-
-      {/* Fashion-Week proposal — the runway eggs ask instead of firing during
-          onboarding (see runway()/startRunway). */}
-      {runwayAsk && (
-        <div className="modal-bg" onClick={() => setRunwayAsk(false)}>
-          <div className="am" onClick={(e) => e.stopPropagation()}>
-            <h3>✨ Fashion Week ?</h3>
-            <p>On dirait que tu hésites — envie de voir tous les skins défiler une fois avant de choisir ?</p>
-            <div className="am-acts">
-              <button className="btn" onClick={() => { setRunwayAsk(false); startRunway(); }}>Lancer le défilé</button>
-              <button className="btn ghost" onClick={() => setRunwayAsk(false)}>Plus tard</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {toasts.length > 0 && <div className="toasts">{toasts.map((t) => <div key={t.id} className="toast">{t.text}</div>)}</div>}
     </div>

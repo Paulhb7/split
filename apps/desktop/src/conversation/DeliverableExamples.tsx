@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import type { DeliverableExample } from "../shared/experts";
 
 // The atelier welcome's projection surface: a row of "here's what I make" cards
@@ -358,8 +359,9 @@ const FALLBACK = (
   </>
 );
 
-// Short uppercase tag shown on the card (the deliverable's "kind").
-const TYPE_LABEL: Record<string, string> = {
+// Short uppercase tag shown on the card (the deliverable's "kind"). Exported so
+// the Gallery (work-wall cabinet) labels its filter chips from the same source.
+export const TYPE_LABEL: Record<string, string> = {
   app: "App · HTML", site: "Site · HTML", board: "Board", deck: "Deck",
   dashboard: "Dashboard", chart: "Analysis", doc: "Doc", track: "Audio",
   podcast: "Podcast", scene: "3D scene", part: "CAD", sky: "Live page",
@@ -368,23 +370,81 @@ const TYPE_LABEL: Record<string, string> = {
   garment: "Fashion", space: "Space", reel: "Reel",
 };
 
-function Preview({ type }: { type: string }) {
+// The typed faux-render. Exported so the Gallery wall draws work tiles from the
+// same 24 SVGs as the welcome cards — one source of truth for "what the
+// deliverable looks like". `slice` (default) crops to fill; `meet` letterboxes
+// to show the whole render (used by the larger Gallery tiles).
+export function Preview({ type, fit = "slice" }: { type: string; fit?: "slice" | "meet" }) {
   return (
-    <svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <svg viewBox="0 0 320 200" preserveAspectRatio={`xMidYMid ${fit}`} aria-hidden="true">
       {PREVIEWS[type] ?? FALLBACK}
     </svg>
   );
 }
 
-export function DeliverableExamples({ examples, onPick }: {
+// A single large example card that auto-advances through the expert's catalogue
+// (one every `intervalMs`), with clickable dots to jump. The whole point of the
+// atelier empty canvas: project ONE polished "here's what I'll build" at a time
+// rather than a grid that reads like a menu. Clicking it launches the prompt.
+export function DeliverableSpotlight({ examples, onPick, heading, intervalMs = 7000 }: {
   examples: DeliverableExample[];
   onPick: (prompt: string) => void;
+  heading?: string;
+  intervalMs?: number;
+}) {
+  const [idx, setIdx] = useState(0);
+  // new expert → new catalogue → restart from the first.
+  useEffect(() => { setIdx(0); }, [examples]);
+  useEffect(() => {
+    if (examples.length <= 1) return;
+    const t = setInterval(() => setIdx((i) => (i + 1) % examples.length), intervalMs);
+    return () => clearInterval(t);
+  }, [examples.length, intervalMs]);
+
+  const ex = examples[idx] ?? examples[0];
+  if (!ex) return null;
+  return (
+    <div className="dspot">
+      {heading && <div className="dwrap-h">{heading}</div>}
+      {/* key={idx} remounts the card so the fade-in animation replays each turn */}
+      <button key={idx} className="dspot-card" onClick={() => onPick(ex.prompt)} title={ex.prompt}>
+        <div className="dspot-prev"><Preview type={ex.type} /></div>
+        <div className="dspot-body">
+          <div className="dcard-top">
+            <span className="dcard-type"><i />{TYPE_LABEL[ex.type] ?? "Deliverable"}</span>
+            <span className="dcard-open">Start →</span>
+          </div>
+          <span className="dspot-title">{ex.title}</span>
+          <span className="dspot-desc">{ex.desc}</span>
+        </div>
+      </button>
+      {examples.length > 1 && (
+        <div className="dspot-dots">
+          {examples.map((_, i) => (
+            <button
+              key={i}
+              className={"dspot-dot" + (i === idx ? " on" : "")}
+              onClick={() => setIdx(i)}
+              aria-label={`Exemple ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function DeliverableExamples({ examples, onPick, heading = "What I make", limit = 3 }: {
+  examples: DeliverableExample[];
+  onPick: (prompt: string) => void;
+  heading?: string;
+  limit?: number;
 }) {
   return (
     <div className="dwrap">
-      <div className="dwrap-h">What I make</div>
+      <div className="dwrap-h">{heading}</div>
       <div className="dgrid">
-        {examples.slice(0, 3).map((ex, i) => (
+        {examples.slice(0, limit).map((ex, i) => (
           <button key={i} className="dcard" onClick={() => onPick(ex.prompt)} title={ex.prompt}>
             <div className="dcard-prev"><Preview type={ex.type} /></div>
             <div className="dcard-body">
