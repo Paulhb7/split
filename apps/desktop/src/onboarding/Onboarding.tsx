@@ -1,166 +1,22 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { H } from "../shared/harnesses";
-import { Tile, League, vars } from "../shared/ui";
+import { League, vars } from "../shared/ui";
 import { useHarnessStates } from "../shared/useHarnessStates";
-import { useHarnessScan, rankHarnesses, healthOf, type Health } from "../shared/useHarnessScan";
+import { useHarnessScan, rankHarnesses, healthOf } from "../shared/useHarnessScan";
 import { useExperts } from "../shared/util";
-import { isActiveExpert, type Expert, type ExpertKind, type ExpertMap } from "../shared/experts";
 import { SKINS, type Skin } from "../shared/skins";
-import { DetailPane } from "../cabinet/Cabinet";
-import { Crest } from "../shared/Crest";
 import SplitMark from "../shared/SplitMark";
 import majordomeUrl from "../shared/majordome.svg";
-import "../cabinet/cabinet.css";
+import { WorkGalleryPage, type FirstBrief } from "./WorkGalleryPage";
+import { CastSpread } from "./CastSpread";
 import "./onboarding.css";
+import "./finalstretch.css";
 
-// Inline Lucide-style SVG glyphs per expert kind. Single-stroke, currentColor,
-// 24×24 viewBox — pairs with the Bright skin's SaaS register. Sized in CSS
-// (see `.ob2-hire-ic .kind-glyph`); the previous emoji set (🔬⚖️📊…) clashed
-// with the lighter, line-art aesthetic. Today only the recruiter glyph renders
-// (the "Hire @Socrates" CTA); the rest are kept for the recruiter/teams reuse.
-const KIND_GLYPH: Record<ExpertKind, ReactNode> = {
-  researcher: (
-    <>
-      <path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2" />
-      <path d="M6.453 15h11.094" />
-      <path d="M8.5 2h7" />
-    </>
-  ),
-  analyst: (
-    <>
-      <path d="M3 3v18h18" />
-      <path d="M18 17V9" />
-      <path d="M13 17V5" />
-      <path d="M8 17v-3" />
-    </>
-  ),
-  advisor: (
-    <>
-      <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
-      <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
-      <path d="M7 21h10" />
-      <path d="M12 3v18" />
-      <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
-    </>
-  ),
-  builder: (
-    <>
-      <path d="m15 12-8.5 8.5c-.83.83-2.17.83-3 0a2.12 2.12 0 0 1 0-3L12 9" />
-      <path d="M17.64 15 22 10.64" />
-      <path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91" />
-    </>
-  ),
-  operator: (
-    <>
-      <path d="M12 8V4H8" />
-      <rect width="16" height="12" x="4" y="8" rx="2" />
-      <path d="M2 14h2" />
-      <path d="M20 14h2" />
-      <path d="M15 13v2" />
-      <path d="M9 13v2" />
-    </>
-  ),
-  organizer: (
-    <>
-      <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
-      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-      <path d="M12 11h4" />
-      <path d="M12 16h4" />
-      <path d="M8 11h.01" />
-      <path d="M8 16h.01" />
-    </>
-  ),
-  finder: (
-    <>
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.3-4.3" />
-    </>
-  ),
-  creator: (
-    <>
-      <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
-      <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
-      <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
-      <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
-      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.83-.44-1.13-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h1.99c3.05 0 5.55-2.5 5.55-5.55C21.97 6.01 17.46 2 12 2Z" />
-    </>
-  ),
-  recruiter: (
-    <>
-      <path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0Z" />
-      <path d="M22 10v6" />
-      <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
-    </>
-  ),
-  coach: (
-    <>
-      <path d="M7 20h10" />
-      <path d="M10 20c5.5-2.5.8-6.4 3-10" />
-      <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" />
-      <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" />
-    </>
-  ),
-};
-
-function KindIcon({ kind }: { kind: ExpertKind }) {
-  return (
-    <svg
-      className="kind-glyph"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {KIND_GLYPH[kind]}
-    </svg>
-  );
-}
-
-// Cabinet display order: think → process → advise → build → operate → find →
-// create → coach. Recruiter handled separately via the "hire" CTA.
-const KIND_ORDER: ExpertKind[] = [
-  "researcher",
-  "analyst",
-  "advisor",
-  "builder",
-  "organizer",
-  "operator",
-  "finder",
-  "creator",
-  "coach",
-  "recruiter",
-];
-
-// Page-3 Spotlight strip — the three cabinet wings, in hanging order.
-const STRIP_GROUPS: { cat: "genius" | "super" | "coach"; label: string }[] = [
-  { cat: "genius", label: "the geniuses" },
-  { cat: "super", label: "the working hands" },
-  { cat: "coach", label: "the coaches" },
-];
-
-// Per-kind example brief, used as the Spotlight input placeholder so the prompt
-// the user mirrors fits the expert they picked (Curie ≠ Wolfgang). Pure UI
-// flavour — the wire prompt is whatever the user actually types.
-const KIND_PLACEHOLDER: Record<ExpertKind, string> = {
-  researcher: "the EV market outlook for 2026",
-  analyst: "the trends hiding in this quarter's numbers",
-  advisor: "the risk in this NDA before I sign",
-  builder: "a landing page for my new app",
-  operator: "rebook my 9am to Thursday afternoon",
-  organizer: "a launch plan with owners and dates",
-  finder: "first editions of Borges' Ficciones",
-  creator: "a 90-second cinematic main theme",
-  recruiter: "an expert who plans my trips",
-  coach: "a 12-week plan to run my first 10k",
-};
-
-export type EnterIntent = "brief_expert" | "start_recruiter" | undefined;
+// "open_gallery" → finish onboarding and land on the in-app work Gallery
+// (the cast page's "See the complete gallery" button).
+export type EnterIntent = "brief_expert" | "start_recruiter" | "open_gallery" | undefined;
 
 export default function Onboarding({
   onEnter,
@@ -173,18 +29,30 @@ export default function Onboarding({
 }) {
   const [page, setPage] = useState(0);
   const [picks, setPicks] = useState<string[]>([]);
-  // Selected expert whose fiche is open as an overlay over the cabinet on
-  // page 3. null = no overlay; clicking a card sets it; the back button
-  // and the launch CTA clear it. Letting users browse fiches in onboarding
-  // — see the real artifact before committing — is a Big Sell moment.
-  const [ficheSlug, setFicheSlug] = useState<string | null>(null);
+  // The first brief, pinned on the gallery page (page 4) and launched by page
+  // 5's "Enter Split". Editable; null = nothing chosen (just enter).
+  const [pinned, setPinned] = useState<FirstBrief | null>(null);
+  // The boss's vault location (page 3). Seeded from the Rust default
+  // (`~/Documents/SplitVault`), overridable via a native folder picker.
+  const [vaultPath, setVaultPath] = useState<string>("");
+  useEffect(() => {
+    invoke<string>("get_vault_root").then(setVaultPath).catch(() => {});
+  }, []);
+  const chooseVault = async () => {
+    const parentHint = vaultPath.slice(0, vaultPath.lastIndexOf("/")) || undefined;
+    const picked = await openDialog({ directory: true, multiple: false, defaultPath: parentHint });
+    if (!picked || Array.isArray(picked)) return;
+    try {
+      setVaultPath(await invoke<string>("set_vault_root", { parent: picked }));
+    } catch {
+      /* keep the previous path on failure */
+    }
+  };
   const lifecycle = useHarnessStates();
-  const { states, progress } = lifecycle;
   const scan = useHarnessScan();
   const experts = useExperts();
 
-  // Ranked best-first by machine-scan health (installed+signed-in wins). Drives
-  // the "Recommended" featured card and the post-scan auto-seed.
+  // Ranked best-first by machine-scan health (installed+signed-in wins).
   const ranked = useMemo(
     () => rankHarnesses(scan.byId, scan.scanning),
     [scan.byId, scan.scanning],
@@ -192,8 +60,8 @@ export default function Onboarding({
   const recommended = ranked[0] ?? "claude";
 
   // Auto-select the best detected agent(s) once the scan settles — but never
-  // overwrite an explicit choice (the anti-race lesson: an App-level autoselect
-  // guard). `touched` flips on the first manual toggle.
+  // overwrite an explicit choice (the anti-race guard). `touched` flips on the
+  // first manual toggle.
   const [touched, setTouched] = useState(false);
   const seededRef = useRef(false);
   useEffect(() => {
@@ -204,22 +72,13 @@ export default function Onboarding({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scan.scanning]);
 
-  // "primary" = the user's first explicit pick, else the recommended best.
+  // The active engine = the user's first explicit pick, else best-detected. It
+  // tints engine-specific surfaces via `--engine` (never `--brand`, which stays
+  // owned by the skin so CTAs keep tracking the skin choice).
   const engineId = picks[0] ?? recommended;
-  const primarySt = states[engineId];
   const accent = H[engineId].brand;
-  // Only override `--brand` once the user has actually picked an agent. Before
-  // that (welcome, skin picker, cabinet intro), the skin's `--brand` from the
-  // .theme-<id> class on .app flows naturally — so switching skins on the
-  // picker page visibly retints the "Next" button, the eyebrow, the heading
-  // accent, etc. Forcing the harness brand here would lock everything to the
-  // default agent's color (claude → orange) regardless of skin.
-  // `--engine` carries the active harness brand to engine-specific surfaces
-  // (chrome SplitMark, session-row glow, running dot) without ever touching
-  // `--brand` — which stays owned by the skin's .theme-<id> class so every
-  // CTA / em / link / focus ring keeps tracking the user's skin choice.
   const engineStyle = vars({ "--engine": accent });
-  // 4 pages: welcome (0) · theme (1) · pick (2) · brief (3).
+  // 6 pages: welcome (0) · theme (1) · pick (2) · vault (3) · gallery (4) · cast (5).
   // Page 2 = picker; can't advance until at least one agent is selected.
   const canNext = page !== 2 || picks.length > 0;
   const toggle = (id: string) => {
@@ -227,21 +86,16 @@ export default function Onboarding({
     setPicks((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   };
 
-  // Featured-card health + how many CLIs the scan actually found on this machine.
-  const primaryHealth: Health = healthOf(scan.byId[engineId], scan.scanning);
-  const primaryVersion = scan.byId[engineId]?.version;
+  // How many CLIs the scan actually found on this machine (scanline copy).
   const foundCount = Object.values(scan.byId).filter((d) => d.available).length;
-  const isRecommended = !touched && engineId === recommended;
 
   return (
     <div className="ob2" style={engineStyle}>
       <div className="ob2-page" key={page}>
         {page === 0 && (
-          // The threshold: the majordome watches over in filigree (planche-2
-          // "l'écran vide"). Large, crisp (a mask — not the padded badge that
-          // muddied the first try), bleeding off the bottom-right corner so the
-          // copy never lands on his wig/face, and inked in `--text` at low
-          // opacity so it reads as an engraving on both dark and light skins.
+          // The threshold: the majordome watches over in filigree — large, crisp
+          // (a mask), bleeding off the bottom-right so copy never lands on his
+          // face, inked in `--text` at low opacity so it reads on dark + light.
           <div className="ob2-welcome">
             <svg className="ob2-welcome-fil" viewBox="388 110 249 348" aria-hidden="true">
               <defs>
@@ -269,10 +123,6 @@ export default function Onboarding({
                 you can switch any time from the chrome bar.
               </p>
               <p className="ob2-seed">Live preview — it applies as you click.</p>
-              {/* The floating majordome — a "live assistant" presence that
-                  retints with every skin click. Tucked under the lede on the
-                  left so the user sees the brand silhouette breathe under
-                  each candidate theme before committing. */}
               <div className="ob2-skin-stage">
                 <div className="split-levitate">
                   <SplitMark size={180} />
@@ -282,8 +132,6 @@ export default function Onboarding({
             </div>
             <div className="ob2-hero-visual">
               <div className="ob2-skins">
-                {/* Special skins stay out of the tour: Noir is an easter egg,
-                    Minuit only exists after dark (see App.tsx night logic). */}
                 {SKINS.filter((s) => !s.hidden && !s.night).map((s) => (
                   <button
                     key={s.id || "classic"}
@@ -332,281 +180,89 @@ export default function Onboarding({
               </button>
             </div>
 
-            {/* Recommended featured card — the best detected agent, auto-picked,
-                with its install + sign-in steps inline (a featured Connect card,
-                minus the cloud-runtime upsell). */}
-            {primarySt && (
-              <div className={"ob2-primary" + (isRecommended ? " recommended" : "")} style={vars({ "--brand": H[engineId].brand })}>
-                <div className="ob2-primary-head">
-                  <Tile id={engineId} size={32} />
-                  <div className="ob2-primary-id">
-                    <b>{H[engineId].label}</b>
-                    <span className="ob2-primary-tag">
-                      {isRecommended
-                        ? "recommended — best detected on your machine; install & sign in now, others stay lazy"
-                        : "primary — install & sign in this one now; others stay lazy"}
-                    </span>
-                  </div>
-                  <span className={"ob2-primary-health sb-" + primaryHealth}>
-                    {primaryHealth === "ready"
-                      ? (primaryVersion ? `✓ ${primaryVersion}` : "✓ ready")
-                      : primaryHealth === "needs-auth"
-                        ? "needs sign-in"
-                        : primaryHealth === "needs-install"
-                          ? "needs install"
-                          : "scanning…"}
-                  </span>
-                </div>
-                <div className="ob2-primary-steps">
-                  <PrimaryStep
-                    label="install"
-                    state={primarySt.install.state}
-                    kind={primarySt.install.kind}
-                    progress={progress[engineId]}
-                    onAction={() => invoke("install_harness", { id: engineId }).catch(() => {})}
-                    actionLabel={primarySt.install.kind === "external" ? "Get the app" : "Install"}
-                  />
-                  <PrimaryStep
-                    label="sign-in"
-                    state={primarySt.configure.state}
-                    kind={primarySt.configure.kind}
-                    progress={primarySt.configure.kind === "oauth" ? progress[engineId] : undefined}
-                    onAction={() => invoke("configure_harness", { id: engineId }).catch(() => {})}
-                    actionLabel="Sign in"
-                    disabled={primarySt.install.state !== "ready"}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="ob2-pickhint">The ones you have access to. Split shows only these; add more anytime. {picks.length > 0 && <b>{picks.length} selected</b>}</div>
+            <div className="ob2-pickhint">The ones you have access to — Split shows only these; add more anytime. {picks.length > 0 && <b>{picks.length} selected</b>}</div>
             <League isSelected={(id) => picks.includes(id)} onPick={toggle} lifecycle={lifecycle} scan={scan} />
           </div>
         )}
 
         {page === 3 && (
           <div className="stagger">
-            <div className="ob-eyebrow">meet your cabinet · 03</div>
-            <h2 className="ob2-h2">Brief your first <em>expert</em></h2>
-            <p className="ob2-lede" style={{ marginBottom: 18 }}>
-              Pick a face. Type a topic. Get a real deliverable back —
-              on whichever brain you just signed in.
+            <div className="ob-eyebrow">where your work is kept · 03</div>
+            <h2 className="ob2-h2">Your <em>vault</em></h2>
+            <p className="ob2-lede" style={{ marginBottom: 20 }}>
+              A plain folder of Markdown where your experts file durable work and
+              facts — notes, briefs, projects. Split creates a <b>SplitVault</b>
+              {" "}folder for it — choose where that folder should live. It opens in
+              any editor and syncs with iCloud/Dropbox if its location does.
             </p>
-            <Spotlight
-              experts={experts}
-              engineId={engineId}
-              onBrief={(slug, topic) => onEnter(picks, "brief_expert", slug, topic)}
-              onOpenFiche={setFicheSlug}
-            />
-            {experts.genius_socrates && (
-              <button className="ob2-hire" onClick={() => onEnter(picks, "start_recruiter")}>
-                <span className="ob2-hire-ic"><KindIcon kind="recruiter" /></span>
-                <span className="ob2-hire-body">
-                  <span className="ob2-hire-title">Don't see what you need? Hire @{experts.genius_socrates.label}.</span>
-                  <span className="ob2-hire-text">
-                    He runs a Socratic interview and drafts a brand-new expert from your answers — no menus, no
-                    code. Custom experts live in your private data folder, alongside the shipped ones.
-                  </span>
-                </span>
-                <span className="ob2-hire-cta">Hire him →</span>
-              </button>
-            )}
-            {/* Fiche overlay — opens over the cabinet when a card is clicked.
-                Same DetailPane the Cabinet route uses, so use cases / tabs /
-                preview / deliverables stay defined in one place. Launching
-                from here calls `onEnter` to leave onboarding with the picked
-                expert + prompt the user clicked. */}
-            {ficheSlug && (
-              <div className="ob2-fiche-overlay" role="dialog" aria-modal="true">
-                <div className="ob2-fiche-shell">
-                  <button
-                    className="ob2-fiche-back"
-                    onClick={() => setFicheSlug(null)}
-                    aria-label="Back to cabinet"
-                    title="Back to cabinet"
-                  >
-                    ← all experts
-                  </button>
-                  <DetailPane
-                    slug={ficheSlug}
-                    experts={experts}
-                    onLaunch={(slug, prompt) => {
-                      setFicheSlug(null);
-                      onEnter(picks, undefined, slug, prompt || undefined);
-                    }}
-                  />
+            <div className="ob2-vault">
+              <div className="ob2-vault-card">
+                <span className="ob2-vault-ic" aria-hidden="true">🗃️</span>
+                <div className="ob2-vault-meta">
+                  <div className="ob2-vault-cap">Vault location</div>
+                  <div className="ob2-vault-path" title={vaultPath}>{vaultPath || "…"}</div>
                 </div>
+                <button type="button" className="btn ghost ob2-vault-pick" onClick={chooseVault}>
+                  Choose location…
+                </button>
               </div>
-            )}
+              <p className="ob2-seed">The default (in your Documents) is fine for most — Split creates the folder on your first session, and you can move it later from the vault view.</p>
+            </div>
           </div>
+        )}
+
+        {page === 4 && (
+          // The wow + the activation: a wall of the studio's WORK. Pick a piece
+          // → it pins as your first brief (editable); page 5 launches it.
+          <div className="ob-finalpage">
+            <div className="stagger">
+              <div className="ob-eyebrow">what your studio makes · 04</div>
+              <h2 className="ob2-h2">Pick something to <em>make</em>.</h2>
+              <p className="ob2-lede" style={{ marginBottom: 14 }}>
+                Not a roster of faces — a wall of finished work. Choose an outcome you want;
+                the maker starts on it the moment you enter.
+              </p>
+            </div>
+            <WorkGalleryPage experts={experts} pinned={pinned} onPin={setPinned} />
+          </div>
+        )}
+
+        {page === 5 && (
+          // The reveal: who makes all that. An editorial spread, not a picker.
+          <CastSpread experts={experts} onHireRecruiter={() => onEnter(picks, "start_recruiter")} />
         )}
       </div>
 
       <div className="ob2-foot">
         <div className="dots">
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1, 2, 3, 4, 5].map((i) => (
             <button key={i} className={"dot2" + (i === page ? " on" : "")} onClick={() => setPage(i)} aria-label={`page ${i + 1}`} />
           ))}
         </div>
         <div className="ob2-actions">
           {page > 0 && <button className="btn ghost" onClick={() => setPage((p) => p - 1)}>← back</button>}
-          {page < 3 ? (
+          {page < 5 ? (
             <button
               className="btn"
               disabled={!canNext}
               title={!canNext ? "Pick at least one agent to continue" : undefined}
               onClick={() => setPage((p) => p + 1)}
             >
-              {page === 2 ? "Continue →" : "Next →"}
+              {page === 2 ? "Continue →" : page === 4 ? "Next — meet the cast →" : "Next →"}
             </button>
           ) : (
-            <button className="btn" onClick={() => onEnter(picks)}>Enter Split →</button>
+            <>
+              <button className="btn ghost" onClick={() => onEnter(picks, "open_gallery")}>See the complete gallery</button>
+              <button
+                className="btn"
+                onClick={() => onEnter(picks, pinned ? "brief_expert" : undefined, pinned?.slug, pinned?.prompt)}
+              >
+                Enter Split →
+              </button>
+            </>
           )}
         </div>
       </div>
     </div>
   );
 }
-
-function PrimaryStep({
-  label,
-  state,
-  kind,
-  progress,
-  onAction,
-  actionLabel,
-  disabled,
-}: {
-  label: string;
-  state: "ready" | "missing" | "external";
-  kind: string;
-  progress?: string;
-  onAction: () => void;
-  actionLabel: string;
-  disabled?: boolean;
-}) {
-  const ready = state === "ready";
-  const noOp = !kind || (label === "sign-in" && kind === "api-key");
-  return (
-    <div className={"ob2-step" + (ready ? " ready" : "")}>
-      <span className="ob2-step-label">{label}</span>
-      {ready ? (
-        <span className="ob2-step-ok">✓ ready</span>
-      ) : noOp ? (
-        <span className="ob2-step-hint">{kind === "api-key" ? "needs an API key — set it later" : "—"}</span>
-      ) : (
-        <button className="btn ghost" disabled={disabled} onClick={onAction}>
-          {actionLabel}
-        </button>
-      )}
-      {progress && !ready && <span className="ob2-step-progress">{progress}</span>}
-    </div>
-  );
-}
-
-// ---- page 3: the Spotlight ----
-// One featured expert in a gilded frame, the brief box docked under their name,
-// and a grouped filmstrip of the whole cabinet. Clicking any face promotes it
-// to the spotlight AND retargets the brief — the thing you're looking at is the
-// thing you put to work, so the page has exactly one hero and one CTA.
-function Spotlight({
-  experts,
-  engineId,
-  onBrief,
-  onOpenFiche,
-}: {
-  experts: ExpertMap;
-  engineId: string;
-  onBrief: (slug: string, topic: string) => void;
-  onOpenFiche: (slug: string) => void;
-}) {
-  const groups = useMemo(() => {
-    const active = Object.entries(experts)
-      .filter(([slug]) => slug !== "genius_socrates" && isActiveExpert(experts, slug))
-      .sort(([, a], [, b]) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
-    return STRIP_GROUPS.map((g) => ({
-      ...g,
-      entries: active.filter(([, e]) => (e.category ?? "super") === g.cat),
-    })).filter((g) => g.entries.length > 0);
-  }, [experts]);
-
-  const defaultSlug = useMemo(() => {
-    const all = groups.flatMap((g) => g.entries.map(([slug]) => slug));
-    if (all.includes("genius_curie")) return "genius_curie";
-    if (all.includes("consultant")) return "consultant";
-    return groups.find((g) => g.cat === "genius")?.entries[0]?.[0] ?? all[0];
-  }, [groups]);
-
-  const [sel, setSel] = useState<string>(defaultSlug);
-  const [topic, setTopic] = useState("");
-  const slug = experts[sel] ? sel : defaultSlug;
-  const e: Expert | undefined = experts[slug];
-  if (!e) return null;
-  const placeholder = KIND_PLACEHOLDER[e.kind] ?? "your first task";
-
-  return (
-    <div className="ob2-sl">
-      <div className="ob2-sl-main">
-        <div className="ob2-sl-hero">
-          <span className="ob2-sl-gild" aria-hidden="true" />
-          <Crest kind={e.kind} seed={slug} size={128} mint={e.label[0]} className="ob2-sl-crest" />
-          <div className="ob2-sl-name">{e.label}</div>
-          <div className="ob2-sl-role">{e.role ?? e.kind}</div>
-          <p className="ob2-sl-craft">{e.blurb}</p>
-          <button type="button" className="ob2-sl-more" onClick={() => onOpenFiche(slug)}>
-            see full brief →
-          </button>
-        </div>
-
-        <div className="ob2-sl-right">
-          <form
-            className="ob2-sl-briefcard"
-            style={vars({ "--brand": H[engineId].brand })}
-            onSubmit={(ev) => {
-              ev.preventDefault();
-              const t = topic.trim();
-              if (t) onBrief(slug, t);
-            }}
-          >
-            <div className="ob2-sl-brief-head">brief <b>@{e.label}</b> on</div>
-            <div className="ob2-sl-brief-row">
-              <input
-                className="ob2-sl-input"
-                placeholder={placeholder}
-                value={topic}
-                onChange={(ev) => setTopic(ev.target.value)}
-                autoFocus
-              />
-              <button className="btn" type="submit" disabled={!topic.trim()}>Run →</button>
-            </div>
-            <p className="ob2-sl-runson">runs on <b>{H[engineId].label}</b> · a real deliverable back</p>
-          </form>
-        </div>
-      </div>
-
-      <div className="ob2-sl-strips">
-        {groups.map((g) => (
-          <div key={g.cat} className={"ob2-sl-group ob2-sl-group-" + g.cat}>
-            <div className="ob2-sl-group-label">{g.label}</div>
-            <div className="ob2-sl-strip">
-              {g.entries.map(([s, ex]) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={"ob2-sl-thumb" + (s === slug ? " on" : "")}
-                  onClick={() => setSel(s)}
-                  title={`@${ex.label} — ${ex.blurb}`}
-                >
-                  <Crest kind={ex.kind} seed={s} size={56} mint={ex.label[0]} />
-                  <span className="ob2-sl-thumb-nm">{ex.label}</span>
-                  <span className="ob2-sl-thumb-rl">{ex.kind}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
