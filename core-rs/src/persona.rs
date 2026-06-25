@@ -1,6 +1,6 @@
 //! Persona + skill projection for the native Rust runner — Rust port of the
-//! relevant pieces of `split/core.py` (memory_text, persona_text,
-//! _refresh_persona, _refresh_skills, ensure_expert_workspace).
+//! relevant pieces of `split/core.py` (persona_text, _refresh_persona,
+//! _refresh_skills, ensure_expert_workspace).
 //!
 //! Why a port and not a shell-out to Python: the whole point of the rust-port
 //! branch is the bundled `.dmg` standing on its own. Calling Python from here
@@ -20,6 +20,21 @@
 
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+
+/// The user-chosen vault location (set in onboarding, persisted by the desktop
+/// shell and re-applied at startup). `None` = fall back to the default. Takes
+/// precedence over the built-in default but NOT over an explicit `SPLIT_VAULT`
+/// env var, so tests and power users keep that escape hatch.
+static VAULT_OVERRIDE: Mutex<Option<PathBuf>> = Mutex::new(None);
+
+/// Set (or clear, with `None`) the in-process vault-location override. Only
+/// touches process state; persistence to disk is the desktop shell's job.
+pub fn set_vault_override(path: Option<PathBuf>) {
+    if let Ok(mut g) = VAULT_OVERRIDE.lock() {
+        *g = path.filter(|p| !p.as_os_str().is_empty());
+    }
+}
 
 // Cross-platform symlink shim. On Unix we create real symlinks, so the
 // projected workspace stays a thin view over `config/`. On Windows symlink
@@ -46,7 +61,6 @@ fn symlink<P: AsRef<Path>, Q: AsRef<Path>>(_src: P, _dst: Q) -> std::io::Result<
 /// Arguments:
 /// * `repo_root` — where `config/experts/`, `config/experts.json`,
 ///   `config/skills/`, `config/harnesses.json` live.
-/// * `var_dir` — where `var/memory/` (cross-session memory snapshot) lives.
 /// * `workspace_root` — usually `<var_dir>/workspace/`, overridable via the
 ///   caller's `SPLIT_WORKSPACE` env var.
 /// * `expert` — slug to project. Falls back to `consultant` if no
@@ -56,7 +70,6 @@ fn symlink<P: AsRef<Path>, Q: AsRef<Path>>(_src: P, _dst: Q) -> std::io::Result<
 ///   shapes the projected persona's "Your vault" block.
 pub fn ensure_expert_workspace(
     repo_root: &Path,
-    var_dir: &Path,
     workspace_root: &Path,
     expert: &str,
     project: &str,
@@ -65,22 +78,26 @@ pub fn ensure_expert_workspace(
     let ws = workspace_root.join(&expert);
     let _ = std::fs::create_dir_all(&ws);
 
-    refresh_persona(repo_root, var_dir, &expert, &ws, project);
+    refresh_persona(repo_root, &expert, &ws, project);
     refresh_skills(repo_root, &expert, &ws);
     ws
 }
 
 /// The boss's vault — the plain-markdown folder where every expert files
 /// durable work and durable facts (the native successor to the retired
-/// Obsidian / Notion workspace backends). `SPLIT_VAULT` overrides (tests,
-/// power users); default is `~/Documents/SplitVault` — deliberately OUTSIDE
-/// `var/` because it's the boss's data, not app state: it survives a
-/// reinstall, syncs with iCloud, and opens in any other markdown tool.
+/// Obsidian / Notion workspace backends). Resolution order: `SPLIT_VAULT` env
+/// (tests, power users) → the user's onboarding choice (`set_vault_override`)
+/// → `~/Documents/SplitVault`. Deliberately OUTSIDE `var/` because it's the
+/// boss's data, not app state: it survives a reinstall, syncs with iCloud, and
+/// opens in any other markdown tool.
 pub fn vault_root() -> PathBuf {
     if let Ok(p) = std::env::var("SPLIT_VAULT") {
         if !p.trim().is_empty() {
             return PathBuf::from(p);
         }
+    }
+    if let Some(p) = VAULT_OVERRIDE.lock().ok().and_then(|g| g.clone()) {
+        return p;
     }
     #[cfg(windows)]
     let home = std::env::var("USERPROFILE").unwrap_or_default();
@@ -135,12 +152,8 @@ fn resolve_expert(repo_root: &Path, expert: &str) -> String {
 /// Write `<ws>/AGENTS.md` from the composed persona body, then symlink the
 /// cross-vendor shims (CLAUDE.md / GEMINI.md / QWEN.md / VIBE.md + .vibe/
 /// AGENTS.md) so any harness finds its character file at the path it scans.
-fn refresh_persona(repo_root: &Path, var_dir: &Path, expert: &str, ws: &Path, project: &str) {
-    // Memory dirs created upfront so the agent's first write never fails.
-    let _ = std::fs::create_dir_all(var_dir.join("memory/_user"));
-    let _ = std::fs::create_dir_all(var_dir.join("memory").join(expert));
-
-    let body = persona_text(repo_root, var_dir, expert, project);
+fn refresh_persona(repo_root: &Path, expert: &str, ws: &Path, project: &str) {
+    let body = persona_text(repo_root, expert, project);
     let canonical = ws.join("AGENTS.md");
     let _ = std::fs::remove_file(&canonical);
     let _ = std::fs::write(&canonical, &body);
@@ -163,9 +176,9 @@ fn refresh_persona(repo_root: &Path, var_dir: &Path, expert: &str, ws: &Path, pr
     }
 }
 
-/// Date header + `_discipline.md` preamble + memory snapshot + persona body.
+/// Date header + `_discipline.md` preamble + vault block + persona body.
 /// Same composition as Python's `core.persona_text`.
-fn persona_text(repo_root: &Path, var_dir: &Path, expert: &str, project: &str) -> String {
+fn persona_text(repo_root: &Path, expert: &str, project: &str) -> String {
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
     let year = &today[..4];
     let date_header = format!(
@@ -192,7 +205,7 @@ fn persona_text(repo_root: &Path, var_dir: &Path, expert: &str, project: &str) -
         reply. Split watches cwd to surface what you produce — files outside it are \
         invisible to the app. The ONE exception is the boss's vault (`$SPLIT_VAULT`, see \
         \"Your vault\" below) — durable work and durable facts are filed there per the \
-        `memory` skill.\n\n\
+        `vault` skill.\n\n\
         **For text deliverables (briefs, essays, notes, reports, plans, drafts) default \
         to Markdown (`.md`).** Split renders markdown inline in the viewer; the boss can \
         edit it in-app and export to PDF in one click. Only reach for `.docx`/`.pptx`/\
@@ -202,7 +215,6 @@ fn persona_text(repo_root: &Path, var_dir: &Path, expert: &str, project: &str) -
 
     let preamble =
         read_if_exists(&repo_root.join("config/experts/_discipline.md")).unwrap_or_default();
-    let memory = memory_text(var_dir, expert);
     let workspace = vault_text(expert, project);
     let persona = read_if_exists(
         &repo_root
@@ -211,7 +223,7 @@ fn persona_text(repo_root: &Path, var_dir: &Path, expert: &str, project: &str) -
     )
     .unwrap_or_default();
 
-    format!("{date_header}{workspace_rule}{preamble}{memory}{workspace}{persona}")
+    format!("{date_header}{workspace_rule}{preamble}{workspace}{persona}")
 }
 
 /// The expert slug as it appears in the `agent:` frontmatter / property of
@@ -229,7 +241,7 @@ fn agent_tag(expert: &str) -> String {
 /// Dynamic "Your vault" block — the native filesystem vault, always present
 /// (no connect step). Slim by design: the heavy doctrine (buckets, frontmatter
 /// vocab, index discipline, propose-a-project flow) lives in the auto-mounted
-/// `memory` skill. This block states the session-specific facts: the vault
+/// `vault` skill. This block states the session-specific facts: the vault
 /// path, your agent slug, the scope list (INDEX.md inlined — that's the
 /// boot-time recall trigger), and the resolved write target for the session's
 /// pinned project (the composer's `#project` chip; empty = none).
@@ -246,7 +258,7 @@ fn vault_text(expert: &str, project: &str) -> String {
         format!("`{path}/projects/{project_hint}/<today>-{agent}-<short>.md`")
     };
     let project_state = if project_hint.is_empty() {
-        "no project set — default to `notes/`. Apply rule 2 of the `memory` \
+        "no project set — default to `notes/`. Apply rule 2 of the `vault` \
          skill: if the conversation produces durable work tied to a named entity \
          + horizon, propose a project at the end of your reply."
             .to_string()
@@ -254,7 +266,7 @@ fn vault_text(expert: &str, project: &str) -> String {
         format!(
             "project `{project_hint}` is set on this session. Write directly to \
              `projects/{project_hint}/` and keep its `MEMORY.md` index current \
-             (one line per file — see the `memory` skill)."
+             (one line per file — see the `vault` skill)."
         )
     };
     format!(
@@ -272,34 +284,8 @@ fn vault_text(expert: &str, project: &str) -> String {
          Before working inside a project, read its `MEMORY.md` index; open \
          individual files only when their index line is relevant. The full \
          doctrine (buckets, frontmatter vocab, index discipline, when to write / \
-         when not to, how to propose a project) is in the `memory` skill — read \
+         when not to, how to propose a project) is in the `vault` skill — read \
          it once if you haven't.\n\n---\n\n\n"
-    )
-}
-
-/// "What you remember" section — projected into every persona at session
-/// start. Empty bodies show a stub (mirrors Python).
-fn memory_text(var_dir: &Path, expert: &str) -> String {
-    let user_path = var_dir.join("memory/_user/USER.md");
-    let expert_path = var_dir.join("memory").join(expert).join("MEMORY.md");
-    let user_body = read_if_exists(&user_path).unwrap_or_else(|| {
-        "_(nothing yet — append here when the boss tells you something to remember about them)_"
-            .to_string()
-    });
-    let expert_body = read_if_exists(&expert_path).unwrap_or_else(|| {
-        "_(nothing yet — append here when you learn something useful for next session)_".to_string()
-    });
-    format!(
-        "## What you remember (read first)\n\n\
-         Persistent notes from past sessions. Plain Markdown — read them, let \
-         them shape your reply, append when you learn something durable. \
-         Tight entries (1-3 lines), no chronology.\n\n\
-         **About the boss** — `{}`\n\n{}\n\n\
-         **Your own notes** — `{}`\n\n{}\n\n---\n\n\n",
-        user_path.display(),
-        user_body,
-        expert_path.display(),
-        expert_body,
     )
 }
 
@@ -309,12 +295,12 @@ fn memory_text(var_dir: &Path, expert: &str) -> String {
 fn refresh_skills(repo_root: &Path, expert: &str, ws: &Path) {
     let skill_dirs = all_harness_skill_dirs(repo_root);
     let mut allowed = expert_skills(repo_root, expert);
-    // The `memory` skill is the doctrine for the vault — the bucket model,
+    // The `vault` skill is the doctrine for the vault — the bucket model,
     // the frontmatter vocab, the index discipline, the "propose a project"
     // gesture. Mounted on EVERY expert: the vault is always there, and writes
     // go through plain filesystem operations (no per-backend API skill).
-    if !allowed.contains(&"memory".to_string()) {
-        allowed.push("memory".to_string());
+    if !allowed.contains(&"vault".to_string()) {
+        allowed.push("vault".to_string());
     }
     let skills_root = repo_root.join("config/skills");
     let valid: Vec<String> = allowed
@@ -435,14 +421,9 @@ fn copy_dir(src: &Path, dst: &Path) -> std::io::Result<()> {
 /// Compose the persona body for first-turn injection (cross-vendor system
 /// prompt shim). Exposed to the runner so it can prepend it to the user's
 /// first prompt, matching what `split.runner` does today.
-pub fn persona_text_for_injection(
-    repo_root: &Path,
-    var_dir: &Path,
-    expert: &str,
-    project: &str,
-) -> String {
+pub fn persona_text_for_injection(repo_root: &Path, expert: &str, project: &str) -> String {
     let expert = resolve_expert(repo_root, expert);
-    persona_text(repo_root, var_dir, &expert, project)
+    persona_text(repo_root, &expert, project)
 }
 
 #[cfg(test)]
@@ -450,16 +431,14 @@ mod tests {
     use super::*;
     use std::fs;
 
-    fn make_repo_fixture(tmp: &Path) -> (PathBuf, PathBuf) {
+    fn make_repo_fixture(tmp: &Path) -> PathBuf {
         // Minimal fixture mirroring `<repo>/config/{experts.json, experts/,
         // skills/, harnesses.json}` so the persona projection can run end-
         // to-end without network or external state.
         let repo = tmp.join("repo");
-        let var = tmp.join("var");
         fs::create_dir_all(repo.join("config/experts")).unwrap();
         fs::create_dir_all(repo.join("config/skills/foo")).unwrap();
         fs::create_dir_all(repo.join("config/skills/bar")).unwrap();
-        fs::create_dir_all(&var).unwrap();
 
         fs::write(
             repo.join("config/harnesses.json"),
@@ -487,17 +466,17 @@ mod tests {
         fs::write(repo.join("config/skills/foo/SKILL.md"), "# foo skill\n").unwrap();
         fs::write(repo.join("config/skills/bar/SKILL.md"), "# bar skill\n").unwrap();
 
-        (repo, var)
+        repo
     }
 
     #[test]
     fn projects_persona_and_shims() {
         let tmp = tempfile_in();
-        let (repo, var) = make_repo_fixture(&tmp);
+        let repo = make_repo_fixture(&tmp);
         let ws_root = tmp.join("workspaces");
         fs::create_dir_all(&ws_root).unwrap();
 
-        let ws = ensure_expert_workspace(&repo, &var, &ws_root, "lawyer", "");
+        let ws = ensure_expert_workspace(&repo, &ws_root, "lawyer", "");
         assert!(ws.join("AGENTS.md").is_file());
         let body = fs::read_to_string(ws.join("AGENTS.md")).unwrap();
         assert!(body.contains("# Lawyer persona body"));
@@ -525,11 +504,11 @@ mod tests {
     #[test]
     fn projects_skill_symlinks_filtered_by_experts_json() {
         let tmp = tempfile_in();
-        let (repo, var) = make_repo_fixture(&tmp);
+        let repo = make_repo_fixture(&tmp);
         let ws_root = tmp.join("workspaces");
         fs::create_dir_all(&ws_root).unwrap();
 
-        let ws = ensure_expert_workspace(&repo, &var, &ws_root, "lawyer", "");
+        let ws = ensure_expert_workspace(&repo, &ws_root, "lawyer", "");
         // Lawyer allows `foo` only — `bar` exists in config/skills but isn't
         // listed, so it MUST NOT appear under any skill_dir.
         for skill_dir in &[".claude/skills", ".agents/skills"] {
@@ -547,12 +526,12 @@ mod tests {
     #[test]
     fn falls_back_to_consultant_when_persona_missing() {
         let tmp = tempfile_in();
-        let (repo, var) = make_repo_fixture(&tmp);
+        let repo = make_repo_fixture(&tmp);
         let ws_root = tmp.join("workspaces");
         fs::create_dir_all(&ws_root).unwrap();
 
         // No `nonsense.md` on disk → resolve to consultant.
-        let ws = ensure_expert_workspace(&repo, &var, &ws_root, "nonsense", "");
+        let ws = ensure_expert_workspace(&repo, &ws_root, "nonsense", "");
         assert_eq!(ws, ws_root.join("consultant"));
         let body = fs::read_to_string(ws.join("AGENTS.md")).unwrap();
         assert!(body.contains("# Consultant persona body"));

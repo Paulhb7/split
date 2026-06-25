@@ -113,10 +113,10 @@ export const SUBSCRIPTION_PICKERS: Record<string, SubscriptionPicker> = {
   },
   codex: {
     models: [
-      { id: "gpt-5.5-codex", name: "GPT-5.5 Codex — default" },
-      { id: "gpt-5.5", name: "GPT-5.5" },
+      { id: "gpt-5.5", name: "GPT-5.5 — default" },
       { id: "gpt-5.4", name: "GPT-5.4 — flagship" },
       { id: "gpt-5.4-mini", name: "GPT-5.4 Mini — fast" },
+      { id: "gpt-5.5-codex", name: "GPT-5.5 Codex — API billing only" },
     ],
     reasoning: [
       { id: "low", name: "Low" },
@@ -124,7 +124,7 @@ export const SUBSCRIPTION_PICKERS: Record<string, SubscriptionPicker> = {
       { id: "high", name: "High" },
       { id: "xhigh", name: "X-High" },
     ],
-    note: "Exact ids show under /model in Codex. Written to a managed CODEX_HOME/config.toml; your sign-in is linked in.",
+    note: "Exact ids show under /model in Codex. Leave blank to use your codex sign-in's own default. The `*-codex` models need an OpenAI API-key account — ChatGPT-subscription sign-ins must use a plain `gpt-5.x`. Written to a managed CODEX_HOME/config.toml; your sign-in is linked in.",
   },
   gemini: {
     models: [

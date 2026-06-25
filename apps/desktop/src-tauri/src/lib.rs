@@ -883,22 +883,21 @@ fn start_session(
     // The workspace is SCRATCH — the agent's home, not the boss's vault.
     // Deliverables worth keeping are filed into the vault deliberately by the
     // boss via the "Keep in vault" action (`keep_in_vault`), or by the agent
-    // writing durable notes/facts to the vault per the `memory` skill.
+    // writing durable notes/facts to the vault per the `vault` skill.
     let var_dir = REPO_ROOT.join("var");
     let workspace_root = if workspace.is_empty() {
         var_dir.join("workspace")
     } else {
         PathBuf::from(&workspace)
     };
-    let ws =
-        persona::ensure_expert_workspace(&REPO_ROOT, &var_dir, &workspace_root, &expert, &project);
+    let ws = persona::ensure_expert_workspace(&REPO_ROOT, &workspace_root, &expert, &project);
     let resolved_workspace = ws.to_string_lossy().into_owned();
 
     // First-turn persona injection — ACP has no standardised system prompt,
     // and per-harness cwd conventions all differ. Prepending the persona to
     // the first user prompt of the session lands it in the agent's history
     // and persists across turns, exactly like the runner does.
-    let persona_body = persona::persona_text_for_injection(&REPO_ROOT, &var_dir, &expert, &project);
+    let persona_body = persona::persona_text_for_injection(&REPO_ROOT, &expert, &project);
 
     let mcp_servers = load_mcp_servers();
     let sessions_dir = var_dir.join("sessions");
@@ -946,7 +945,7 @@ fn start_session(
     }
     // Vault env — the boss's plain-markdown vault (native successor to the
     // retired Obsidian / Notion workspace backends). Always present: ensure
-    // the skeleton exists, then hand the agent its path. The `memory` skill
+    // the skeleton exists, then hand the agent its path. The `vault` skill
     // and the persona's "Your vault" block assume `SPLIT_VAULT`.
     let vault = persona::vault_root();
     persona::ensure_vault(&vault);
@@ -1196,7 +1195,10 @@ fn list_experts() -> Result<String, String> {
 // CLI's logs live in its own session); stdin is null so it can't block on TTY.
 fn login_cmd(harness: &str) -> Option<&'static [&'static str]> {
     Some(match harness {
-        "claude" => &["claude", "login"],
+        // The Claude Code CLI has no top-level `login` (a bare `claude login`
+        // is parsed as a one-shot PROMPT and dies on null stdin) — the browser
+        // OAuth flow lives under the `auth` subcommand.
+        "claude" => &["claude", "auth", "login"],
         "codex" => &["codex", "login"],
         "gemini" => &["gemini"],
         "cursor" => &["cursor-agent", "login"],
@@ -1205,11 +1207,63 @@ fn login_cmd(harness: &str) -> Option<&'static [&'static str]> {
     })
 }
 
+// Resolve the login CLI to something spawnable. If it's already on PATH, use it
+// verbatim. Otherwise look through the harness's probe candidates (probe.bin →
+// fallback_bins → command) for one whose FILE NAME matches the login program
+// (so copilot's `gh` login isn't hijacked by its `copilot` probe bin), and
+// return its resolved path — handling repo-relative `./var/bin/...` specs.
+fn resolve_login_program(harness: &str, program: &str) -> String {
+    if command_on_path(program) {
+        return program.to_string();
+    }
+    let Ok(map) = read_harnesses_map() else {
+        return program.to_string();
+    };
+    let Some(row) = map.get(harness) else {
+        return program.to_string();
+    };
+    let mut candidates: Vec<String> = Vec::new();
+    if let Some(probe) = row.get("probe") {
+        if let Some(b) = probe.get("bin").and_then(|v| v.as_str()) {
+            candidates.push(b.to_string());
+        }
+        if let Some(fbs) = probe.get("fallback_bins").and_then(|v| v.as_array()) {
+            candidates.extend(fbs.iter().filter_map(|v| v.as_str()).map(String::from));
+        }
+    }
+    if let Some(cmd) = row.get("command").and_then(|v| v.as_str()) {
+        candidates.push(cmd.to_string());
+    }
+    for cand in candidates {
+        let base = std::path::Path::new(&cand)
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or("");
+        if base != program {
+            continue;
+        }
+        let resolved = if cand.starts_with("./") || cand.starts_with("../") {
+            REPO_ROOT.join(&cand).to_string_lossy().into_owned()
+        } else {
+            cand.clone()
+        };
+        if std::path::Path::new(&resolved).exists() || command_on_path(&resolved) {
+            return resolved;
+        }
+    }
+    program.to_string()
+}
+
 #[tauri::command]
 fn browser_login(harness: String) -> Result<String, String> {
     let argv = login_cmd(&harness).ok_or_else(|| format!("No browser login for {harness}"))?;
     let (program, args) = argv.split_first().expect("login_cmd entries are non-empty");
-    Command::new(program)
+    // `login_cmd` names the bare vendor CLI, but some agents ship as a
+    // repo-local binary that isn't on PATH (e.g. cursor-agent lives at
+    // ./var/bin/dist-package/cursor-agent). Resolve it so the spawn finds it;
+    // otherwise the login process silently fails to start and no browser opens.
+    let program = resolve_login_program(&harness, program);
+    Command::new(&program)
         .args(args)
         .env("PATH", child_path())
         .stdin(Stdio::null())
@@ -1404,6 +1458,41 @@ fn install_state_for(install_kind: Option<&str>, command: &str) -> &'static str 
     }
 }
 
+// Run an allowlisted "are we signed in?" probe (`configure.check_cmd`) and
+// report whether it exits 0. Used as a last-resort signal for OAuth CLIs that
+// keep their credentials somewhere a file/env check can't see — notably the
+// Claude Code CLI, which on macOS stores its subscription token in the
+// Keychain, so `~/.claude/.credentials.json` never exists even when signed in.
+// Bounded (null stdio, short timeout) so a wedged CLI can't hang the scan.
+fn cmd_exit_ok(argv: &[&str], timeout: std::time::Duration) -> bool {
+    let Some((program, args)) = argv.split_first() else {
+        return false;
+    };
+    let spawn = Command::new(program)
+        .args(args)
+        .env("PATH", child_path())
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn();
+    let Ok(mut child) = spawn else { return false };
+    let start = std::time::Instant::now();
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => return status.success(),
+            Ok(None) => {
+                if start.elapsed() > timeout {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return false;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(40));
+            }
+            Err(_) => return false,
+        }
+    }
+}
+
 // `configure`: "oauth" → a creds dotfile OR a fallback env key signals ready;
 // "api-key" → the declared env key is in .env or process env; "external" → the
 // UI just shows a docs link (always reported as "external"); "hermes-config" →
@@ -1424,7 +1513,22 @@ fn configure_state_for(cfg: Option<&serde_json::Value>) -> &'static str {
                 .and_then(|v| v.as_str())
                 .map(env_set)
                 .unwrap_or(false);
-            if file_ok || env_ok {
+            // Last resort: an allowlisted status command (e.g. `claude auth
+            // status`) for CLIs whose creds live in the Keychain, where the
+            // file/env checks above can't see them. Only spawned when the cheap
+            // checks fail, so the common signed-in-via-file case stays no-spawn.
+            let cmd_ok = !(file_ok || env_ok)
+                && cfg
+                    .get("check_cmd")
+                    .and_then(|v| v.as_array())
+                    .map(|a| {
+                        let argv: Vec<&str> =
+                            a.iter().filter_map(|v| v.as_str()).collect();
+                        !argv.is_empty()
+                            && cmd_exit_ok(&argv, std::time::Duration::from_secs(4))
+                    })
+                    .unwrap_or(false);
+            if file_ok || env_ok || cmd_ok {
                 "ready"
             } else {
                 "missing"
@@ -2308,6 +2412,66 @@ fn vault_tree() -> Result<String, String> {
         .map_err(|e| e.to_string())
 }
 
+/// The vault folder name Split creates inside the user-chosen parent. Must match
+/// core-rs `vault_root()`'s default tail (`~/Documents/SplitVault`).
+const VAULT_FOLDER: &str = "SplitVault";
+
+/// Where the user's chosen vault location is remembered. Lives under `var/`
+/// (app state); the vault DATA it points at is deliberately OUTSIDE `var/`.
+fn vault_pointer_path() -> PathBuf {
+    REPO_ROOT.join("var").join("state").join("vault.txt")
+}
+
+/// Re-apply the persisted vault location into the in-process override at
+/// startup, so every `persona::vault_root()` call (persona projection, the
+/// vault commands, the child-agent `SPLIT_VAULT` env) reflects the user's
+/// onboarding choice. No-op if nothing was ever chosen.
+fn load_persisted_vault() {
+    if let Ok(raw) = std::fs::read_to_string(vault_pointer_path()) {
+        let p = raw.trim();
+        if !p.is_empty() {
+            persona::set_vault_override(Some(PathBuf::from(p)));
+        }
+    }
+}
+
+/// The effective vault root (user override, else default) as an absolute path
+/// — for the onboarding "where should the vault live?" step and the overlay.
+#[tauri::command]
+fn get_vault_root() -> String {
+    persona::vault_root().to_string_lossy().into_owned()
+}
+
+/// Set where the boss's vault lives. `parent` is the directory the user picked
+/// in onboarding ("where should we create the SplitVault folder?"); Split
+/// creates/uses `<parent>/SplitVault` as the actual root. Forgiving: pointing
+/// straight at an existing `SplitVault` folder (e.g. replaying onboarding)
+/// reuses it instead of nesting another. Updates the in-process override, seeds
+/// the skeleton, and persists the pointer under `var/state/` so the choice
+/// survives a restart. Returns the resolved absolute root.
+#[tauri::command]
+fn set_vault_root(parent: String) -> Result<String, String> {
+    let parent = parent.trim();
+    if parent.is_empty() {
+        return Err("empty path".into());
+    }
+    let base = PathBuf::from(parent);
+    let root = if base.file_name().and_then(|s| s.to_str()) == Some(VAULT_FOLDER) {
+        base
+    } else {
+        base.join(VAULT_FOLDER)
+    };
+    std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
+    persona::set_vault_override(Some(root.clone()));
+    persona::ensure_vault(&root);
+    let ptr = vault_pointer_path();
+    if let Some(parent) = ptr.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(&ptr, root.to_string_lossy().as_bytes()).map_err(|e| e.to_string())?;
+    Ok(root.to_string_lossy().into_owned())
+}
+
 /// Open an arbitrary URL in the OS default handler. Used by the React side
 /// for "Open in browser ↗". Scheme is restricted to a small allowlist so the
 /// UI can't be tricked into launching arbitrary handlers.
@@ -2435,6 +2599,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            // Re-apply the user's chosen vault location before any session can
+            // spawn, so persona projection + the SPLIT_VAULT child env see it.
+            load_persisted_vault();
+
             // Native macOS app menu — mirrors what a "real" macOS app exposes:
             // App > About/Services/Hide/Quit · Edit > Cut/Copy/Paste/Select-All ·
             // View > Toggle Full Screen (⌃⌘F, complements the green traffic light)
@@ -2601,6 +2769,8 @@ pub fn run() {
             vault_tree,
             vault_create,
             vault_delete,
+            get_vault_root,
+            set_vault_root,
             open_url,
             notify_turn_done
         ])

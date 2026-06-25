@@ -36,14 +36,19 @@ pub fn apply(repo_root: &Path, var_dir: &Path, harness: &str) -> HarnessAdjustme
     }
 }
 
-/// Built-in default model per subscription harness, applied when the user
-/// hasn't picked one — so a fresh Split runs these without any config (e.g.
-/// Claude defaults to Opus rather than the CLI's own Sonnet). Keep in sync
-/// with `models[0]` in apps/desktop/src/shared/model-picker.ts.
+/// Built-in default model for the env-var subscription harnesses (Claude,
+/// Gemini), applied when the user hasn't picked one — so a fresh Split runs
+/// these without any config (e.g. Claude defaults to Opus rather than the CLI's
+/// own Sonnet). Keep in sync with `models[0]` in
+/// apps/desktop/src/shared/model-picker.ts.
+///
+/// Codex is deliberately absent: it has NO forced default (see `apply_codex`).
+/// Forcing one is account-type-dependent and breaks ChatGPT-subscription users
+/// (the `*-codex` frontier models 400 with "model is not supported when using
+/// Codex with a ChatGPT account"), so codex defers to its own `~/.codex` config.
 fn default_model(harness: &str) -> &'static str {
     match harness {
         "claude" => "opus",
-        "codex" => "gpt-5.5-codex",
         "gemini" => "gemini-3.5-flash",
         _ => "",
     }
@@ -75,12 +80,24 @@ fn apply_env_model(var_dir: &Path, harness: &str, env_key: &str) -> HarnessAdjus
 /// We write a managed home with the chosen model (+ optional reasoning effort)
 /// and link the user's real `auth.json` in so the session stays signed in
 /// (hijacking `CODEX_HOME` without it would log the agent out).
+///
+/// We only do this when the user has EXPLICITLY picked a model in Split's
+/// picker. With no pick we return empty adjustments — leaving `CODEX_HOME`
+/// unset so codex runs against the real `~/.codex` (its own config + auth) and
+/// chooses the model its account type allows. Forcing a default here is harmful:
+/// `gpt-5.5-codex` (and the other `*-codex` models) are rejected for
+/// ChatGPT-subscription accounts, and overriding a working `~/.codex/config.toml`
+/// (e.g. the account-correct `gpt-5.5`) with it breaks the session.
 fn apply_codex(var_dir: &Path) -> HarnessAdjustments {
-    let model = configured_model(var_dir, "codex");
-    if model.is_empty() {
-        return (Vec::new(), HashMap::new());
-    }
     let cfg = load_model_config(var_dir, "codex");
+    let model = cfg
+        .as_ref()
+        .and_then(|c| c.get("model").and_then(|v| v.as_str()))
+        .map(str::to_string)
+        .filter(|s| !s.is_empty());
+    let Some(model) = model else {
+        return (Vec::new(), HashMap::new());
+    };
     let home = var_dir.join("state").join("codex-home");
     let _ = std::fs::create_dir_all(&home);
 
@@ -394,12 +411,15 @@ mod tests {
     }
 
     #[test]
-    fn codex_no_config_uses_default_model() {
+    fn codex_no_config_leaves_codex_native() {
+        // No explicit pick → no managed home, no CODEX_HOME override, so codex
+        // runs against the real ~/.codex (its own config + auth + account-correct
+        // default model). Forcing a default here breaks ChatGPT-subscription
+        // accounts, so we deliberately do nothing.
         let var = tmpdir();
-        let (_, env) = apply(Path::new("/repo"), &var, "codex");
-        let home = env.get("CODEX_HOME").expect("CODEX_HOME should be set");
-        let toml = fs::read_to_string(PathBuf::from(home).join("config.toml")).unwrap();
-        assert!(toml.contains("model = \"gpt-5.5-codex\""));
+        let (args, env) = apply(Path::new("/repo"), &var, "codex");
+        assert!(args.is_empty());
+        assert!(env.is_empty(), "no CODEX_HOME should be set without a pick");
     }
 
     #[test]
