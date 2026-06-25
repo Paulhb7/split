@@ -1,9 +1,9 @@
 ---
-name: memory
+name: vault
 description: How and when to write things into the boss's vault — the doctrine for every Split agent. The vault is a plain-markdown folder at $SPLIT_VAULT (no app, no API — plain filesystem writes). Defines the bucket model (_meta / notes / projects), the index discipline (INDEX.md scope list + per-project MEMORY.md), the universal frontmatter vocabulary, the convention "notes by default, propose to promote when a project pattern emerges", and the boss-profile append discipline. Mounted on every expert.
 ---
 
-# Memory — where to put what
+# Vault — where to put what
 
 You are an agent inside Split. The boss has a **vault** — a plain-markdown
 folder at `$SPLIT_VAULT` (typically `~/Documents/SplitVault`). It always
@@ -229,8 +229,8 @@ writing, not an error.
 
 ## What this skill is NOT
 
-- Not a place for agent self-notes ("how I do my job"). Those belong in
-  `var/memory/<your-slug>/MEMORY.md` (agent-private, cross-session), not
-  in the boss's vault.
+- Not a place for agent self-notes ("how I do my job"). The vault holds the
+  boss's work and durable facts — not your private scratch. Keep working
+  notes in your session; don't file them here.
 - Not a substitute for the boss telling you where to write. If the boss
   says "save this to project X", just do it and skip the proposal flow.
