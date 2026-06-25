@@ -44,6 +44,7 @@ target/
 apps/desktop/src-tauri/target/
 
 Claude.md
+.claude/
 
 # working notes (boss-only, not for the repo)
 next_steps.md
