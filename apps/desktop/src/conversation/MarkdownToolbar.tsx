@@ -64,7 +64,7 @@ export function MarkdownToolbar({ editor }: { editor: Editor }) {
       </Group>
       <Sep />
       <Group>
-        <Btn on={is("bulletList")} onClick={run(() => editor.chain().focus().toggleBulletList().run())} title="Liste à puces">
+        <Btn on={is("bulletList")} onClick={run(() => editor.chain().focus().toggleBulletList().run())} title="Bullet list">
           •
         </Btn>
         <Btn on={is("orderedList")} onClick={run(() => editor.chain().focus().toggleOrderedList().run())} title="Liste numérotée">

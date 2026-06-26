@@ -8,30 +8,32 @@ import { useHarnessScan, rankHarnesses, healthOf } from "../shared/useHarnessSca
 import { useExperts } from "../shared/util";
 import { SKINS, type Skin } from "../shared/skins";
 import SplitMark from "../shared/SplitMark";
-import majordomeUrl from "../shared/majordome.svg";
-import { WorkGalleryPage, type FirstBrief } from "./WorkGalleryPage";
+import { MajordomeOrbit } from "../home/MajordomeOrbit";
 import { CastSpread } from "./CastSpread";
+import { OnboardingDemo } from "./OnboardingDemo";
 import "./onboarding.css";
 import "./finalstretch.css";
 
 // "open_gallery" → finish onboarding and land on the in-app work Gallery
 // (the cast page's "See the complete gallery" button).
-export type EnterIntent = "brief_expert" | "start_recruiter" | "open_gallery" | undefined;
+export type EnterIntent = "start_recruiter" | "open_gallery" | undefined;
 
 export default function Onboarding({
   onEnter,
   skin,
   onPickSkin,
+  team,
+  onToggleHire,
 }: {
-  onEnter: (ids: string[], intent?: EnterIntent, expertSlug?: string, prompt?: string) => void;
+  onEnter: (ids: string[], intent?: EnterIntent, expertSlug?: string) => void;
   skin: Skin;
   onPickSkin: (s: Skin) => void;
+  /** The hired team (shared/team.ts) — favourited experts pinned to the rail. */
+  team: string[];
+  onToggleHire: (slug: string) => void;
 }) {
   const [page, setPage] = useState(0);
   const [picks, setPicks] = useState<string[]>([]);
-  // The first brief, pinned on the gallery page (page 4) and launched by page
-  // 5's "Enter Split". Editable; null = nothing chosen (just enter).
-  const [pinned, setPinned] = useState<FirstBrief | null>(null);
   // The boss's vault location (page 3). Seeded from the Rust default
   // (`~/Documents/SplitVault`), overridable via a native folder picker.
   const [vaultPath, setVaultPath] = useState<string>("");
@@ -78,7 +80,7 @@ export default function Onboarding({
   const engineId = picks[0] ?? recommended;
   const accent = H[engineId].brand;
   const engineStyle = vars({ "--engine": accent });
-  // 6 pages: welcome (0) · theme (1) · pick (2) · vault (3) · gallery (4) · cast (5).
+  // 6 pages: welcome (0) · theme (1) · pick (2) · vault (3) · demo (4) · hire team (5).
   // Page 2 = picker; can't advance until at least one agent is selected.
   const canNext = page !== 2 || picks.length > 0;
   const toggle = (id: string) => {
@@ -93,22 +95,15 @@ export default function Onboarding({
     <div className="ob2" style={engineStyle}>
       <div className="ob2-page" key={page}>
         {page === 0 && (
-          // The threshold: the majordome watches over in filigree — large, crisp
-          // (a mask), bleeding off the bottom-right so copy never lands on his
-          // face, inked in `--text` at low opacity so it reads on dark + light.
+          // The threshold: the majordome is "loaded" at the centre — the one
+          // runtime — with the agent engines (Claude, Codex, Gemini…) orbiting
+          // him in a slow ring. The welcome copy sits below the orbit.
           <div className="ob2-welcome">
-            <svg className="ob2-welcome-fil" viewBox="388 110 249 348" aria-hidden="true">
-              <defs>
-                <mask id="welcomeMask">
-                  <image href={majordomeUrl} x="0" y="0" width="1024" height="544" />
-                </mask>
-              </defs>
-              <rect className="ob2-welcome-fil-ink" x="388" y="110" width="249" height="348" mask="url(#welcomeMask)" />
-            </svg>
+            <div className="ob2-welcome-orbit">
+              <MajordomeOrbit active="" diameter="clamp(340px, 42vw, 500px)" coreSize={150} />
+            </div>
             <div className="ob2-welcome-text stagger">
               <h1 className="ob2-welcome-h1">Welcome to <em>Split</em>.</h1>
-              <p className="ob2-welcome-sub">I am your <b>Majordome</b>.</p>
-              <p className="ob2-welcome-seed">A roster of experts, each in its own session — briefed by you, run on the brain of your choice.</p>
             </div>
           </div>
         )}
@@ -186,7 +181,7 @@ export default function Onboarding({
         )}
 
         {page === 3 && (
-          <div className="stagger">
+          <div className="stagger ob2-center">
             <div className="ob-eyebrow">where your work is kept · 03</div>
             <h2 className="ob2-h2">Your <em>vault</em></h2>
             <p className="ob2-lede" style={{ marginBottom: 20 }}>
@@ -212,24 +207,30 @@ export default function Onboarding({
         )}
 
         {page === 4 && (
-          // The wow + the activation: a wall of the studio's WORK. Pick a piece
-          // → it pins as your first brief (editable); page 5 launches it.
-          <div className="ob-finalpage">
-            <div className="stagger">
-              <div className="ob-eyebrow">what your studio makes · 04</div>
-              <h2 className="ob2-h2">Pick something to <em>make</em>.</h2>
-              <p className="ob2-lede" style={{ marginBottom: 14 }}>
-                Not a roster of faces — a wall of finished work. Choose an outcome you want;
-                the maker starts on it the moment you enter.
-              </p>
-            </div>
-            <WorkGalleryPage experts={experts} pinned={pinned} onPin={setPinned} />
+          // The walkthrough: a fictitious cursor drives a miniature atelier so a
+          // first-launch user *sees* the core loop — pick an expert, brief them,
+          // watch them work, a deliverable lands — before configuring anything.
+          <div className="stagger ob2-center">
+            <div className="ob-eyebrow">how it works · 04</div>
+            <h2 className="ob2-h2">See it <em>in action</em></h2>
+            <p className="ob2-lede" style={{ marginBottom: 18 }}>
+              Pick an expert from the rail, brief them in plain words, and they get to
+              work — filing the deliverable in your vault. Here's the whole loop.
+            </p>
+            <OnboardingDemo />
           </div>
         )}
 
         {page === 5 && (
-          // The reveal: who makes all that. An editorial spread, not a picker.
-          <CastSpread experts={experts} onHireRecruiter={() => onEnter(picks, "start_recruiter")} />
+          // The activation: hire your team. The roster index is now a picker —
+          // ★ an expert to pin it to your atelier rail. A starter team is
+          // pre-hired so no one enters with an empty rail.
+          <CastSpread
+            experts={experts}
+            team={team}
+            onToggleHire={onToggleHire}
+            onHireRecruiter={() => onEnter(picks, "start_recruiter")}
+          />
         )}
       </div>
 
@@ -248,16 +249,13 @@ export default function Onboarding({
               title={!canNext ? "Pick at least one agent to continue" : undefined}
               onClick={() => setPage((p) => p + 1)}
             >
-              {page === 2 ? "Continue →" : page === 4 ? "Next — meet the cast →" : "Next →"}
+              {page === 2 ? "Continue →" : page === 4 ? "Next — hire your team →" : "Next →"}
             </button>
           ) : (
             <>
               <button className="btn ghost" onClick={() => onEnter(picks, "open_gallery")}>See the complete gallery</button>
-              <button
-                className="btn"
-                onClick={() => onEnter(picks, pinned ? "brief_expert" : undefined, pinned?.slug, pinned?.prompt)}
-              >
-                Enter Split →
+              <button className="btn" onClick={() => onEnter(picks)}>
+                Enter Split → {team.length > 0 && <span className="ob2-team-ct">{team.length} hired</span>}
               </button>
             </>
           )}

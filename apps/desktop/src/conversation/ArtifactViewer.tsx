@@ -136,25 +136,24 @@ function CsvTable({ text }: { text: string }) {
   );
 }
 
-function renderText(rel: string, content: string) {
+function renderText(rel: string, content: string, htmlSrc?: string) {
   const ext = extOf(rel);
   if (ext === "md" || ext === "markdown") {
     return <div className="art-md"><ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown></div>;
   }
   if (ext === "csv" || ext === "tsv") return <CsvTable text={content} />;
   if (ext === "html" || ext === "htm") {
-    // Render inside a sandboxed srcdoc iframe. `allow-same-origin` gives the
-    // page a real origin (the app's) so the browser APIs games rely on — chiefly
-    // localStorage/sessionStorage for scores and save state — work instead of
-    // throwing SecurityError in an opaque origin. Without it a generated game
-    // plays for a few seconds, then the first storage write (e.g. saving a new
-    // high score) throws inside the game loop and the whole thing freezes —
-    // even though it runs fine in a real browser. Trade-off: same-origin content
-    // shares the app's storage and can reach `window.parent`; acceptable for the
-    // user's own agent-generated deliverables, and consistent with the Cabinet preview.
-    // `allow-pointer-lock` lets first-person games capture the mouse — without
-    // it requestPointerLock() is silently denied and "click to play" no-ops.
-    return <iframe className="art-iframe" sandbox="allow-scripts allow-same-origin allow-pointer-lock" srcDoc={content} title={rel} />;
+    // Render the agent's HTML off disk via the asset protocol (`htmlSrc`), NOT
+    // inline. That hands it a real-but-FOREIGN origin (`asset://…`), so the
+    // browser APIs games rely on — localStorage/sessionStorage for scores and
+    // save state — keep working (no SecurityError, no mid-game freeze), WHILE
+    // the same-origin policy isolates it from Split: its JS can't reach
+    // `window.parent`, the app's localStorage, or the Tauri `invoke` bridge, so
+    // a prompt-injected deliverable can't read your files or drive the app.
+    // (This previously used a same-origin `srcdoc`, which handed agent HTML the
+    // keys to the app.) `?v=<mtime>` in `htmlSrc` busts the webview cache when a
+    // turn overwrites the file; `allow-pointer-lock` keeps FPS mouse-capture.
+    return <iframe className="art-iframe" sandbox="allow-scripts allow-pointer-lock" src={htmlSrc} title={rel} />;
   }
   // Everything else: monospaced. The .art-pre class also wraps long lines.
   return <pre className="art-pre">{content}</pre>;
@@ -544,7 +543,7 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
               />
             )
           ) : (
-            renderText(artifact.rel, payload.content)
+            renderText(artifact.rel, payload.content, `${convertFileSrc(artifact.path)}?v=${artifact.mtime}`)
           )
         )}
         {payload && payload.kind === "image" && (
@@ -787,29 +786,3 @@ function KeepControl({
 // Minimal shape of the vault tree nodes returned by `vault_tree` — only the
 // fields KeepControl reads (the Vault overlay owns the full type).
 interface VaultNode { name: string; dir: boolean; children: VaultNode[]; }
-
-export function ArtifactStrip({
-  artifacts, activeArtifact, onPick,
-}: {
-  artifacts: Artifact[];
-  activeArtifact: string | null;
-  onPick: (rel: string) => void;
-}) {
-  if (!artifacts.length) return null;
-  return (
-    <div className="art-strip" role="tablist" aria-label="Deliverables">
-      {artifacts.map((a) => (
-        <button
-          key={a.rel}
-          role="tab"
-          aria-selected={a.rel === activeArtifact}
-          className={"art-chip" + (a.rel === activeArtifact ? " active" : "")}
-          onClick={() => onPick(a.rel)}
-          title={a.path}
-        >
-          📦 {a.rel}
-        </button>
-      ))}
-    </div>
-  );
-}

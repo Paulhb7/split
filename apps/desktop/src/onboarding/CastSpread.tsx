@@ -4,12 +4,13 @@ import { Preview, TYPE_LABEL } from "../conversation/DeliverableExamples";
 import { isActiveExpert, type ExpertMap } from "../shared/experts";
 import "./finalstretch.css";
 
-// Onboarding page 5 — the CAST. An editorial two-column spread: a few featured
-// makers rotate on the left (each a serif voice line + a real work peek), the
-// full roster sits as a quiet index on the right. It REVEALS who makes the work
-// you just browsed — it is NOT a picker (no per-face launch), so it can't slide
-// back into the people-first cabinet we replaced. Socrates is a separate
-// recruiter card. Real Crest + real Preview keep it identical to the live app.
+// Onboarding page 4 — HIRE YOUR TEAM. An editorial two-column spread: a few
+// featured makers rotate on the left (each a serif voice line + a real work
+// peek + a ★ Hire toggle), the full roster sits as the index on the right where
+// every cell is a ★ hire toggle. Hiring pins an expert to the atelier rail (a
+// favourites set, shared/team.ts) so the rail shows your handful, not all ~26.
+// A starter team is pre-hired. Socrates is a separate recruiter card. Real Crest
+// + real Preview keep it identical to the live app.
 
 // Crafted in-character voice lines (≤ ~12 words). Keyed by slug so any maker can
 // be featured. Non-featured index cells don't need one.
@@ -45,10 +46,14 @@ const CAT_ORDER: ("super" | "genius" | "coach")[] = ["super", "genius", "coach"]
 const CAT_LABEL: Record<string, string> = { super: "Jobs · the staff", genius: "Geniuses · the makers", coach: "Coaches · life" };
 const CAT_TAG: Record<string, string> = { super: "In the staff", genius: "A genius in residence", coach: "Your coach" };
 
-export function CastSpread({ experts, onHireRecruiter }: {
+export function CastSpread({ experts, team, onToggleHire, onHireRecruiter }: {
   experts: ExpertMap;
+  /** The hired team (shared/team.ts) — ★ slugs pinned to the atelier rail. */
+  team: string[];
+  onToggleHire: (slug: string) => void;
   onHireRecruiter: () => void;
 }) {
+  const hiredSet = new Set(team);
   const groups = useMemo(() => {
     const out: Record<string, string[]> = { super: [], genius: [], coach: [] };
     for (const slug of Object.keys(experts)) {
@@ -62,70 +67,84 @@ export function CastSpread({ experts, onHireRecruiter }: {
 
   const featured = FEATURED.filter((s) => experts[s]);
   const [fi, setFi] = useState(0);
+  // The expert whose details fill the left panel. null → the featured rotation
+  // drives it; clicking any roster cell on the right pins it here (and pauses
+  // the rotation) so you can read what a maker does before hiring.
+  const [selected, setSelected] = useState<string | null>(null);
   useEffect(() => {
-    if (featured.length <= 1) return;
+    if (selected || featured.length <= 1) return;
     const t = setInterval(() => setFi((i) => (i + 1) % featured.length), 5000);
     return () => clearInterval(t);
-  }, [featured.length]);
+  }, [featured.length, selected]);
   const featSlug = featured[fi] ?? featured[0];
+  const activeSlug = selected ?? featSlug;
+  const active = experts[activeSlug];
+  const activeEx = active?.examples?.[0];
 
   return (
     <div className="cst-spread">
       <div className="cst-left">
-        <div className="cst-eyebrow">the cast · 05</div>
+        <div className="cst-eyebrow">hire your team · 04</div>
         <h2 className="cst-statement">
-          <span className="n">{total}</span> experts. One runtime.
-          <span className="rt">And these are the hands behind all that.</span>
+          <span className="n">{total}</span> experts. <em>Hire your team.</em>
+          <span className="rt">The ones you ★ pin to your atelier rail.</span>
         </h2>
         <p className="cst-lede">
-          You already picked the work. Here are the makers who deliver it — each a persona, a craft, a kit of
-          skills. Pick none now; they’re all yours the moment you enter.
+          Each is a persona, a craft, a kit of skills. Click a name to see what they make, then ★ Hire the ones
+          you’ll actually use — they’re one click away in the atelier. Add or drop any anytime.
         </p>
 
         <div className="cst-feature">
-          {featured.map((s, i) => {
-            const e = experts[s];
-            const ex = e.examples?.[0];
-            return (
-              <div key={s} className={"cst-hero" + (i === fi ? " show" : "")}>
-                <div className="cst-hero-byline">
-                  <span className="cst-hero-crest"><Crest kind={e.kind} seed={s} size={62} mint={e.label[0]} /></span>
-                  <div>
-                    <div className="cst-hero-cat">{CAT_TAG[e.category ?? "super"]}</div>
-                    <div className="cst-hero-name">{e.label}</div>
-                    <div className="cst-hero-role">{e.role ? e.role + " · " : ""}{e.kind}</div>
+          {active && (
+            // key=activeSlug → remounts on selection/rotation so the card fades in.
+            <div key={activeSlug} className="cst-hero show">
+              <div className="cst-hero-byline">
+                <span className="cst-hero-crest"><Crest kind={active.kind} seed={activeSlug} size={62} /></span>
+                <div>
+                  <div className="cst-hero-cat">{CAT_TAG[active.category ?? "super"]}</div>
+                  <div className="cst-hero-name">{active.label}</div>
+                  <div className="cst-hero-role">{active.role ? active.role + " · " : ""}{active.kind}</div>
+                </div>
+                <button
+                  type="button"
+                  className={"cst-hero-hire" + (hiredSet.has(activeSlug) ? " on" : "")}
+                  onClick={() => onToggleHire(activeSlug)}
+                >
+                  {hiredSet.has(activeSlug) ? "★ Hired" : "☆ Hire"}
+                </button>
+              </div>
+              <div className="cst-hero-voice"><span className="mk">“</span>{VOICE[activeSlug] ?? active.blurb}</div>
+              <div className="cst-hero-blurb">{active.blurb}</div>
+              {activeEx && (
+                <div className="cst-peek">
+                  <div className="cst-peek-prev"><Preview type={activeEx.type} fit="slice" /></div>
+                  <div className="cst-peek-meta">
+                    <div>
+                      <div className="cst-peek-type"><i />{TYPE_LABEL[activeEx.type] ?? "Work"} · signature work</div>
+                      <div className="cst-peek-title">{activeEx.title}</div>
+                      <div className="cst-peek-desc">{activeEx.desc}</div>
+                    </div>
+                    <div className="cst-peek-tag">one of {active.label}’s</div>
                   </div>
                 </div>
-                <div className="cst-hero-voice"><span className="mk">“</span>{VOICE[s] ?? e.blurb}</div>
-                {ex && (
-                  <div className="cst-peek">
-                    <div className="cst-peek-prev"><Preview type={ex.type} fit="slice" /></div>
-                    <div className="cst-peek-meta">
-                      <div>
-                        <div className="cst-peek-type"><i />{TYPE_LABEL[ex.type] ?? "Work"} · signature work</div>
-                        <div className="cst-peek-title">{ex.title}</div>
-                        <div className="cst-peek-desc">{ex.desc}</div>
-                      </div>
-                      <div className="cst-peek-tag">one of {e.label}’s</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              )}
+            </div>
+          )}
         </div>
         <div className="cst-rail">
           {/* key includes the active flag so the on pip remounts when it becomes
               active → its ::after progress-fill animation restarts each rotation */}
           {featured.map((s, i) => (
-            <button key={s + (i === fi ? "-on" : "")} className={"cst-pip" + (i === fi ? " on" : "")} onClick={() => setFi(i)} title={experts[s].label} aria-label={`Feature ${experts[s].label}`} />
+            <button key={s + (!selected && i === fi ? "-on" : "")} className={"cst-pip" + (!selected && i === fi ? " on" : "")} onClick={() => { setSelected(null); setFi(i); }} title={experts[s].label} aria-label={`Feature ${experts[s].label}`} />
           ))}
-          {featSlug && <span className="cst-rail-lbl">featured · {experts[featSlug]?.label}</span>}
+          <span className="cst-rail-lbl">
+            {selected ? <>selected · {active?.label}</> : <>featured · {experts[featSlug]?.label}</>}
+          </span>
         </div>
       </div>
 
       <div className="cst-right">
-        <div className="cst-ix-head"><span className="h">The full roster</span><span className="ct">{total} makers</span></div>
+        <div className="cst-ix-head"><span className="h">The full roster</span><span className="ct">{team.length} of {total} hired</span></div>
         <div className="cst-ix-scroll">
           {CAT_ORDER.map((c) => (groups[c]?.length ? (
             <div key={c}>
@@ -133,12 +152,20 @@ export function CastSpread({ experts, onHireRecruiter }: {
               <div className="cst-ix-grid">
                 {groups[c].map((slug) => {
                   const e = experts[slug];
+                  const hired = hiredSet.has(slug);
                   return (
-                    <div key={slug} className={"cst-ix-cell " + c + (slug === featSlug ? " feat" : "")} title={e.blurb}>
-                      <span className="cst-ix-crest"><Crest kind={e.kind} seed={slug} size={28} mint={e.label[0]} /></span>
+                    <button
+                      type="button"
+                      key={slug}
+                      className={"cst-ix-cell " + c + (hired ? " hired" : "") + (slug === activeSlug ? " sel" : "")}
+                      title={`${e.label} — ${e.blurb}`}
+                      aria-pressed={slug === activeSlug}
+                      onClick={() => setSelected(slug)}
+                    >
+                      <span className="cst-ix-crest"><Crest kind={e.kind} seed={slug} size={28} /></span>
                       <div><div className="cst-ix-nm">{e.label}</div><div className="cst-ix-kd">{e.role || e.kind}</div></div>
-                      <span className="cst-ix-star">★</span>
-                    </div>
+                      <span className="cst-ix-star" title={hired ? "Hired" : undefined}>{hired ? "★" : "☆"}</span>
+                    </button>
                   );
                 })}
               </div>
@@ -146,7 +173,7 @@ export function CastSpread({ experts, onHireRecruiter }: {
           ) : null))}
         </div>
         <button className="cst-recruit" onClick={onHireRecruiter}>
-          <span className="cst-recruit-ic"><Crest kind="recruiter" seed="genius_socrates" size={40} mint="S" /></span>
+          <span className="cst-recruit-ic"><Crest kind="recruiter" seed="genius_socrates" size={40} /></span>
           <div>
             <b>Missing a maker? Hire <span className="rn">@{experts.genius_socrates?.label ?? "Socrates"}</span>.</b>
             <p>He runs a Socratic interview and drafts a brand-new expert from your answers — no menus, no code.</p>

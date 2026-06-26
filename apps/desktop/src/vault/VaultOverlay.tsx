@@ -306,7 +306,7 @@ export function VaultOverlay({ onClose }: { onClose: () => void }) {
               </div>
               {age?.label && (
                 <span className={"vault-age big" + (age.stale ? " stale" : "")}>
-                  {age.stale ? `${age.label} ⚠ à vérifier` : age.label}
+                  {age.stale ? `${age.label} ⚠ stale` : age.label}
                 </span>
               )}
               {isMd && (

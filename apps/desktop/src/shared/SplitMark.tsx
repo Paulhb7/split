@@ -75,7 +75,7 @@ export default function SplitMark({
       onClick={bowOnClick ? () => setBowing(true) : undefined}
       onAnimationEnd={bowing ? () => setBowing(false) : undefined}
       role={bowOnClick ? "button" : undefined}
-      aria-label={bowOnClick ? "À votre service" : undefined}
+      aria-label={bowOnClick ? "At your service" : undefined}
       style={{
         display: "block",
         // Bow pivots at the feet (bottom-centre), like the planche-2 bowman.

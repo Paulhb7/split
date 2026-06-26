@@ -1,4 +1,5 @@
 import type { Artifact, AuthMethod, PermissionOption, PlanEntry, SlashCommand } from "./events";
+import type { QuestionForm } from "./questionForm";
 
 // "running" = a turn is in flight; "idle" = ready for the next turn;
 // "auth" = blocked on sign-in; "error" = last turn failed; "ended" = process gone.
@@ -88,6 +89,25 @@ export interface Session {
   // by the reducer whenever a new artifact arrives.
   artifacts: Artifact[];
   activeArtifact: string | null;
+  // Live browser view — the newest screenshot streamed by the Rust frame
+  // watcher (`frame` VEVT) while an operator drives a headless browser. Live
+  // only (never archived); the atelier project pane renders it as a data-URL
+  // image. null = no browser frame this session (the common case).
+  liveFrame: LiveFrame | null;
+  // The expert's pending clarifying questions — parsed by the reducer from a
+  // `<question-form>` block in the streamed answer (its markup is stripped from
+  // the thread). Renders as the atelier right pane's QuestionsPanel, taking the
+  // stage until the boss answers; cleared when the next turn is sent. null = no
+  // form pending (the common case).
+  questionForm: QuestionForm | null;
+}
+
+/** One streamed browser screenshot (base64) — see the `frame` VEVT. */
+export interface LiveFrame {
+  seq: number;
+  mime: string; // "image/png" | "image/jpeg"
+  data: string; // base64 (no data-URL prefix)
+  ts: number; // file mtime, unix seconds
 }
 
 // What a session is doing *right now* — derived purely from status + summary
@@ -136,5 +156,7 @@ export function newSession(
     queued: null,
     artifacts: [],
     activeArtifact: null,
+    liveFrame: null,
+    questionForm: null,
   };
 }

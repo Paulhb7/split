@@ -4,6 +4,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { H } from "../shared/harnesses";
 import { useSmoothText, stabilizeMarkdown } from "../shared/useSmoothText";
+import { visibleAnswer } from "../shared/questionForm";
+import { QuestionsPanel, type SubmitSource } from "./QuestionsPanel";
 import { useExperts } from "../shared/util";
 import { Logo } from "../shared/ui";
 import { Crest } from "../shared/Crest";
@@ -129,6 +131,9 @@ export function Conversation(props: {
   onInputChange: (v: string, cursor: number | null) => void;
   onKey: (e: React.KeyboardEvent) => void;
   onReply: () => void;
+  // The boss answered the inline discovery form (compact posture). Absent in
+  // the atelier, where the right pane's QuestionsPanel owns the form.
+  onAnswerForm?: (answers: Record<string, string | string[]>, source: SubmitSource) => void;
   // Opens the native file picker → pending attachment (📎 paperclip).
   onAttach: () => void;
   onPickCommand: (name: string) => void;
@@ -150,7 +155,7 @@ export function Conversation(props: {
     session: focused, experts, value, inputRef, slashQuery, chips,
     onBack, onStop, onClose, onAuth, onPermission,
     godMode, onToggleGodMode,
-    onCancelQueued, onInputChange, onKey, onReply, onAttach, onPickCommand, onPickArtifact,
+    onCancelQueued, onInputChange, onKey, onReply, onAnswerForm, onAttach, onPickCommand, onPickArtifact,
     expanded, onTogglePosture, peers, onFocusPeer,
   } = props;
   // Scope persistence for the next permission decision (drives both Allow and
@@ -161,7 +166,10 @@ export function Conversation(props: {
   // `answer`/`thoughts`; what we render is the smoothed reveal. Flushed
   // instantly when the turn ends (status leaves "running").
   const streaming = focused.status === "running";
-  const smoothAnswer = useSmoothText(focused.answer, streaming, focused.id);
+  // Strip any `<question-form>` markup from the live stream — it renders in the
+  // atelier panel, not the thread (committed turns are already stripped at the
+  // reducer's idle commit).
+  const smoothAnswer = useSmoothText(visibleAnswer(focused.answer), streaming, focused.id);
   const smoothThoughts = useSmoothText(focused.thoughts, streaming, focused.id);
 
   const threadRef = useRef<HTMLDivElement>(null);
@@ -347,6 +355,20 @@ export function Conversation(props: {
         })()}
         {focused.queued && <div className="thinking">⏳ queued · {focused.queued.display || "(file)"} <button className="xbtn" onClick={() => onCancelQueued(focused.id)}>✕</button></div>}
       </div>
+
+      {/* The expert's discovery form, inline (compact posture only — the atelier
+          renders it in the right pane). Sits between the thread and the composer
+          as the agent's current ask; answering it sends the next turn. */}
+      {!expanded && focused.questionForm && onAnswerForm && (
+        <div className="qf-inline">
+          <QuestionsPanel
+            key={focused.questionForm.id}
+            form={focused.questionForm}
+            busy={focused.status === "running"}
+            onSubmit={onAnswerForm}
+          />
+        </div>
+      )}
 
       {/* Deliverables live in the Reflet dock (right), not duplicated in the
           thread. Compact posture keeps ONLY the latest one as a headline card

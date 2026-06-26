@@ -5,53 +5,43 @@ import { open as openDialog } from "@tauri-apps/plugin-dialog";
 
 import { HARNESSES, H, brandOf } from "./shared/harnesses";
 import { useExperts, composeTurn, type Attachment } from "./shared/util";
-import { isActiveExpert } from "./shared/experts";
+import { isActiveExpert, isDarkExpert } from "./shared/experts";
+import { loadTeam, saveTeam } from "./shared/team";
 import { useSessions } from "./shared/useSessions";
 import { useWindowChrome, useAdaptiveHeight, useFullscreen, useNativeFullscreen, useBarWidth } from "./shared/useWindowChrome";
 import { useHarnessStates } from "./shared/useHarnessStates";
-import { useHarnessScan } from "./shared/useHarnessScan";
 import { useToasts } from "./shared/useToasts";
 import { useNativeNotify } from "./shared/useNativeNotify";
-import { SKINS } from "./shared/skins";
+import { Chrome } from "./home/Chrome";
 import { useSkin } from "./shared/useSkin";
 import { useComposer } from "./shared/useComposer";
 import { useGodMode } from "./shared/useGodMode";
-import { League, vars } from "./shared/ui";
+import { vars } from "./shared/ui";
 import { Composer } from "./home/Composer";
+import { RosterOverlay } from "./home/RosterOverlay";
 import { SessionRow } from "./home/SessionRow";
 import { Conversation, type PeerAlert } from "./conversation/Conversation";
 import { ArtifactViewer } from "./conversation/ArtifactViewer";
 import { AtelierLeft } from "./conversation/AtelierLeft";
-import { DeliverableExamples } from "./conversation/DeliverableExamples";
+import { AtelierWelcome } from "./conversation/AtelierWelcome";
 import { AtelierCanvasEmpty } from "./conversation/AtelierCanvasEmpty";
-import { Crest } from "./shared/Crest";
+import { AtelierLiveView } from "./conversation/AtelierLiveView";
+import { QuestionsPanel, type SubmitSource } from "./conversation/QuestionsPanel";
+import { formatFormAnswers } from "./shared/questionForm";
 import { HistoryOverlay } from "./history/HistoryOverlay";
 import { AuthModal } from "./auth/AuthModal";
 import Onboarding from "./onboarding/Onboarding";
 import Gallery from "./cabinet/Gallery";
+import { CabinetNoir } from "./cabinet/CabinetNoir";
 import { AtelierInvite } from "./home/AtelierInvite";
+import { MajordomeOrbit } from "./home/MajordomeOrbit";
 import { VaultOverlay } from "./vault/VaultOverlay";
-import SplitMark from "./shared/SplitMark";
 import "./app.css";
 
 const LS_DONE = "split.onboarded";
 const LS_DEF = "split.defaultHarness"; // legacy single-pick (migrated to LS_ENABLED)
 const LS_ENABLED = "split.enabledHarnesses"; // the agents the user activated
 const LS_ACTIVE = "split.activeHarness"; // the armed engine for the next session
-
-// Drifting starfield behind the atelier welcome crest. Positions are seeded once
-// at module load (deterministic — no Math.random in render) so they don't
-// re-scatter every time the welcome remounts on focus change.
-const AW_STARS = Array.from({ length: 42 }, (_, i) => {
-  const r = (n: number) => { const x = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453; return x - Math.floor(x); };
-  return {
-    left: (r(1) * 100).toFixed(2) + "%",
-    top: (r(2) * 100).toFixed(2) + "%",
-    big: r(3) > 0.8,
-    tw: (3 + r(4) * 5).toFixed(2) + "s",
-    td: (r(5) * 6).toFixed(2) + "s",
-  };
-});
 
 // The user's activated agents — only these show in the roster/menus. Falls back
 // to the legacy single default, then to claude.
@@ -88,6 +78,21 @@ export default function App() {
   const [enabled, setEnabled] = useState<string[]>(loadEnabled);
   const [active, setActiveState] = useState(loadActive);
   const [expertSlug, setExpertSlug] = useState("consultant");
+  // The hired team — favourited experts pinned to the atelier rail (shared/team.ts).
+  // Seeded once experts load: from localStorage, or the DEFAULT_TEAM on first run.
+  const [team, setTeam] = useState<string[]>([]);
+  const teamSeeded = useRef(false);
+  useEffect(() => {
+    if (teamSeeded.current || Object.keys(experts).length === 0) return;
+    teamSeeded.current = true;
+    setTeam(loadTeam(experts));
+  }, [experts]);
+  const toggleTeam = (slug: string) =>
+    setTeam((prev) => {
+      const next = prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug];
+      saveTeam(next);
+      return next;
+    });
   const [overlay, setOverlay] = useState(false);
   // "list" = the floating bar (home or compact conversation). "atelier" = the
   // fullscreen control room (roster · conversation · project). The window SIZE is
@@ -98,9 +103,6 @@ export default function App() {
   const [view, setView] = useState<"list" | "atelier">("list");
 
   const [focusedId, setFocusedId] = useState<string | null>(null);
-  // Chrome overflow menu (⋯) — gathers the rare actions (skin, workspace,
-  // replay onboarding) behind one glyph. "skins" is the drill-down page.
-  const [moreMenu, setMoreMenu] = useState<false | "root" | "skins">(false);
   const { toasts, push: pushToast } = useToasts();
   // The whole wardrobe — day skin, auto-Minuit, the three easter eggs — lives
   // in shared/useSkin.ts; `shownSkin` is what the window wears right now.
@@ -116,6 +118,9 @@ export default function App() {
   //                   from @ chip or focused conversation header)
   // Closes via ✕ / Esc / clicking a use case (which also launches a session).
   const [cabinet, setCabinet] = useState<boolean | string>(false);
+  // The Cabinet Noir — the hidden black-&-gold chamber of dark geniuses. Opened
+  // only via the secret seal (long-press the logo, or the midnight hour).
+  const [cabinetNoir, setCabinetNoir] = useState(false);
   // Vault overlay — the boss's window into $SPLIT_VAULT (tree + editor).
   // Like Cabinet, it forces fullscreen geometry.
   const [vaultOpen, setVaultOpen] = useState(false);
@@ -171,10 +176,20 @@ export default function App() {
   const openArtifact = (id: string, rel: string) => { setFocusedId(id); setView("atelier"); setAtelierArt(rel); };
   useEffect(() => {
     // Keep the open deliverable if it still belongs to the newly-focused session
-    // (so openArtifact's focus+art set isn't clobbered); otherwise clear it so you
-    // never land on a stale artifact after switching agents. Keyed on focusedId
-    // only — `focused` is read fresh, intentionally not a dep.
-    setAtelierArt((cur) => (cur && focused?.artifacts.some((a) => a.rel === cur) ? cur : null));
+    // (so openArtifact's focus+art set isn't clobbered). Otherwise, if the
+    // focused session ALREADY has deliverables — opening a past/archived session,
+    // or refocusing one that produced work — surface its latest one instead of
+    // the placeholder canvas (that's what "open the old session, see the artifact"
+    // means). Fall back to null only for a session with nothing to show. Keyed on
+    // focusedId only — `focused` is read fresh, intentionally not a dep.
+    setAtelierArt((cur) => {
+      if (cur && focused?.artifacts.some((a) => a.rel === cur)) return cur;
+      const arts = focused?.artifacts ?? [];
+      if (arts.length === 0) return null;
+      // Prefer the reducer's tracked active artifact (last one that arrived),
+      // else the most recent in the list.
+      return focused?.activeArtifact ?? arts[arts.length - 1]!.rel;
+    });
   }, [focusedId]); // eslint-disable-line react-hooks/exhaustive-deps
   // Atelier left rail. It's the navigator (Agents · Sessions · History) and
   // stays OPEN while you brief — it only folds to a thin strip when a deliverable
@@ -202,7 +217,7 @@ export default function App() {
   // screen on its own terms (cabinet, history, vault, onboarding). The atelier is
   // the OTHER layer — driven by the window size. Together they decide whether the
   // OS window is fullscreen.
-  const overlayFullscreen = overlay || !!cabinet || historyOpen || !onboarded || vaultOpen;
+  const overlayFullscreen = overlay || !!cabinet || cabinetNoir || historyOpen || !onboarded || vaultOpen;
   const isFullscreen = overlayFullscreen || atelierMode;
   useFullscreen(isFullscreen);
   const nativeFs = useNativeFullscreen();
@@ -291,7 +306,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!experts[expertSlug] || !isActiveExpert(experts, expertSlug)) {
+    // Dark geniuses are valid armable experts (just hidden) — don't reset them.
+    if (!experts[expertSlug] || (!isActiveExpert(experts, expertSlug) && !isDarkExpert(experts[expertSlug]))) {
       const first = Object.keys(experts).find((s) => isActiveExpert(experts, s));
       if (first) setExpertSlug(first);
     }
@@ -400,7 +416,7 @@ export default function App() {
       return final;
     });
   }
-  function enterSplit(ids: string[], intent?: "brief_expert" | "start_recruiter" | "open_gallery", expertSlug?: string, customPrompt?: string) {
+  function enterSplit(ids: string[], intent?: "start_recruiter" | "open_gallery", expertSlug?: string) {
     const list = ids.length ? ids : ["claude"];
     setEnabled(list);
     setActiveState(list[0]);
@@ -412,19 +428,11 @@ export default function App() {
     // - clicking an expert card → expertSlug set, no auto-launch (user types
     //   their own prompt in the home composer with that expert pre-selected)
     // - "Hire @Socrates" → auto-launches a recruiter session straight away
-    // - brief_expert auto-launches the pinned expert from the page-4 work
-    //   gallery with its brief; falls back to consultant + a sample brief.
     // - open_gallery enters and lands on the in-app work Gallery.
     if (expertSlug) {
       setExpertSlug(expertSlug);
     }
-    if (intent === "brief_expert") {
-      const slug = expertSlug || "consultant";
-      const prompt = customPrompt || "Brief me on the EV market outlook for 2026";
-      const turn = composeTurn(prompt, []);
-      setExpertSlug(slug);
-      start({ harness: list[0], expertSlug: slug, display: turn.display, wire: turn.wire, files: turn.files }).then(setFocusedId);
-    } else if (intent === "start_recruiter") {
+    if (intent === "start_recruiter") {
       const slug = "genius_socrates";
       const prompt = "Help me design my first custom expert";
       const turn = composeTurn(prompt, []);
@@ -453,6 +461,15 @@ export default function App() {
     if (!taken) return;
     send(focused.id, taken.turn);
   }
+  // The boss answered (or skipped) the atelier Questions panel → send the
+  // formatted answers as the next turn. `send` clears `questionForm`, so the
+  // panel folds and the pane returns to the deliverable/canvas.
+  function answerForm(answers: Record<string, string | string[]>, source: SubmitSource) {
+    if (!focused?.questionForm) return;
+    const wire = formatFormAnswers(focused.questionForm, answers);
+    const display = source === "skip" ? "↪︎ Questions passées — valeurs par défaut" : wire;
+    send(focused.id, { display, wire, files: [] });
+  }
   function submit() {
     if (focused) reply();
     else launch();
@@ -467,6 +484,7 @@ export default function App() {
     if (e.key === "Enter") submit();
     else if (e.key === "Escape") {
       if (menu) closePickers();
+      else if (cabinetNoir) setCabinetNoir(false);
       else if (cabinet) setCabinet(false);
       else if (overlay) setOverlay(false);
       else if (atelierMode) exitAtelier();
@@ -480,105 +498,25 @@ export default function App() {
       {dragging && <div className="drop">⬇ Drop a file to attach</div>}
 
       {/* chrome */}
-      <div className="chrome" onMouseDown={(e) => { if (!(e.target as HTMLElement).closest("button, .wm-name")) startMove(); }}>
-        <span className={"wm" + (anyRunning ? " live" : "")}>
-          {/* The chrome mark stays still on purpose: the working heartbeat
-              lives in the session UI (TurnSpinner, rows), not in the chrome —
-              a glowing logo up here read as noise. */}
-          <SplitMark size={22} />
-          {/* The wordmark is excluded from window-drag so its clicks land —
-              5 quick ones flip the hidden Noir skin (see noirEgg). */}
-          <span className="wm-name" onClick={noirEgg}>split</span>
-        </span>
-        {/* The night star — only in the sky from midnight, while the bar
-            wears Minuit (and kept lit inside Cosmos so you can fly back).
-            No tooltip: you notice the glint, or you don't. See cosmosEgg. */}
-        {((shownSkin === "minuit" && smallHours) || skin === "cosmos") && (
-          <button className={"wm-star" + (skin === "cosmos" ? " in" : "")} onClick={cosmosEgg} type="button">✦</button>
-        )}
-        <span className="chrome-meta">{focused ? `on ${H[focused.harness]?.label || focused.harness}` : sessions.length ? `${sessions.length} session${sessions.length === 1 ? "" : "s"}` : "ready"}</span>
-        <span className="spacer" />
-        {/* The window SIZE is the mode — no split/atelier segment anymore. This
-            single chevron toggles it: ⊡ maximise → atelier, ⊟ shrink → the
-            floating bar. Shown only when NO conversation is focused (home or the
-            empty atelier), so the empty home keeps a discoverable way into the
-            atelier; inside a conversation the header's own chevron takes over.
-            The green traffic light and a fresh delivery drive the same axis. */}
-        {onboarded && !focused && (
-          <button
-            className={"iconbtn" + (atelierMode ? " on" : "")}
-            onClick={() => setView(atelierMode ? "list" : "atelier")}
-            title={atelierMode ? "Réduire — revenir à la barre" : "Agrandir — passer en atelier plein écran"}
-            aria-label={atelierMode ? "Collapse to the bar" : "Expand to the atelier"}
-          >{atelierMode ? "⊟" : "⊡"}</button>
-        )}
-        <button className="iconbtn" onClick={() => setCabinet(true)} title="The gallery — browse the work your studio makes" aria-label="Open the gallery">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="3" y="3" width="7" height="7" rx="1.5" />
-            <rect x="14" y="3" width="7" height="7" rx="1.5" />
-            <rect x="3" y="14" width="7" height="7" rx="1.5" />
-            <rect x="14" y="14" width="7" height="7" rx="1.5" />
-          </svg>
-        </button>
-        {/* History lives in the atelier rail's History tab now (one entry, no
-            redundant chrome button) — see AtelierLeft + "Tout l'historique →". */}
-        <button className="iconbtn" onClick={() => setVaultOpen(true)} title="Vault — everything your experts know & produce">🗃️</button>
-        <div className="skin-wrap">
-          <button className="iconbtn" onClick={() => setMoreMenu((v) => (v ? false : "root"))} title="More — skin, onboarding">⋯</button>
-          {moreMenu && (
-            <>
-              <div className="skin-scrim" onClick={() => setMoreMenu(false)} />
-              <div className="skin-menu" role="menu">
-                {moreMenu === "root" ? (
-                  <>
-                    <button className="more-item" onClick={() => setMoreMenu("skins")} role="menuitem">
-                      <span className="more-ic">✿</span>
-                      <span className="more-meta">
-                        <b>Skin</b>
-                        <small>{SKINS.find((s) => s.id === shownSkin)?.label ?? "Classic"}</small>
-                      </span>
-                      <span className="more-chev">▸</span>
-                    </button>
-                    <button className="more-item" onClick={() => { setMoreMenu(false); setVaultOpen(true); }} role="menuitem">
-                      <span className="more-ic">🗃️</span>
-                      <span className="more-meta">
-                        <b>Vault</b>
-                        <small>tout ce que tes experts savent</small>
-                      </span>
-                    </button>
-                    <button className="more-item" onClick={() => { setMoreMenu(false); localStorage.removeItem(LS_DONE); setOnboarded(false); }} role="menuitem">
-                      <span className="more-ic">↻</span>
-                      <span className="more-meta">
-                        <b>Replay onboarding</b>
-                        <small>the guided tour, from the top</small>
-                      </span>
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button className="more-item more-back" onClick={() => setMoreMenu("root")}>
-                      <span className="more-ic">‹</span>
-                      <span className="more-meta"><b>Skin</b></span>
-                    </button>
-                    {/* Hidden skins (Noir) only list while worn — so you can
-                        leave; night skins (Minuit) only exist after dark. */}
-                    {SKINS.filter((s) => (!s.hidden || skin === s.id) && (!s.night || night)).map((s) => (
-                      <button key={s.id || "classic"} className={"skin-item" + (shownSkin === s.id ? " on" : "")} onClick={() => { setMoreMenu(false); pickSkin(s.id); }} role="menuitem">
-                        <span className="skin-sw" style={{ background: `linear-gradient(135deg, ${s.sw[0]} 0%, ${s.sw[0]} 50%, ${s.sw[1]} 50%, ${s.sw[1]} 100%)`, boxShadow: `inset 0 0 0 1.5px ${s.sw[2]}` }} />
-                        <span className="skin-meta">
-                          <b>{s.label}</b>
-                          <small>{s.hint}</small>
-                        </span>
-                        {shownSkin === s.id && <span className="skin-tick">●</span>}
-                      </button>
-                    ))}
-                  </>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+      <Chrome
+        running={anyRunning}
+        meta={focused ? `on ${H[focused.harness]?.label || focused.harness}` : sessions.length ? `${sessions.length} session${sessions.length === 1 ? "" : "s"}` : "ready"}
+        showExpandToggle={onboarded && !focused}
+        atelierMode={atelierMode}
+        onToggleView={() => setView(atelierMode ? "list" : "atelier")}
+        onOpenGallery={() => setCabinet(true)}
+        onOpenVault={() => setVaultOpen(true)}
+        onOpenNoir={() => setCabinetNoir(true)}
+        onReplayOnboarding={() => { localStorage.removeItem(LS_DONE); setOnboarded(false); }}
+        onStartMove={startMove}
+        skin={skin}
+        shownSkin={shownSkin}
+        night={night}
+        smallHours={smallHours}
+        onPickSkin={pickSkin}
+        onNoirEgg={noirEgg}
+        onCosmosEgg={cosmosEgg}
+      />
 
       {/* When the focused session has at least one artifact, the conversation
           becomes a left rail and a viewer fills the rest, so the window owns its
@@ -595,20 +533,27 @@ export default function App() {
         // A deliverable is open in the atelier → the centre splits (conversation
         // left, artifact right) and both flanking rails fold for focus.
         const atelierArtOpen = !!(focused && atelierArt && focused.artifacts.some((a) => a.rel === atelierArt));
+        // A pending clarifying form takes the stage over the deliverable until
+        // answered (live sessions only — not a stale form replayed from archive).
+        const formOpen = !!(focused && focused.questionForm && !focused.archived);
         return (
       <div className={bodyCls}>
         <div ref={measureRef} className={measureCls}>
         {!onboarded ? (
-          /* ============ ONBOARDING (6 pages: welcome · skin · agents · vault · gallery · cast) ============ */
-          <Onboarding onEnter={enterSplit} skin={skin} onPickSkin={pickSkin} />
+          /* ============ ONBOARDING (5 pages: welcome · skin · agents · vault · hire team) ============ */
+          <Onboarding onEnter={enterSplit} skin={skin} onPickSkin={pickSkin} team={team} onToggleHire={toggleTeam} />
         ) : atelierMode ? (
           /* ============ ATELIER (fullscreen control room: roster · centre · project) ============ */
-          <div className="atelier">
+          /* When a dark genius holds the stage, the room goes black-&-gold (`noir`)
+              — talk-first, the project pane sealed until the exchange earns it. */
+          <div className={"atelier" + (focused && experts[focused.expertSlug]?.dark ? " noir" : "")}>
             <AtelierLeft
               experts={experts}
               sessions={sessions}
               focusedId={focusedId}
               armedSlug={expertSlug}
+              team={team}
+              onToggleTeam={toggleTeam}
               onArm={(slug) => { setExpertSlug(slug); setFocusedId(null); }}
               onFocus={setFocusedId}
               onResume={async (meta) => { const id = await resumeArchive(meta); if (id) setFocusedId(id); }}
@@ -618,7 +563,7 @@ export default function App() {
             />
             <div className="atelier-conv">
               {focused ? (
-                <div className={"atelier-stage split" + (atelierArtOpen ? " delivered" : "")}>
+                <div className={"atelier-stage split" + (formOpen || atelierArtOpen || focused.liveFrame ? " delivered" : "")}>
                   <div className="atelier-stage-conv">
                     <Conversation
                       session={focused}
@@ -653,7 +598,16 @@ export default function App() {
                       grows to dominate (see `.delivered`), showing the viewer + a
                       deliverable switcher (the strip that replaced the Reflet list). */}
                   <div className="atelier-project">
-                    {atelierArtOpen ? (
+                    {formOpen ? (
+                      <div className="atelier-questions">
+                        <QuestionsPanel
+                          key={focused.questionForm!.id}
+                          form={focused.questionForm!}
+                          busy={focused.status === "running"}
+                          onSubmit={answerForm}
+                        />
+                      </div>
+                    ) : atelierArtOpen ? (
                       <div className="atelier-art">
                         <div className="atelier-art-bar">
                           {focused.artifacts.length > 1 && (
@@ -677,6 +631,8 @@ export default function App() {
                           <ArtifactViewer artifact={focused.artifacts.find((a) => a.rel === atelierArt)!} />
                         </div>
                       </div>
+                    ) : focused.liveFrame ? (
+                      <AtelierLiveView session={focused} />
                     ) : (
                       <AtelierCanvasEmpty
                         session={focused}
@@ -687,67 +643,22 @@ export default function App() {
                   </div>
                 </div>
               ) : (
-                <div className="atelier-welcome">
-                  {/* atmosphere — concentrated blooms + drifting starfield behind the hero */}
-                  <div className="aw-atmos" aria-hidden="true">
-                    <i className="aw-bloom b2" /><i className="aw-bloom b3" /><i className="aw-bloom b1" />
-                    <div className="aw-stars">
-                      {AW_STARS.map((s, i) => (
-                        <span
-                          key={i}
-                          className={"aw-star" + (s.big ? " big" : "")}
-                          style={vars({ left: s.left, top: s.top, "--tw": s.tw, "--td": s.td })}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="aw-hero">
-                    <div className="aw-crest-wrap">
-                      <span className="aw-crest-halo" aria-hidden="true" />
-                      <Crest kind={experts[expertSlug]?.kind} seed={expertSlug} size={120} />
-                    </div>
-
-                    <h2 className="aw-greet">Hi, I'm your <span className="aw-em">{expertLabel}</span>.</h2>
-                    {experts[expertSlug]?.blurb && <p className="aw-blurb">{experts[expertSlug]!.blurb}</p>}
-
-                    {/* Projection surface: example-deliverable cards ("what I
-                        make") REPLACE the starter chips when the expert defines
-                        them; experts without examples fall back to starters. */}
-                    {(experts[expertSlug]?.examples?.length ?? 0) > 0 ? (
-                      <DeliverableExamples
-                        examples={experts[expertSlug]!.examples!}
-                        onPick={(p) => { handleInputChange(p, null); inputRef.current?.focus(); }}
-                      />
-                    ) : (experts[expertSlug]?.starters?.length ?? 0) > 0 ? (
-                      <div className="aw-starters">
-                        {experts[expertSlug]!.starters!.map((s, i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            className="aw-starter"
-                            onClick={() => { handleInputChange(s, null); inputRef.current?.focus(); }}
-                          >
-                            <span className="aw-idx">{String(i + 1).padStart(2, "0")}<span className="aw-arrow">→</span></span>
-                            <span className="aw-label">{s}</span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="aw-footer">
-                    <Composer
-                      experts={experts} expertSlug={expertSlug} expertLabel={expertLabel} active={active}
-                      engines={enabledHarnesses} onAddAgent={() => setOverlay(true)}
-                      menu={menu} setMenu={setMenu} setActive={setActive}
-                      value={value} onChange={handleInputChange} onKey={onKey} onRun={launch} chips={chips} inputRef={inputRef}
-                      expertEntries={filteredExperts} onPickExpert={pickExpert}
-                      projects={filteredProjects} onPickProject={pickProject}
-                      lockExpert onAttach={pickAttachments}
-                    />
-                  </div>
-                </div>
+                <AtelierWelcome
+                  experts={experts}
+                  expertSlug={expertSlug}
+                  expertLabel={expertLabel}
+                  onPick={(p) => { handleInputChange(p, null); inputRef.current?.focus(); }}
+                >
+                  <Composer
+                    experts={experts} expertSlug={expertSlug} expertLabel={expertLabel} active={active}
+                    engines={enabledHarnesses} onAddAgent={() => setOverlay(true)}
+                    menu={menu} setMenu={setMenu} setActive={setActive}
+                    value={value} onChange={handleInputChange} onKey={onKey} onRun={launch} chips={chips} inputRef={inputRef}
+                    expertEntries={filteredExperts} onPickExpert={pickExpert}
+                    projects={filteredProjects} onPickProject={pickProject}
+                    lockExpert onAttach={pickAttachments}
+                  />
+                </AtelierWelcome>
               )}
             </div>
           </div>
@@ -771,6 +682,7 @@ export default function App() {
             onInputChange={handleInputChange}
             onKey={onKey}
             onReply={reply}
+            onAnswerForm={answerForm}
             onAttach={pickAttachments}
             onPickCommand={pickCommand}
             onPickArtifact={openArtifact}
@@ -783,11 +695,19 @@ export default function App() {
           /* ============ HOME ============ */
           <div className="home">
             <div className={"home-orb" + (expanded ? " mini" : "")}>
-              <div className="split-levitate">
-                <SplitMark size={expanded ? 72 : 140} isSpeaking={anyRunning} bowOnClick />
-              </div>
-              <div className="split-shadow" aria-hidden="true" />
-              {!expanded && <div className="home-eyebrow">one runtime · each expert on its own engine</div>}
+              <MajordomeOrbit
+                speaking={anyRunning}
+                active={active}
+                enabled={enabled}
+                mini={expanded}
+                onPick={(id) => {
+                  // Tapping an engine arms it for the next session if it's one
+                  // you've activated; otherwise open the roster to add it.
+                  if (enabled.includes(id)) setActive(id);
+                  else setOverlay(true);
+                }}
+              />
+              {!expanded && <div className="home-eyebrow">one runtime · the agents orbit it</div>}
             </div>
             <Composer
               experts={experts} expertSlug={expertSlug} expertLabel={expertLabel} active={active}
@@ -862,6 +782,23 @@ export default function App() {
         />
       )}
 
+      {cabinetNoir && (
+        <CabinetNoir
+          experts={experts}
+          onClose={() => setCabinetNoir(false)}
+          onSummon={(slug) => {
+            // Talk-first: summoning sends a hidden priming cue so the genius
+            // OPENS the conversation in character — no work-spotlight, no launch
+            // sheet. The atelier goes black-&-gold (see the `noir` class below).
+            setExpertSlug(slug);
+            setView("atelier");
+            setCabinetNoir(false);
+            const wire = "[You have just been summoned from the Cabinet Noir. Open the conversation yourself, in character, per your talk-first protocol: a single short, cold provocation — then wait. Do NOT produce any deliverable yet.]";
+            start({ harness: active, expertSlug: slug, display: "(the seal breaks)", wire, files: [] }).then(setFocusedId);
+          }}
+        />
+      )}
+
       {historyOpen && (
         <HistoryOverlay
           experts={experts}
@@ -888,60 +825,6 @@ export default function App() {
       {authSession && <AuthModal session={authSession} onPick={(m) => sendAuth(authSession.id, m)} />}
 
       {toasts.length > 0 && <div className="toasts">{toasts.map((t) => <div key={t.id} className="toast">{t.text}</div>)}</div>}
-    </div>
-  );
-}
-
-// The "Your agents" overlay. Owns its own `useHarnessScan` so the machine probe
-// runs when the overlay OPENS (not on every app boot), mirroring how onboarding
-// scans on mount. The scan streams health badges onto each card and auto-rescans
-// on window focus, so signing in / installing reflects without a manual refresh.
-function RosterOverlay({
-  enabled,
-  onToggle,
-  lifecycle,
-  onClose,
-}: {
-  enabled: string[];
-  onToggle: (id: string) => void;
-  lifecycle: ReturnType<typeof useHarnessStates>;
-  onClose: () => void;
-}) {
-  const scan = useHarnessScan();
-  const foundCount = Object.values(scan.byId).filter((d) => d.available).length;
-  return (
-    <div className="overlay" onClick={onClose}>
-      <div className="overlay-card" onClick={(e) => e.stopPropagation()}>
-        <div className="overlay-head">
-          <div>
-            <div className="ob-eyebrow">your roster</div>
-            <h2 className="ob2-h2">Your <em>agents</em></h2>
-          </div>
-          <button className="btn ghost" onClick={onClose}>done</button>
-        </div>
-        <p className="ob2-lede" style={{ marginBottom: 16 }}>
-          Toggle the agents you want — only these appear in your roster &amp; menus.
-          Install &amp; sign-in state shows on each card; expand a card to manage.
-        </p>
-        <div className="ob2-scanline">
-          {scan.scanning ? (
-            <span className="ob2-scanstat scanning">
-              <span className="ob2-scandot" aria-hidden="true" />
-              Scanning your machine…
-            </span>
-          ) : (
-            <span className="ob2-scanstat">
-              {foundCount > 0
-                ? <>Found <b>{foundCount}</b> agent{foundCount > 1 ? "s" : ""} ready on your machine.</>
-                : <>No agents detected yet — install one below, or it'll fetch on first run.</>}
-            </span>
-          )}
-          <button type="button" className="ob2-rescan" onClick={scan.rescan} disabled={scan.scanning}>
-            ↻ Rescan
-          </button>
-        </div>
-        <League isSelected={(id) => enabled.includes(id)} onPick={onToggle} lifecycle={lifecycle} scan={scan} />
-      </div>
     </div>
   );
 }

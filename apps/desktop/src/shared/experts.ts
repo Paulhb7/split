@@ -58,6 +58,12 @@ export interface Expert {
    * REPLACE the starter chips; experts without them fall back to `starters`.
    * Authoritative copy lives in experts.json; the frontend only displays. */
   examples?: DeliverableExample[];
+  /** Dark genius — a hidden, talk-first figure summoned only from the secret
+   * Cabinet Noir (never in the roster / gallery / composer / cast). When focused,
+   * the atelier goes black-&-gold and the deliverable stays sealed until the
+   * conversation earns it. `isActiveExpert` excludes these so they never leak
+   * into the normal surfaces; `isDarkExpert` selects them for the Cabinet Noir. */
+  dark?: boolean;
 }
 
 /** One sample deliverable shown as a card on the atelier welcome. */
@@ -88,7 +94,11 @@ export type ExpertMap = Record<string, Expert>;
  * directly so deferred experts still render (in their own "Coming next"
  * section). */
 export const isActiveExpert = (experts: ExpertMap, slug: string): boolean =>
-  !isNextExpert(experts[slug]);
+  !isNextExpert(experts[slug]) && !isDarkExpert(experts[slug]);
+
+/** Dark genius — hidden from every normal surface, summoned only from the
+ * Cabinet Noir. The one place that selects FOR them instead of against them. */
+export const isDarkExpert = (e: Expert | undefined): boolean => !!e && !!e.dark;
 
 // Fallback roster if `list_experts` fails (matches experts.json order/defaults).
 // Slug convention: supers stay unprefixed (`consultant`, `scientist`, `engineer`),

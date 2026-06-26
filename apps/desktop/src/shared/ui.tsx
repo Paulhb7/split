@@ -163,7 +163,7 @@ function EngineCard({
 
   return (
     <div
-      className={"gcard" + (h.reserve ? " reserve" : "") + (selected ? " sel" : "") + (open ? " open" : "") + " sc-" + eff}
+      className={"gcard" + (h.reserve ? " reserve" : "") + (selected ? " sel" : "") + (open ? " open" : "") + (open && hasModelPicker ? " modelopen" : "") + " sc-" + eff}
       style={vars({ "--brand": h.brand })}
       role="button"
       tabIndex={0}
