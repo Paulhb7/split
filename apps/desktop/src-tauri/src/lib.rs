@@ -20,8 +20,8 @@ pub mod runner;
 // projection) + `detection` (the machine-scan wire types & classification);
 // `runner.rs` reaches for the rest directly.
 use split_core::detection::{
-    auth_from_state, classify_exit, classify_spawn_error, Diagnostic, DiagnosticKind,
-    DetectedHarness, VersionProbe,
+    auth_from_state, classify_exit, classify_spawn_error, DetectedHarness, Diagnostic,
+    DiagnosticKind, VersionProbe,
 };
 use split_core::{harness_config, persona};
 
@@ -454,54 +454,51 @@ async fn export_artifact_pdf(
     let slot_cb = slot.clone();
 
     let label = format!("split-pdf-export-{n}");
-    let win = tauri::WebviewWindowBuilder::new(
-        &app,
-        &label,
-        tauri::WebviewUrl::External(file_url),
-    )
-    .visible(false)
-    // A4-ish at ~96dpi so the layout the user sees roughly matches the page.
-    .inner_size(794.0, 1123.0)
-    .on_page_load(move |webview, payload| {
-        if payload.event() != tauri::webview::PageLoadEvent::Finished {
-            return;
-        }
-        let slot_inner = slot_cb.clone();
-        let sink = slot_inner.clone();
-        let res = webview.with_webview(move |pw| {
-            use block2::RcBlock;
-            use objc2_web_kit::WKWebView;
-
-            // `inner()` is the raw `WKWebView*`; objc2's class is a ZST view
-            // over the object, so a reference cast is the canonical bridge.
-            let wk_ptr = pw.inner() as *const WKWebView;
-            let wk: &WKWebView = unsafe { &*wk_ptr };
-
-            let handler = RcBlock::new(
-                move |data: *mut objc2_foundation::NSData, err: *mut objc2_foundation::NSError| {
-                    let out = if !data.is_null() {
-                        Ok(unsafe { &*data }.to_vec())
-                    } else if !err.is_null() {
-                        Err(format!("createPDF: {:?}", unsafe { &*err }))
-                    } else {
-                        Err("createPDF returned neither data nor error".to_string())
-                    };
-                    if let Some(s) = sink.lock().unwrap().take() {
-                        let _ = s.send(out);
-                    }
-                },
-            );
-            // nil configuration → captures the full bounds of the page.
-            unsafe { wk.createPDFWithConfiguration_completionHandler(None, &handler) };
-        });
-        if let Err(e) = res {
-            if let Some(s) = slot_inner.lock().unwrap().take() {
-                let _ = s.send(Err(format!("with_webview failed: {e}")));
+    let win = tauri::WebviewWindowBuilder::new(&app, &label, tauri::WebviewUrl::External(file_url))
+        .visible(false)
+        // A4-ish at ~96dpi so the layout the user sees roughly matches the page.
+        .inner_size(794.0, 1123.0)
+        .on_page_load(move |webview, payload| {
+            if payload.event() != tauri::webview::PageLoadEvent::Finished {
+                return;
             }
-        }
-    })
-    .build()
-    .map_err(|e| format!("hidden export window failed: {e}"))?;
+            let slot_inner = slot_cb.clone();
+            let sink = slot_inner.clone();
+            let res = webview.with_webview(move |pw| {
+                use block2::RcBlock;
+                use objc2_web_kit::WKWebView;
+
+                // `inner()` is the raw `WKWebView*`; objc2's class is a ZST view
+                // over the object, so a reference cast is the canonical bridge.
+                let wk_ptr = pw.inner() as *const WKWebView;
+                let wk: &WKWebView = unsafe { &*wk_ptr };
+
+                let handler = RcBlock::new(
+                    move |data: *mut objc2_foundation::NSData,
+                          err: *mut objc2_foundation::NSError| {
+                        let out = if !data.is_null() {
+                            Ok(unsafe { &*data }.to_vec())
+                        } else if !err.is_null() {
+                            Err(format!("createPDF: {:?}", unsafe { &*err }))
+                        } else {
+                            Err("createPDF returned neither data nor error".to_string())
+                        };
+                        if let Some(s) = sink.lock().unwrap().take() {
+                            let _ = s.send(out);
+                        }
+                    },
+                );
+                // nil configuration → captures the full bounds of the page.
+                unsafe { wk.createPDFWithConfiguration_completionHandler(None, &handler) };
+            });
+            if let Err(e) = res {
+                if let Some(s) = slot_inner.lock().unwrap().take() {
+                    let _ = s.send(Err(format!("with_webview failed: {e}")));
+                }
+            }
+        })
+        .build()
+        .map_err(|e| format!("hidden export window failed: {e}"))?;
 
     // Bound the wait: if the page never loads or createPDF never calls back,
     // don't hang the command (and the JS `invoke`) forever.
@@ -593,7 +590,11 @@ fn copy_dir_filtered(src: &std::path::Path, dst: &std::path::Path) -> std::io::R
 /// copied on its own; an `index.*` sitting at cwd root is renamed after its
 /// folder so deliverables don't all collide on `index.html` in `notes/`.
 #[tauri::command]
-fn keep_in_vault(source_path: String, rel: String, project: Option<String>) -> Result<String, String> {
+fn keep_in_vault(
+    source_path: String,
+    rel: String,
+    project: Option<String>,
+) -> Result<String, String> {
     let src = std::path::PathBuf::from(&source_path);
     if !src.exists() {
         return Err(format!("source not found: {source_path}"));
@@ -1263,6 +1264,15 @@ fn browser_login(harness: String) -> Result<String, String> {
     // ./var/bin/dist-package/cursor-agent). Resolve it so the spawn finds it;
     // otherwise the login process silently fails to start and no browser opens.
     let program = resolve_login_program(&harness, program);
+
+    // On Windows the bare vendor CLIs (claude/codex/gemini) are `.cmd` shims and
+    // `Command::new` doesn't honour PATHEXT — route them through `cmd /C`, exactly
+    // like the session spawn (see `windows_spawn_shim` in `start_session`). No-op
+    // on Unix and for path-qualified binaries (the repo-local cursor-agent, gh.exe
+    // for copilot). Without this, sign-in silently fails to launch on Windows.
+    #[cfg(target_os = "windows")]
+    let (program, args) = windows_spawn_shim(program, args.iter().map(|s| s.to_string()).collect());
+
     Command::new(&program)
         .args(args)
         .env("PATH", child_path())
@@ -1301,7 +1311,9 @@ fn tool_status_cmd(tool: &str) -> Option<&'static [&'static str]> {
 #[tauri::command]
 fn tool_login(tool: String) -> Result<String, String> {
     let argv = tool_login_cmd(&tool).ok_or_else(|| format!("No login for tool {tool}"))?;
-    let (program, args) = argv.split_first().expect("tool_login_cmd entries are non-empty");
+    let (program, args) = argv
+        .split_first()
+        .expect("tool_login_cmd entries are non-empty");
     Command::new(program)
         .args(args)
         .env("PATH", child_path())
@@ -1316,7 +1328,9 @@ fn tool_login(tool: String) -> Result<String, String> {
 #[tauri::command]
 fn tool_status(tool: String) -> Result<String, String> {
     let argv = tool_status_cmd(&tool).ok_or_else(|| format!("No status for tool {tool}"))?;
-    let (program, args) = argv.split_first().expect("tool_status_cmd entries are non-empty");
+    let (program, args) = argv
+        .split_first()
+        .expect("tool_status_cmd entries are non-empty");
     let ok = Command::new(program)
         .args(args)
         .env("PATH", child_path())
@@ -1522,10 +1536,8 @@ fn configure_state_for(cfg: Option<&serde_json::Value>) -> &'static str {
                     .get("check_cmd")
                     .and_then(|v| v.as_array())
                     .map(|a| {
-                        let argv: Vec<&str> =
-                            a.iter().filter_map(|v| v.as_str()).collect();
-                        !argv.is_empty()
-                            && cmd_exit_ok(&argv, std::time::Duration::from_secs(4))
+                        let argv: Vec<&str> = a.iter().filter_map(|v| v.as_str()).collect();
+                        !argv.is_empty() && cmd_exit_ok(&argv, std::time::Duration::from_secs(4))
                     })
                     .unwrap_or(false);
             if file_ok || env_ok || cmd_ok {
@@ -1911,7 +1923,10 @@ fn probe_version_spawn(
         Ok(c) => c,
         Err(e) => {
             let denied = e.kind() == std::io::ErrorKind::PermissionDenied;
-            return (VersionProbe::NotInvocable(classify_spawn_error(denied)), program);
+            return (
+                VersionProbe::NotInvocable(classify_spawn_error(denied)),
+                program,
+            );
         }
     };
     let start = std::time::Instant::now();
@@ -1969,7 +1984,11 @@ fn detect_one_harness(row: &serde_json::Value, id: &str) -> DetectedHarness {
         .get("probe")
         .and_then(|p| p.get("version_args"))
         .and_then(|v| v.as_array())
-        .map(|a| a.iter().filter_map(|x| x.as_str().map(String::from)).collect())
+        .map(|a| {
+            a.iter()
+                .filter_map(|x| x.as_str().map(String::from))
+                .collect()
+        })
         .unwrap_or_else(|| vec!["--version".to_string()]);
     let (probe, resolved) =
         probe_version_spawn(&spec, &version_args, std::time::Duration::from_secs(3));
@@ -1983,7 +2002,8 @@ fn detect_one_harness(row: &serde_json::Value, id: &str) -> DetectedHarness {
                 DiagnosticKind::ShimBroken => "Found a broken launcher — reinstall the CLI.",
                 _ => "Could not run the CLI.",
             };
-            DetectedHarness::unavailable(id, Diagnostic::new(kind, msg)).with_install_kind(install_kind)
+            DetectedHarness::unavailable(id, Diagnostic::new(kind, msg))
+                .with_install_kind(install_kind)
         }
     }
 }
