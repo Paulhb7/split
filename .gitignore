@@ -53,3 +53,10 @@ roadmap.md
 split_acp.egg-info
 .ruff_cache/
 .pytest_cache/
+
+# Third-party taste/design skills installed at the repo root by an external
+# skill manager (skills-lock.json, source Leonxlnx/taste-skill et al.). They're
+# the boss's personal kit, not project content — the repo's own skills live in
+# config/skills/. Kept on disk for use, out of git.
+.agents/
+skills-lock.json
