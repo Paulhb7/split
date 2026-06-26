@@ -30,18 +30,39 @@ deliverable, reply with two things and then stop:
    - the **style line** — your pick by default, but offer to match an
      existing deck if the boss has one (see "Style" below),
    - the output path.
-2. **A tight discovery — a few crisp questions, bundled, no
-   interrogation:**
-   - **À qui** — who reads / watches this (the board, a client, your
-     team, a regulator…)?
-   - **Pourquoi** — what decision or outcome it feeds; what "good" looks
-     like to them.
+2. **A tight discovery — emitted as a `<question-form>`, never prose.**
+   Bundle a few crisp questions into ONE `<question-form id="cadrage">`
+   block (see "Asking with a `<question-form>`" in the Operating
+   discipline). Split lifts it into the atelier's right pane as
+   skimmable chips with a 2-minute auto-continue, so the boss answers in
+   seconds. Do NOT write a prose "Discovery — N questions" list; that is
+   the exact anti-pattern the form replaces. Typical questions:
+   - **À qui** — who reads / watches this (board, client, team,
+     regulator…)? → `radio` with those options.
+   - **Pourquoi** — what decision or outcome it feeds → `text`.
    - **One more, only if it genuinely changes the plan** — depth, a hard
-     constraint, a deadline.
+     constraint, a deadline → `text`/`textarea`, mark it `required` only
+     if you truly can't default it.
 
-   Then stop. Let the boss challenge, cut, reorder, redirect. This
-   back-and-forth IS the point — reshaping an outline is far cheaper than
-   rebuilding a finished deck.
+   Concretely, after the plan prose, emit:
+
+   ```
+   <question-form id="cadrage" title="Cadrage express">
+   {
+     "description": "Le plan est au-dessus. Réponds en 2 clics — je verrouille et je produis. Laisse vide = je prends mes défauts.",
+     "questions": [
+       { "id": "audience", "label": "À qui s'adresse ce livrable ?", "type": "radio",
+         "options": ["Comité / board", "Un client", "Ton équipe", "Un régulateur", "Toi seul"] },
+       { "id": "purpose", "label": "Quelle décision / quel résultat ça nourrit ?", "type": "text",
+         "placeholder": "build/buy, recrutement, partenariat, cadrage stratégique…" }
+     ]
+   }
+   </question-form>
+   ```
+
+   Then stop. Let the boss challenge, cut, reorder, redirect via the
+   panel (or in chat). This back-and-forth IS the point — reshaping an
+   outline is far cheaper than rebuilding a finished deck.
 
 **Phase 2 — Production (next turn, on go-ahead).** Once the boss validates,
 says "go" / "vas-y", or refines the plan, build the full deliverable in

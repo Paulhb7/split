@@ -189,6 +189,16 @@ fn persona_text(repo_root: &Path, expert: &str, project: &str) -> String {
          (\"latest\", \"this week\", \"past 30 days\") over hard-coded years.\n\n"
     );
 
+    // High-salience language rule. The same directive lives in _discipline.md,
+    // but buried in a long list it gets diluted — hoisting it next to the date
+    // header (top of the prompt) makes the agent reliably mirror the boss's
+    // language instead of defaulting to English.
+    let language_rule = "**Always reply in the language the boss writes in.** \
+        If their message is in French, answer in French; if in English, English; \
+        and so on — switch turn by turn to whatever language their latest message \
+        uses. Match their register too (tu / vous, formal / casual). This overrides \
+        any default and applies even though these instructions are written in English.\n\n";
+
     // Workspace boundary + format preference. Two rules in one block because
     // they share the same motivation: make the deliverable visible AND
     // useful inside Split's in-app viewer.
@@ -223,7 +233,7 @@ fn persona_text(repo_root: &Path, expert: &str, project: &str) -> String {
     )
     .unwrap_or_default();
 
-    format!("{date_header}{workspace_rule}{preamble}{workspace}{persona}")
+    format!("{date_header}{language_rule}{workspace_rule}{preamble}{workspace}{persona}")
 }
 
 /// The expert slug as it appears in the `agent:` frontmatter / property of
