@@ -37,6 +37,12 @@ jobs:
           node-version: "20"
           cache: npm
           cache-dependency-path: apps/desktop/package-lock.json
+      # Cheap, dependency-free guard: the roster/harness/skill counts quoted in
+      # README + AGENTS must match config/. Runs first so doc drift fails fast.
+      # NB: the workflow ignores **/*.md, so in CI this fires on config changes;
+      # the pre-commit hook covers md-only edits locally.
+      - name: Doc counts match config/
+        run: python3 scripts/check-doc-counts.py
       - name: Install frontend deps
         working-directory: apps/desktop
         run: npm ci
