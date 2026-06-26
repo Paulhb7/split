@@ -1,16 +1,16 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+This file provides guidance to coding agents when working with code in this repository.
 
 > **⚠️ Archived — moved out of the repo.** Old / reference-only material (the previous
-> `desktop/` Tauri bar + `sidecar/` Python app locked to the Codex Agent SDK, plus
+> `desktop/` Tauri bar + `sidecar/` Python app locked to the Claude Agent SDK, plus
 > `openclaw-main/`, `registry-main/`) was moved OUT of the repo to the sibling folder
 > **`~/Desktop/split-archive/`**; planning notes (vision / design / NEXT_STEPS) live in
 > **`~/Desktop/split-notes/`**. **Do not read or grep `~/Desktop/split-archive/` unless the
 > user explicitly asks for it.** Both are superseded by the active project documented below.
 
 > **📖 Canonical overview: [README.md](README.md).** It is current and thorough (the model,
-> the 12 harnesses, the 11 experts, the skills, setup/run, the full repo layout). This file
+> the 9 harnesses, the 35 experts, the skills, setup/run, the full repo layout). This file
 > is the working guide for *editing the code* — it favours correct paths and gotchas over
 > prose. If the two ever drift, README.md wins.
 
@@ -18,9 +18,9 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 Split is a macOS assistant that runs **a roster of experts, each in its own session**, side
 by side. An **expert = persona + skills + tools**, and that bundle runs unchanged on the
-**coding agent of the user's choice** (Codex, Codex, Gemini, Qwen, Copilot, Mistral Vibe,
+**coding agent of the user's choice** (Claude, Codex, Gemini, Qwen, Copilot, Mistral Vibe,
 OpenCode…) — spoken to over **ACP (Agent Client Protocol)**. The "brain" is swappable: the
-same Consultant runs on Codex today and a local Ollama brain tomorrow, no rewrite.
+same Consultant runs on Claude today and a local Ollama brain tomorrow, no rewrite.
 
 The whole active project lives at the **repo root**, split into four tracked
 concerns + one local-only legacy:
@@ -28,8 +28,8 @@ concerns + one local-only legacy:
 - **`core-rs/`** (Rust) — the portable engine. Persona projection, session
   archive, permission rules with `DEFAULT_DENY` guards, harness model config.
   No Tauri, no ACP SDK — pure stdlib + serde + chrono. Tested via
-  `cargo test --workspace` (15 unit tests, plus the runner integration
-  suite in `apps/desktop/src-tauri/tests/`).
+  `cargo test --workspace` (the core-rs unit tests, plus the runner
+  integration suite in `apps/desktop/src-tauri/tests/`).
 - **`config/`** — the portable expert system (harnesses / experts / tools / personas / skills).
 - **`apps/desktop/`** — the Tauri 2 + React 19 desktop bar. `src-tauri/` is a
   workspace member depending on `core-rs/` and housing the **native Rust runner**
@@ -48,11 +48,12 @@ concerns + one local-only legacy:
 **Portable engine.** [core-rs/](core-rs/) is the Rust crate the desktop shell
 depends on. It resolves the layout (`REPO_ROOT`, `CONFIG_DIR`, `VAR_DIR`,
 `WORKSPACE` — overridable per session via the `SPLIT_WORKSPACE` env var) and
-exposes the engine surface in four modules: `persona` (`ensure_expert_workspace`
+exposes the engine surface in five modules: `persona` (`ensure_expert_workspace`
 + cross-vendor shims + skill symlinks), `archive` (per-session `events.ndjson`
 + `meta.json` with `acp_sid` for resume), `permissions` (allow/ask/deny with
 `DEFAULT_DENY` guards + glob match), `harness_config` (Hermes/OpenCode
-model-picker translation). A session = spawn the harness in the EXPERT's
+model-picker translation), and `detection` (machine scan for installed harness
+CLIs). A session = spawn the harness in the EXPERT's
 persistent workspace (projected once, refreshed only when sources change) →
 mount MCP tools via `session/new` → stream `session/update` back. The ACP
 `Client` callbacks (`session_update`, `request_permission`,
@@ -160,7 +161,7 @@ in the thread as a 📎 chip. `display` (thread) vs `wire` (sent to the agent) a
   per expert, once**: `ensure_expert_workspace(expert)` in [core-rs/src/persona.rs](core-rs/src/persona.rs)
   (Rust runner) — or the legacy [`split-python/split/core.py`](split-python/split/core.py)
   (if you kept it locally) — reconciles
-  `<workspace>/<expert>/.Codex/skills/`, `.agents/skills/`, `.vibe/skills/` with
+  `<workspace>/<expert>/.claude/skills/`, `.agents/skills/`, `.vibe/skills/` with
   `experts.json[expert].skills`. Each entry is a direct symlink to `config/skills/<name>`
   — no intermediate mount layer. Re-runs are idempotent: existing symlinks pointing at the
   right target are left alone; obsolete entries are unlinked; new entries are added. So
@@ -192,7 +193,7 @@ The legacy Python sidecar (only if `split-python/` is kept locally — gitignore
 ```bash
 cd split-python
 uv sync
-SPLIT_REPO_ROOT=$PWD/.. uv run python -m split.terminal Codex   # CLI smoke
+SPLIT_REPO_ROOT=$PWD/.. uv run python -m split.terminal claude   # CLI smoke
 ```
 
 ## Setup requirements
@@ -201,7 +202,7 @@ SPLIT_REPO_ROOT=$PWD/.. uv run python -m split.terminal Codex   # CLI smoke
   download on first use via `npx -y …@version` / `uvx …` — first launch of a harness can lag.
 - **uv** is only needed if you keep `split-python/` checked out locally to compare the retired
   Python sidecar; the desktop bar's default runtime is Rust and has no Python dependency.
-- **Per-agent auth**: each harness signs in with its own account — `Codex login`,
+- **Per-agent auth**: each harness signs in with its own account — `claude login`,
   `codex login`, Google login for Gemini, etc. (see each entry's `auth` note). Provider keys
   go in the **OS keychain** (macOS Keychain / Windows Credential Manager / Linux Secret Service,
   via the `keyring` crate in [apps/desktop/src-tauri/src/lib.rs](apps/desktop/src-tauri/src/lib.rs))

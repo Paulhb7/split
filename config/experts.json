@@ -191,7 +191,8 @@
     "blurb": "Designs 3D-printable parts & mechanisms — parametric CAD, animated, with 2D blueprints, in a shareable report"
   },
   "genius_alfred": {
-    "label": "Alfred", "role": "Majordome", "category": "genius", "kind": "operator", "skills": ["browser-use"], "status": "next",
+    "label": "Alfred", "role": "Majordome", "category": "genius", "kind": "operator", "skills": ["browser-use"],
+    "starters": ["What are my latest emails?", "What's on my calendar today?", "Book me a table for tonight"],
     "blurb": "Your majordome — drives your apps with your logins, books, runs admin"
   },
   "genius_socrates": {
@@ -278,5 +279,81 @@
       {"type": "doc", "title": "Substitution guide", "desc": "What swaps for what", "prompt": "Suggest substitutions for an ingredient"}
     ],
     "blurb": "Teaches techniques, scales recipes, suggests substitutions live"
+  },
+
+  "genius_machiavelli": {
+    "label": "Machiavelli",
+    "role": "the strategist",
+    "category": "genius",
+    "kind": "advisor",
+    "dark": true,
+    "skills": ["frontend-slides", "docx"],
+    "starters": ["Who, in this, do I want to see lose?", "Give me 3 strategies to win this deal", "Prep my negotiation"],
+    "examples": [
+      {"type": "graph", "title": "Power map", "desc": "Stakeholders, leverage", "prompt": "Map the power dynamics around this decision"},
+      {"type": "doc", "title": "Strategic-options memo", "desc": "3 routes, scored on cost/risk", "prompt": "Give me 3 strategies to win this deal"},
+      {"type": "doc", "title": "Negotiation playbook", "desc": "BATNA, concessions, sequence", "prompt": "Prepare my negotiation with this counterpart"}
+    ],
+    "blurb": "Realpolitik — power maps, strategic options, negotiation playbooks"
+  },
+  "genius_moriarty": {
+    "label": "Moriarty",
+    "role": "the adversary",
+    "category": "genius",
+    "kind": "analyst",
+    "dark": true,
+    "skills": ["frontend-slides", "docx"],
+    "starters": ["Describe my plan; find where it dies", "Run the pre-mortem on this launch", "Tear my argument apart"],
+    "examples": [
+      {"type": "graph", "title": "Attack tree", "desc": "Every flaw, by severity", "prompt": "Model how someone could break this plan"},
+      {"type": "doc", "title": "Pre-mortem", "desc": "It's six months on — it failed", "prompt": "Run the pre-mortem on this launch"},
+      {"type": "doc", "title": "\"Kill your plan\" review", "desc": "The methodical devil's advocate", "prompt": "Tear my argument apart, find the holes"}
+    ],
+    "blurb": "Defensive red-team — attack trees, pre-mortems; he breaks your plan first"
+  },
+  "genius_faust": {
+    "label": "Faust",
+    "role": "ambition",
+    "category": "genius",
+    "kind": "advisor",
+    "dark": true,
+    "skills": ["frontend-slides", "docx"],
+    "starters": ["Make this plan three times bolder", "What if we transformed everything?", "Ask me the questions I avoid"],
+    "examples": [
+      {"type": "deck", "title": "The audacious thesis", "desc": "The 10× bet, owned", "prompt": "Make this plan three times bolder"},
+      {"type": "plan", "title": "Rupture roadmap", "desc": "Transform, don't optimize", "prompt": "Draw a rupture roadmap for this"},
+      {"type": "doc", "title": "The forbidden questions", "desc": "What no one dares ask", "prompt": "Ask me the questions I avoid on this project"}
+    ],
+    "blurb": "The anti-timidity advisor — the 10× thesis, the rupture roadmap, the forbidden questions"
+  },
+  "genius_hannibal": {
+    "label": "Hannibal",
+    "role": "the profiler",
+    "category": "genius",
+    "kind": "analyst",
+    "dark": true,
+    "skills": ["frontend-slides", "docx"],
+    "starters": ["Profile the person across this negotiation", "How do I convince someone like this?", "What truly drives my users?"],
+    "examples": [
+      {"type": "graph", "title": "Behavioral profile", "desc": "Drivers, fears, levers", "prompt": "Profile the person across this negotiation"},
+      {"type": "doc", "title": "Negotiation-psychology brief", "desc": "What will make them say yes", "prompt": "How do I convince someone like this?"},
+      {"type": "graph", "title": "Motivation map", "desc": "Of the real customer persona", "prompt": "What truly drives my users?"}
+    ],
+    "blurb": "Profiling — behavior, negotiation psychology, real motivations"
+  },
+  "genius_loki": {
+    "label": "Loki",
+    "role": "the spin doctor",
+    "category": "genius",
+    "kind": "creator",
+    "dark": true,
+    "skills": ["frontend-slides", "docx"],
+    "starters": ["Build me a crisis playbook", "Reframe this message so it lands", "Give me the narrative that sticks"],
+    "examples": [
+      {"type": "doc", "title": "Crisis playbook", "desc": "The narrative, step by step", "prompt": "Build me a crisis playbook"},
+      {"type": "deck", "title": "The narrative", "desc": "Messaging, scene by scene", "prompt": "Give me the narrative that sticks"},
+      {"type": "doc", "title": "Reframe memo", "desc": "Same fact, better told", "prompt": "Reframe this message so it lands"}
+    ],
+    "blurb": "Narrative control — crisis comms, reframing, messaging"
   }
 }

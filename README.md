@@ -50,7 +50,7 @@ config on one side; the agent's working home on the other.
 
 ---
 
-## Experts (31 in the roster — super · genius · coach)
+## Experts (35 in the roster — super · genius · coach)
 
 Pick one with `@` (terminal: `@consultant`; desktop: the picker). The **kind** is
 informational — it tells the UI how to render (chat panel vs. a step feed vs. an
@@ -130,7 +130,7 @@ on every call — adding a skill to `experts.json` makes it appear on next launc
 removing one unlinks it. A declared skill not yet vendored under `skills/<name>/`
 is silently skipped, so a persona may name a skill before it exists.
 
-Vendored in [`config/skills/`](config/skills/) (~40, grouped):
+Vendored in [`config/skills/`](config/skills/) (47, grouped):
 
 - **Documents / web / design:** `docx`, `frontend-slides`, `web-deploy`,
   `ui-ux-pro-max`, `dashboard`.
@@ -158,12 +158,12 @@ Vendored in [`config/skills/`](config/skills/) (~40, grouped):
   the **Connect Higgsfield** chip, generations cost credits). One account covers
   image, video, 3D, music (Sonilo), SFX (Mirelo) and voice (Inworld TTS) — no
   provider API keys.
-- **Cross-cutting:** `memory` (the $SPLIT_VAULT doctrine) — auto-mounted on
+- **Cross-cutting:** `vault` (the $SPLIT_VAULT doctrine) — auto-mounted on
   every expert, not declared per-expert.
 
 ---
 
-## Harnesses (the agents — 10 configured)
+## Harnesses (the agents — 9 configured)
 
 Each harness is a runtime/brain. ACP calls each one an "agent"; we launch any
 `command + args`, so even agents the public ACP registry can't express still
@@ -358,7 +358,7 @@ core-rs/              # the Rust BACKEND — portable engine (cargo workspace me
 
 config/               # the EXPERT SYSTEM (portable, version-controlled)
   harnesses.json      #   the 9 HARNESSES (brains/runtimes)
-  experts.json        #   the 12 EXPERTS (render kind + declared skills)
+  experts.json        #   the 35 EXPERTS (render kind + declared skills)
   tools.json          #   the TOOLS (MCP servers, mcpServers shape)
   experts/*.md        #   each expert's persona prompt
   skills/<name>/      #   portable SKILLs, Agent Skills standard (SKILL.md + optional scripts/)
@@ -459,7 +459,7 @@ there's real external distribution.
   workspace instruction files still see it. This is pragmatic, but it is not a
   standardized ACP system prompt; the underlying model's own instruction stack
   can still leak through.
-- **Skills:** per-expert (`config/experts.json`), currently 17 vendored in
+- **Skills:** per-expert (`config/experts.json`), currently 47 vendored in
   `config/skills/` (whole folders, per the Agent Skills standard). The
   `higgsfield-*` skills wrap the `higgsfield` CLI (browser sign-in, credits);
   the other skills are local or use the harness's own search/tools.
