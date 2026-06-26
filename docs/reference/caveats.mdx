@@ -8,7 +8,7 @@ These are deliberate trade-offs in the current build, not bugs to file.
 </Warning>
 
 - **Persona / roleplay injection** — experts are real prompt personas, not just
-  UI labels. `persona_text()` composes `_discipline.md` + memory +
+  UI labels. `persona_text()` composes `_discipline.md` + the `vault` block +
   `config/experts/<expert>.md`, writes it into `AGENTS.md` / vendor shims, and
   the runner also prepends it to the first user turn. This is pragmatic, but it
   is **not** a standardized ACP system prompt — the model's own instruction stack
@@ -19,14 +19,15 @@ These are deliberate trade-offs in the current build, not bugs to file.
 - **Permissions** — the desktop runs the runner with
   `SPLIT_PERMISSION_MODE=prompt` and surfaces `permission_request` in the UI. The
   runner default is still `auto-allow` for bench/CLI usage unless overridden.
-- **Process tree** — `stop_session` does `pkill -P` + `kill -KILL`; deeply nested
-  grandchildren (node workers) may leak. A pgid kill is the fix if it bites.
+- **Process tree** — `stop_session` triggers a graceful `session/cancel` +
+  `session/close`, and the ACP SDK kills the agent's **direct** child when the
+  connection drops. Deeply nested grandchildren (npx → node workers) are not
+  reaped yet and may leak; spawning the agent in its own process group is the
+  planned fix.
 - **GUI PATH** — handled by `child_path()` in Rust; if an agent CLI isn't found,
   check it.
 - **`var/workspace/` persists** — it's the agent's home; only persona/skill
   projections are overwritten. `rm -rf var/workspace/` for a clean slate.
-- **`var/memory/` is a frozen snapshot** — in-session writes only appear at the
-  next session boot. No auto-extraction yet. See [Memory](/concepts/memory).
 - **Operator UI narration** — Alfred drives real macOS apps via `cua-driver`, but
   the dedicated screen-driving narration (app rail / live frames) is **not yet
   wired** into the VEVT vocabulary; today it streams as text/steps like the others.

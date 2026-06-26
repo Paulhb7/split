@@ -29,9 +29,6 @@ apps/
 var/                  # generated / vendored — gitignored, safe to delete
   workspace/          #   each session's PERSISTENT home (persona+skill projected in)
   sessions/           #   per-session archive (events.ndjson + meta.json)
-  memory/             #   cross-session expert memory — survives `rm -rf workspace/`
-    _user/USER.md     #     about the boss; every expert reads this
-    <expert>/MEMORY.md#     this expert's own notes
   bin/                #   downloaded harness binaries (opencode, vibe-acp, cursor-agent)
   _retired/           #   parked code (the old web front: server.py + web/)
 

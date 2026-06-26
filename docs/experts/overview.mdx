@@ -46,8 +46,8 @@ exec-summary header (why / context / how / what was assumed).
 The agent's workspace is scratch — kept across runs, but not curated. Deliverables
 worth keeping move into your **vault** (`~/Documents/SplitVault`) with the
 **Keep in vault** action (🗃️). The vault is the only durable, boss-owned store;
-the [memory](/concepts/memory) doctrine (auto-mounted on every expert) governs
-what experts file there and recall later.
+the auto-mounted `vault` skill (the `$SPLIT_VAULT` doctrine) governs what experts
+file there and recall later. See [Skills](/concepts/skills).
 
 ## How experts compose
 
@@ -56,8 +56,6 @@ what experts file there and recall later.
 - **The persona is portable** — projected into `AGENTS.md` (+ `CLAUDE.md` /
   `GEMINI.md` / `QWEN.md` shims), so the *same* expert runs unchanged on Claude,
   Codex, Gemini, Qwen… See [The model](/get-started/the-model).
-- **Toscanini** (Chief of Staff) conducts a team of experts: delegates, tracks,
-  synthesizes — when one request spans several experts.
 
 ## What each expert page tells you
 
