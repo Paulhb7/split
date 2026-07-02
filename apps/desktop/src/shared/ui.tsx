@@ -83,12 +83,15 @@ function EngineCard({
   onPick,
   lifecycle,
   scan,
+  rec,
 }: {
   id: string;
   selected: boolean;
   onPick: (id: string) => void;
   lifecycle?: LifecycleAPI;
   scan?: ScanAPI;
+  /** Best-detected engine (onboarding) — a brand ring + a "recommended" pill. */
+  rec?: boolean;
 }) {
   const h = H[id];
   const state = lifecycle?.states[id];
@@ -163,7 +166,7 @@ function EngineCard({
 
   return (
     <div
-      className={"gcard" + (h.reserve ? " reserve" : "") + (selected ? " sel" : "") + (open ? " open" : "") + (open && hasModelPicker ? " modelopen" : "") + " sc-" + eff}
+      className={"gcard" + (h.reserve ? " reserve" : "") + (rec ? " rec" : "") + (selected ? " sel" : "") + (open ? " open" : "") + (open && hasModelPicker ? " modelopen" : "") + " sc-" + eff}
       style={vars({ "--brand": h.brand })}
       role="button"
       tabIndex={0}
@@ -175,6 +178,7 @@ function EngineCard({
           <div className="gc-nm">{h.label}</div>
           <div className="gc-sub">{h.vendor}{version ? " · " + version : " · " + h.tag}</div>
         </div>
+        {rec && <span className="gc-recpill">recommended</span>}
         <span className={"gc-pill " + pillCls}><i />{pillText}</span>
       </div>
 
@@ -250,11 +254,14 @@ export function League({
   onPick,
   lifecycle,
   scan,
+  recommendedId,
 }: {
   isSelected: (id: string) => boolean;
   onPick: (id: string) => void;
   lifecycle?: LifecycleAPI;
   scan?: ScanAPI;
+  /** Best-detected engine — marks that card "recommended" (onboarding only). */
+  recommendedId?: string;
 }) {
   // Group by the machine SCAN, not cloud/local: what's already on the machine
   // (detected, ready-or-needs-sign-in) vs what we propose installing (the binary
@@ -269,7 +276,7 @@ export function League({
   const grid = (ids: string[], cls = "") => (
     <div className={"ecard-grid" + cls}>
       {ids.map((id) => (
-        <EngineCard key={id} id={id} selected={isSelected(id)} onPick={onPick} lifecycle={lifecycle} scan={scan} />
+        <EngineCard key={id} id={id} selected={isSelected(id)} onPick={onPick} lifecycle={lifecycle} scan={scan} rec={id === recommendedId} />
       ))}
     </div>
   );
@@ -293,7 +300,7 @@ export function League({
           <div className="alane add">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12" /><path d="m7 11 5 5 5-5" /><path d="M5 21h14" /></svg>
             <span className="at">Suggested to install</span>
-            <span className="as">— not detected yet; one click to add</span>
+            <span className="as">— not detected yet; installs on first run</span>
             <span className="ar" />
             <span className="ac">{toInstall.length} available</span>
           </div>

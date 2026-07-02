@@ -4,13 +4,15 @@ import { Preview, TYPE_LABEL } from "../conversation/DeliverableExamples";
 import { isActiveExpert, type ExpertMap } from "../shared/experts";
 import "./finalstretch.css";
 
-// Onboarding page 4 — HIRE YOUR TEAM. An editorial two-column spread: a few
-// featured makers rotate on the left (each a serif voice line + a real work
-// peek + a ★ Hire toggle), the full roster sits as the index on the right where
-// every cell is a ★ hire toggle. Hiring pins an expert to the atelier rail (a
-// favourites set, shared/team.ts) so the rail shows your handful, not all ~26.
-// A starter team is pre-hired. Socrates is a separate recruiter card. Real Crest
-// + real Preview keep it identical to the live app.
+// Onboarding page 5 — HIRE YOUR TEAM. Two candidate faces share one spread
+// (rotating featured maker left, roster index right) and one hired state:
+//   · Spread (board) — the framed editorial hero card, italic voice, work-peek
+//     corner tag, "Geniuses in residence".
+//   · Cast (app)     — the chromeless app page, hero flush in the column.
+// The top-right toggle switches faces while the choice settles. Hiring pins an
+// expert to the atelier rail (shared/team.ts); a starter team is pre-hired.
+// Socrates is a separate recruiter card. Real Crest + real Preview keep it
+// identical to the live app.
 
 // Crafted in-character voice lines (≤ ~12 words). Keyed by slug so any maker can
 // be featured. Non-featured index cells don't need one.
@@ -33,7 +35,9 @@ const VOICE: Record<string, string> = {
   genius_ride: "The stars were always there. I wire the live feeds so you can look up and know.",
   genius_curie: "Nothing is to be feared, only understood. Name the disease; I’ll dock the candidate.",
   genius_tesla: "The future is mine. Describe the part; I’ll model it to print.",
+  genius_alfred: "Your majordome — I drive your apps with your logins, book, file, run the admin.",
   genius_maradona: "The ball doesn’t get dirty. I read the duel that decides the match — live.",
+  genius_marcopolo: "The road is the destination. Name the country; I’ll draw the carnet.",
   genius_vatel: "An evening is staged, not served. The menu, the table, the minute by minute.",
   coach_diet: "You don’t need willpower — you need a plan that fits your week. I’ll build it.",
   coach_learning: "Any subject is learnable on a schedule. I’ll map the weeks and the recalls.",
@@ -43,7 +47,10 @@ const VOICE: Record<string, string> = {
 
 const FEATURED = ["consultant", "genius_davinci", "coach_sport"];
 const CAT_ORDER: ("super" | "genius" | "coach")[] = ["super", "genius", "coach"];
-const CAT_LABEL: Record<string, string> = { super: "Jobs · the staff", genius: "Geniuses · the makers", coach: "Coaches · life" };
+const CAT_LABEL: Record<string, Record<string, string>> = {
+  spread: { super: "Staff", genius: "Geniuses in residence", coach: "Coaches" },
+  cast: { super: "Staff", genius: "Geniuses", coach: "Coaches" },
+};
 const CAT_TAG: Record<string, string> = { super: "In the staff", genius: "A genius in residence", coach: "Your coach" };
 
 export function CastSpread({ experts, team, onToggleHire, onHireRecruiter }: {
@@ -54,6 +61,9 @@ export function CastSpread({ experts, team, onToggleHire, onHireRecruiter }: {
   onHireRecruiter: () => void;
 }) {
   const hiredSet = new Set(team);
+  // The two candidate faces (final-flow board, p5) — switchable while the
+  // Spread-vs-Cast choice settles. Same state, different chrome.
+  const [face, setFace] = useState<"spread" | "cast">("spread");
   const groups = useMemo(() => {
     const out: Record<string, string[]> = { super: [], genius: [], coach: [] };
     for (const slug of Object.keys(experts)) {
@@ -82,16 +92,19 @@ export function CastSpread({ experts, team, onToggleHire, onHireRecruiter }: {
   const activeEx = active?.examples?.[0];
 
   return (
-    <div className="cst-spread">
+    <div className={"cst-spread face-" + face}>
+      <nav className="cst-toggle" aria-label="Page 5 candidates">
+        <button type="button" className={face === "spread" ? "on" : undefined} onClick={() => setFace("spread")}>Spread (board)</button>
+        <button type="button" className={face === "cast" ? "on" : undefined} onClick={() => setFace("cast")}>Cast (app)</button>
+      </nav>
+
       <div className="cst-left">
-        <div className="cst-eyebrow">hire your team · 04</div>
+        <div className="cst-eyebrow">hire your team · 05</div>
         <h2 className="cst-statement">
           <span className="n">{total}</span> experts. <em>Hire your team.</em>
-          <span className="rt">The ones you ★ pin to your atelier rail.</span>
         </h2>
         <p className="cst-lede">
-          Each is a persona, a craft, a kit of skills. Click a name to see what they make, then ★ Hire the ones
-          you’ll actually use — they’re one click away in the atelier. Add or drop any anytime.
+          ★ the ones you’ll use. They pin to your atelier rail, one click away. Add or drop anytime.
         </p>
 
         <div className="cst-feature">
@@ -102,7 +115,7 @@ export function CastSpread({ experts, team, onToggleHire, onHireRecruiter }: {
                 <span className="cst-hero-crest"><Crest kind={active.kind} seed={activeSlug} size={62} /></span>
                 <div>
                   <div className="cst-hero-cat">{CAT_TAG[active.category ?? "super"]}</div>
-                  <div className="cst-hero-name">{active.label}</div>
+                  <div className={"cst-hero-name" + ((active.category ?? "super") === "genius" ? " gen" : "")}>{active.label}</div>
                   <div className="cst-hero-role">{active.role ? active.role + " · " : ""}{active.kind}</div>
                 </div>
                 <button
@@ -114,17 +127,16 @@ export function CastSpread({ experts, team, onToggleHire, onHireRecruiter }: {
                 </button>
               </div>
               <div className="cst-hero-voice"><span className="mk">“</span>{VOICE[activeSlug] ?? active.blurb}</div>
-              <div className="cst-hero-blurb">{active.blurb}</div>
               {activeEx && (
                 <div className="cst-peek">
                   <div className="cst-peek-prev"><Preview type={activeEx.type} fit="slice" /></div>
                   <div className="cst-peek-meta">
                     <div>
-                      <div className="cst-peek-type"><i />{TYPE_LABEL[activeEx.type] ?? "Work"} · signature work</div>
+                      <div className="cst-peek-type"><i />{TYPE_LABEL[activeEx.type] ?? "Work"}</div>
                       <div className="cst-peek-title">{activeEx.title}</div>
                       <div className="cst-peek-desc">{activeEx.desc}</div>
                     </div>
-                    <div className="cst-peek-tag">one of {active.label}’s</div>
+                    {face === "spread" && <div className="cst-peek-tag">work peek</div>}
                   </div>
                 </div>
               )}
@@ -138,7 +150,7 @@ export function CastSpread({ experts, team, onToggleHire, onHireRecruiter }: {
             <button key={s + (!selected && i === fi ? "-on" : "")} className={"cst-pip" + (!selected && i === fi ? " on" : "")} onClick={() => { setSelected(null); setFi(i); }} title={experts[s].label} aria-label={`Feature ${experts[s].label}`} />
           ))}
           <span className="cst-rail-lbl">
-            {selected ? <>selected · {active?.label}</> : <>featured · {experts[featSlug]?.label}</>}
+            {selected ? <>selected · <b>{active?.label}</b></> : <>featured · <b>{experts[featSlug]?.label}</b></>}
           </span>
         </div>
       </div>
@@ -148,7 +160,7 @@ export function CastSpread({ experts, team, onToggleHire, onHireRecruiter }: {
         <div className="cst-ix-scroll">
           {CAT_ORDER.map((c) => (groups[c]?.length ? (
             <div key={c}>
-              <div className="cst-ix-cat"><span className="c">{CAT_LABEL[c]}</span> · {groups[c].length}</div>
+              <div className="cst-ix-cat"><span className="c">{CAT_LABEL[face][c]}</span><span className="ct">{groups[c].length}</span></div>
               <div className="cst-ix-grid">
                 {groups[c].map((slug) => {
                   const e = experts[slug];
@@ -164,7 +176,17 @@ export function CastSpread({ experts, team, onToggleHire, onHireRecruiter }: {
                     >
                       <span className="cst-ix-crest"><Crest kind={e.kind} seed={slug} size={28} /></span>
                       <div><div className="cst-ix-nm">{e.label}</div><div className="cst-ix-kd">{e.role || e.kind}</div></div>
-                      <span className="cst-ix-star" title={hired ? "Hired" : undefined}>{hired ? "★" : "☆"}</span>
+                      {/* The star is a mouse shortcut for hiring straight from
+                          the index (hidden from AT — nested in the cell button;
+                          the accessible path is select row → hero Hire). */}
+                      <span
+                        className="cst-ix-star"
+                        aria-hidden="true"
+                        title={hired ? "Hired — click to drop" : "Hire"}
+                        onClick={(ev) => { ev.stopPropagation(); onToggleHire(slug); }}
+                      >
+                        {hired ? "★" : "☆"}
+                      </span>
                     </button>
                   );
                 })}
