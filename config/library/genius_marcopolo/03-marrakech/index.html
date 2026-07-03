@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marrakech &amp; the Atlas — a long weekend · a carnet by Marco Polo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Gaegu:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+  :root{
+    /* --- the spice-carnet palette --- */
+    --paper:#F4E7CE;          /* warm sand paper ground */
+    --paper-2:#EFDFC0;        /* deeper sand */
+    --paper-3:#E9D6B0;        /* card shadow sand */
+    --card:#FBF2DE;           /* lit page */
+    --card-edge:#E4D0A6;      /* page hairline */
+    --ink:#3A2A1C;            /* walnut ink (body) */
+    --ink-soft:#6B5540;       /* faded ink */
+    --ink-faint:#9C8564;      /* very faint ink */
+    --saffron:#E4972B;        /* saffron */
+    --saffron-deep:#C9791A;   /* saffron shadow */
+    --terra:#B24A2C;          /* terracotta */
+    --terra-deep:#8F3A22;     /* terracotta shadow */
+    --teal:#2E8079;           /* zellige teal */
+    --teal-deep:#1F5E58;      /* zellige teal shadow */
+    --teal-tint:#CFE3DE;      /* teal wash */
+    --rose:#C56A5B;           /* faded rose (medina walls) */
+    --olive:#7C7A3A;          /* Atlas olive */
+    --gold-line:#C79A4E;      /* ornamental hairline */
+    --tape-saffron:rgba(228,151,43,.42);
+    --tape-teal:rgba(46,128,121,.34);
+    --tape-rose:rgba(197,106,91,.34);
+    /* day accent colours (map + cards) */
+    --d1:#B24A2C;  /* terracotta — medina */
+    --d2:#2E8079;  /* teal — gardens */
+    --d3:#7C7A3A;  /* olive — atlas */
+    --d4:#E4972B;  /* saffron — dunes */
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Spectral', Georgia, serif;
+    font-size:16px; line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+    overflow-x:hidden;
+  }
+  /* woven-paper tooth + faint fibre grain over the whole booklet */
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.5;
+    background-image:
+      radial-gradient(rgba(58,42,28,.05) 1px, transparent 1.4px),
+      radial-gradient(rgba(178,74,44,.035) 1px, transparent 1.4px);
+    background-size:15px 15px, 23px 23px;
+    background-position:0 0, 7px 11px;
+  }
+  body::after{ /* soft vignette, like an old page under lamplight */
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:radial-gradient(120% 90% at 50% 30%, transparent 55%, rgba(120,80,40,.10) 100%);
+  }
+  .wrap{ position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:0 22px 90px; }
+
+  a{ color:inherit; }
+  .serif{ font-family:'Cormorant Garamond', serif; }
+  .display{ font-family:'Marcellus', serif; }
+  .hand{ font-family:'Gaegu', 'Comic Sans MS', cursive; }
+  .num{ font-variant-numeric:tabular-nums; }
+
+  /* ============ washi tape ============ */
+  .tape{
+    position:absolute; height:26px; width:104px;
+    background:var(--tape-saffron);
+    box-shadow:0 1px 3px rgba(58,42,28,.14);
+    z-index:3;
+  }
+  .tape::before, .tape::after{ /* torn serrated edges */
+    content:""; position:absolute; top:0; bottom:0; width:7px;
+    background-image:linear-gradient(45deg, transparent 46%, var(--paper) 47%),
+                     linear-gradient(-45deg, transparent 46%, var(--paper) 47%);
+    background-size:7px 7px;
+  }
+  .tape::before{ left:-1px; }
+  .tape::after{ right:-1px; transform:scaleX(-1); }
+  .tape.teal{ background:var(--tape-teal); }
+  .tape.rose{ background:var(--tape-rose); }
+
+  /* ============ HERO ============ */
+  header.hero{
+    position:relative; margin-top:34px;
+    padding:40px 40px 42px;
+    background:
+      linear-gradient(180deg, rgba(251,242,222,.5), rgba(251,242,222,.9)),
+      var(--card);
+    border:1px solid var(--card-edge);
+    border-radius:5px;
+    box-shadow:0 1px 0 var(--card-edge), 0 22px 44px -30px rgba(80,50,25,.5);
+    overflow:hidden;
+  }
+  header.hero::before{ /* double ornamental hairline frame */
+    content:""; position:absolute; inset:11px; border:1px solid var(--gold-line);
+    opacity:.5; border-radius:3px; pointer-events:none;
+  }
+  header.hero::after{
+    content:""; position:absolute; inset:15px; border:1px solid var(--gold-line);
+    opacity:.28; border-radius:2px; pointer-events:none;
+  }
+  .hero-grid{ position:relative; display:grid; grid-template-columns:1fr auto; gap:26px; align-items:center; z-index:2; }
+  .kicker{
+    font-family:'Gaegu', cursive; font-size:18px; color:var(--terra);
+    letter-spacing:.02em; margin-bottom:6px; transform:rotate(-1.2deg); display:inline-block;
+  }
+  h1.title{
+    font-family:'Marcellus', serif; font-weight:400;
+    font-size:clamp(34px, 6vw, 58px); line-height:1.02; color:var(--ink);
+    letter-spacing:.005em;
+  }
+  h1.title em{ font-family:'Cormorant Garamond', serif; font-style:italic; font-weight:500; color:var(--terra-deep); }
+  .subtitle{
+    margin-top:14px; font-family:'Cormorant Garamond', serif; font-style:italic;
+    font-size:21px; color:var(--ink-soft); max-width:52ch; line-height:1.4;
+  }
+  .hero-meta{ margin-top:20px; display:flex; flex-wrap:wrap; gap:9px; }
+  .chip{
+    font-family:'Spectral', serif; font-size:12.5px; letter-spacing:.04em;
+    padding:6px 13px; border-radius:2px; white-space:nowrap;
+    background:rgba(255,255,255,.4); border:1px solid var(--card-edge); color:var(--ink-soft);
+  }
+  .chip b{ color:var(--terra-deep); font-weight:600; }
+  .chip.teal{ border-color:var(--teal); color:var(--teal-deep); background:var(--teal-tint); }
+  .chip.saffron{ border-color:var(--saffron-deep); color:var(--saffron-deep); background:rgba(228,151,43,.14); }
+
+  /* the hero seal — a hand-drawn keyhole door mark */
+  .seal{ width:150px; height:180px; flex:none; }
+
+  /* signature line */
+  .sig{
+    margin-top:22px; padding-top:16px; border-top:1px dashed var(--card-edge);
+    display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
+  }
+  .sig .from{ font-family:'Cormorant Garamond', serif; font-style:italic; font-size:17px; color:var(--ink-soft); }
+  .sig .name{ font-family:'Gaegu', cursive; font-size:26px; color:var(--terra-deep); transform:rotate(-2deg); }
+
+  /* ============ EXEC SUMMARY (collapsible) ============ */
+  .about{
+    margin-top:26px; background:var(--card); border:1px solid var(--card-edge);
+    border-left:4px solid var(--saffron); border-radius:4px;
+    box-shadow:0 14px 30px -26px rgba(80,50,25,.5);
+  }
+  .about > summary{
+    list-style:none; cursor:pointer; padding:16px 22px;
+    display:flex; align-items:center; gap:12px; user-select:none;
+  }
+  .about > summary::-webkit-details-marker{ display:none; }
+  .about .about-ico{ width:26px; height:26px; flex:none; color:var(--saffron-deep); }
+  .about .about-t{ font-family:'Marcellus', serif; font-size:16px; letter-spacing:.02em; }
+  .about .about-t small{ display:block; font-family:'Cormorant Garamond', serif; font-style:italic; font-size:14px; color:var(--ink-faint); letter-spacing:0; }
+  .about .caret{ margin-left:auto; color:var(--ink-faint); transition:transform .25s; font-size:13px; }
+  .about[open] .caret{ transform:rotate(90deg); }
+  .about-body{ padding:2px 24px 22px 24px; }
+  .about-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px 30px; }
+  .about-cell h4{
+    font-family:'Gaegu', cursive; font-size:16px; color:var(--terra); margin-bottom:2px; letter-spacing:.02em;
+  }
+  .about-cell p{ font-size:14.5px; color:var(--ink-soft); line-height:1.55; }
+
+  /* ============ SECTION TITLES ============ */
+  .sec{ margin-top:52px; }
+  .sec-head{ display:flex; align-items:center; gap:16px; margin-bottom:22px; }
+  .sec-head .ico{ width:38px; height:38px; flex:none; color:var(--terra); }
+  .sec-head h2{
+    font-family:'Marcellus', serif; font-weight:400; font-size:27px; color:var(--ink); letter-spacing:.01em;
+  }
+  .sec-head .rule{ flex:1; height:0; border-top:1px solid var(--gold-line); opacity:.55; position:relative; top:3px; }
+  .sec-head .rule::after{ content:"✦"; position:absolute; right:-2px; top:-11px; color:var(--gold-line); font-size:13px; }
+  .sec-sub{ font-family:'Cormorant Garamond', serif; font-style:italic; font-size:18px; color:var(--ink-soft); margin:-8px 0 20px; max-width:70ch; }
+
+  /* ============ MAP ============ */
+  .map-shell{
+    position:relative; background:var(--card); border:1px solid var(--card-edge);
+    border-radius:5px; padding:12px; box-shadow:0 20px 40px -30px rgba(80,50,25,.55);
+  }
+  .map-shell::before{ content:""; position:absolute; inset:5px; border:1px solid var(--gold-line); opacity:.4; border-radius:3px; pointer-events:none; z-index:401; }
+  #map{ height:520px; border-radius:3px; background:#EDE6D6; }
+  .map-legend{
+    display:flex; flex-wrap:wrap; gap:16px; margin-top:14px; padding:2px 6px 4px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .lg{ display:flex; align-items:center; gap:8px; }
+  .lg .dot{ width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.3); flex:none; }
+  .map-note{ margin-top:8px; font-family:'Cormorant Garamond', serif; font-style:italic; font-size:15px; color:var(--ink-faint); }
+
+  /* Leaflet re-skin to the carnet */
+  .leaflet-container{ font-family:'Spectral', serif; }
+  .leaflet-tile{ filter:sepia(.22) saturate(1.05) brightness(1.02); }
+  .leaflet-popup-content-wrapper{
+    background:var(--card); color:var(--ink); border-radius:4px;
+    box-shadow:0 10px 26px -12px rgba(60,40,20,.6); border:1px solid var(--gold-line);
+  }
+  .leaflet-popup-tip{ background:var(--card); border:1px solid var(--gold-line); }
+  .leaflet-popup-content{ margin:12px 15px; line-height:1.45; }
+  .pop-day{ font-family:'Gaegu', cursive; font-size:13px; letter-spacing:.03em; }
+  .pop-name{ font-family:'Marcellus', serif; font-size:16px; margin:1px 0 3px; }
+  .pop-desc{ font-size:13px; color:var(--ink-soft); }
+  .leaflet-bar a, .leaflet-bar a:hover{ background:var(--card); color:var(--ink); border-bottom-color:var(--card-edge); }
+  .day-marker{ background:transparent; border:0; }
+  .day-marker span{
+    display:grid; place-items:center; width:26px; height:26px; border-radius:50% 50% 50% 2px;
+    transform:rotate(45deg); color:#fff; font-family:'Marcellus',serif; font-size:12px;
+    box-shadow:0 3px 7px -1px rgba(50,30,10,.5); border:2px solid rgba(255,255,255,.85);
+  }
+  .day-marker span b{ transform:rotate(-45deg); }
+
+  /* ============ ITINERARY DAY CARDS ============ */
+  .days{ display:grid; gap:26px; }
+  .day{
+    position:relative; background:var(--card); border:1px solid var(--card-edge);
+    border-radius:5px; padding:26px 28px 24px; box-shadow:0 16px 34px -30px rgba(80,50,25,.5);
+  }
+  .day::after{ /* torn bottom feel via a soft inner line */
+    content:""; position:absolute; left:14px; right:14px; bottom:10px; height:1px;
+    background:repeating-linear-gradient(90deg, var(--card-edge) 0 6px, transparent 6px 12px); opacity:.5;
+  }
+  .day-top{ display:flex; align-items:flex-start; gap:18px; padding-bottom:16px; border-bottom:1px solid var(--card-edge); }
+  .day-badge{
+    width:58px; height:58px; flex:none; border-radius:50% 50% 50% 4px; transform:rotate(-3deg);
+    display:grid; place-items:center; color:#fff; box-shadow:0 6px 14px -6px rgba(50,30,10,.6);
+    border:2px solid rgba(255,255,255,.7);
+  }
+  .day-badge b{ transform:rotate(3deg); font-family:'Marcellus', serif; font-size:15px; line-height:1; text-align:center; }
+  .day-badge b small{ display:block; font-family:'Gaegu', cursive; font-size:10px; font-weight:700; margin-top:1px; opacity:.92; }
+  .day-h{ flex:1; }
+  .day-h .kick{ font-family:'Gaegu', cursive; font-size:15px; letter-spacing:.04em; margin-bottom:1px; }
+  .day-h h3{ font-family:'Marcellus', serif; font-weight:400; font-size:23px; color:var(--ink); line-height:1.1; }
+  .day-h .base{ font-family:'Cormorant Garamond', serif; font-style:italic; font-size:16px; color:var(--ink-soft); margin-top:3px; }
+  .day-sketch{ width:66px; height:66px; flex:none; opacity:.92; }
+
+  /* timeline of the day */
+  .tl{ margin-top:18px; display:grid; gap:2px; }
+  .stop{ display:grid; grid-template-columns:66px 1fr; gap:16px; padding:11px 0; border-bottom:1px dashed var(--card-edge); }
+  .stop:last-child{ border-bottom:0; }
+  .stop .when{
+    font-family:'Gaegu', cursive; font-size:15px; color:var(--terra-deep); font-weight:700;
+    padding-top:2px; letter-spacing:.02em;
+  }
+  .stop .what h4{ font-family:'Spectral', serif; font-weight:600; font-size:16.5px; color:var(--ink); }
+  .stop .what h4 .fact{
+    font-family:'Spectral', serif; font-weight:400; font-size:12px; color:var(--teal-deep);
+    background:var(--teal-tint); padding:1px 7px; border-radius:2px; margin-left:7px; letter-spacing:.02em;
+    white-space:nowrap; vertical-align:1px;
+  }
+  .stop .what p{ font-size:14.5px; color:var(--ink-soft); margin-top:2px; line-height:1.5; }
+  .stop .what a{ color:var(--teal-deep); text-decoration:underline; text-underline-offset:2px; text-decoration-color:var(--teal-tint); }
+  .move{
+    display:inline-flex; align-items:center; gap:6px; margin-top:7px;
+    font-family:'Cormorant Garamond', serif; font-style:italic; font-size:14px; color:var(--olive);
+  }
+  .move svg{ width:15px; height:15px; flex:none; }
+  .tip{
+    margin-top:14px; padding:11px 14px; background:rgba(228,151,43,.11);
+    border:1px dashed var(--saffron); border-radius:4px;
+    font-family:'Cormorant Garamond', serif; font-size:15.5px; color:var(--ink-soft); line-height:1.5;
+  }
+  .tip b{ font-family:'Gaegu', cursive; font-style:normal; color:var(--saffron-deep); font-size:15px; }
+  .skip{ border-color:var(--rose); background:rgba(197,106,91,.10); }
+  .skip b{ color:var(--terra-deep); }
+
+  /* ============ LODGING ============ */
+  .lodge-grid{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+  .lodge-col > .lodge-loc{
+    font-family:'Gaegu', cursive; font-size:17px; color:var(--terra-deep); margin-bottom:11px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .lodge-loc svg{ width:20px; height:20px; }
+  .stay{
+    position:relative; background:var(--card); border:1px solid var(--card-edge); border-radius:5px;
+    padding:18px 20px; margin-bottom:16px; box-shadow:0 12px 26px -26px rgba(80,50,25,.5);
+    transition:transform .18s, box-shadow .18s;
+  }
+  .stay:hover{ transform:translateY(-2px); box-shadow:0 20px 34px -26px rgba(80,50,25,.55); }
+  .stay .stay-top{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+  .stay h4{ font-family:'Marcellus', serif; font-weight:400; font-size:18.5px; color:var(--ink); line-height:1.15; }
+  .stay .tag{
+    font-family:'Gaegu', cursive; font-size:12px; letter-spacing:.03em; padding:2px 8px; border-radius:2px; white-space:nowrap; flex:none;
+  }
+  .tag.hotel{ background:var(--teal-tint); color:var(--teal-deep); }
+  .tag.bnb{ background:rgba(228,151,43,.18); color:var(--saffron-deep); }
+  .stay .why{ font-family:'Cormorant Garamond', serif; font-style:italic; font-size:16px; color:var(--ink-soft); margin:5px 0 12px; line-height:1.4; }
+  .stay .stay-foot{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:10px; border-top:1px dashed var(--card-edge); }
+  .price{ font-family:'Spectral', serif; }
+  .price b{ font-size:19px; color:var(--terra-deep); font-weight:600; }
+  .price small{ font-size:12px; color:var(--ink-faint); }
+  .book{
+    font-family:'Spectral', serif; font-size:13px; letter-spacing:.03em; font-weight:600;
+    padding:7px 15px; border-radius:3px; text-decoration:none; white-space:nowrap;
+    background:var(--terra); color:#FBF2DE; border:1px solid var(--terra-deep);
+    box-shadow:0 4px 10px -4px rgba(143,58,34,.6); transition:filter .15s, transform .1s;
+    display:inline-flex; align-items:center; gap:7px;
+  }
+  .book:hover{ filter:brightness(1.07); }
+  .book:active{ transform:translateY(1px); }
+  .book svg{ width:13px; height:13px; }
+  .book.teal{ background:var(--teal); border-color:var(--teal-deep); box-shadow:0 4px 10px -4px rgba(31,94,88,.6); }
+
+  /* ============ GETTING THERE ============ */
+  .travel-grid{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+  .tcard{
+    background:var(--card); border:1px solid var(--card-edge); border-radius:5px; padding:22px 24px;
+    box-shadow:0 12px 28px -26px rgba(80,50,25,.5);
+  }
+  .tcard .th{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .tcard .th svg{ width:30px; height:30px; color:var(--teal-deep); }
+  .tcard .th h3{ font-family:'Marcellus', serif; font-weight:400; font-size:20px; }
+  .tcard p{ font-size:14.5px; color:var(--ink-soft); margin-bottom:12px; line-height:1.55; }
+  .tcard .route{ font-family:'Gaegu', cursive; font-size:16px; color:var(--terra-deep); }
+  .tcard ul{ list-style:none; margin:4px 0 14px; display:grid; gap:9px; }
+  .tcard li{ display:flex; gap:10px; align-items:baseline; font-size:14.5px; color:var(--ink-soft); }
+  .tcard li .b{ color:var(--teal-deep); font-family:'Gaegu',cursive; font-size:14px; }
+  .tcard li a{ color:var(--teal-deep); text-decoration:underline; text-underline-offset:2px; }
+  .pricepill{
+    display:inline-block; font-family:'Spectral',serif; font-size:13px; color:var(--terra-deep);
+    background:rgba(178,74,44,.10); border:1px solid rgba(178,74,44,.3); border-radius:2px; padding:2px 9px; margin-left:6px;
+  }
+
+  /* ============ BUDGET ============ */
+  .budget-shell{
+    background:var(--card); border:1px solid var(--card-edge); border-radius:6px; overflow:hidden;
+    box-shadow:0 20px 42px -30px rgba(80,50,25,.55);
+  }
+  .budget-shell::before{ content:""; display:block; height:5px;
+    background:linear-gradient(90deg, var(--terra), var(--saffron) 40%, var(--teal) 75%, var(--olive)); }
+  .budget-top{ padding:22px 26px 6px; display:flex; flex-wrap:wrap; gap:16px 20px; align-items:center; justify-content:space-between; }
+  .budget-top h3{ font-family:'Marcellus', serif; font-weight:400; font-size:22px; }
+  .budget-top .assume{ font-family:'Cormorant Garamond', serif; font-style:italic; font-size:15px; color:var(--ink-faint); }
+  /* tier toggle */
+  .tiers{ display:inline-flex; background:var(--paper-2); border:1px solid var(--card-edge); border-radius:4px; padding:4px; gap:3px; }
+  .tier-btn{
+    font-family:'Spectral', serif; font-size:13.5px; letter-spacing:.02em; font-weight:500;
+    padding:7px 16px; border:0; border-radius:3px; cursor:pointer; color:var(--ink-soft); background:transparent; transition:all .18s;
+  }
+  .tier-btn .hint{ display:block; font-family:'Gaegu',cursive; font-size:10.5px; color:var(--ink-faint); margin-top:0; }
+  .tier-btn.active{ background:var(--terra); color:#FBF2DE; box-shadow:0 5px 12px -5px rgba(143,58,34,.6); }
+  .tier-btn.active .hint{ color:rgba(251,242,222,.85); }
+  .tier-btn:not(.active):hover{ background:rgba(255,255,255,.5); }
+
+  .ledger{ padding:6px 26px 8px; }
+  table.bud{ width:100%; border-collapse:collapse; }
+  table.bud th{ text-align:left; font-family:'Gaegu',cursive; font-size:14px; color:var(--ink-faint); font-weight:700; padding:12px 6px 8px; border-bottom:1.5px solid var(--card-edge); letter-spacing:.03em; }
+  table.bud th.r, table.bud td.r{ text-align:right; font-variant-numeric:tabular-nums; }
+  table.bud td{ padding:11px 6px; border-bottom:1px dashed var(--card-edge); font-size:14.5px; vertical-align:top; }
+  table.bud tr:last-child td{ border-bottom:0; }
+  table.bud .item b{ font-weight:600; color:var(--ink); font-size:15px; }
+  table.bud .item small{ display:block; font-family:'Cormorant Garamond',serif; font-style:italic; color:var(--ink-faint); font-size:13.5px; }
+  table.bud .calc{ font-family:'Spectral',serif; color:var(--ink-soft); font-size:13.5px; white-space:nowrap; }
+  table.bud .amt{ font-variant-numeric:tabular-nums; font-size:15.5px; color:var(--ink); font-weight:500; }
+  .cat-ico{ display:inline-grid; place-items:center; width:26px; height:26px; border-radius:5px; margin-right:9px; vertical-align:-7px; }
+  .cat-ico svg{ width:16px; height:16px; }
+
+  .grand{ background:linear-gradient(180deg, rgba(228,151,43,.10), rgba(178,74,44,.09)); border-top:2px solid var(--saffron); }
+  .grand-in{ padding:20px 26px 24px; display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:14px; }
+  .grand-cell{ text-align:center; padding:6px; }
+  .grand-cell .lab{ font-family:'Gaegu',cursive; font-size:14px; color:var(--ink-soft); letter-spacing:.03em; }
+  .grand-cell .val{ font-family:'Marcellus',serif; font-size:clamp(26px,4.5vw,40px); color:var(--terra-deep); line-height:1.05; margin-top:3px; }
+  .grand-cell .val small{ font-family:'Spectral',serif; font-size:15px; color:var(--ink-soft); font-weight:400; }
+  .grand-cell.main{ border-right:1px dashed var(--card-edge); }
+  .grand-cell.main .val{ color:var(--terra-deep); }
+
+  .disclaimer{
+    margin-top:16px; padding:13px 16px; background:rgba(197,106,91,.09); border:1px dashed var(--rose); border-radius:4px;
+    font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; color:var(--ink-soft); line-height:1.5;
+    display:flex; gap:11px; align-items:flex-start;
+  }
+  .disclaimer svg{ width:22px; height:22px; flex:none; color:var(--terra); margin-top:1px; }
+
+  /* ============ FOOTER ============ */
+  footer{ margin-top:60px; text-align:center; padding-top:28px; border-top:1px solid var(--gold-line); position:relative; }
+  footer::before{ content:"✦ ✦ ✦"; position:absolute; top:-11px; left:50%; transform:translateX(-50%); background:var(--paper); padding:0 16px; color:var(--gold-line); font-size:12px; letter-spacing:.4em; }
+  footer .car{ font-family:'Gaegu',cursive; font-size:19px; color:var(--terra-deep); transform:rotate(-1deg); display:inline-block; }
+  footer .meta{ font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; color:var(--ink-faint); margin-top:6px; }
+  footer .mark{ margin-top:12px; font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--ink-faint); }
+
+  /* responsive */
+  @media (max-width:860px){
+    .hero-grid{ grid-template-columns:1fr; } .seal{ display:none; }
+    .about-grid{ grid-template-columns:1fr; }
+    .lodge-grid, .travel-grid{ grid-template-columns:1fr; }
+    .grand-in{ grid-template-columns:1fr; } .grand-cell.main{ border-right:0; border-bottom:1px dashed var(--card-edge); padding-bottom:14px; }
+    table.bud .calc{ white-space:normal; }
+    #map{ height:420px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <div class="tape" style="top:-11px; left:56px; transform:rotate(-4deg);"></div>
+    <div class="tape teal" style="top:-12px; right:78px; transform:rotate(3.5deg); width:88px;"></div>
+    <div class="hero-grid">
+      <div>
+        <span class="kicker">carnet de voyage no. 03 · from Paris, two travellers</span>
+        <h1 class="title">Marrakech<br>&amp; the <em>Atlas</em></h1>
+        <p class="subtitle">Four days on the red city's edge — the medina and its souks, the blue garden, a High Atlas valley, and the Agafay stones at sundown. A long weekend, walked in order.</p>
+        <div class="hero-meta">
+          <span class="chip"><b>4 days</b> · Thu → Sun</span>
+          <span class="chip teal">2 travellers</span>
+          <span class="chip">CDG → RAK · <b>≈3h30</b> direct</span>
+          <span class="chip saffron">medina · atlas · dunes</span>
+        </div>
+        <div class="sig">
+          <span class="from">routed &amp; carried by</span>
+          <span class="name">— Marco Polo</span>
+          <span class="from">· prices checked July 2026, verify before booking</span>
+        </div>
+      </div>
+      <!-- SVG hand-drawn keyhole door seal -->
+      <svg class="seal" viewBox="0 0 150 180" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="doorg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#B24A2C"/><stop offset="1" stop-color="#8F3A22"/>
+          </linearGradient>
+        </defs>
+        <!-- outer keyhole arch frame -->
+        <path d="M20 175 V72 C20 40 44 12 75 12 C106 12 130 40 130 72 V175" stroke="#C79A4E" stroke-width="2.4" fill="rgba(228,151,43,.10)"/>
+        <path d="M27 175 V72 C27 44 48 20 75 20 C102 20 123 44 123 72 V175" stroke="#C79A4E" stroke-width="1.1" opacity=".6"/>
+        <!-- the door -->
+        <path d="M37 175 V74 C37 52 54 34 75 34 C96 34 113 52 113 74 V175" fill="url(#doorg)" stroke="#3A2A1C" stroke-width="1.4"/>
+        <!-- centre split -->
+        <path d="M75 34 V175" stroke="#3A2A1C" stroke-width="1.2" opacity=".55"/>
+        <!-- zellige studs -->
+        <g fill="#E4972B">
+          <circle cx="56" cy="70" r="2.1"/><circle cx="56" cy="92" r="2.1"/><circle cx="56" cy="114" r="2.1"/><circle cx="56" cy="136" r="2.1"/><circle cx="56" cy="158" r="2.1"/>
+          <circle cx="94" cy="70" r="2.1"/><circle cx="94" cy="92" r="2.1"/><circle cx="94" cy="114" r="2.1"/><circle cx="94" cy="136" r="2.1"/><circle cx="94" cy="158" r="2.1"/>
+        </g>
+        <!-- knockers -->
+        <circle cx="63" cy="104" r="5.4" fill="none" stroke="#2E8079" stroke-width="2"/>
+        <circle cx="87" cy="104" r="5.4" fill="none" stroke="#2E8079" stroke-width="2"/>
+        <!-- little arch keystone star -->
+        <path d="M75 46 l3 5 6 .6 -4.5 4 1.3 6 -5.8-3 -5.8 3 1.3-6 -4.5-4 6-.6z" fill="#E4972B" stroke="#3A2A1C" stroke-width=".6"/>
+      </svg>
+    </div>
+  </header>
+
+  <!-- ===================== EXEC SUMMARY (collapsible) ===================== -->
+  <details class="about" open>
+    <summary>
+      <svg class="about-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span class="about-t">About this trip<small>why this carnet exists — open before you pack</small></span>
+      <span class="caret">▶</span>
+    </summary>
+    <div class="about-body">
+      <div class="about-grid">
+        <div class="about-cell"><h4>Why</h4><p>You asked for a vivid long weekend in Marrakech from Paris, for two: the medina and souks, the Jardin Majorelle, a riad stay, a High Atlas / Ourika day, and an Agafay desert-edge sunset. This is that trip, day by day, bookable — every place, price and link is real and current.</p></div>
+        <div class="about-cell"><h4>Context</h4><p>Four days, Thursday to Sunday, two travellers out of Paris-CDG. The medina is walked (cars don't go where you're going); the two day-trips (Ourika, Agafay) are door-to-door transfers from your riad. Budget is built for two and runs in three tiers you can flip live.</p></div>
+        <div class="about-cell"><h4>How to use it</h4><p>Read the days in order — each is clustered so you never cross the city twice. Tap any map pin or booking button (they open the real page). Flip the Shoestring / Comfort / Splurge tier in the budget to re-price the whole trip. Confirm hours &amp; prices at booking; a medina in July keeps its own clock.</p></div>
+        <div class="about-cell"><h4>What I assumed</h4><p>July shoulder heat (plan mornings, rest the afternoon, live on rooftops after dark), a riad in the medina over a Gueliz hotel, one Atlas day and one dune sundown rather than a Sahara overnight, and card-and-cash both (much of the souk is cash, small dirham notes).</p></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============================ MAP ============================ -->
+  <section class="sec" id="map-sec">
+    <div class="sec-head">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5.4 2.7A1 1 0 0 1 2 21.8V6.6a1 1 0 0 1 .6-.9L9 3m0 17l6-3m-6 3V3m6 14l5.4 2.7a1 1 0 0 0 1.6-.9V5.6a1 1 0 0 0-.6-.9L15 2m0 15V2m0 0L9 3"/></svg>
+      <h2>The whole weekend, on one map</h2>
+      <span class="rule"></span>
+    </div>
+    <p class="sec-sub">Every stop, with its real coordinates — the medina cluster in terracotta, the gardens in teal, the Atlas valley in olive, the Agafay dunes in saffron. The dotted line is the order you'll walk and drive it.</p>
+    <div class="map-shell">
+      <div class="tape" style="top:-10px; left:40px; transform:rotate(-3deg); width:92px;"></div>
+      <div id="map"></div>
+      <div class="map-legend">
+        <span class="lg"><span class="dot" style="background:var(--d1)"></span> Day 1 — Medina &amp; souks</span>
+        <span class="lg"><span class="dot" style="background:var(--d2)"></span> Day 2 — The blue garden &amp; palaces</span>
+        <span class="lg"><span class="dot" style="background:var(--d3)"></span> Day 3 — Ourika &amp; the High Atlas</span>
+        <span class="lg"><span class="dot" style="background:var(--d4)"></span> Day 4 — Agafay dunes &amp; home</span>
+      </div>
+      <p class="map-note">Tiles: CARTO Voyager (no key), warmed to the carnet. Coordinates are the real sites; the day-trip pins (Ourika, Agafay) sit ~40–65 km out — zoom to find them.</p>
+    </div>
+  </section>
+
+  <!-- ============================ ITINERARY ============================ -->
+  <section class="sec" id="itinerary">
+    <div class="sec-head">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+      <h2>Four days, hour by hour</h2>
+      <span class="rule"></span>
+    </div>
+    <p class="sec-sub">Clustered so you never cross the red city twice. Mornings for the sights before the heat and the crowds; afternoons slow; the rooftops after dark. What to skip is named as plainly as what to see.</p>
+
+    <div class="days">
+
+      <!-- ===== DAY 1 ===== -->
+      <article class="day">
+        <div class="tape rose" style="top:-11px; right:44px; transform:rotate(3deg);"></div>
+        <div class="day-top">
+          <div class="day-badge" style="background:linear-gradient(150deg,#C0553A,#8F3A22);"><b>1<small>THU</small></b></div>
+          <div class="day-h">
+            <div class="kick" style="color:var(--terra);">arrive · the red walls close in</div>
+            <h3>Into the medina &amp; the souks</h3>
+            <div class="base">Base: your riad, inside the walls · all on foot</div>
+          </div>
+          <!-- lantern sketch -->
+          <svg class="day-sketch" viewBox="0 0 66 66" fill="none" stroke="#8F3A22" stroke-width="1.4" stroke-linecap="round">
+            <path d="M33 6 v5"/><path d="M25 12 h16 l-2 5 h-12 z" fill="rgba(228,151,43,.25)"/>
+            <path d="M24 17 h18 l3 26 a12 8 0 0 1 -24 0 z" fill="rgba(228,151,43,.30)"/>
+            <path d="M30 22 l-3 16 M36 22 l3 16 M27 30 h12" stroke="#2E8079"/>
+            <path d="M21 43 h24 M25 48 l16 0" stroke="#8F3A22"/><path d="M33 56 v5"/>
+            <circle cx="33" cy="34" r="3" fill="#E4972B" stroke="none"/>
+          </svg>
+        </div>
+        <div class="tl">
+          <div class="stop"><div class="when">13:30</div><div class="what"><h4>Land at Menara (RAK) <span class="fact">≈3h30 from CDG</span></h4><p>Have the riad send a driver — the medina is a maze of car-free derbs and you won't find the door with a suitcase. A private airport transfer runs about 150–200 MAD (€14–18); agree it when you book the room.</p><span class="move"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg> 15 min to the medina gate, then porter on foot</span></div></div>
+          <div class="stop"><div class="when">15:00</div><div class="what"><h4>Drop bags, mint tea on the roof</h4><p>Settle in, let the riad pour the first tea, and don't fight the afternoon heat — July in Marrakech is for shade until five. Learn your door: photograph the derb and the nearest landmark so you can find your way back after dark.</p></div></div>
+          <div class="stop"><div class="when">17:00</div><div class="what"><h4>First walk into the souks <span class="fact">cash · small notes</span></h4><p>Ease in from Souk Semmarine up toward the dyers' and the coppersmiths' lanes — <a href="https://en.wikipedia.org/wiki/Souks_of_Marrakesh" target="_blank" rel="noopener">the souks</a> are a covered warren, so let yourself get a little lost while it's still light. Don't buy on day one; learn the prices. Haggling is expected — offer a third, settle near half.</p></div></div>
+          <div class="stop"><div class="when">19:30</div><div class="what"><h4>Jemaa el-Fnaa at dusk <span class="fact">the great square</span></h4><p><a href="https://en.wikipedia.org/wiki/Jemaa_el-Fnaa" target="_blank" rel="noopener">Jemaa el-Fnaa</a> only truly wakes at nightfall — smoke off the grill stalls, snake-charmers packing up, orange-juice carts (No. 1 is the local shorthand). Eat a bowl of harira and a skewer standing up at a numbered stall; it's theatre as much as dinner.</p><div class="tip skip"><b>skip →</b> the carts pushing photos with monkeys and chained snakes — it's a shakedown and the animals are mistreated. Walk on; the grills are the point.</div></div></div>
+          <div class="stop"><div class="when">21:00</div><div class="what"><h4>Rooftop nightcap over the square</h4><p>Climb to a terrace for the view down onto the smoke and lanterns — a café on the square's edge for a mint tea, or push into the souk to <a href="https://www.nomadmarrakech.com/" target="_blank" rel="noopener">Nomad</a>'s roof if you want a proper table. Then follow your photographed landmarks home.</p></div></div>
+        </div>
+        <div class="tip"><b>tonight's one thing →</b> stand in the middle of Jemaa el-Fnaa at full dark and just turn once, slowly. Eight hundred years of this square doing exactly this. That's the trip, right there — everything else is detail.</div>
+      </article>
+
+      <!-- ===== DAY 2 ===== -->
+      <article class="day">
+        <div class="tape teal" style="top:-11px; left:48px; transform:rotate(-3deg);"></div>
+        <div class="day-top">
+          <div class="day-badge" style="background:linear-gradient(150deg,#38928A,#1F5E58);"><b>2<small>FRI</small></b></div>
+          <div class="day-h">
+            <div class="kick" style="color:var(--teal-deep);">the blue garden &amp; the palaces</div>
+            <h3>Majorelle, Bahia &amp; Ben Youssef</h3>
+            <div class="base">Gueliz in the morning, medina palaces after · petit-taxi + foot</div>
+          </div>
+          <!-- teapot sketch -->
+          <svg class="day-sketch" viewBox="0 0 66 66" fill="none" stroke="#1F5E58" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 34 a15 11 0 0 0 30 0 a15 11 0 0 0 -30 0z" fill="rgba(46,128,121,.20)"/>
+            <path d="M46 30 c9 -2 12 6 5 9" />
+            <path d="M20 30 c-6 -1 -9 -6 -3 -9 l6 4" />
+            <path d="M28 23 h10 l-2 -5 h-6 z" fill="rgba(228,151,43,.30)"/>
+            <path d="M33 18 v-4" /><circle cx="33" cy="12" r="2.2" fill="#E4972B" stroke="none"/>
+            <path d="M24 45 l3 6 h12 l3 -6" /><path d="M27 38 h12" stroke="#E4972B"/>
+          </svg>
+        </div>
+        <div class="tl">
+          <div class="stop"><div class="when">08:15</div><div class="what"><h4>Jardin Majorelle at opening <span class="fact">08:00–18:30 · 170 MAD</span></h4><p>Be at the gate when <a href="https://www.jardinmajorelle.com/en/" target="_blank" rel="noopener">Jardin Majorelle</a> opens — by ten the queues wrap the block and the famous Majorelle-blue villa is elbow-to-elbow. Buy the timed ticket in advance on the <a href="https://tickets.jardinmajorelle.com/Visite" target="_blank" rel="noopener">official site only</a> (170 MAD garden; the copycats overcharge). A petit-taxi from the medina is ~30–40 MAD; insist on the meter or agree the price first.</p><span class="move"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg> ~12 min by petit-taxi to Gueliz</span></div></div>
+          <div class="stop"><div class="when">09:45</div><div class="what"><h4>Musée YSL, next door <span class="fact">10:00–18:30 · closed Wed · 140 MAD</span></h4><p>The <a href="https://www.museeyslmarrakech.com/en/" target="_blank" rel="noopener">Musée Yves Saint Laurent</a> shares the wall — one terracotta-brick building, a single exquisite room of couture, well air-conditioned. A good hour before the day heats up. (Same official ticket site sells a combined pass.)</p><div class="tip"><b>note →</b> the Berber Museum inside the garden is closed 6–12 July 2026 for its annual rotation, reopening the 13th — check your dates on the official site.</div></div></div>
+          <div class="stop"><div class="when">12:30</div><div class="what"><h4>Lunch &amp; the heat of the day</h4><p>Long garden lunch in Gueliz, then back to the riad for the worst of the afternoon — a swim in the plunge pool, a nap under the fan. This is not laziness; it's how the city is designed to be lived in July.</p></div></div>
+          <div class="stop"><div class="when">16:30</div><div class="what"><h4>Bahia Palace <span class="fact">08:00–17:00 · 70 MAD</span></h4><p>Back into the medina for the <a href="https://en.wikipedia.org/wiki/Bahia_Palace" target="_blank" rel="noopener">Bahia Palace</a> — painted cedar ceilings, zellige courtyards, the harem quarters cool and quiet late in the day. Go near closing when the tour groups have gone; the light through the riad courtyards is best then. (Last entry ~16:15 — don't cut it fine.)</p></div></div>
+          <div class="stop"><div class="when">17:45</div><div class="what"><h4>Ben Youssef Madrasa <span class="fact">09:00–19:00 · 50 MAD</span></h4><p>A ten-minute walk north to the <a href="https://www.medersabenyoussef.ma/en/" target="_blank" rel="noopener">Ben Youssef Madrasa</a>, the 16th-century Qur'anic school — the most breathtaking tilework in the city, a still courtyard pool, carved cedar and stucco to the ceiling. Restored and open late; catch it in the last of the daylight.</p><span class="move"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 5l7 7-7 7M5 12h15"/></svg> 10-min walk between the two, through the souk's northern edge</span></div></div>
+          <div class="stop"><div class="when">20:00</div><div class="what"><h4>Dinner on a medina rooftop</h4><p>End on a terrace over the ochre roofs — <a href="https://www.facebook.com/laterrassedesepices/" target="_blank" rel="noopener">La Terrasse des Épices</a> (they serve wine, rare in the medina) or the garden-riad calm of <a href="https://www.lejardin.ma/" target="_blank" rel="noopener">Le Jardin</a>. Order the pastilla once while you're here — the sweet-savoury pigeon pie is the dish people fly back for.</p></div></div>
+        </div>
+        <div class="tip"><b>walking logic →</b> today front-loads Gueliz (Majorelle + YSL are neighbours) in the cool morning, then keeps the two medina palaces (Bahia + Ben Youssef) together in the late afternoon so you cross town only once, in a taxi, not twice on foot.</div>
+      </article>
+
+      <!-- ===== DAY 3 ===== -->
+      <article class="day">
+        <div class="tape" style="top:-11px; right:52px; transform:rotate(2.5deg);"></div>
+        <div class="day-top">
+          <div class="day-badge" style="background:linear-gradient(150deg,#918F45,#5F5D28);"><b>3<small>SAT</small></b></div>
+          <div class="day-h">
+            <div class="kick" style="color:var(--olive);">up into the mountains</div>
+            <h3>Ourika Valley &amp; the High Atlas</h3>
+            <div class="base">Full-day trip · ~65 km each way · private driver from the riad</div>
+          </div>
+          <!-- mountain + palm sketch -->
+          <svg class="day-sketch" viewBox="0 0 66 66" fill="none" stroke="#5F5D28" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 50 l14 -26 l9 15 l7 -11 l16 22z" fill="rgba(124,122,58,.20)"/>
+            <path d="M20 24 l4 6 M45 30 l-4 6" stroke="#2E8079"/>
+            <path d="M30 42 c0 -8 2 -12 2 -12 c0 0 2 4 2 12" stroke="#8F3A22"/>
+            <path d="M32 30 c-5 -4 -9 -3 -11 -6 M32 30 c5 -4 9 -3 11 -6 M32 31 c-4 -6 -4 -9 -4 -12 M32 31 c4 -6 4 -9 4 -12" stroke="#2E8079"/>
+            <path d="M8 50 h50" stroke="#5F5D28"/>
+          </svg>
+        </div>
+        <div class="tl">
+          <div class="stop"><div class="when">08:30</div><div class="what"><h4>Leave the city, climb the valley <span class="fact">~90 min drive</span></h4><p>A private driver collects you at the riad and heads south into the <a href="https://en.wikipedia.org/wiki/Ourika_River" target="_blank" rel="noopener">Ourika Valley</a> — terraced fields, red-earth villages, the Atlas rising green and wet against the desert. Book a private day (~€70–90 for the car, or a shared seat from ~€25pp); see the day-trips card below.</p><span class="move"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg> ~65 km up the R203 into the mountains</span></div></div>
+          <div class="stop"><div class="when">10:00</div><div class="what"><h4>An argan co-op &amp; mint tea</h4><p>Stop at a women's argan cooperative on the way up — watch the nuts cracked and pressed by hand, taste amlou (the argan-almond-honey butter), buy the oil at source if you want it. Twenty minutes, genuinely worth it, and the money stays in the valley.</p></div></div>
+          <div class="stop"><div class="when">11:00</div><div class="what"><h4>Setti Fatma &amp; the waterfalls <span class="fact">1,500 m · Berber village</span></h4><p><a href="https://en.wikipedia.org/wiki/Setti_Fatma" target="_blank" rel="noopener">Setti Fatma</a> sits at the head of the valley — hire a local guide at the village (100–200 MAD) for the scramble to the first of the seven cascades, about 45 minutes up over rock and little bridges. Wear real shoes; it's a proper clamber, not a stroll.</p><div class="tip skip"><b>skip →</b> the "guides" who latch on before you've agreed a price or the route. Fix the guide, the price and which waterfalls at the village start, in writing on your phone if you must.</div></div></div>
+          <div class="stop"><div class="when">13:30</div><div class="what"><h4>Tagine over the river</h4><p>Lunch at one of the riverside terraces with tables set literally in the shallows — a slow-cooked tagine and a cold drink with your feet near the water (60–100 MAD a plate). The valley air is ten degrees cooler than the city; this is the reprieve you came up for.</p></div></div>
+          <div class="stop"><div class="when">15:30</div><div class="what"><h4>The long descent, a viewpoint or two</h4><p>Wander back down with a couple of photo stops — a Berber village, a viewpoint over the terraces. If your dates land on a Monday there's a genuine country souk near the valley mouth; on a Saturday, just enjoy the quiet road down.</p></div></div>
+          <div class="stop"><div class="when">17:30</div><div class="what"><h4>Back to the riad, an easy night</h4><p>Home by early evening, dusty and content. Tonight is a quiet one — a light dinner near the riad, an early night. Tomorrow ends in the desert and you'll want the legs.</p></div></div>
+        </div>
+        <div class="tip"><b>carnet note →</b> Ourika is the popular Atlas day (closest, greenest, the waterfalls). If you'd rather trade waterfalls for real summits and a Berber village walk under Toubkal, ask me to swap this day for <em>Imlil</em> — same driver, wilder valley, harder walk. Either is a real day; this one's the softer, wetter one.</div>
+      </article>
+
+      <!-- ===== DAY 4 ===== -->
+      <article class="day">
+        <div class="tape" style="top:-11px; left:56px; transform:rotate(-2.5deg); background:var(--tape-saffron);"></div>
+        <div class="day-top">
+          <div class="day-badge" style="background:linear-gradient(150deg,#E9A63B,#C9791A);"><b>4<small>SUN</small></b></div>
+          <div class="day-h">
+            <div class="kick" style="color:var(--saffron-deep);">last souk, then the stones at sundown</div>
+            <h3>Souks by day, Agafay at dusk</h3>
+            <div class="base">Morning in the medina · sunset transfer to the desert · late flight</div>
+          </div>
+          <!-- camel / dune sketch -->
+          <svg class="day-sketch" viewBox="0 0 66 66" fill="none" stroke="#C9791A" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 46 q14 -8 28 -2 q16 6 30 -2" fill="rgba(228,151,43,.18)"/>
+            <circle cx="49" cy="16" r="5" fill="#E4972B" stroke="none" opacity=".8"/>
+            <path d="M18 44 v-8 q0 -4 4 -4 q2 -6 5 0 q1 -5 5 -2 q3 -6 5 1 v13" stroke="#8F3A22"/>
+            <path d="M18 36 l-2 -6 M40 36 l3 8" stroke="#8F3A22"/>
+            <path d="M22 44 v6 M27 44 v6 M33 44 v6 M38 44 v6" stroke="#8F3A22"/>
+            <path d="M4 50 h58" stroke="#C9791A"/>
+          </svg>
+        </div>
+        <div class="tl">
+          <div class="stop"><div class="when">09:00</div><div class="what"><h4>The souk, this time to buy <span class="fact">cash · haggle</span></h4><p>Now you know the prices. Go back for the one or two things worth carrying home — a leather pouf (they'll ship it), a Berber rug from a co-op, a bag of ras-el-hanout from a spice stall, a hand-hammered brass lamp. Start at a third of the ask, walk if it stalls; the second price is always better.</p></div></div>
+          <div class="stop"><div class="when">11:30</div><div class="what"><h4>A last mint tea, check out</h4><p>One more tea on the riad roof, pack the pouf, settle the bill. Leave the bags with the riad — most will mind them for the day so you're not dragging a suitcase into the desert.</p></div></div>
+          <div class="stop"><div class="when">13:00</div><div class="what"><h4>Lunch, then rest before the dunes</h4><p>A slow lunch and the last of the afternoon shade. The desert trip is an evening thing; there's no rush, and you'll be out late.</p></div></div>
+          <div class="stop"><div class="when">17:00</div><div class="what"><h4>Transfer to the Agafay desert <span class="fact">~40 min · transfer included</span></h4><p>A pickup runs you 40 minutes out to the <a href="https://en.wikipedia.org/wiki/Agafay_Desert" target="_blank" rel="noopener">Agafay</a> — not sand dunes but a lunar sweep of grey rock desert on the city's edge, the Atlas snow-capped on the horizon. Book a sunset camel + dinner combo (from ~€35pp, transfer included; see the card below).</p><span class="move"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg> ~30 km southwest, transfer included in the package</span></div></div>
+          <div class="stop"><div class="when">18:30</div><div class="what"><h4>Camel at golden hour, dinner under the stars</h4><p>A short camel walk along a Berber path as the sun drops, then dinner at a desert camp — tagine, a fire, drums, and a sky with no city in it. This is the send-off: the last light going pink on the Atlas, mint tea, the stones going cold.</p></div></div>
+          <div class="stop"><div class="when">22:00</div><div class="what"><h4>Collect bags, fly home <span class="fact">RAK → CDG</span></h4><p>Back to the riad for the luggage and out to Menara. If your flight's an early Monday instead, the camp will still have you back by 22:00 for a good night's sleep — either way, agree the airport run when you book the room.</p></div></div>
+        </div>
+        <div class="tip"><b>the send-off →</b> Agafay isn't the Sahara — that's a two-day drive and a different trip. But for a long weekend it's the honest trade: real desert silence, a real camel, the Atlas going gold, and you're back for your flight. Sand-dune purists, ask me for the Merzouga overnight version and we'll stretch the trip.</div>
+      </article>
+
+    </div>
+  </section>
