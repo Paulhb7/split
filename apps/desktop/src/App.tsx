@@ -21,6 +21,7 @@ import { Composer } from "./home/Composer";
 import { RosterOverlay } from "./home/RosterOverlay";
 import { SessionRow } from "./home/SessionRow";
 import { Conversation, type PeerAlert } from "./conversation/Conversation";
+import type { Session } from "./shared/models";
 import { ArtifactViewer } from "./conversation/ArtifactViewer";
 import { AtelierLeft } from "./conversation/AtelierLeft";
 import { AtelierWelcome } from "./conversation/AtelierWelcome";
@@ -130,8 +131,23 @@ export default function App() {
   const prevStatus = useRef<Record<string, string>>({});
 
   const focused = sessions.find((s) => s.id === focusedId) ?? null;
-  const authSession = sessions.find((s) => s.auth) ?? null;
+  // Sessions whose auth modal the boss dismissed — the sign-in ask stays live
+  // in the thread/row, only the blocking modal stops re-appearing. Pruned when
+  // a session's auth clears, so a later ask re-opens the modal.
+  const [authDismissed, setAuthDismissed] = useState<string[]>([]);
+  useEffect(() => {
+    setAuthDismissed((prev) => {
+      const next = prev.filter((id) => sessions.some((s) => s.id === id && s.auth));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [sessions]);
+  const authSession = sessions.find((s) => s.auth && !authDismissed.includes(s.id)) ?? null;
   const anyRunning = sessions.some((s) => s.status === "running");
+  // Attention-first home list: rows blocked on the boss (a permission ask or
+  // sign-in) float to the top, live runs next, the rest keep arrival order —
+  // sort is stable, so rows never churn within a group.
+  const rowRank = (s: Session) => ((s.pendingPermission || s.status === "auth") && !s.archived ? 0 : s.status === "running" && !s.archived ? 1 : 2);
+  const homeSessions = [...sessions].sort((a, b) => rowRank(a) - rowRank(b));
   // The composer brain — input value, attachments, `@`/`#`/`/` pickers and
   // chips — lives in shared/useComposer.tsx; one draft shared by the home
   // composer and the focused conversation's reply input, same as before.
@@ -467,7 +483,7 @@ export default function App() {
   function answerForm(answers: Record<string, string | string[]>, source: SubmitSource) {
     if (!focused?.questionForm) return;
     const wire = formatFormAnswers(focused.questionForm, answers);
-    const display = source === "skip" ? "↪︎ Questions passées — valeurs par défaut" : wire;
+    const display = source === "skip" ? "↪︎ Questions skipped — default values" : wire;
     send(focused.id, { display, wire, files: [] });
   }
   function submit() {
@@ -481,7 +497,8 @@ export default function App() {
     // While the @-mention / #-project picker is open, Enter picks the top
     // filtered entry (insert it into the input) instead of submitting.
     if (handlePickerEnter(e)) return;
-    if (e.key === "Enter") submit();
+    // Enter submits; Shift+Enter falls through to the textarea's newline.
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
     else if (e.key === "Escape") {
       if (menu) closePickers();
       else if (cabinetNoir) setCabinetNoir(false);
@@ -500,7 +517,9 @@ export default function App() {
       {/* chrome */}
       <Chrome
         running={anyRunning}
-        meta={focused ? `on ${H[focused.harness]?.label || focused.harness}` : sessions.length ? `${sessions.length} session${sessions.length === 1 ? "" : "s"}` : "ready"}
+        meta={sessions.length ? `${sessions.length} session${sessions.length === 1 ? "" : "s"}` : "ready"}
+        expertLabel={focused?.expertLabel}
+        fileCount={focused?.artifacts.length}
         showExpandToggle={onboarded && !focused}
         atelierMode={atelierMode}
         onToggleView={() => setView(atelierMode ? "list" : "atelier")}
@@ -527,7 +546,12 @@ export default function App() {
         // (no adaptive growth). Every focused conversation qualifies now — the
         // thread scrolls internally with the header + composer pinned — alongside
         // the atelier. Home keeps the adaptive bar (`tall` for overlays).
-        const fillMode = atelierMode || !!focused;
+        // Onboarding is `fill` too: its pages centre with `margin: auto`, which
+        // needs the definite flex height chain — under `tall` the percentage
+        // min-height chain (.measure → .ob2) resolves against an auto-height
+        // parent and WebKit lands centred or top-anchored depending on the
+        // layout pass.
+        const fillMode = atelierMode || !!focused || !onboarded;
         const bodyCls = "body" + (fillMode ? " fill" : isFullscreen ? " tall" : "");
         const measureCls = "measure" + (fillMode ? " fill" : isFullscreen ? " tall" : "");
         // A deliverable is open in the atelier → the centre splits (conversation
@@ -609,27 +633,15 @@ export default function App() {
                       </div>
                     ) : atelierArtOpen ? (
                       <div className="atelier-art">
-                        <div className="atelier-art-bar">
-                          {focused.artifacts.length > 1 && (
-                            <div className="atelier-deliv-tabs" role="tablist">
-                              {focused.artifacts.map((a) => (
-                                <button
-                                  key={a.rel}
-                                  role="tab"
-                                  aria-selected={a.rel === atelierArt}
-                                  className={"atelier-deliv-tab" + (a.rel === atelierArt ? " on" : "")}
-                                  onClick={() => setAtelierArt(a.rel)}
-                                  title={a.rel}
-                                >{a.rel.split("/").pop()}</button>
-                              ))}
-                            </div>
-                          )}
-                          <span className="atelier-art-spacer" />
-                          <button className="atelier-art-back" onClick={() => setAtelierArt(null)} title="Close deliverable — back to the project">✕ close</button>
-                        </div>
-                        <div className="atelier-art-body">
-                          <ArtifactViewer artifact={focused.artifacts.find((a) => a.rel === atelierArt)!} />
-                        </div>
+                        {/* One bar owns tabs + actions + close — inside the
+                            viewer, no second stacked strip. */}
+                        <ArtifactViewer
+                          artifact={focused.artifacts.find((a) => a.rel === atelierArt)!}
+                          tabs={focused.artifacts}
+                          activeRel={atelierArt ?? undefined}
+                          onPickTab={(rel) => setAtelierArt(rel)}
+                          onClose={() => setAtelierArt(null)}
+                        />
                       </div>
                     ) : focused.liveFrame ? (
                       <AtelierLiveView session={focused} />
@@ -653,7 +665,7 @@ export default function App() {
                     experts={experts} expertSlug={expertSlug} expertLabel={expertLabel} active={active}
                     engines={enabledHarnesses} onAddAgent={() => setOverlay(true)}
                     menu={menu} setMenu={setMenu} setActive={setActive}
-                    value={value} onChange={handleInputChange} onKey={onKey} onRun={launch} chips={chips} inputRef={inputRef}
+                    value={value} onChange={handleInputChange} onKey={onKey} onRun={launch} canSubmit={canSubmit} chips={chips} inputRef={inputRef}
                     expertEntries={filteredExperts} onPickExpert={pickExpert}
                     projects={filteredProjects} onPickProject={pickProject}
                     lockExpert onAttach={pickAttachments}
@@ -713,7 +725,7 @@ export default function App() {
               experts={experts} expertSlug={expertSlug} expertLabel={expertLabel} active={active}
               engines={enabledHarnesses} onAddAgent={() => setOverlay(true)}
               menu={menu} setMenu={setMenu} setActive={setActive}
-              value={value} onChange={handleInputChange} onKey={onKey} onRun={launch} chips={chips} inputRef={inputRef}
+              value={value} onChange={handleInputChange} onKey={onKey} onRun={launch} canSubmit={canSubmit} chips={chips} inputRef={inputRef}
               expertEntries={filteredExperts} onPickExpert={pickExpert}
               projects={filteredProjects} onPickProject={pickProject}
               onAttach={pickAttachments}
@@ -739,7 +751,7 @@ export default function App() {
               {sessions.length === 0 ? (
                 <div className="empty">No sessions yet — brief an expert above.<br />Its engine's logo shows here while it runs.</div>
               ) : (
-                sessions.map((s) => <SessionRow key={s.id} s={s} kind={experts[s.expertSlug]?.kind} onOpen={() => setFocusedId(s.id)} onStop={() => stop(s.id)} onClose={() => remove(s.id)} />)
+                homeSessions.map((s) => <SessionRow key={s.id} s={s} kind={experts[s.expertSlug]?.kind} onOpen={() => setFocusedId(s.id)} onStop={() => stop(s.id)} onClose={() => remove(s.id)} />)
               )}
             </div>
             </>}
@@ -768,15 +780,17 @@ export default function App() {
           initialSlug={typeof cabinet === "string" ? cabinet : null}
           onIceberg={titanicEgg}
           onClose={() => setCabinet(false)}
-          onLaunch={(slug, prompt) => {
+          onLaunch={(slug, prompt, template) => {
             // Launching a piece of work pushes straight into the atelier (the
             // fullscreen studio) — the gallery's highest-intent click is also
-            // the strongest pull toward fullscreen.
+            // the strongest pull toward fullscreen. When a real piece backs the
+            // card, `template` carries its HTML source so the agent starts from
+            // the actual deliverable, not a blank page (wire-only; see composeTurn).
             setCabinet(false);
             setExpertSlug(slug);
             setView("atelier");
             if (!prompt) return;
-            const turn = composeTurn(prompt, []);
+            const turn = composeTurn(prompt, [], template);
             start({ harness: active, expertSlug: slug, display: turn.display, wire: turn.wire, files: turn.files }).then(setFocusedId);
           }}
         />
@@ -822,7 +836,7 @@ export default function App() {
 
       {vaultOpen && <VaultOverlay onClose={() => setVaultOpen(false)} />}
 
-      {authSession && <AuthModal session={authSession} onPick={(m) => sendAuth(authSession.id, m)} />}
+      {authSession && <AuthModal session={authSession} onPick={(m) => sendAuth(authSession.id, m)} onClose={() => setAuthDismissed((p) => [...p, authSession.id])} />}
 
       {toasts.length > 0 && <div className="toasts">{toasts.map((t) => <div key={t.id} className="toast">{t.text}</div>)}</div>}
     </div>

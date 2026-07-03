@@ -1,4 +1,4 @@
-import { Crest } from "../shared/Crest";
+import { Avatar } from "../shared/Avatar";
 import { DeliverableSpotlight } from "./DeliverableExamples";
 import type { useExperts } from "../shared/util";
 import type { Session } from "../shared/models";
@@ -76,7 +76,7 @@ export function AtelierCanvasEmpty({ session, experts, onPick }: {
           </div>
         ) : (
           <div className="canvas-empty-hero">
-            <Crest kind={expert?.kind} seed={session.expertSlug} size={96} />
+            <Avatar slug={session.expertSlug} size={96} />
             {expert?.blurb && <p className="canvas-empty-blurb">{expert.blurb}</p>}
           </div>
         )}

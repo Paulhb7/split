@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Crest } from "../shared/Crest";
+import { Avatar } from "../shared/Avatar";
 import { vars } from "../shared/ui";
+import { brandOf } from "../shared/harnesses";
 import { isActiveExpert } from "../shared/experts";
 import type { useExperts } from "../shared/util";
 import type { Session } from "../shared/models";
@@ -88,19 +89,37 @@ export function AtelierLeft({ experts, sessions, focusedId, armedSlug, team, onT
     return () => { alive = false; };
   }, [tab]);
 
-  // Collapsed → a thin strip with a chevron, a vertical label, and a glance of
-  // live sessions (so you still see who's running even folded).
+  // Collapsed → a thin strip of mini-crests: each session as its own identifiable
+  // tile (per-expert crest + live status dot, active ringed in the engine's
+  // colour, click to focus), a chevron to expand, and a + to start a new one.
   if (collapsed) {
     return (
-      <button className="rail-stub left" onClick={onToggleCollapsed} title="Expand the rail">
-        <span className="rail-stub-x">›</span>
-        <span className="rail-stub-label">Sessions</span>
-        <span className="rail-stub-dots">
-          {sessions.slice(0, 4).map((s) => (
-            <span key={s.id} className={"rail-stub-dot" + (s.status === "running" ? " run" : "")} />
-          ))}
-        </span>
-      </button>
+      <div className="mini-rail left">
+        <button className="mini-expand" onClick={() => onToggleCollapsed?.()} title="Expand the rail" aria-label="Expand the rail">›</button>
+        {sessions.map((s) => {
+          const needs = s.status === "auth" ? "auth" : s.pendingPermission ? "perm" : null;
+          const live =
+            s.status === "running" ? "run"
+            : s.status === "error" ? "err"
+            : needs ? "warn"
+            : s.status === "ended" ? "end"
+            : "idle";
+          return (
+            <button
+              key={s.id}
+              className={"mini-crest" + (focusedId === s.id ? " active" : "")}
+              style={vars({ "--engine": brandOf(s.harness) })}
+              onClick={() => onFocus(s.id)}
+              title={`@${s.expertLabel} — ${s.status}`}
+            >
+              <Avatar slug={s.expertSlug} size={34} />
+              <span className={"mini-st " + live} />
+              {needs && <span className="mini-badge">!</span>}
+            </button>
+          );
+        })}
+        <button className="mini-add" onClick={() => onToggleCollapsed?.()} title="New session — expand the rail" aria-label="New session">+</button>
+      </div>
     );
   }
 
@@ -151,7 +170,7 @@ export function AtelierLeft({ experts, sessions, focusedId, armedSlug, team, onT
                           onClick={() => onToggleTeam(slug)}
                           title={hired ? `Drop ${e?.label} from your team` : `Hire ${e?.label}`}
                         >
-                          <span className="atelier-agent-crest"><Crest kind={e?.kind} seed={slug} size={40} /></span>
+                          <span className="atelier-agent-crest"><Avatar slug={slug} size={40} /></span>
                           <span className="atelier-agent-id">
                             <span className="atelier-agent-nm">{e?.label}</span>
                             <span className="atelier-agent-kind">{e?.kind}</span>
@@ -179,7 +198,7 @@ export function AtelierLeft({ experts, sessions, focusedId, armedSlug, team, onT
                       onClick={() => onArm(slug)}
                       title={e?.blurb}
                     >
-                      <span className="atelier-agent-crest"><Crest kind={e?.kind} seed={slug} size={40} /></span>
+                      <span className="atelier-agent-crest"><Avatar slug={slug} size={40} /></span>
                       <span className="atelier-agent-id">
                         <span className="atelier-agent-nm">{e?.label}</span>
                         <span className="atelier-agent-kind">{e?.kind}</span>
@@ -211,7 +230,7 @@ export function AtelierLeft({ experts, sessions, focusedId, armedSlug, team, onT
                   title={`@${s.expertLabel}${needs === "auth" ? " · needs sign-in" : needs === "perm" ? " · needs your approval" : ""}`}
                 >
                   <span className="atelier-agent-crest">
-                    <Crest kind={experts[s.expertSlug]?.kind} seed={s.expertSlug} size={40} />
+                    <Avatar slug={s.expertSlug} size={40} />
                     <span className={"att-live " + live} />
                     {needs && <span className="att-badge">!</span>}
                   </span>

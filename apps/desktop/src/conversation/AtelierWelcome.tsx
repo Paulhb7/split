@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { vars } from "../shared/ui";
-import { Crest } from "../shared/Crest";
+import { Avatar } from "../shared/Avatar";
 import type { ExpertMap } from "../shared/experts";
 import { DeliverableExamples } from "./DeliverableExamples";
 
@@ -54,7 +54,7 @@ export function AtelierWelcome({
       <div className="aw-hero">
         <div className="aw-crest-wrap">
           <span className="aw-crest-halo" aria-hidden="true" />
-          <Crest kind={expert?.kind} seed={expertSlug} size={120} />
+          <Avatar slug={expertSlug} size={120} />
         </div>
 
         <h2 className="aw-greet">Hi, I'm your <span className="aw-em">{expertLabel}</span>.</h2>

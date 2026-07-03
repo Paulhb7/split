@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { SKINS, type Skin } from "../shared/skins";
 import SplitMark from "../shared/SplitMark";
+import { Icon } from "../shared/ui";
 
 // The window chrome bar: the split mark (with the secret long-press into the
 // Cabinet Noir), the live/meta status, the expand chevron, and the gallery /
@@ -9,6 +10,8 @@ import SplitMark from "../shared/SplitMark";
 export function Chrome({
   running,
   meta,
+  expertLabel,
+  fileCount,
   showExpandToggle,
   atelierMode,
   onToggleView,
@@ -27,6 +30,10 @@ export function Chrome({
 }: {
   running: boolean;
   meta: string;
+  /** Focused session context — feeds the centred chrome line `@expert · N files`.
+      Absent (roster / no focus) → the plain `meta` string shows instead. */
+  expertLabel?: string;
+  fileCount?: number;
   showExpandToggle: boolean;
   atelierMode: boolean;
   onToggleView: () => void;
@@ -71,8 +78,21 @@ export function Chrome({
       {((shownSkin === "minuit" && smallHours) || skin === "cosmos") && (
         <button className={"wm-star" + (skin === "cosmos" ? " in" : "")} onClick={onCosmosEgg} type="button">✦</button>
       )}
-      <span className="chrome-meta">{meta}</span>
-      <span className="spacer" />
+      {/* Centred session context — fills what used to be the dead flex void.
+          `@expert · N files` when a session is focused (the harness is NOT
+          echoed here — it lives once, in the conversation header), else the
+          plain status string. `margin:0 auto` self-centres between the wordmark
+          and the tools. */}
+      <span className="chrome-ctx">
+        {expertLabel ? (
+          <>
+            <b>@{expertLabel}</b>
+            {fileCount ? (
+              <><span className="sep">·</span><span>{fileCount} file{fileCount === 1 ? "" : "s"}</span></>
+            ) : null}
+          </>
+        ) : meta}
+      </span>
       {/* The window SIZE is the mode — one chevron toggles it: ⊡ maximise →
           atelier, ⊟ shrink → the floating bar. Shown only when NO conversation
           is focused; inside a conversation the header's own chevron takes over. */}
@@ -94,7 +114,7 @@ export function Chrome({
       </button>
       {/* History lives in the atelier rail's History tab now (one entry, no
           redundant chrome button) — see AtelierLeft + "Tout l'historique →". */}
-      <button className="iconbtn" onClick={onOpenVault} title="Vault — everything your experts know & produce">🗃️</button>
+      <button className="iconbtn" onClick={onOpenVault} title="Vault — everything your experts know & produce" aria-label="Open the vault"><Icon name="vault" size={15} /></button>
       <div className="skin-wrap">
         <button className="iconbtn" onClick={() => setMoreMenu((v) => (v ? false : "root"))} title="More — skin, onboarding">⋯</button>
         {moreMenu && (
@@ -112,10 +132,10 @@ export function Chrome({
                     <span className="more-chev">▸</span>
                   </button>
                   <button className="more-item" onClick={() => { setMoreMenu(false); onOpenVault(); }} role="menuitem">
-                    <span className="more-ic">🗃️</span>
+                    <span className="more-ic"><Icon name="vault" size={13} /></span>
                     <span className="more-meta">
                       <b>Vault</b>
-                      <small>tout ce que tes experts savent</small>
+                      <small>everything your experts know</small>
                     </span>
                   </button>
                   <button className="more-item" onClick={() => { setMoreMenu(false); onReplayOnboarding(); }} role="menuitem">
