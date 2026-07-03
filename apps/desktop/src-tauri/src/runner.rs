@@ -968,9 +968,9 @@ pub async fn run_session(
         let archive_for_loop = archive.clone();
         let harness_for_loop = harness.clone();
 
-        // Permissions: persisted rules path + in-memory session allowlist.
-        // The set is Arc<Mutex<>> so the per-request closure can mutate it
-        // when the user picks "allow for this session".
+        // Permissions: persisted rules path + in-memory session allow/deny
+        // sets. Arc<Mutex<>> so the per-request closure can mutate them when
+        // the user picks "allow/deny for this session".
         let perms_path = sessions_dir
             .parent()
             .unwrap_or(&sessions_dir)
@@ -978,6 +978,9 @@ pub async fn run_session(
         let session_allow: Arc<Mutex<std::collections::HashSet<String>>> =
             Arc::new(Mutex::new(std::collections::HashSet::new()));
         let session_allow_for_perm = session_allow.clone();
+        let session_deny: Arc<Mutex<std::collections::HashSet<String>>> =
+            Arc::new(Mutex::new(std::collections::HashSet::new()));
+        let session_deny_for_perm = session_deny.clone();
         let perms_path_for_perm = perms_path.clone();
         let mcp_names_for_perm = mcp_server_names.clone();
 
@@ -1086,7 +1089,13 @@ pub async fn run_session(
                 async move |request: RequestPermissionRequest, responder, _conn| {
                     let tool_id = extract_tool_id(&request, &mcp_names_for_perm);
 
-                    // Fast path 1: in-memory "allow for this session" set.
+                    // Fast path 1: in-memory session-scoped decisions
+                    // (deny checked first — deny > allow, like the rules).
+                    if session_deny_for_perm.lock().unwrap().contains(&tool_id) {
+                        return responder.respond(RequestPermissionResponse::new(
+                            RequestPermissionOutcome::Cancelled,
+                        ));
+                    }
                     if session_allow_for_perm.lock().unwrap().contains(&tool_id) {
                         if let Some(opt) = pick_option(&request.options, "allow") {
                             return responder.respond(RequestPermissionResponse::new(
@@ -1160,11 +1169,17 @@ pub async fn run_session(
 
                     // Persistence per scope (matches the Python flow):
                     //   once          — nothing extra
-                    //   session       — add tool_id to the per-runner set
+                    //   session       — add tool_id to the per-runner allow
+                    //                   or deny set (which one = the verb)
                     //   always-allow  — append "<expert>:<generalized>" to allow
                     //   always-deny   — append to deny
                     if picked.is_some() && scope == "session" {
                         session_allow_for_perm
+                            .lock()
+                            .unwrap()
+                            .insert(tool_id.clone());
+                    } else if picked.is_none() && scope == "session" {
+                        session_deny_for_perm
                             .lock()
                             .unwrap()
                             .insert(tool_id.clone());

@@ -372,6 +372,40 @@ async fn permission_flow_allow_deny_and_session_scope() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn session_scoped_deny_skips_the_dialog() {
+    let mut s = start_session("permdeny", "perm", Vec::new());
+    s.next_vevt("ready").await;
+
+    // ── turn 1: deny for this session ────────────────────────────────────
+    s.send(RunnerInput::Turn("t1".to_string()));
+    let req = s.next_vevt("permission_request").await;
+    reply_permission(req["id"].as_str().unwrap(), None, "session");
+    let (vevts, _) = s.drain_turn().await;
+    assert!(
+        says(&vevts).contains("perm:denied"),
+        "got: {}",
+        says(&vevts)
+    );
+
+    // ── turn 2: same tool — auto-denied, no dialog ───────────────────────
+    s.send(RunnerInput::Turn("t2".to_string()));
+    let (vevts, _) = s.drain_turn().await;
+    assert!(
+        !vevts.iter().any(|v| v["type"] == "permission_request"),
+        "session-scoped deny must skip the dialog"
+    );
+    assert!(
+        says(&vevts).contains("perm:denied"),
+        "got: {}",
+        says(&vevts)
+    );
+
+    s.send(RunnerInput::Stop);
+    s.drain_to_close().await;
+    let _ = std::fs::remove_dir_all(&s.base);
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn always_allow_persists_a_generalized_rule() {
     let mut s = start_session("permrule", "perm", Vec::new());
     s.next_vevt("ready").await;

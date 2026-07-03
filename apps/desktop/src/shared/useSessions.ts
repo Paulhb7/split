@@ -223,7 +223,8 @@ export function useSessions(experts: ExpertMap) {
 
   // Answer a pending permission_request. `optionId = null` denies. `scope`:
   //   "once"          — this call only
-  //   "session"       — runner adds tool_id to the in-memory session allowlist
+  //   "session"       — runner adds tool_id to the in-memory session allow
+  //                     (or, with a null optionId, deny) set
   //   "always-allow"  — runner persists "<expert>:<tool_id>" to var/permissions.json (allow)
   //   "always-deny"   — same, deny
   // We optimistically clear pendingPermission here — the runner has no echo event.
