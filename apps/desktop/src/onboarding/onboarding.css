@@ -7,7 +7,11 @@
      5 · Spread / Cast        — finalstretch.css
    Lives inside .app (inherits its tokens). Design boards:
    apps/desktop/design/onboarding-proposals/final-flow.html. */
-.ob2 { --ease: cubic-bezier(0.2, 0.8, 0.2, 1); max-width: 1200px; margin: 0 auto; padding: 32px 36px 0; display: flex; flex-direction: column; min-height: 100%; }
+/* Rendered on the `fill` canvas (App gives it flex:1 + min-height:0 via
+   `.measure.fill > *`), so the column always spans the window and the pages'
+   `margin: auto` centring is deterministic; scrolls itself if the screen is
+   shorter than a page. min-height:100% stays as the fallback outside fill. */
+.ob2 { --ease: cubic-bezier(0.2, 0.8, 0.2, 1); width: 100%; max-width: 1200px; margin: 0 auto; padding: 32px 36px 0; display: flex; flex-direction: column; min-height: 100%; overflow-y: auto; }
 .ob2-page { flex: 1; display: flex; flex-direction: column; min-height: 0; animation: pageIn 0.5s var(--ease) both; }
 @keyframes pageIn { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
 

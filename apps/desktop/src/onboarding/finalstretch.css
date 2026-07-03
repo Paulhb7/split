@@ -69,6 +69,79 @@
 .cst-ix-cat .c { color: var(--dim); }
 .cst-ix-cat .ct { color: var(--dim2); }
 .cst-ix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 14px; }
+
+/* Delos-style avatar cards — one full-body avatar per card, name + role over a
+   bottom gradient, ★ to hire. Source art is 3:4 so cover shows the whole figure
+   with no crop. Replaces the small avatar+text rows in the onboarding roster. */
+.cst-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(116px, 1fr)); gap: 12px; margin-top: 4px; }
+.face-spread .cst-cards { grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); }
+.cst-card { position: relative; aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden; padding: 0; cursor: pointer;
+  border: 1px solid var(--line2); background: color-mix(in srgb, var(--text) 3%, #0b0b0d); transition: transform .18s, border-color .18s, box-shadow .18s; }
+.cst-card:hover { border-color: var(--line); transform: translateY(-2px); }
+.cst-card.sel { border-color: color-mix(in srgb, var(--brand) 75%, var(--line)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 45%, transparent); }
+.cst-card.hired { border-color: color-mix(in srgb, var(--brand) 55%, var(--line)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 40%, transparent), 0 10px 26px -14px color-mix(in srgb, var(--brand) 60%, transparent); }
+.cst-card-img { width: 100%; height: 100%; object-fit: cover; object-position: center 10%; display: block; }
+.cst-card-cap { position: absolute; inset: auto 0 0 0; padding: 22px 10px 8px; text-align: left; display: flex; flex-direction: column; gap: 1px; pointer-events: none;
+  background: linear-gradient(to top, rgba(0,0,0,.85) 18%, rgba(0,0,0,.35) 62%, rgba(0,0,0,0)); }
+.cst-card-nm { font-size: 12.5px; font-weight: 650; letter-spacing: -0.01em; line-height: 1.1; color: #fff; }
+.cst-card.genius .cst-card-nm { font-family: var(--disp); font-style: italic; font-weight: 500; font-size: 13.5px; }
+.cst-card-kd { font-family: var(--mono); font-size: 8px; color: rgba(255,255,255,0.62); text-transform: uppercase; letter-spacing: 0.05em; }
+.cst-card-star { position: absolute; top: 6px; right: 7px; z-index: 2; font-size: 15px; line-height: 1; color: rgba(255,255,255,0.78); text-shadow: 0 1px 3px rgba(0,0,0,0.6); opacity: 0.9; transition: transform .12s; }
+.cst-card.hired .cst-card-star { color: var(--brand); opacity: 1; }
+.cst-card-star:hover { transform: scale(1.18); }
+
+/* ---- Stage layout (cast v2): big hero render on top, grid below ---- */
+.cst-spread.cst-stagev { display: block; overflow-y: auto; }
+.cst-stagev .cst-head { margin-bottom: 16px; }
+.cst-stage { display: grid; grid-template-columns: minmax(220px, 320px) 1fr; gap: 26px; align-items: center;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--text) 4%, transparent), transparent);
+  border: 1px solid var(--line); border-radius: 20px; padding: 0 30px 0 4px; overflow: hidden; min-height: 336px; margin-bottom: 10px; }
+.cst-stage-pic { position: relative; aspect-ratio: 3 / 4; max-height: 412px; margin: 22px 0; align-self: center;
+  border-radius: 16px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--hue) 32%, var(--line));
+  box-shadow: 0 24px 55px -22px color-mix(in srgb, var(--hue) 45%, #000); }
+.cst-stage-pic::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  box-shadow: inset 0 -70px 60px -50px color-mix(in srgb, var(--hue) 55%, transparent); }
+.cst-stage-img { width: 100%; height: 100%; object-fit: cover; object-position: center 8%; display: block; animation: cstFade .28s ease; }
+@keyframes cstFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.cst-stage-glow { display: none; }
+.cst-stage-info { padding: 26px 0; min-width: 0; }
+.cst-stage-tag { font: 9px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--hue); }
+.cst-stage-nm { font: 600 32px/1.03 -apple-system, sans-serif; letter-spacing: -.02em; margin: 8px 0 3px; color: var(--text); }
+.cst-stage-nm.gen { font-family: var(--disp); font-style: italic; font-weight: 500; font-size: 36px; }
+.cst-stage-role { font: 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--dim2); }
+.cst-stage-voice { font: italic 20px/1.42 var(--disp); color: #e9e2d2; margin: 16px 0; max-width: 46ch; }
+.cst-stage-voice .mk { color: var(--hue); font-size: 25px; margin-right: 2px; }
+.cst-stage-hire { margin-top: 8px; padding: 11px 22px; border-radius: 12px; cursor: pointer; font: 600 14px -apple-system;
+  border: 1px solid color-mix(in srgb, var(--hue) 45%, var(--line)); background: color-mix(in srgb, var(--hue) 16%, transparent); color: var(--text); transition: .15s; }
+.cst-stage-hire:hover { background: color-mix(in srgb, var(--hue) 26%, transparent); }
+.cst-stage-hire.on { background: var(--hue); color: #0b0b0d; border-color: var(--hue); }
+
+/* the maker's deliverables, in the stage */
+.cst-stage-work { margin: 18px 0 18px; }
+.cst-stage-work-lbl { font: 9px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim2); margin-bottom: 9px; }
+.cst-stage-work-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.cst-work-card { width: 154px; border: 1px solid var(--line2); border-radius: 11px; overflow: hidden; background: color-mix(in srgb, var(--text) 2%, transparent); transition: .16s; }
+.cst-work-card:hover { border-color: color-mix(in srgb, var(--hue) 45%, var(--line)); transform: translateY(-2px); }
+.cst-work-prev { height: 90px; overflow: hidden; position: relative; border-bottom: 1px solid var(--line2); }
+.cst-work-thumb { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+.cst-work-meta { padding: 7px 9px 9px; }
+.cst-work-type { font: 8px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--hue); display: flex; align-items: center; gap: 5px; }
+.cst-work-type i { width: 4px; height: 4px; border-radius: 50%; background: var(--hue); display: inline-block; }
+.cst-work-title { font-size: 12px; font-weight: 600; margin-top: 3px; line-height: 1.15; }
+
+.cst-roster { margin-top: 6px; }
+.cst-stagev .cst-cards { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); }
+
+/* per-agent hue on the cards (overrides the earlier --brand accents) */
+.cst-card::after { content: ""; position: absolute; inset: 0; border-radius: 14px; pointer-events: none; box-shadow: inset 0 0 0 0 var(--hue); transition: .2s; }
+.cst-card:hover { border-color: color-mix(in srgb, var(--hue) 55%, var(--line)); }
+.cst-card:hover::after { box-shadow: inset 0 -50px 44px -38px color-mix(in srgb, var(--hue) 55%, transparent); }
+.cst-card.sel, .cst-card.active { border-color: color-mix(in srgb, var(--hue) 78%, var(--line)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--hue) 48%, transparent); }
+.cst-card.hired { border-color: color-mix(in srgb, var(--hue) 58%, var(--line)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--hue) 42%, transparent), 0 12px 30px -16px color-mix(in srgb, var(--hue) 65%, transparent); }
+.cst-card.hired .cst-card-star { color: var(--hue); }
+
+@media (max-width: 720px) { .cst-stage { grid-template-columns: 1fr; padding: 0 16px 16px; } .cst-stage-pic { height: 290px; } }
+
 .cst-ix-cell { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; border: 1px solid transparent; transition: 0.16s;
   width: 100%; text-align: left; font-family: inherit; color: var(--text); background: none; cursor: pointer; }
 .cst-ix-cell:hover { background: color-mix(in srgb, var(--text) 2%, transparent); border-color: var(--line2); }
