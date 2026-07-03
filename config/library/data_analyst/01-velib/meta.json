@@ -1,0 +1,10 @@
+{
+  "expert": "data_analyst",
+  "key": "velib",
+  "type": "dashboard",
+  "title": "Vélib' network dashboard",
+  "desc": "1,517 stations, real snapshot",
+  "brief": "An interactive exploration dashboard of a real Vélib' Métropole network snapshot (dataset velib-disponibilite-en-temps-reel, opendata.paris.fr, exported 3 July 2026 at 08:01 UTC — 1,517 stations embedded in the file): a KPI strip (stations, bikes available, mechanical vs e-bike split, free docks), a Leaflet station map where dot size encodes capacity and colour encodes fill rate, availability histograms, a mechanical/e-bike fleet split by arrondissement, top-10 fullest and emptiest station boards with fly-to on click, and a métro-roundel arrondissement filter that recomputes every panel.",
+  "da": "Paris-transit signage — jade green and midnight navy on cream, Public Sans + Geist Mono, métro-style roundels and line accents, map-forward layout.",
+  "generated": "2026-07-03"
+}

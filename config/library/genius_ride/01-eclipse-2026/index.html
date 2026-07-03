@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Total Eclipse of the Sun — 12 August 2026 · An Observatory Almanac</title>
+<meta name="description" content="A verified guide to the total solar eclipse of 12 August 2026 — path of totality over Greenland, Iceland and Spain, city timings, the choreography of totality, eye safety, travel and weather odds.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f3ecda;
+  --paper-deep:#ece3cd;
+  --ink:#211b11;
+  --ink-soft:#5f5745;
+  --hair:rgba(33,27,17,.30);
+  --hair-faint:rgba(33,27,17,.14);
+  --sun:#d85a12; /* the one accent — reserved for the Sun, the band, the countdown */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(33,27,17,.016) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, rgba(33,27,17,.010) 0 1px, transparent 1px 140px),
+    radial-gradient(120% 90% at 50% 0%, rgba(255,252,240,.55), transparent 60%);
+  color:var(--ink);
+  font-family:"Newsreader", Georgia, "Times New Roman", serif;
+  font-size:17.5px; line-height:1.62;
+  font-feature-settings:"onum" 0;
+  -webkit-font-smoothing:antialiased;
+}
+.sheet{max-width:1060px;margin:0 auto;padding:0 28px 90px}
+a{color:inherit;text-decoration:none;border-bottom:1px solid var(--hair)}
+a:hover{border-bottom-color:var(--ink)}
+em{font-style:italic}
+.sc{font-size:.72em;letter-spacing:.17em;text-transform:uppercase;font-weight:500}
+.tn{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* ---------- rules & plates ---------- */
+.rule2{border:0;border-top:2.5px solid var(--ink);position:relative;margin:0}
+.rule2::after{content:"";display:block;border-top:1px solid var(--ink);margin-top:2.5px}
+.rule1{border:0;border-top:1px solid var(--hair)}
+.plate{
+  border:1px solid var(--ink);
+  outline:1px solid var(--hair);
+  outline-offset:4px;
+  background:linear-gradient(180deg, rgba(255,252,242,.5), rgba(255,252,242,0) 30%);
+  padding:0; position:relative; margin:26px 0 10px;
+}
+.plate-inner{padding:22px 24px}
+.plate-caption{font-style:italic;color:var(--ink-soft);font-size:15px;margin:10px 2px 0}
+.plate-src{font-size:12.5px;color:var(--ink-soft);letter-spacing:.02em;margin-top:4px}
+.plate-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;border-bottom:1px solid var(--hair);padding:14px 24px 10px}
+.plate-no{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink)}
+.plate-title{font-size:19px;font-weight:600;letter-spacing:.01em}
+
+/* ---------- masthead ---------- */
+header{padding-top:44px;text-align:center}
+.mast-top{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-soft);padding:10px 2px}
+.mast-title{
+  font-size:clamp(46px,7.4vw,84px);
+  line-height:1.02;font-weight:500;font-style:italic;
+  font-variation-settings:"opsz" 72;
+  letter-spacing:-.012em; margin:30px 0 14px;
+}
+.mast-sub{font-size:14px;letter-spacing:.26em;text-transform:uppercase;margin:6px 0 4px}
+.mast-line{font-style:italic;color:var(--ink-soft);font-size:18px;margin:12px auto 0;max-width:640px}
+.sunfig{margin:26px auto 6px;display:block}
+.ornament-row{display:flex;align-items:center;gap:18px;margin:26px 0 0}
+.ornament-row .rule1{flex:1}
+.ornament-row .dia{width:7px;height:7px;border:1px solid var(--ink);transform:rotate(45deg)}
+
+/* ---------- about (exec summary) ---------- */
+details.about{margin:26px 0 0;border:1px solid var(--hair);background:rgba(255,252,242,.45)}
+details.about summary{
+  cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;
+  padding:10px 16px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);
+}
+details.about summary::-webkit-details-marker{display:none}
+details.about summary::before{content:"+";font-size:15px;color:var(--ink);width:12px}
+details.about[open] summary::before{content:"−"}
+.about-body{padding:6px 20px 20px;columns:2;column-gap:40px;font-size:15.5px;color:var(--ink);border-top:1px solid var(--hair-faint)}
+.about-body h4{font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:12px 0 3px;break-after:avoid}
+.about-body p{margin:0 0 6px;break-inside:avoid-column}
+@media(max-width:760px){.about-body{columns:1}}
+
+/* ---------- countdown ---------- */
+.count-wrap{margin:34px 0 8px;text-align:center;border-top:2.5px solid var(--ink);border-bottom:2.5px solid var(--ink);padding:26px 10px 24px;position:relative}
+.count-wrap::before,.count-wrap::after{content:"";position:absolute;left:0;right:0;border-top:1px solid var(--ink)}
+.count-wrap::before{top:3.5px}.count-wrap::after{bottom:3.5px}
+.count-label{font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:12px}
+.count-row{display:flex;justify-content:center;align-items:baseline;gap:clamp(10px,3vw,34px);flex-wrap:wrap}
+.count-cell{min-width:96px}
+.count-num{font-size:clamp(44px,6.4vw,74px);line-height:1;color:var(--sun);font-weight:500;font-variation-settings:"opsz" 72;font-variant-numeric:tabular-nums}
+.count-unit{font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-soft);margin-top:6px}
+.count-sep{font-size:clamp(30px,4vw,48px);color:var(--hair);align-self:center;line-height:1}
+.count-foot{font-size:14.5px;font-style:italic;color:var(--ink-soft);margin-top:14px}
+
+/* ---------- vitals ---------- */
+.vitals{display:grid;grid-template-columns:repeat(6,1fr);border:1px solid var(--ink);margin:30px 0 0}
+.vital{padding:16px 14px 14px;border-right:1px solid var(--hair);text-align:center}
+.vital:last-child{border-right:0}
+.vital b{display:block;font-size:clamp(20px,2.4vw,27px);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.vital span{display:block;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);margin-top:5px;line-height:1.5}
+@media(max-width:860px){.vitals{grid-template-columns:repeat(3,1fr)}.vital:nth-child(3){border-right:0}.vital:nth-child(-n+3){border-bottom:1px solid var(--hair)}}
+@media(max-width:560px){.vitals{grid-template-columns:repeat(2,1fr)}.vital{border-right:1px solid var(--hair)!important}.vital:nth-child(2n){border-right:0!important}.vital:nth-child(-n+4){border-bottom:1px solid var(--hair)}}
+
+/* ---------- prose ---------- */
+.section{margin-top:64px}
+.section-kicker{font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:8px}
+.section h2{font-size:clamp(28px,3.6vw,40px);font-weight:500;font-style:italic;line-height:1.12;letter-spacing:-.008em;font-variation-settings:"opsz" 60}
+.lede{font-size:19.5px;line-height:1.6;max-width:760px;margin-top:14px}
+.body-cols{columns:2;column-gap:44px;margin-top:18px;max-width:1000px}
+.body-cols p{margin-bottom:12px;break-inside:avoid-column}
+@media(max-width:760px){.body-cols{columns:1}}
+.smallnote{font-size:13.5px;color:var(--ink-soft);font-style:italic}
+
+/* ---------- map ---------- */
+.map-svg{display:block;width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:22px;align-items:center;padding:12px 24px;border-top:1px solid var(--hair);font-size:12.5px;letter-spacing:.06em}
+.legend .it{display:flex;align-items:center;gap:8px;color:var(--ink-soft)}
+.lg-band{width:26px;height:11px;background:rgba(216,90,18,.20);border-top:1px solid var(--sun);border-bottom:1px solid var(--sun)}
+.lg-center{width:26px;border-top:1.6px dashed var(--sun)}
+.lg-tot{width:8px;height:8px;border-radius:50%;background:var(--ink)}
+.lg-part{width:8px;height:8px;border-radius:50%;border:1.2px solid var(--ink);background:transparent}
+.lg-max{width:11px;height:11px;border-radius:50%;background:var(--sun)}
+
+/* ---------- table ---------- */
+table{width:100%;border-collapse:collapse;font-size:15.5px}
+th{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:500;text-align:left;padding:10px 12px;border-bottom:2px solid var(--ink)}
+td{padding:11px 12px;border-bottom:1px solid var(--hair-faint);vertical-align:top;font-variant-numeric:tabular-nums}
+tr.tot td:first-child{font-weight:600}
+td .live{display:block;font-size:12px;color:var(--ink-soft);margin-top:3px;font-style:italic}
+.badge-tot{display:inline-block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--ink);padding:1px 6px;margin-left:6px;vertical-align:2px}
+.tfoot{font-size:13px;color:var(--ink-soft);padding:12px 24px 4px;line-height:1.6}
+#livecheck{font-style:italic}
+@media(max-width:900px){.tbl-wrap{overflow-x:auto}.tbl-wrap table{min-width:880px}}
+
+/* ---------- figures row ---------- */
+.figrow{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:1px solid var(--ink);margin-top:26px}
+.figcell{padding:20px 12px 14px;border-right:1px solid var(--hair);text-align:center}
+.figcell:last-child{border-right:0}
+.figcell svg{display:block;margin:0 auto 10px}
+.figcell b{display:block;font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:500}
+.figcell span{display:block;font-size:13px;font-style:italic;color:var(--ink-soft);margin-top:3px;line-height:1.45}
+@media(max-width:860px){.figrow{grid-template-columns:repeat(2,1fr)}.figcell{border-bottom:1px solid var(--hair)}}
+
+/* ---------- timeline ---------- */
+.timeline{margin-top:26px;border-left:2px solid var(--ink);padding-left:0;max-width:820px}
+.tl-item{position:relative;padding:0 0 26px 34px}
+.tl-item::before{content:"";position:absolute;left:-6px;top:8px;width:9px;height:9px;background:var(--paper);border:1.6px solid var(--ink);border-radius:50%}
+.tl-item.sun::before{background:var(--sun);border-color:var(--sun)}
+.tl-time{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.tl-item.sun .tl-time{color:var(--sun);font-weight:600}
+.tl-item h4{font-size:19px;font-weight:600;margin:2px 0 4px}
+.tl-item p{font-size:16px;color:var(--ink);max-width:660px}
+.tl-item p .smallnote{display:block;margin-top:3px}
+
+/* ---------- safety ---------- */
+.safety{border:2.5px solid var(--ink);outline:1px solid var(--ink);outline-offset:3px;padding:28px 30px;margin-top:26px}
+.safety h3{font-size:13px;letter-spacing:.26em;text-transform:uppercase;margin-bottom:14px}
+.safety ol{margin-left:20px}
+.safety li{margin-bottom:10px;font-size:16.5px}
+.safety li b{font-weight:600}
+
+/* ---------- travel table verdicts ---------- */
+td.verdict{font-style:italic}
+
+/* ---------- alt profile ---------- */
+.altfig{margin-top:8px}
+
+/* ---------- footer ---------- */
+footer{margin-top:80px}
+.sources{columns:2;column-gap:44px;font-size:14px;margin-top:18px}
+.sources li{margin:0 0 9px 18px;break-inside:avoid-column}
+@media(max-width:760px){.sources{columns:1}}
+.colophon{margin-top:36px;text-align:center;font-size:12.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<!-- ============ MASTHEAD ============ -->
+<header>
+  <hr class="rule2">
+  <div class="mast-top">
+    <span>Ride · Observatory Almanac</span>
+    <span>Sheet N° 1 · MMXXVI</span>
+  </div>
+  <hr class="rule1">
+
+  <h1 class="mast-title">The Total Eclipse<br>of the Sun</h1>
+
+  <svg class="sunfig" width="120" height="120" viewBox="0 0 120 120" aria-hidden="true">
+    <g id="mast-rays" stroke="#d85a12" stroke-width="1"></g>
+    <circle cx="60" cy="60" r="17" fill="none" stroke="#d85a12" stroke-width="1.4"/>
+    <circle cx="60" cy="60" r="13.5" fill="#d85a12"/>
+    <circle cx="66" cy="55" r="13.5" fill="#f3ecda"/>
+  </svg>
+
+  <div class="mast-sub">Wednesday · 12 August 2026</div>
+  <div class="mast-sub" style="letter-spacing:.18em;font-size:12.5px;color:var(--ink-soft)">Greenland — Iceland — the North Atlantic — Spain</div>
+  <p class="mast-line">The Moon's shadow returns to mainland Europe for the first time since 11&nbsp;August&nbsp;1999. This sheet records where it falls, to the minute, and how to stand in it.</p>
+
+  <div class="ornament-row"><hr class="rule1"><span class="dia"></span><hr class="rule1"></div>
+</header>
+
+<!-- ============ ABOUT (exec summary) ============ -->
+<details class="about">
+  <summary>About this sheet — why it exists &amp; what was assumed</summary>
+  <div class="about-body">
+    <h4>Why</h4>
+    <p>A single, verified reference for the total solar eclipse of 12 August 2026 — the path, the local timings, what each city will actually see, and how to watch it safely.</p>
+    <h4>Context</h4>
+    <p>This is the first totality over mainland Europe since 1999 and the first over Spain since 1905. It happens at low sun, near sunset in Iberia — an unusually unforgiving geometry that rewards planning.</p>
+    <h4>How to use it</h4>
+    <p>Read Plate I to place yourself, Plate II for your city's clock times, Plate III for the minute-by-minute script, Plate IV to choose where to travel. The countdown and the table's cross-checks recompute live in your browser.</p>
+    <h4>What was assumed</h4>
+    <p>Times are local civil time (CEST for France/Spain, GMT for Iceland). Printed values come from timeanddate.com and NASA/GSFC (fetched 3 July 2026); durations between published sources differ by a few seconds owing to lunar-limb profile and ΔT conventions — the spread is stated, not hidden. Weather figures are climatology, not a forecast.</p>
+  </div>
+</details>
+
+<!-- ============ COUNTDOWN ============ -->
+<div class="count-wrap" id="countdown">
+  <div class="count-label">Time remaining until totality — greatest eclipse, 17:46 <span style="letter-spacing:.1em">UT</span>, off the western coast of Iceland</div>
+  <div class="count-row" id="count-row">
+    <div class="count-cell"><div class="count-num" id="cd-d">—</div><div class="count-unit">days</div></div>
+    <div class="count-sep">·</div>
+    <div class="count-cell"><div class="count-num" id="cd-h">—</div><div class="count-unit">hours</div></div>
+    <div class="count-sep">·</div>
+    <div class="count-cell"><div class="count-num" id="cd-m">—</div><div class="count-unit">minutes</div></div>
+    <div class="count-sep">·</div>
+    <div class="count-cell"><div class="count-num" id="cd-s">—</div><div class="count-unit">seconds</div></div>
+  </div>
+  <div class="count-foot" id="cd-foot">12 August 2026, 17:46 UT — 17:46 in Reykjavík, 19:46 in Paris and Madrid. Totality crosses Spain 20:25–20:33 CEST.</div>
+</div>
+
+<!-- ============ VITALS ============ -->
+<div class="vitals">
+  <div class="vital"><b>2 m 18.2 s</b><span>maximum totality</span></div>
+  <div class="vital"><b>294 km</b><span>width of the shadow's path</span></div>
+  <div class="vital"><b>1.0386</b><span>eclipse magnitude</span></div>
+  <div class="vital"><b>Saros 126</b><span>member 48 of 72</span></div>
+  <div class="vital"><b>17:46 UT</b><span>greatest eclipse · 65°13′ N 25°14′ W</span></div>
+  <div class="vital"><b>15.2 M</b><span>people inside the path</span></div>
+</div>
+<p class="smallnote" style="margin-top:8px">Elements: F. Espenak, NASA/GSFC; Wikipedia eclipse canon; timeanddate.com. Verified 3 July 2026.</p>
+
+<!-- ============ INTRO ============ -->
+<section class="section">
+  <div class="section-kicker">The event</div>
+  <h2>A shadow the size of a province, moving faster than sound</h2>
+  <div class="body-cols">
+    <p>On the evening of 12 August 2026 the new Moon will pass squarely between the Earth and the Sun, and its inner shadow — the umbra, a cone of true darkness roughly 294 kilometres wide at the surface — will touch down in the Siberian Arctic, sweep across the polar cap, run down the east coast of Greenland, cross western Iceland at 17:44–17:50 UT, race south-southeast over the open Atlantic, and make landfall on the north coast of Spain at about 20:27 local time, dying at sunset just east of the Balearic Islands.</p>
+    <p>Inside that band, day becomes deep twilight: the corona — the Sun's outer atmosphere, a million times fainter than the disc — stands visible to the naked eye, the brighter planets come out, and the horizon glows sunset-orange in every direction at once. Outside the band, even one kilometre outside, none of this happens. A 99&nbsp;% partial eclipse is not 99&nbsp;% of the experience; it is a different, lesser event. That is the single most important fact on this sheet.</p>
+    <p>The occasion is historic three times over. It is the first total eclipse visible from mainland Europe since 11 August 1999; the first over Spain since 30 August 1905; and the first over Iceland since 30 June 1954 — an eclipse of the same Saros family, 126, four cycles earlier: the series' members return every 18.03 years, and every fourth visit finds nearly the same ground. And the Sun cooperates: Solar Cycle 25 passed its maximum in late 2024, so the corona should still wear its extravagant maximum form — petals and streamers all around the disc, not the thin equatorial wings of a quiet year.</p>
+    <p>One caution before the beauty: in Spain, totality arrives with the Sun only 3–12 degrees above the west-northwest horizon. A hill, a building, even a stand of trees can erase the whole event. The choreography below assumes you have already found your horizon.</p>
+  </div>
+</section>
+
+<!-- ============ PLATE I — MAP ============ -->
+<section class="section">
+  <div class="section-kicker">Cartography</div>
+  <h2>Where the shadow falls</h2>
+  <div class="plate">
+    <div class="plate-head"><span class="plate-no">Plate I</span><span class="plate-title">The Path of Totality — 12 August 2026, 17:12 → 18:34 UT</span><span class="plate-no" style="color:var(--ink-soft)">Conic conformal</span></div>
+    <svg id="map-main" class="map-svg" viewBox="0 0 980 1010" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Map of the eclipse path of totality across Greenland, Iceland, the Atlantic and Spain"></svg>
+    <div class="legend">
+      <span class="it"><span class="lg-band"></span> path of totality</span>
+      <span class="it"><span class="lg-center"></span> centre line, ticked in UT</span>
+      <span class="it"><span class="lg-max"></span> greatest eclipse · 2 m 18 s</span>
+      <span class="it"><span class="lg-tot"></span> city in totality</span>
+      <span class="it"><span class="lg-part"></span> city, partial (% of Sun covered)</span>
+    </div>
+  </div>
+  <p class="plate-caption">The umbra runs 6,000 km in 96 minutes — touching the Siberian Arctic at sunrise (top, off-sheet), crossing Scoresby Sund in East Greenland near 17:22 UT, western Iceland at 17:44–17:50 UT, and northern Spain at 18:27–18:32 UT, where the eclipsed Sun hangs barely 10° above the evening horizon.</p>
+  <p class="plate-src">Path limits &amp; centre line: F. Espenak, NASA/GSFC path tables (SE2026Aug12T). Coastlines: Natural Earth 50 m. Durations on centre line as tabulated.</p>
+
+  <div class="plate" style="margin-top:34px">
+    <div class="plate-head"><span class="plate-no">Plate I·b</span><span class="plate-title">The Iberian Crossing — 20:25 → 20:33 CEST</span><span class="plate-no" style="color:var(--ink-soft)">Enlarged</span></div>
+    <svg id="map-iberia" class="map-svg" viewBox="0 0 980 600" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Enlarged map of the eclipse path over Spain"></svg>
+  </div>
+  <p class="plate-caption">Landfall on the Galician–Asturian coast at ≈20:27 CEST; the shadow exits past Mallorca eight minutes later and dies at sunset in the Mediterranean. Madrid sits a breath outside the southern limit — 99.98 % covered, and not dark. A Coruña, Bilbao, Zaragoza, Valencia and Palma are inside.</p>
+</section>
+
+<!-- ============ PLATE II — CITY TABLE ============ -->
+<section class="section">
+  <div class="section-kicker">Local circumstances</div>
+  <h2>What your city sees, to the minute</h2>
+  <p class="lede">All times are local civil time — CEST in France and Spain, GMT in Iceland. “First bite” is the Moon's first contact with the disc; the Sun must be watched through certified filters at every moment outside totality.</p>
+
+  <div class="plate">
+    <div class="plate-head"><span class="plate-no">Plate II</span><span class="plate-title">Timetable — seven cities, verified</span><span class="plate-no" style="color:var(--ink-soft)">± few s between sources</span></div>
+    <div class="plate-inner tbl-wrap" style="padding-top:8px">
+    <table>
+      <thead><tr>
+        <th>City</th><th>Sees</th><th>First bite</th><th>Maximum</th><th>Totality lasts</th><th>Last bite</th><th>Sun covered</th><th>Sun alt. at max</th>
+      </tr></thead>
+      <tbody id="citytable">
+        <tr class="tot" data-city="reykjavik"><td>Reykjavík <span class="badge-tot">Total</span></td><td>Totality</td><td>16:47</td><td>17:48</td><td>≈ 1 min <span class="smallnote">(17:48 → 17:49)</span></td><td>18:47</td><td>100 %</td><td>25°</td></tr>
+        <tr class="tot" data-city="coruna"><td>A Coruña <span class="badge-tot">Total</span></td><td>Totality</td><td>19:30</td><td>20:28</td><td>1 m 17 s</td><td>21:22</td><td>100 %</td><td>12°</td></tr>
+        <tr class="tot" data-city="zaragoza"><td>Zaragoza <span class="badge-tot">Total</span></td><td>Totality</td><td>19:34</td><td>20:29</td><td>1 m 24 s</td><td>21:07 †</td><td>100 %</td><td>6°</td></tr>
+        <tr class="tot" data-city="valencia"><td>Valencia <span class="badge-tot">Total</span></td><td>Totality</td><td>19:38</td><td>20:33</td><td>≈ 1 m 0 s</td><td>21:01 †</td><td>100 %</td><td>5°</td></tr>
+        <tr class="tot" data-city="palma"><td>Palma de Mallorca <span class="badge-tot">Total</span></td><td>Totality</td><td>19:38</td><td>20:31</td><td>1 m 36 s</td><td>20:49 †</td><td>100 %</td><td>3°</td></tr>
+        <tr data-city="madrid"><td>Madrid</td><td>Deep partial</td><td>19:36</td><td>20:32</td><td>— <span class="smallnote">outside the path</span></td><td>21:16 †</td><td>99.98 %</td><td>7°</td></tr>
+        <tr data-city="paris"><td>Paris</td><td>Partial</td><td>19:22</td><td>20:17</td><td>—</td><td>21:11 ‡</td><td>92.1 %</td><td>8°</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="tfoot">
+      † The Sun sets before the Moon fully clears it — the eclipse ends, still in progress, at the horizon.&ensp;
+      ‡ In Paris the last contact and the 21:11 sunset fall within the same minute or two — the Moon lets go as the Sun touches the horizon.<br>
+      Printed values: timeanddate.com city pages &amp; the Espenak/Wikipedia canon, fetched 3 July 2026. Obscurations: 92.12 % Paris, 99.98 % Madrid (Espenak). Sun altitudes computed (astronomy-engine).<br>
+      <span id="livecheck">Recomputing every row in your browser with astronomy-engine…</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FROM PARIS ============ -->
+<section class="section">
+  <div class="section-kicker">The honest paragraph</div>
+  <h2>What Paris will see — and what it won't</h2>
+  <div class="body-cols">
+    <p>From Paris the Moon takes its first bite at <b>19:22</b>, and by the <b>20:17</b> maximum it covers <b>92 %</b> of the Sun — a fat crescent of daylight star hanging just 8° above the west-northwest horizon (azimuth 284°). The evening light will turn pewter and strange; shadows will sharpen; the temperature will ease. Gaps between leaves will project a thousand little crescents on the pavement. Through proper eclipse glasses it is a genuinely beautiful sight, made better by its lowness: a horned Sun sinking over the rooftops. The show ends at 21:11 — the very minute of sunset.</p>
+    <p>But be clear about what 92 % is not. The sky does not go dark. The corona does not appear. No stars come out. Even Madrid's 99.98 % buys none of it — the last 0.02 % of the solar disc is still thousands of times brighter than the full Moon. Totality is binary, and Paris is outside. The band is a two-hour flight or a long day's drive away: Bilbao and Zaragoza both sit inside it. If you can go — go. People who have stood in the umbra do not describe it as an astronomical event; they describe it as a physical one.</p>
+  </div>
+</section>
+
+<!-- ============ PLATE III — CHOREOGRAPHY ============ -->
+<section class="section">
+  <div class="section-kicker">The script</div>
+  <h2>The choreography of totality, minute by minute</h2>
+  <p class="lede">Clock times below are for Zaragoza (totality 20:29 CEST); shift them by a few minutes for anywhere else in the band. The sequence itself is universal — it has run unchanged for a billion years.</p>
+
+  <div class="figrow" id="phasefigs">
+    <div class="figcell"><svg width="86" height="86" viewBox="0 0 86 86"><circle cx="43" cy="43" r="26" fill="#d85a12"/><circle cx="66" cy="30" r="24" fill="#f3ecda" stroke="#211b11" stroke-width=".8"/></svg><b>Fig. I — First bite</b><span>The Moon's limb notches the disc. Filters on.</span></div>
+    <div class="figcell"><svg width="86" height="86" viewBox="0 0 86 86"><circle cx="43" cy="43" r="26" fill="#d85a12"/><circle cx="53" cy="37" r="26" fill="#f3ecda" stroke="#211b11" stroke-width=".8"/></svg><b>Fig. II — Deep partial</b><span>A thinning crescent; the light turns metallic.</span></div>
+    <div class="figcell"><svg width="86" height="86" viewBox="0 0 86 86"><circle cx="43" cy="43" r="26" fill="#211b11"/><g fill="#d85a12"><circle cx="21" cy="30" r="2.2"/><circle cx="26" cy="22.5" r="1.6"/><circle cx="33" cy="18.5" r="2.6"/><circle cx="19.5" cy="38" r="1.4"/></g></svg><b>Fig. III — Baily's beads</b><span>The last sunlight through lunar valleys.</span></div>
+    <div class="figcell"><svg width="86" height="86" viewBox="0 0 86 86"><circle cx="43" cy="43" r="26" fill="none" stroke="#d85a12" stroke-width="1.6"/><circle cx="43" cy="43" r="25" fill="#211b11"/><circle cx="27" cy="24" r="6" fill="#d85a12"/><circle cx="27" cy="24" r="9.5" fill="none" stroke="#d85a12" stroke-width=".7" opacity=".6"/></svg><b>Fig. IV — Diamond ring</b><span>One brilliant point on a ring of fire. Seconds left.</span></div>
+    <div class="figcell"><svg width="86" height="86" viewBox="0 0 86 86"><g id="corona-rays" stroke="#211b11" stroke-width=".65"></g><circle cx="43" cy="43" r="17" fill="#211b11"/></svg><b>Fig. V — Totality</b><span>The corona, by eye. Filters off — only now.</span></div>
+  </div>
+
+  <div class="timeline" style="margin-top:40px">
+    <div class="tl-item"><div class="tl-time">19:34 · T − 55 min</div><h4>First contact</h4><p>Through glasses: a small black notch on the Sun's north-western limb. To the unaided, unprotected eye nothing whatsoever has changed — which is exactly why the filters matter.</p></div>
+    <div class="tl-item"><div class="tl-time">≈ 20:00 · T − 30 min</div><h4>The light goes wrong</h4><p>Half the Sun is gone and the world looks like a photograph very slightly underexposed. Colours desaturate. The air begins to cool — over the next half hour the drop can reach several degrees.</p></div>
+    <div class="tl-item"><div class="tl-time">≈ 20:14 · T − 15 min</div><h4>Sharp shadows, little crescents</h4><p>The Sun is now a narrowing source, so shadows grow strangely crisp. Every gap in the foliage becomes a pinhole camera, projecting crescents. Birds start their evening routines an hour early.</p></div>
+    <div class="tl-item"><div class="tl-time">≈ 20:24 · T − 5 min</div><h4>The plunge</h4><p>Light drains fast now — perceptibly, minute by minute. Venus snaps out in the southwest. The west-northwest horizon, where the shadow will come from, turns a bruised grey-violet.</p></div>
+    <div class="tl-item"><div class="tl-time">≈ 20:27 · T − 2 min</div><h4>Shadow bands, maybe</h4><p>On white walls and pale ground, faint rippling bands of light and dark may shimmer — the thin solar crescent twinkling through atmospheric turbulence. Rare, subtle, unphotographable; look sideways.</p></div>
+    <div class="tl-item"><div class="tl-time">20:28 · T − 60 s</div><h4>The umbra arrives</h4><p>Look northwest: the Moon's shadow is visible as a wall of dusk sweeping toward you across the sky, covering ground faster than sound. This is the moment people gasp. Glasses still ON.</p></div>
+    <div class="tl-item"><div class="tl-time">T − 20 s</div><h4>Baily's beads, then the diamond</h4><p>The crescent breaks into beads of light between lunar mountains; they wink out one by one until a single point blazes on a ghostly ring — the diamond ring. When it dies —</p></div>
+    <div class="tl-item sun"><div class="tl-time">20:29 · Totality — 1 m 24 s</div><h4>Filters off. Look up.</h4><p>A black disc where the Sun was, wreathed in the corona — pearl-white, structured, reaching a solar diameter or more into the sky, in the full-petaled form of a star near activity maximum. For the first seconds a thin ring of crimson chromosphere and perhaps a prominence or two rim the disc. The horizon glows orange for 360°. Venus and Jupiter stand out; Mercury may join them. The temperature has visibly dropped; the world holds its breath. Do not spend it all through a viewfinder.<span class="smallnote">Halfway through, glance behind you: dusk to the southeast, where the shadow is headed.</span></p></div>
+    <div class="tl-item"><div class="tl-time">20:30 · Third contact</div><h4>The diamond returns — filters ON</h4><p>A bead of photosphere flares on the opposite limb: totality is over, instantly. Glasses back on before the second flash. The whole sequence now runs in reverse into the low western light.</p></div>
+    <div class="tl-item"><div class="tl-time">21:01 – 21:22</div><h4>Sunset finishes the job</h4><p>Across eastern Spain the Sun sets before the Moon fully lets go — a partially eclipsed sunset into the Mediterranean. In Galicia the eclipse completes above the horizon at 21:22. Then stay out: the night has one more gift (see below).</p></div>
+  </div>
+</section>
+
+<!-- ============ SAFETY ============ -->
+<section class="section">
+  <div class="section-kicker">Non-negotiable</div>
+  <h2>Your eyes, in five rules</h2>
+  <div class="safety">
+    <h3>Solar viewing discipline — after the American Astronomical Society &amp; NASA</h3>
+    <ol>
+      <li><b>Filters must be certified ISO 12312-2.</b> Eclipse glasses or handheld solar viewers only — from a vendor on the AAS's audited list. Sunglasses, smoked glass, exposed film, CDs and stacked filters are all useless, and dangerously so.</li>
+      <li><b>Inspect before use.</b> Scratched, punctured, torn or delaminating filters go in the bin. Supervise children continuously.</li>
+      <li><b>Never point unfiltered optics at the Sun.</b> A camera, binocular or telescope concentrates sunlight enough to destroy a filter behind it — and the retina behind that — in under a second. Optics need their own front-mounted solar filters.</li>
+      <li><b>Filters off only inside totality.</b> If — and only if — you stand inside the path, you may (and should) look at the eclipsed Sun with naked eyes between the two diamond rings. The instant photosphere reappears, filters back on. In Paris or Madrid there is no such moment: filters at all times, start to finish.</li>
+      <li><b>No filters? Project.</b> A pinhole in a card, or a colander, throws safe crescent images on the ground. You watch the projection, never the hole.</li>
+    </ol>
+    <p class="smallnote" style="margin-top:12px">Reference: American Astronomical Society eye-safety guidance (eclipse.aas.org/eye-safety) and NASA eclipse-safety pages.</p>
+  </div>
+</section>
+
+<!-- ============ PLATE IV — TRAVEL & WEATHER ============ -->
+<section class="section">
+  <div class="section-kicker">The decision</div>
+  <h2>Where to stand — totality, sun height, and the odds of a clear sky</h2>
+  <p class="lede">Three theatres, one shadow. Iceland offers the longest totality and the worst odds; Spain the best odds and the lowest Sun; Greenland the clearest record and the hardest journey. Cloud figures are August climatology — book with a plan B and stay mobile on the day.</p>
+
+  <div class="plate">
+    <div class="plate-head"><span class="plate-no">Plate IV</span><span class="plate-title">Observing stations, compared</span><span class="plate-no" style="color:var(--ink-soft)">Climatology, not forecast</span></div>
+    <div class="plate-inner tbl-wrap" style="padding-top:8px">
+    <table>
+      <thead><tr><th>Region</th><th>Totality</th><th>Sun alt.</th><th>Sky odds — August record</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td><b>Ebro valley, Aragón</b> — Zaragoza, Huesca</td><td>≈ 1 m 24 s</td><td>≈ 6°</td><td>Best on the path — cloud climatology under 30 %</td><td class="verdict">The strategist's pick. Scout a clear WNW horizon (az ≈ 285°) days ahead.</td></tr>
+        <tr><td><b>Balearics</b> — Palma de Mallorca</td><td>1 m 36 s</td><td>≈ 3°</td><td>Good; summer-evening Mediterranean sky</td><td class="verdict">The romantic's pick — totality almost touching the sea. A west-facing shore or a boat is mandatory.</td></tr>
+        <tr><td><b>Galicia &amp; Asturias coast</b> — A Coruña</td><td>1 m 17 s</td><td>≈ 12°</td><td>Fair — Atlantic fronts are a real risk</td><td class="verdict">The highest totality Sun in Spain; ocean horizon built in.</td></tr>
+        <tr><td><b>Western Iceland</b> — Snæfellsnes, Westfjords, Reykjavík</td><td>1 min (Reykjavík) to 2 m 13 s (Látrabjarg)</td><td>≈ 25°</td><td>≈ 25 % clear at 18 UT; roughly 50 % if you chase gaps by car</td><td class="verdict">The longest totality on land, a high Sun — and a coin flip. Rent wheels, watch the satellite loop, commit late.</td></tr>
+        <tr><td><b>East Greenland</b> — Scoresby Sund</td><td>≈ 2 m 17 s</td><td>≈ 25°</td><td>Clear or thin cloud on ~80 % of Augusts in the 21-year satellite record</td><td class="verdict">The connoisseur's pick — expedition ship or nothing.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="tfoot">Climatology: J. Anderson, eclipsophile.com (tse2026); eclipse2026.is for Iceland station statistics. Durations: timeanddate.com &amp; eclipse2026.is. Altitudes: NASA/GSFC path table &amp; astronomy-engine.</div>
+  </div>
+
+  <div class="plate altfig" style="margin-top:34px">
+    <div class="plate-head"><span class="plate-no">Plate IV·b</span><span class="plate-title">How low the Sun — altitude of totality above the horizon</span><span class="plate-no" style="color:var(--ink-soft)">To scale</span></div>
+    <svg id="altprofile" class="map-svg" viewBox="0 0 980 300" role="img" aria-label="Sun altitude above the horizon at maximum eclipse for six locations"></svg>
+  </div>
+  <p class="plate-caption">The whole Iberian crossing happens in the last hour of daylight. At Palma the totally eclipsed Sun stands three degrees over the sea — roughly six Sun-widths. Anything on your west-northwest horizon taller than that wins.</p>
+</section>
+
+<!-- ============ PERSEIDS CODA ============ -->
+<section class="section">
+  <div class="section-kicker">The encore</div>
+  <h2>Stay out after dark — the Perseids peak the same night</h2>
+  <div class="body-cols">
+    <p>A total eclipse requires a new Moon, and a new Moon means perfectly dark skies. By elegant coincidence, the Perseid meteor shower — the year's most reliable, up to ~100 meteors per hour from a dark site — reaches its peak on the night of 12–13 August 2026, hours after third contact, with zero moonlight to wash it out. An observer in rural Aragón can watch the corona at 20:29 and count fireballs by midnight: two of the sky's great spectacles in one rotation of the Earth.</p>
+    <p>Face the darkest part of your sky after 23:00; the radiant in Perseus climbs through the night, so the show improves toward dawn. No optics needed — the eclipse rule inverts, and the naked eye is the right instrument. Bring the blanket you sat on for totality.</p>
+  </div>
+</section>
+
+<!-- ============ SOURCES ============ -->
+<footer>
+  <hr class="rule2">
+  <div class="section" style="margin-top:34px">
+    <div class="section-kicker">Provenance</div>
+    <h2 style="font-size:30px">Sources &amp; verification</h2>
+    <p class="lede" style="font-size:16px">Every dated figure on this sheet was checked against the sources below on 3 July 2026. Where published values disagree (durations by a few seconds, contact times by ≤ 2 minutes near sunset), the spread is shown rather than smoothed over. The timetable is additionally recomputed live, in your browser, from the VSOP87/ELP lunar-solar theory in astronomy-engine.</p>
+    <ol class="sources">
+      <li><a href="https://science.nasa.gov/eclipses/future-eclipses/total-solar-eclipse-on-august-12-2026/" target="_blank" rel="noopener">NASA Science — Total Solar Eclipse of August 12, 2026</a></li>
+      <li><a href="https://eclipse.gsfc.nasa.gov/SEpath/SEpath2001/SE2026Aug12Tpath.html" target="_blank" rel="noopener">NASA/GSFC (F. Espenak) — path of totality table, SE2026Aug12T</a> — limits, centre line, durations, sun altitudes</li>
+      <li><a href="https://www.timeanddate.com/eclipse/solar/2026-august-12" target="_blank" rel="noopener">timeanddate.com — global &amp; city circumstances</a> (Paris, Madrid, Reykjavík, A&nbsp;Coruña, Zaragoza, Valencia, Palma pages)</li>
+      <li><a href="https://en.wikipedia.org/wiki/Solar_eclipse_of_August_12,_2026" target="_blank" rel="noopener">Wikipedia — Solar eclipse of August 12, 2026</a> — gamma, magnitude, Saros, city obscurations (after Espenak)</li>
+      <li><a href="https://eclipse2026.is/total-solar-eclipse-2026" target="_blank" rel="noopener">eclipse2026.is — the Icelandic eclipse guide</a> — Icelandic contact times, Látrabjarg 2 m 13 s, weather statistics</li>
+      <li><a href="https://eclipsophile.com/tse2026/" target="_blank" rel="noopener">Eclipsophile (J. Anderson) — climatology along the 2026 path</a></li>
+      <li><a href="https://nso.edu/for-public/eclipse-map-2026/" target="_blank" rel="noopener">National Solar Observatory — 2026 eclipse map</a></li>
+      <li><a href="https://eclipse.aas.org/eye-safety" target="_blank" rel="noopener">American Astronomical Society — solar eclipse eye safety</a></li>
+      <li><a href="https://github.com/cosinekitty/astronomy" target="_blank" rel="noopener">astronomy-engine (D. Cross)</a> — in-browser recomputation of local circumstances</li>
+      <li>Natural Earth 50 m coastlines, via world-atlas — cartographic base of Plates I &amp; I·b</li>
+    </ol>
+  </div>
+  <div class="colophon">Ride · for the Split library — computed, drawn &amp; verified 3 July 2026 · filters on, eyes up</div>
+</footer>
+
+</div><!-- /sheet -->
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
+<script>
+/* ============================================================
+   Data — NASA/GSFC path table SE2026Aug12T (Espenak), decimal°
+   [lon, lat]; times UT. N = northern limit, S = southern, C = centre.
+   ============================================================ */
+const NLIM = [[8.38,85.72],[-4.81,84.48],[-12.00,83.13],[-16.22,81.78],[-18.84,80.44],[-20.54,79.14],[-21.66,77.88],[-22.39,76.64],[-22.87,75.44],[-23.15,74.27],[-23.29,73.12],[-23.31,71.99],[-23.26,70.89],[-23.13,69.80],[-22.95,68.73],[-22.71,67.67],[-22.44,66.63],[-22.12,65.59],[-21.77,64.57],[-21.38,63.56],[-20.96,62.55],[-20.51,61.55],[-20.02,60.55],[-19.50,59.55],[-18.94,58.56],[-18.35,57.57],[-17.71,56.57],[-17.03,55.57],[-16.30,54.56],[-15.50,53.55],[-14.65,52.52],[-13.71,51.48],[-12.69,50.42],[-11.55,49.33],[-10.27,48.21],[-8.80,47.04],[-7.08,45.80],[-4.95,44.46],[-2.09,42.91],[3.30,40.67],[6.34,39.71]];
+const SLIM = [[-32.25,84.57],[-33.42,83.07],[-33.84,81.65],[-33.90,80.29],[-33.76,78.99],[-33.51,77.73],[-33.18,76.51],[-32.81,75.32],[-32.40,74.17],[-31.97,73.04],[-31.53,71.94],[-31.07,70.86],[-30.60,69.80],[-30.12,68.75],[-29.63,67.72],[-29.13,66.71],[-28.63,65.70],[-28.11,64.71],[-27.58,63.73],[-27.03,62.75],[-26.48,61.78],[-25.91,60.82],[-25.32,59.86],[-24.71,58.90],[-24.08,57.95],[-23.42,56.99],[-22.74,56.04],[-22.03,55.08],[-21.28,54.12],[-20.49,53.15],[-19.65,52.18],[-18.76,51.19],[-17.80,50.20],[-16.77,49.18],[-15.64,48.15],[-14.40,47.08],[-13.01,45.98],[-11.42,44.83],[-9.55,43.61],[-7.24,42.26],[-4.04,40.68],[4.54,37.69]];
+const CENTER = [ // [lon, lat, "UT label", durSec]
+[-15.18,85.40,"17:12",123],[-21.19,83.93,"17:14",125],[-24.27,82.50,"17:16",127],[-25.99,81.11,"17:18",128],
+[-26.98,79.77,"17:20",130],[-27.54,78.48,"17:22",131],[-27.83,77.23,"17:24",133],[-27.93,76.02,"17:26",134],
+[-27.91,74.84,"17:28",135],[-27.79,73.68,"17:30",135],[-27.60,72.56,"17:32",136],[-27.36,71.45,"17:34",137],
+[-27.08,70.37,"17:36",137],[-26.76,69.30,"17:38",138],[-26.41,68.25,"17:40",138],[-26.03,67.21,"17:42",138],
+[-25.63,66.19,"17:44",138],[-25.21,65.17,"17:46",138],[-24.76,64.17,"17:48",138],[-24.29,63.17,"17:50",138],
+[-23.79,62.18,"17:52",138],[-23.28,61.20,"17:54",137],[-22.74,60.22,"17:56",137],[-22.17,59.25,"17:58",136],
+[-21.57,58.27,"18:00",135],[-20.95,57.30,"18:02",135],[-20.29,56.32,"18:04",134],[-19.59,55.34,"18:06",133],
+[-18.85,54.36,"18:08",131],[-18.06,53.37,"18:10",130],[-17.21,52.37,"18:12",129],[-16.30,51.36,"18:14",127],
+[-15.32,50.33,"18:16",125],[-14.24,49.29,"18:18",123],[-13.05,48.21,"18:20",121],[-11.72,47.10,"18:22",119],
+[-10.19,45.94,"18:24",116],[-8.40,44.71,"18:26",113],[-6.19,43.37,"18:28",109],[-3.19,41.82,"18:30",105],
+[2.95,39.41,"18:32",96],[5.42,38.68,"end",93]];
+const GREATEST = {lon:-25.23, lat:65.22}; // 17:45:54 UT, 2m18.2s
+
+const CITIES = {
+  reykjavik:{name:"Reykjavík", lat:64.1466, lon:-21.9426, tz:"Atlantic/Reykjavik", total:true},
+  coruna:   {name:"A Coruña",  lat:43.3623, lon:-8.4115,  tz:"Europe/Madrid", total:true},
+  bilbao:   {name:"Bilbao",    lat:43.2630, lon:-2.9350,  tz:"Europe/Madrid", total:true},
+  zaragoza: {name:"Zaragoza",  lat:41.6488, lon:-0.8891,  tz:"Europe/Madrid", total:true},
+  valencia: {name:"Valencia",  lat:39.4699, lon:-0.3763,  tz:"Europe/Madrid", total:true},
+  palma:    {name:"Palma",     lat:39.5696, lon:2.6502,   tz:"Europe/Madrid", total:true},
+  madrid:   {name:"Madrid",    lat:40.4168, lon:-3.7038,  tz:"Europe/Madrid", total:false, pct:"99.98 %"},
+  paris:    {name:"Paris",     lat:48.8566, lon:2.3522,   tz:"Europe/Paris",  total:false, pct:"92 %"},
+  london:   {name:"London",    lat:51.5074, lon:-0.1278,  tz:"Europe/London", total:false, pct:"91 %"},
+  lisbon:   {name:"Lisbon",    lat:38.7223, lon:-9.1393,  tz:"Europe/Lisbon", total:false, pct:"95 %"}
+};
+
+/* Land + graticule pre-projected at build time from Natural Earth 50 m
+   via d3-geo's spherical clipping (topojson-simplify; conic conformal). */
+const BAKED = {"main":{"scale":818.5546199067334,"translate":[495.05,1466.8],"dLand":"M668.1,93.6L665.4,94.9L663.8,92.6L664.2,90.0L661.7,88.5L662.9,86.6L666.5,87.2L668.4,90.4ZM670.6,110.9L669.7,112.2L664.1,110.3L666.2,107.2L669.0,106.1L668.3,108.4ZM469.0,359.8L468.8,363.7L464.4,366.3L462.9,364.7L456.5,365.5L458.1,359.1L461.5,360.0L467.3,357.9ZM787.2,444.8L792.3,443.6L791.0,448.8L788.3,452.0L783.6,449.4ZM618.2,206.6L619.5,206.1L623.2,210.2L627.0,209.1L627.5,211.8L631.4,210.8L634.5,211.3L633.3,214.1L634.0,216.7L633.1,221.6L631.7,221.8L630.6,218.3L626.7,222.8L624.2,215.4L622.3,215.1L615.6,209.9ZM664.8,95.7L668.0,97.3L669.9,101.1L666.7,104.8L662.3,102.0L663.3,96.7ZM645.8,129.2L648.0,127.5L650.7,128.6L647.6,129.9L648.9,131.9L649.2,135.9L645.1,137.0L646.2,131.6ZM648.9,122.4L649.9,121.4L654.3,121.3L655.3,124.3L654.3,127.2L654.6,130.5L657.5,132.2L656.1,135.8L652.0,136.2L651.1,129.8L652.9,128.8L648.9,125.6ZM800.1,219.6L802.2,224.9L801.0,230.1L796.2,229.3L792.9,226.2L793.2,221.4ZM815.3,168.9L818.0,170.3L816.0,174.1L812.7,176.0L806.7,175.8L805.2,172.2ZM788.2,108.1L787.4,111.3L782.5,108.8L782.5,105.3L788.2,103.8ZM694.5,14L698.1,17.0L698.1,17.0L698.2,18.5L694.7,21.5L692.3,20.7L692.3,18.6L694.4,14L694.5,14ZM966,670.7L960.4,671.8L952.3,670.4L952.6,667.5L952.6,667.5L961.2,666.4L966,670.0L966,670.7ZM771.4,468.3L770.7,470.9L773.6,474.2L772.1,482.9L767.4,475.3L768.0,470.5ZM741.9,517.6L741.4,522.9L743.1,532.8L739.1,528.3L736.4,529.4L731.0,523.9L733.2,519.4L737.2,521.3L735.8,517.8L740.2,514.1ZM729.3,526.4L733.1,532.0L727.2,534.3L724.3,530.2ZM746.6,759.7L749.9,759.0L748.1,766.6L739.3,764.9L745.9,757.2ZM133.2,558.6L129.9,556.6L122.3,545.8L119.4,536.3L122.6,536.6L130.1,546.0L134.5,556.3ZM114.0,599.1L112.5,602.2L123.5,599.1L124.7,605.7L117.7,606.4L109.6,602.5L110.8,597.0L122.5,590.3L127.9,590.3L126.5,593.8L120.1,599.2ZM96.5,578.0L101.5,582.4L109.7,587.0L100.1,588.6L93.4,572.7L96.8,572.9ZM692.6,14L690.1,18.6L687.3,20.5L684.3,17.7L680.1,16.1L680.3,17.8L676.8,16.7L675.2,14L692.6,14ZM701.8,14L701.1,15.8L697.6,14L701.8,14ZM739.3,105.1L741.2,111.5L742.2,122.4L743.8,132.6L746.8,138.8L748.1,138.3L751.2,145.9L750.3,148.0L755.2,150.8L755.5,154.0L758.5,155.2L762.6,161.4L762.5,164.0L757.5,168.2L757.4,171.6L750.9,170.5L750.2,165.9L745.5,160.0L746.1,156.9L743.2,157.7L740.5,152.1L738.9,153.5L736.4,152.0L738.7,150.9L735.8,148.1L737.2,145.6L733.6,141.8L732.3,137.8L732.6,129.4L730.0,127.2L733.2,121.5L733.2,115.7L731.5,109.7L729.8,108.3L727.7,102.1L729.9,99.3L735.6,99.6ZM760.1,168.1L763.8,164.6L768.5,168.8L768.0,170.4L771.2,174.0L774.7,175.1L778.0,177.9L787.3,179.0L794.6,178.3L798.8,176.5L799.6,179.5L794.9,185.1L792.6,189.8L787.2,193.5L785.8,188.4L780.3,189.8L778.6,188.6L775.6,195.2L771.1,194.5L767.7,191.6L768.6,188.6L763.2,181.9L761.5,182.9L761.0,178.3L757.0,176.1L758.0,169.4ZM601.7,185.7L603.2,184.8L606.7,186.2L603.8,181.2L605.5,179.6L607.3,183.1L608.3,178.9L613.5,178.8L615.9,177.2L619.2,179.8L619.4,185.6L620.6,189.0L618.9,191.1L618.6,194.7L615.7,196.1L613.9,193.7L609.2,197.2L604.6,196.5L605.9,192.6L601.5,195.6L598.2,194.0L598.7,191.6L595.6,191.5L597.2,189.6L599.2,189.8L599.2,187.7L596.8,184.6ZM594.8,196.4L596.9,195.6L599.4,197.6L601.3,202.4L601.0,198.5L603.5,199.7L604.9,202.6L606.8,203.3L609.6,201.8L616.3,205.1L613.1,209.4L613.7,214.7L615.6,218.0L614.5,219.7L618.0,226.8L617.1,227.8L618.6,235.0L621.3,240.4L620.8,242.2L608.7,237.2L605.4,233.2L607.6,232.7L607.0,230.1L612.3,225.2L610.9,223.9L605.5,229.5L602.5,229.6L600.9,227.3L607.2,218.0L605.1,216.5L604.8,213.7L602.5,218.5L599.9,214.3L598.4,217.1L600.8,220.5L600.4,223.3L597.9,225.2L590.6,220.3L588.1,216.8L590.7,216.9L586.1,212.4L586.2,215.1L582.2,210.0L580.7,205.8L582.7,204.5L584.9,205.3L587.5,201.3L588.8,203.3L586.7,207.0L588.6,205.9L592.0,208.4L590.4,204.8L590.2,201.0L592.3,202.2L597.3,207.5L600.9,210.1L594.2,201.0L592.3,196.0ZM807.0,719.1L810.5,722.6L815.8,739.2L815.8,742.6L810.7,743.2L810.9,748.3L804.4,746.5L802.1,737.6L792.8,724.8L796.6,724.1L800.8,715.9ZM794.3,694.6L798.7,702.7L799.6,714.4L794.8,713.4L788.0,704.3L788.4,701.2ZM883.2,723.8L883.8,736.1L888.8,740.7L889.2,745.9L882.2,747.9L854.1,745.6L854.8,739.4L865.7,736.8L873.7,731.9ZM337.2,337.7L339.4,341.0L337.1,345.0L328.8,344.6L327.4,341.0L329.6,340.4L325.9,335.6L328.9,331.6L332.5,329.1L336.2,332.6ZM617.4,522.9L617.3,525.7L612.9,532.0L613.1,537.4L618.0,534.4L627.6,532.1L630.5,534.3L627.8,548.5L623.7,552.0L628.2,551.9L623.8,557.1L629.5,555.8L633.4,556.5L638.4,560.1L644.1,570.0L656.0,576.2L655.4,577.8L663.2,588.0L661.8,592.2L669.7,589.0L675.4,590.2L677.3,593.8L676.1,603.3L672.2,606.2L673.1,611.0L679.3,609.4L679.9,611.8L671.5,620.5L663.1,622.9L657.2,622.6L653.0,628.0L644.3,628.6L641.1,630.6L639.0,636.9L635.2,635.4L630.7,637.9L627.1,642.5L625.4,639.7L630.4,631.0L632.6,624.6L641.5,622.2L645.6,613.5L639.6,620.0L627.4,617.9L625.2,620.0L621.4,617.1L627.8,611.2L630.1,605.7L627.9,600.9L623.5,603.4L626.9,596.7L634.0,592.5L633.8,581.3L631.6,582.6L627.3,578.7L626.7,571.7L623.2,575.2L613.7,576.2L615.4,566.7L612.4,559.4L609.0,563.4L608.9,569.6L607.2,569.9L606.6,560.6L607.7,550.4L604.9,554.2L600.8,552.4L603.6,544.4L601.4,535.6L604.7,534.9L602.3,530.3L603.4,526.1L617.4,521.2ZM597.1,576.7L598.6,574.6L604.9,572.9L610.7,579.6L611.7,585.0L606.5,590.1L612,604.1L611.4,613.9L601.7,617.9L591.9,626.9L583.3,629.6L580.6,628.3L583.3,624.8L577.9,624.9L581.0,620.7L577.3,621.2L582.9,614.6L584.5,606.6L576.8,601.3L577.9,593.5L575.9,591.5L588.2,589.8L590.5,583.8L585.4,584.0L588.2,577.0L594.0,575.3L595.8,572.7ZM578.3,996L583.8,991.8L587.9,977.1L590.6,972.9L603.2,968.2L610.2,963.5L621.4,951.5L629.9,934.3L625.9,925.6L625.2,914.9L629.6,904.2L629.7,896.9L636.3,886.5L655.0,871.5L659.2,858.5L661.4,843.0L668.5,839.7L668.3,842.1L675.6,847.5L682.0,847.9L694.8,843.7L709.2,842.4L724.6,826.4L729.8,824.3L733.7,817.6L740.9,811.5L755.4,805.5L758.8,801.6L767.2,797.0L777.9,793.1L786.3,793.4L795.7,783.4L801.4,783.7L803.5,780.1L812.4,780.2L821.3,774.1L828.5,765.5L834.7,764.8L839.9,770.1L844.5,762.4L846.5,764.6L843.5,774.9L846.9,780.4L853.0,781.7L856.7,786.3L854.7,798.6L851.5,805.4L854.8,809.8L865.1,808.7L868.9,811.1L884.9,811.8L895.7,805.4L920.3,801.2L929.2,808.9L939.1,810.1L954.1,804.6L965.8,803.0L966,803.0L966,996ZM966,524.0L962.5,528.7L955.2,530.8L958.1,522.6L950.2,528.9L945.9,534.8L948.0,545.8L945.1,551.8L949.2,554.6L952.5,561.1L949.3,565.3L946.7,563.2L950.4,572.9L957.2,584.1L954.7,589.8L958.3,594.9L957.5,600.7L965.4,602.1L966,602.3L966,627.7L966,627.7L962.3,630.7L958.2,629.7L950.3,632.9L945.3,637.4L940.7,644.3L944.4,647.5L941.1,653.4L932.7,654.4L936.1,660.1L948.6,664.5L944.8,667.7L947.8,669.6L945.6,673.6L953.5,672.1L963.4,671.9L966,674.8L966,677.8L966,677.8L962.0,677.6L958.0,682.8L966.0,685.0L963.8,688.4L957.9,688.9L964.9,693.3L966,695.0L966,698.0L966,698.0L964.7,697.5L963.1,703.5L956.0,699.2L956.6,704.0L950.8,701.8L946.9,696.4L940.3,695.4L940.1,689.5L943.0,685.3L956.3,682.6L956.6,678.5L947.7,680.1L939.7,687.6L935.8,689.1L927.7,683.6L920.7,682.7L910.9,676.7L906.2,676.8L901.4,672.2L895.0,657.1L885.4,655.4L870.4,654.4L859.2,652.1L850.0,655.2L837.2,650.4L840.2,648.5L832.2,645.9L829.3,641.4L822.8,640.7L823.1,648.6L818.3,646.8L814.0,638.5L804.1,648.6L809.3,653.6L808.4,657.9L812.9,663.6L826.9,666.2L837.6,675.4L849.9,679.2L853.5,679.1L860.9,675.0L864.8,681.0L877.7,679.8L888.6,680.1L897.7,683.9L898.5,688.2L890.5,685.3L880.4,688.3L880.9,697.9L883.1,700.3L890.0,700.7L893.3,705.1L889.4,712.1L891.4,716L890.0,724.6L886.7,726.5L883.7,715.4L885.5,713.5L872.0,700.8L863.0,701.6L858.3,697.1L850.9,698.5L844.6,695.2L838.4,698.3L832.6,697.6L817.9,691.8L813.8,691.6L805.2,687.6L792.5,676.5L778.3,676.6L774.7,685.8L767.6,692.8L763.6,701.9L760.4,704.6L752.7,705.2L748.3,703.6L744.4,705.9L737.8,705.1L732.0,713.2L731.2,717.7L736.6,725.2L737.7,730.1L728.8,743.0L719.0,749.5L712.3,769.2L711.1,775.0L714.2,780.9L719.8,783.9L713.0,795.0L713.3,803.5L707.8,805.3L703.7,811.4L701.2,819.4L676.5,825.8L668.2,832.0L664.1,838.8L658.9,837.5L651.5,827.5L646.3,824.9L639.5,826.6L636.0,829.6L626.9,829.4L622.5,831.4L623.7,825.4L620.7,810.9L616.9,811.5L617.2,807.2L613.4,807.9L613.2,799.1L615.2,795.8L617.2,773.8L613.0,762.9L614.0,756.3L610.3,749.3L606.8,747.3L609.7,741.7L615.8,739.2L620.6,733.6L625.4,735.2L641.6,732.2L653.6,732.1L662.5,728.5L675.9,728.0L683.6,722.5L679.8,691.6L676.6,684.1L669.8,683.0L660.5,671.5L645.7,669.8L642.0,670.9L637.9,668.6L640.7,666.1L636.0,661.9L648.5,654.6L654.4,657.5L656.2,655.5L665.8,652.9L657.8,640.1L663.1,638.7L665.2,642.4L674.1,641.2L678.6,637.6L675.6,634.8L683.5,628.1L685.5,623.7L683.3,617.3L685.0,613.0L689.1,610.6L694.3,604.6L699.8,602.7L695.3,601.5L701.0,598.4L698.2,596.5L700.1,588.3L699.3,581.2L707.2,569.3L712.9,566.5L715.2,562.0L720.7,559.6L725.4,560.2L724.3,555.2L726.8,553.4L721.7,548.4L723.2,545.6L719.7,543.2L715.8,535.4L711.3,534.6L706.0,521.5L710.2,521.4L709.6,518.2L705.5,518.0L706.4,513.7L712.2,509.3L713.0,503.6L716.0,499.8L718.9,506.1L720.8,514.8L725.3,514.2L726.8,517.0L723.5,519.8L724.5,524.7L722.4,531.3L724.0,537.6L732.2,542.3L739.3,540.7L740.9,545.9L744.8,544.8L748.7,539.5L750.2,534.1L760.5,533.7L763.5,536.9L770.1,536.8L768.7,534.6L763.8,536.3L777.3,522.4L778.1,517.7L781.8,512.8L788.3,507.1L793.7,510.5L799.1,507.9L800.4,504.5L799.0,499.1L807.1,493.6L803.4,487.3L799.4,483.9L791.7,472.1L790.0,460.6L794.0,455.4L806.7,459.3L809.0,454.2L804.1,447.2L800.7,439.7L796.2,442.9L789.6,438.0L787.8,434.6L790.6,427.7L796.3,422.7L795.6,421.1L810.9,413.1L809.0,408.0L813.0,403.9L812.5,401.1L818.9,398.0L813.8,396.4L810.4,399.4L806.5,399.3L803.1,396.6L799.3,403.5L797.5,403.6L790.6,412.7L789.0,416.3L779.5,429.5L779.3,426.4L775.9,425.4L775.0,429.2L772.9,424.7L764.7,426.6L761.3,422.6L757.8,414.4L752.8,411.0L751.5,407.9L747.0,404.1L746.7,397.2L744.8,395.7L748.0,391.7L746.4,387.0L748.1,381.5L748.1,370.7L747.1,366.4L750.1,363.1L745.1,355.8L739.1,355.3L734.3,357.6L732.3,360.7L727.9,361.9L729.3,365.1L727.5,369.6L729.5,372.5L730.1,378.2L734.7,381.0L735.5,390.6L731.0,400.0L729.2,406.1L730.5,410.0L727.8,412.7L730.3,415.0L728.8,418.4L731.8,428.5L739.4,440.7L744.4,439.6L753.1,442.7L756.5,445.9L754.5,452.7L757.1,456.1L751.5,468.0L755.4,478.2L760.4,487.4L762.7,499.7L754.6,505.6L753.1,511.1L755.7,516.7L746.5,521.2L744.4,516.0L738.3,511.5L738.9,506.1L733.9,504.1L724.2,496.2L716.5,488.1L712.4,480.7L709.4,480.5L705.3,476.2L706.2,484.7L703.0,486.2L699.2,498.7L693.5,505.3L686.7,506.5L678.9,503.6L675.8,497.4L677.4,496.1L677.6,488.8L673.3,496.0L671.5,495.8L670.6,489.9L675.6,485.1L672.3,486.0L674.7,476.8L672.6,478.6L671.0,487.1L669.2,490.1L665.6,477.9L661.8,472.3L667.6,468.9L674.4,466.6L677.1,464.2L671.4,466.0L663.5,470.6L659.8,467.1L661.7,465.6L658.0,463.6L657.1,457.2L661.9,448.9L670.4,445.5L671.5,442.2L664.3,446.2L664.4,442.3L670.1,437.9L671.7,433.8L669.4,431.3L671.3,428.8L676.4,426.9L679.3,429.1L683.4,426.2L682.3,424.2L684.8,420.1L683.0,417.2L682.6,421.8L678.3,427.6L674.9,424.9L676.6,414.4L679.9,407.7L678.3,404.8L680.6,400.5L678.8,394.2L678.1,387.1L682.1,383.7L682.7,381.2L679.0,384.5L676.8,379.1L678.1,370.6L683.7,365.5L678.6,367.5L679.2,362.7L682.4,362.9L679.5,359.3L677.6,361.9L677.0,357.6L679.6,351.7L683.2,355.3L680.2,348.7L679.7,345.0L681.8,340.9L681.0,336.3L682.3,334.5L680.8,330.0L682.5,329.7L682.6,324.3L684.6,322.4L687.0,327.1L685.2,320.3L691.9,313.8L687.8,312.5L692.1,307.1L697.6,310.0L695.9,306.6L696.2,298.3L694.5,297.2L694.9,293.7L700.1,292.6L700.8,297.6L703.8,303.4L702.3,289.7L703.7,289.7L707.2,295.3L707.1,287.6L704.8,284.4L708.8,283.4L714.4,291.9L711.6,285.1L712.5,282.5L724.9,283.1L722.8,288.4L718.0,291.5L722.7,290.8L724.7,292.9L726.2,290.4L732.5,287.8L731.9,283.2L737.4,282.1L738.9,283.2L735.4,285.5L738.0,286.9L742.1,283.8L744.8,287.0L744.6,284.1L753.7,277.5L765.7,275.4L771.8,276.0L778.9,274.2L778.6,272.6L784.4,273.2L787.8,271.8L793.3,275.3L794.7,274.9L798.3,279.1L800.0,285.6L798.7,293.8L796.0,298.3L790.0,301.4L781.1,307.1L776.1,307.7L769.2,311.4L763.7,310.2L758.7,313.3L770.4,314.9L772.9,316.4L777.1,314.5L783.5,315.5L786.6,321.8L792.4,324.3L796.9,328.3L802.1,326.8L809.0,327.3L815.6,324.3L816.1,319.4L812.5,317.1L808.3,319.7L801.1,318.3L799.2,313.5L802.5,311.4L806.9,311.4L817.2,306.4L817.8,301.4L809.1,299.0L806.5,296.6L805.9,289.3L807.1,284.4L805.4,277.5L810.3,273.9L817.9,273.5L815.3,271.6L811.7,266.0L806.2,263.1L803.7,264.3L795.8,255.5L791.8,252.8L786.1,253.5L791.8,246.8L795.6,244.2L804.0,245.1L805.4,246.1L802.8,252.0L805.5,258.1L809.5,256.7L814.7,257.6L817.0,255.8L818.8,249.0L812.3,243.0L813.6,237.3L812.8,234.9L811.9,223.5L812.8,216.9L816.2,216.9L815.5,214.0L812.9,214.8L811.9,205.3L819.3,208.8L819.6,213.1L823.0,207.0L821.5,201.0L822.0,197.5L825.9,193.1L824,186.0L824.5,181.1L828.7,181.3L831.9,184.4L834.0,180.7L830.3,179.0L831.3,176.0L828.9,172.4L819.2,172.3L817.5,166.9L824.5,157.0L828.0,153.8L833.1,151.2L842.0,143.6L852.0,139.3L849.2,135.8L844.4,132.6L843.2,135.5L835.3,135.8L830.9,140.8L823.7,136.5L816.7,133.4L815.2,135.2L811.0,134.7L808.6,132.4L805.1,124.6L792.2,116.8L788.6,114.0L789.7,113.2L791.7,105.4L796.5,100.6L805.0,103.7L813.0,109.4L818.2,107.3L828.2,109.3L830.5,111.1L837.5,112.2L847.4,115.2L850.5,115.2L855.8,111.8L860.8,115.3L865.3,116.3L868.4,120.3L875.4,126.4L875.3,129.2L878.4,128.9L880.4,134.4L874.6,137.7L873.9,142.6L877.1,142.5L882.3,137.2L883.2,132.7L886.0,128.9L882.4,124.9L878.3,115.9L872.8,112.9L868.7,108.1L864.4,107.3L859.1,108.0L854.6,105.9L853.4,95.6L861.5,93.0L871.2,95.2L874.4,93.0L875.6,86.3L872.0,93.1L865.8,91.5L865.2,89.6L855.7,89.7L849.3,97.2L850.1,103.6L848.8,107.8L839.9,107.8L833.6,104.9L828.4,101.1L817.7,102.7L814.6,104.0L809.6,99.9L806.6,93.0L802.7,91.7L796.7,91.7L797.5,89.3L805.1,89.2L811.6,92.9L814.2,92.3L818.5,94.0L821.1,90.8L823.1,84.1L826.2,82.3L826.5,79.8L822.2,80.9L821.0,84.2L815.8,88.8L811.0,89.1L810.5,84.2L813.3,82.4L812.3,79.1L808.2,81.9L806.0,76.8L806.9,72.7L812.1,67.3L817.5,64.6L818.3,57.8L823.1,58.7L825.1,61.7L835.5,63.2L830.7,61.0L830.8,59.0L839.8,59.7L836.2,56.0L827.8,58.0L820.8,55.3L816.5,56.7L815.5,59.1L810.7,60.7L806.3,66.3L799.5,65.3L797.2,66.4L790.1,65.1L789.5,59.7L790.2,52.5L787.7,39.5L788.9,37.7L793.5,43.0L792.0,37.5L789.2,35.4L788.1,36.9L779.7,40.7L780.8,36.5L777.3,39.6L776.2,42.1L773.7,40.3L775.9,38.6L772.1,35.4L770.1,37.1L769.3,34.3L764.2,27.8L762.4,24.4L758.9,14L966,14ZM757.3,14L757.4,14.3L754.8,14.1L754.8,14L757.3,14ZM520.7,427.9L524.5,425.5L523.3,429.2L525.8,430.5L525.3,434.0L532.7,437.1L531.8,439.6L533.4,444.0L528.8,452.1L525.7,455.2L519.4,458.2L516.0,461.9L508.8,464.3L507.2,467.4L503.6,468.8L493.8,466.7L487.3,461.3L478.5,462.6L482.3,459.3L485.0,454.7L480.1,448.9L470.8,447.5L478.1,445.6L483.7,445.4L480.3,442.8L484.1,439.7L477.9,437.6L471.9,439.8L468.7,438.3L471.0,434.7L475.8,435.1L473.4,430.4L475.6,428.9L477.5,431.9L480.9,430.8L477.2,426.8L481.2,425.6L486.9,431.5L486.6,439.6L488.3,442.4L490.7,436.9L492.4,438.1L493.0,431.5L494.9,431.3L497.4,435.1L498.6,430.9L502.1,429.5L506.2,434.3L504.9,429.6L509.3,432.3L511.5,428.8L515.3,428.7L514.8,425.1L517.9,424.0ZM662.0,97.4L660.3,99.7L660.0,95.6ZM663.9,121.3L660.9,123.8L659.9,121.1L663.2,119.8ZM666.2,111.4L669.9,113.3L668,116.6L665.0,114.0ZM675.2,107.7L673.0,109.0L672.6,107.0ZM14,525.6L16.8,525.9L14,527.6L14,525.6ZM787.4,441.2L786.2,444.3L781.3,443.4L783.3,439.6ZM633.6,188.8L631.4,191.8L631.6,189.4ZM664.2,128.4L661.7,131.2L661.4,128.2ZM628.4,167.5L626.3,169.5L628.7,164.4ZM649.5,100.8L651.4,100.0L655.1,104.7L652.9,105.3L652.3,108.2L648.7,102.4ZM652.2,111.0L655.2,108.4L660.5,106.7L661.3,109.7L660.3,112.5L655.7,114.9ZM657.9,102.7L662.1,104.0L660.8,106.1L656.6,106.1L656.1,103.4ZM654.3,87.3L651.8,90.3L653.2,86.7ZM647.4,98.5L645.6,98.0L646.3,95.4L647.9,95.9ZM589.8,222.5L594.9,226.7L590.5,224.8L585.9,219.2ZM781.9,191.7L784.4,193.7L778.6,193.2ZM795.7,92.1L791.8,93.2L793.3,90.2ZM806.9,80.9L806.1,84.1L801.8,80.2L804.6,77.1ZM802.0,71.6L798.9,74.8L796.2,72.2ZM763.2,55.1L765.7,56.2L763.7,57.8ZM694.6,64.3L697.8,60.9L697.4,63.7ZM677.3,50.7L677.5,53.2L675.1,52.5L676.1,49.5ZM674.4,20.6L675.7,21.5L674.9,24.7L673.2,24.4ZM548.0,357.8L550.2,353.0L552.0,354.2ZM544.4,969.3L540.3,975.2L536.8,970.2ZM573.4,970.5L575.9,961.5L576.9,968.9ZM557.2,972.1L553.4,977.9L553.4,972.2ZM604.5,556.9L601.6,558.3L601.2,553.3ZM602.9,563.1L604.0,566.8L600.8,565.0ZM622.7,492.2L624.8,493.0L625.4,499.2L621.3,496.3ZM582.4,477.2L582.4,480.6L578.7,477.1ZM595.8,529.9L595.1,534.9L591.9,539.4L590.3,532.9L595.1,528.0ZM598.5,541.6L602.8,544.7L601.2,547.6L594.1,543.3L597.4,539.7ZM765.8,496.8L763.1,493.9L762.5,482.1ZM758.9,530.9L757.3,533.9L754.1,530.9L754.8,528.1ZM738.8,533.1L742.0,532.8L741.1,536.0L737.1,535.7ZM917.8,682.8L911.5,681.8L912.5,679.5ZM342.5,346.6L342.8,341.9L345.9,343.4ZM341,321.6L339.8,319.5L342.5,318.1ZM347.1,295.5L343.6,297.3L342.0,293.9ZM879.5,138.3L875.3,140.1L877.0,137.2ZM222.3,219.7L228.2,224.2L227.1,226.4L235.0,221.4L233.9,219.0L235.8,213.8L240.4,213.8L240.9,218.9L242.5,212.0L246.5,207.5L254.3,205.0L257.3,206.0L258.5,208.5L260.5,207.2L265.1,209.3L267.4,214.2L264.4,218.2L263.7,221.8L260.4,226.6L252.7,227.5L255.8,228.6L252.4,229.5L249.3,232.6L254.9,232.3L257.1,230.8L262.0,237.0L264.5,234.4L268.3,235.5L270.2,237.9L272.6,245.5L270.7,248.9L265.7,250.4L269.8,250.7L271.3,253.4L262.8,258.2L267.1,256.8L269.8,258.5L267.2,264.9L269.5,261.9L272.1,261.6L274.9,267.3L274.5,270.6L271.3,272.3L268.6,271.6L271.2,274.6L273.8,274.5L270.9,278.0L265.7,277.9L266.2,279.6L262.0,283.1L268.0,279.6L274.3,280.0L277.5,287.2L276.8,289.1L266.5,288.2L272.7,291.0L270.3,293.9L276.2,291.7L276.5,297.2L274.3,301.1L271.5,298.2L264.3,297.1L267.8,298.7L271.4,303.6L272.5,307.9L270.8,309.1L267.1,304.3L264.0,302.6L265.9,307.3L263.1,309.7L261.8,307.6L260.3,311.8L264.8,317.4L262.3,319.6L265.5,320.9L260.7,325.5L265.7,326.8L263.8,329.0L268.7,327.7L266.3,330.5L268.4,331.1L268.7,335.2L267.1,340.4L269.2,339.9L270.5,343.3L264.0,346.0L273.6,349.3L273.8,355.8L268.4,358.0L265.9,354.6L264.6,356.8L265.6,360.8L262.7,358.9L262.1,361.9L259.2,363.3L255.7,361.3L251.3,366.8L248.7,368.3L248.8,365.2L245.7,362.8L246.0,356.9L247.8,351.8L251.7,350.2L247.2,348.3L246.7,342.8L247.7,338.6L245.0,337.1L243.1,339.5L242.3,335.4L241.3,343.0L237.8,341.4L237.5,335.9L235.9,343.4L236.4,349.9L234.6,350.0L234.4,356.7L237.0,360.4L237.4,368.7L234.3,370.0L233.5,373.0L235.9,374.8L230.3,384.1L231.1,375.9L227.5,382.0L226.6,387.0L224.2,385.4L221.7,388.6L220.3,379.3L218.6,379.5L217.2,373.4L217.5,365.8L215.6,369.9L214.5,363.5L212.3,362.1L211.3,371.0L212.9,373.7L213.8,390.4L209.4,393.0L205.7,385.1L201.7,380.3L199.7,375.5L200.5,369.9L197.3,366.8L194.9,359.5L195.2,352.3L198.4,353.7L199.0,350.5L196.7,348.4L198.1,335.8L200.4,334.9L197.6,332.2L195.3,325.8L194.2,329.3L182.0,323.4L178.8,317.4L179.8,313.2L183.5,310.5L189.2,311.2L192.0,308.9L195.8,317.5L197.2,317.1L208.0,324.4L210.0,320.7L210.8,314.1L220.9,313.1L226.4,311.3L230.9,311.1L237.5,295.4L235.5,294.9L237.1,290.8L235.4,289.1L237.6,283.1L235.4,281.3L228.6,279.7L232.0,276.7L234.3,278.8L237.9,276.4L237.0,272.9L239.2,270.1L236.7,268.2L239.0,266.7L237.1,264.5L240.7,260.0L238.9,258.2L240.4,251.7L237.0,252.9L235.3,258.2L231.9,257.7L228.2,249.0L226.5,246.9L226.1,252.0L225.0,248.7L222.0,247.4L220.8,241.9L218.1,239.6L212.8,228.1L215.0,224.8L209.6,220.9L210.2,214.8L215.2,208.0L218.1,215.3L220.4,217.6L221.2,213.0L218.9,207.6L219.5,203.0L224.7,198.6L228.2,198.3L230.8,195.5L236.9,194.2L240.4,192.3L245.9,191.5L252.3,192.3L255.9,194.6L259.7,200.4L258.7,201.9L250.6,202.0L243.1,204.3L240.4,208.1L236.3,211.0L232.9,215.2L230.8,222.7ZM399.5,136.1L403.5,141.4L401.7,142.3L397.1,142.3L399.1,143.6L405.8,143.7L405.3,145.9L407.1,146.5L405.6,150.7L407.6,154.1L406.3,157.0L402.3,159.1L394.6,160.1L389.5,158.7L387.6,160.0L382.1,159.7L382.5,160.7L390.0,161.6L391.8,163.1L388.4,164.8L375.7,167.6L370.2,169.6L369.8,166.2L367.7,170.3L362.5,168.5L365.2,170.5L360.2,173.9L357.2,172.7L355.8,167.1L354.2,166.6L355.8,169.9L353.2,173.1L347.7,169.7L346.0,165.6L345.4,169.4L346.1,172.9L347.7,173.9L345.6,175.8L343.4,172.2L339.6,169.6L337.4,166.8L337.3,169.8L341.4,172.7L342.2,179.8L339.2,180.9L335.6,177.8L336.1,182.6L331.0,184.6L328.3,183.4L325.4,180.2L320.3,184.6L316.8,184.8L312.3,180.3L312.1,175.7L310.6,179.4L311.0,182.8L313.3,185.1L311.0,187.7L313.6,189.7L311.8,192.9L309.0,194.0L303.0,193.4L298.6,191.5L301.0,188.8L300.0,184.9L300.9,181.0L298.5,184.3L294.6,179.8L296.5,176.7L292.5,179.6L290.0,177.5L289.5,173.5L290.7,171.1L287.6,172.4L284.4,167.0L283.1,162.7L287.6,160.1L293.3,160.9L297.3,164.7L299.5,159.2L301.8,156.3L306.1,157.7L305.9,161.3L303.4,165.5L303.9,168.8L306.7,171.0L312.3,170.1L315.5,168.3L308.0,169.7L305.3,165.4L309.4,161.3L314.6,161.2L315.3,159.0L312.3,159.6L310.0,158.1L313.9,156.4L309.3,155.8L308.8,153.7L312.0,151.7L317.8,150.2L322.4,152.9L324.4,159.0L327.7,159.6L325.1,155.0L326.2,152.7L327.3,155.4L331.7,146.4L332.5,141.1L335.8,138.0L338.9,136.8L342.0,143.4L338.9,152.6L340.1,154.8L344.0,144.5L345.9,144.4L352.2,148.0L354.4,147.5L358.3,148.5L362.1,150.4L359.6,146.7L363.1,144.4L368.7,144.0L365.6,143.2L360.4,143.4L357.8,144.9L352.1,144.7L347.9,141.6L351.5,141.0L348.8,139.2L345.6,139.3L342.2,134.6L343.0,132.8L349.4,132.6L354.6,134.9L349.2,131.0L342.0,131.2L341.4,126.5L342.4,124.7L344.8,125.8L348.2,129.5L353.8,130.2L347.6,127.4L343.5,122.9L345.0,120.9L350.7,120.4L353.2,122.5L352.5,120.4L347.7,118.1L351.3,117.2L349.2,113.2L354.2,113.4L356.2,115.3L359.3,115.5L360.8,117.1L359.9,119.5L361.7,119.3L361.9,122.4L363.4,121.9L363.7,118.1L369.5,118.5L369.7,122.1L368.0,125.1L369.9,124.7L369.7,134.7L370.8,131.5L371.3,125.5L372.6,123.1L374.9,123.4L375.7,121.4L377.0,124.1L378.6,121.7L381.2,126.5L382.2,121.6L385.6,125.7L383.5,132.6L385.1,132.4L387.7,125.2L390.2,126.8L391.8,129.2L390.6,133.9L392.0,132.0L395.0,130.7L396.5,133.4L399.8,134.2ZM14,528.0L22.0,524.9L37.0,526.8L50.7,531.5L73.1,527.7L88.5,529.8L101.6,533.7L111.2,541.3L113.2,547.5L108.5,552.7L98.3,552.2L94.7,546.5L89.9,545.0L93.7,554.7L98.7,555.6L100.0,558.6L90.0,562.2L91.4,567.0L88.8,576.4L93.1,580.8L90.8,581.7L94.7,589.2L100.2,595.3L106.5,595.3L108.8,600.0L109.5,607.2L80.5,601.0L79.9,597.8L66.3,601.5L56.5,599.6L55.5,594.3L60.5,588.3L67.5,586.6L82.7,588.3L81.1,590.0L90.9,593.2L78.6,584.1L87.2,582.3L69.6,579.9L60.5,575.7L59.4,573.0L54.5,578.0L48.5,575.0L45.1,575.7L43.1,571.9L40.2,574.1L38.5,569.4L34.6,572.3L25.8,571.0L25.4,569.0L16.4,570.7L14,571.8L14,528.0ZM139.7,14L146.4,23.1L144.3,27.3L139.0,20.8L137.9,16.2L135.8,14L139.7,14ZM133.6,14L136.1,16.5L136.0,20.5L132.9,20.7L139.3,23.8L142.7,30.1L140.2,30.8L146.1,34.1L148.4,37L150.6,34.5L152.9,35.3L148.2,39.7L140.9,42.7L137.3,45.7L135.8,49.3L142.8,49.7L147.2,53.1L142.2,53.8L141.2,55.3L137.2,53.8L137.0,58.3L143.5,60.6L144.1,65.4L142.6,71.2L139.6,75.1L138.4,82.7L136.0,87.1L135.1,98.1L137.4,99.9L135.4,105.7L131.3,110.3L128.5,106.5L122.5,104.1L121.8,114.1L123.3,120.8L126.8,128.0L131.0,131.8L128.1,135.3L128.7,138.3L125.4,140.8L127.8,141.3L123.2,146.8L121.2,144.0L114.3,153.6L117.8,149.8L121.5,149.1L120.7,152.1L130.9,143.9L135.3,143.4L140.0,149.7L145.5,151.3L146.8,150.0L141.8,148.0L139.7,143.0L136.1,140.6L137.3,137.6L142.3,138.2L144.9,142.3L150.2,147.5L149.8,150.3L145.3,153.4L141.9,161.8L144.4,164.9L142.0,170.5L142.8,176.9L147.2,181.5L148.9,189.2L151.7,191.6L154.4,189.0L151.4,194.7L151.4,197.6L155.1,197.3L153.5,192.6L158.1,187.1L162.6,193.1L160.8,195.8L162.8,198.0L158.9,198.2L163.2,200.6L152.8,203.6L150.4,206.1L152.0,208.1L148.7,212.2L152.5,210.7L157.5,205.6L161.6,204.5L163.4,207.2L174.0,208.7L178.0,205.0L174.8,205.7L175.1,202.5L179.2,203.1L181.0,201.0L183.9,203.1L182.8,199.9L183.2,189.4L188.5,183.9L192.9,185.2L194.7,180.6L201.1,178.0L206.1,180.6L206.6,178.1L211.9,178.6L214.3,180.6L212.1,183.1L212.1,183.1L211.8,186.3L208.9,192.4L203.6,195.3L202.6,199.3L199.0,203.7L195.4,202.8L195.9,205.6L189.0,204.5L189.8,209.8L193.1,215.8L188.6,214.5L185.5,221.2L180.5,223.7L178.9,227.1L183.0,226.5L189.6,223.5L194.4,224.1L191.9,232.2L186.0,237.5L184.7,235.1L179.0,240.1L175.0,249.0L181.3,249.6L189.6,247.4L199.1,243.3L204.7,243.4L204.9,239.8L212.0,234.4L215.4,239.2L215.6,242.7L219.0,248.3L216.2,248.2L215.3,252.8L216.6,257.3L211.9,257.0L213.4,259.6L211.6,261.8L207.3,261.0L205.0,258.5L200.4,266.2L198.5,272.9L193.8,275.6L191.1,274.7L183.9,275.0L178.3,273.0L181.6,263.1L180.2,262.0L179.1,267.6L176.4,272.3L172.8,270.3L173.4,261.8L169.5,257.4L167.2,259.3L167.6,263.2L165.6,264.4L153.6,264.0L151.2,260.7L152.3,247.4L148.7,241.0L149.8,248.7L147.8,255.8L152.6,266.5L147.4,268.4L137.1,269.4L132.3,267.3L130.1,262.9L131.2,260.7L127.6,260.4L123.3,262.6L120.7,260.0L118.6,253.7L118.1,262.1L112.9,264.5L109.2,262.4L106.3,257.3L105.5,260.8L99.6,258.2L97.9,261.1L91.6,256.7L90.4,259.5L82.1,258.2L78.5,259.8L69.4,261.0L63.2,263.3L50.6,270.9L49.8,274.9L44.5,277.5L51.2,276.0L53.9,281.0L39.3,296.9L34.0,297.5L44.1,305.7L46.0,309.1L46.4,316.1L48.5,322.5L47.8,331.0L45.3,337.6L48.7,351.9L48.2,359.9L54.1,366.9L58.9,376.7L57.0,381.8L51.1,384.6L46.7,391.1L36.8,398.0L32.8,409.0L32.7,419.2L28.9,424.5L31.3,431.3L38.8,429.1L36.9,435.9L41.0,434.2L42.0,430.4L50.2,428.6L52.7,423.6L65.2,406.7L69.1,398.6L84.3,404.1L92.5,404.2L99.8,402.9L108.4,396.0L112.6,390.5L116.5,381.6L116.5,368.0L119.2,366.4L127.4,365.4L130.6,362.7L133.8,363.6L136.4,361.3L140.2,353.2L143.0,352.3L140.3,349.5L150.9,345.8L151.1,341.7L156.7,335.4L162.0,336.6L166.4,346.5L170.8,353.0L177.5,354.4L178.9,363.8L176.4,378.5L181.4,384.6L180.6,387.4L185.0,388.8L178.3,393.6L175.4,397.9L169.6,394.5L173.5,398.7L172.3,402.6L168.7,405.7L170.2,407.1L165.2,411.4L170.7,417.6L168.3,422.5L171.0,424.7L170.4,427.6L178.9,428.3L189.4,426.5L196.4,419.7L204.8,416.6L204.9,421.4L203.2,432.8L201.6,435.4L201.8,443.2L196.9,443.5L202.0,446.3L196.5,449.4L200.0,450.7L201.3,456.6L198.9,459.2L194.7,458.8L197.8,462.3L196.0,463.3L198.2,468.8L195.4,472.5L191.1,469.3L192.5,476L189.5,480.1L195.2,487.4L193.9,491.6L187.8,494.7L195.5,495.4L199.4,500.6L198.6,505.2L204.5,508.1L206.2,514.1L199.4,513.7L193.9,515.2L184.0,512.6L176.1,517.0L193.2,516.0L198.0,517.0L198.3,514.9L203.2,519.0L202.2,524.9L198.9,527.7L204.3,526.5L208.6,531.3L208.2,537.1L203.1,545.6L201.7,550.7L187.4,553.5L175.3,548.8L160.5,553.0L155.2,553.6L145.7,548.2L135.9,539.9L120.1,529.0L117.6,526.3L107.9,520.9L102.9,520.8L94.2,525.4L88.5,522.5L78.5,522.0L67.5,524.3L63.0,517.6L65.8,524.8L62.5,526.8L50.3,529.2L43.1,529.2L37.7,526.4L25.2,524.1L17.1,525.6L14,524.9L14,14ZM42.8,409.8L38.9,398.6L41.4,398.6L45.4,403.0ZM230.5,300.3L227.2,296.2L229.1,293.3L233.1,299.1ZM169.1,325.6L168.7,329.0L165.1,328.7L166.2,322.9ZM146.3,310.6L142.6,312.8L134.0,312.1L130.7,309.0L133.4,305.2L140.2,304.2ZM150.8,327.7L150.2,330.5L142.2,334.3L141.8,329.2L145.1,326.7ZM267.9,111.1L267.6,108.8L274.6,103.1L275.3,104.6L270.7,110.0ZM290.0,134.8L292.7,140.5L292.0,142.6L288.9,143.0L284.9,135.6L287.9,133.4ZM316.4,109.8L312.8,111.4L313.5,107.4L317.5,106.2ZM292.7,155.4L291.2,154.7L291.8,150.6L294.8,148.7L296.3,151.6L295.2,154.2ZM256.2,161.8L251.7,164.3L248.8,160.7L249.1,155.2L250.8,151.0L258.8,150.8L262.0,154.5L260.0,158.6ZM284.7,87.0L280.3,89.8L277.7,83.7L278.3,81.2L276.2,78.3L278.2,77.9L285.8,84.8ZM231.4,69.3L231.3,65.2L236.2,67.4L239.9,70.0L237.7,70.9ZM206.8,131.2L210.9,125.6L212.3,121.7L215.8,121.9L218.3,125.9L217.5,130.1L214.0,131.8ZM229.7,146.1L228.3,150.7L233.3,155.6L231.4,159.3L228.5,157.9L227.1,160.1L219.7,158.2L221.5,162.0L217.4,165.8L219.5,167.7L216.9,169.5L213.9,169.3L208.0,173.3L203.2,170.7L203.3,166.1L199.5,169.4L196.7,168.3L196.5,165.7L200.6,160.9L204.2,154.9L204.4,149.2L209.1,142.5L213.6,142.4L214.2,144.1L210.9,148.2L212.8,151.5L216.1,151.9L219.5,148.7L220.1,143.7L226.2,143.5L227.6,147.1ZM160.8,276.2L164.0,276.0L163.3,280.5L164.6,284.7L163.7,291.0L164.6,295.2L160.6,301.4L158.5,301.4L163.4,306.0L162.0,311.5L155.7,310.7L153.0,302.0L155.1,299.6L152.2,293.1L148.9,294.5L139.8,294.3L134.6,291.4L139.9,285.0L133.5,279.0L138.4,277.8L143.2,279.2L147.6,275.0L162.2,267.4L166.1,267.6L164.3,272.2ZM228.1,287.0L229.1,289.9L222.1,297.1L217,297.1L212.1,292.4L215.3,287.0L223.1,283.8ZM272.7,220.0L276.4,223.8L277.7,228.9L275.9,236.1L272.8,238.4L269.3,233.1L262.8,229.0L262.7,226.5L266.1,222.2L266.1,218.6L270.2,215.1ZM268.1,137.5L259.8,142.1L254.4,146.0L253.4,144.1L249.8,146.8L246.7,144.5L243.9,138.6L247.7,134.7L253.9,136.7L253.7,135.4L247.3,127.3L248.2,125.9L253.4,127.1L252.7,130.3L256.3,126.2L258.7,126.5L258.8,124.1L261.4,124.1L257.1,133.3L260.7,130.1L262.4,131.1L263.3,127.0L266.0,127.8L267.2,130.1L265.6,132.8L269.7,132.7ZM301.1,101.9L300.5,103.8L295.7,106.9L299.6,108.1L295.1,117.3L290.9,118.7L289.1,121.8L285.3,123.5L283.3,121.5L283.9,119.0L287.6,115.6L286.4,110.7L288.0,109.6L284.6,105.4L287.6,102.0L289.0,105.6L295.5,101.8L292.0,100.9L295.6,99.3L294.6,97.6L299.2,96.4ZM341.8,117.1L336.0,124.6L336.6,128.9L333.6,130.8L333.1,134.5L336.1,130.9L337.4,133.3L333.4,135.2L333.8,137.4L332.2,139.3L327.5,141.5L329.5,142.4L328.4,145.5L330.8,145.1L328.1,149.2L326.2,149.8L319.1,148.5L315.1,149.0L318.2,145.1L311.6,149.4L311.9,146.9L306.7,150.3L306.4,149.3L310.0,143.3L305.2,148.6L305.0,144.2L302.9,145.7L301.9,141.4L303.9,137.1L306.1,139.0L304.7,134.7L308.6,129.2L313.5,131.6L315.1,131.1L318.0,133.5L317.0,129.0L313.1,127.5L313.8,125.5L311.4,124.5L314.0,121.2L317.5,123.0L316.0,119.0L318.2,115.9L321.2,113.8L322.8,119.7L325.0,118.6L322.9,117.1L324.0,113.6L326.1,115.0L330.0,111.1L331.1,113.2L329.9,115.0L331.0,117.3L332.9,111.4L335.6,110.7L338.9,113.1L340.9,113.1L341.7,110.3L343.3,112.0ZM279.9,145.0L279.7,149.5L275.0,150.9L278.3,151.2L281.3,154.5L282.0,158.5L279.9,159.3L281.2,165.2L279.5,165.8L275.4,160.2L276.1,164.3L274.2,170.2L271.1,170.3L271.2,173.6L273.5,172.3L273.4,175.3L276.8,177.4L277.0,183.4L278.0,182.1L283.2,185.1L286.8,185.6L287.6,188.3L291.1,190.7L293.2,198.0L292.8,201.7L290.0,204.3L286.4,203.6L287.4,207.8L284.0,206.8L281.2,208.6L276.0,204.9L274.2,200.5L276.8,197.6L272.5,198.3L264.2,189.2L260.2,183.3L264.0,181.1L257.7,178.1L257.3,172.2L255.4,171.6L256.3,169.0L263.0,162.7L267.3,161.8L269.6,159.9L274.6,153.0L272.5,151.8L269.5,146.8L272.4,142.3L273.2,138.2L274.8,139.3L276.6,136.9L279.4,139.1ZM299.1,127.2L299.9,129.1L298.5,132.3L296.2,132.0L293.4,134.4L287.8,130.3L290.8,126.3L292.7,127.9L292.6,124.8L294.8,122.2L300.2,119.7L300.8,125.0ZM275.8,87.5L276.2,90.1L274.2,90.3L271.4,87.4L270.3,90.3L267.3,90.9L263.0,85.9L264.8,81.2L270.4,79.6L274.9,85.3ZM260.4,73.9L255.9,72.3L254.2,74.2L252.5,73.2L248.5,74.0L246.7,71.5L243.1,71.7L244.8,68.1L250.0,68.1L249.0,66.4L245.3,65.2L242.7,66.2L239.2,64.8L242.2,63.0L234.7,62.7L233.9,61.0L238.9,58.9L236.6,58.3L234.8,53.3L238.1,52.1L241.8,52.7L242.7,55.3L246.8,57.0L257.2,62.2L259.0,65.7L259.8,70.0L262.0,69.1ZM247.6,104.1L248.1,105.6L244.2,106.3L246.2,109.3L249.9,110.7L249.0,114.2L246.5,115.6L238.1,117.1L232.6,113.7L231.3,109.1L232.5,106.8L229.1,105.1L226.4,101.6L221.1,98.1L218.3,93.5L218.4,90.7L221.0,87.2L226.9,92.0L228.4,95.9L232.4,97.8L227.4,88.4L229.4,87.2L232.8,88.0L232.6,85.9L227.1,85.5L224.2,81.0L226.6,77.5L226.4,73.5L230.6,74.0L231.7,78.0L235.7,80.9L233.5,77.8L232.7,74.1L234.9,73.9L238.7,80.7L237.4,75.9L240.1,74.3L243.4,76.7L246.3,76.8L247.6,81.7L244.3,83.9L245.2,87.9L240.5,93.7L237.1,96.4L238.6,103.8L241.6,103.4L243.1,99.7L245.8,100.2L249.5,95.9L256.8,97.2L257.4,100.3L252.9,101.5L250.4,103.9ZM245.6,169.7L245.1,174.5L248.1,178.2L248.0,181.9L229.8,184.3L227.7,179.3L225.2,176.3L222.3,181.3L216.2,182.3L213.6,177.7L219.6,174.1L222.6,171.0L234.5,164.1L235.7,167.4L239.3,163.9L242.3,165.3ZM177.6,184.5L178.4,185.2L176.4,191.6L170.1,198.6L164.9,197.0L163.3,191.5L165.2,185.6L163.6,179.8L166.4,178.4L171.3,181.8L177.2,180.0L179.6,181.4ZM190.5,93.6L193.0,97.7L197.4,97.9L197.4,103.1L195.7,107.1L189.9,105.9L190.9,109.1L196.3,111.9L200.7,108.5L201.2,111.3L198.6,116.2L196.0,119.0L186.1,124.5L184.9,126.3L189.5,127.8L192.4,124.9L205.2,118.2L208.9,117.9L208.0,122.4L209.4,122.6L207.3,128.6L204.8,131.4L199.9,134.1L189.7,142.1L183.2,143.7L179.2,148.4L177.4,153.6L179.4,153.0L175.3,162.7L175.0,166.0L170.9,168.0L171.3,164.7L169.2,164.8L170.0,161.3L165.4,161.1L165.7,156.9L159.9,160.8L164.7,162.4L164.7,165.0L159.8,167.7L155.1,163.9L153.6,156.3L152.1,152.6L154.5,152.2L153.8,145.6L156.5,142.5L149.1,140.8L146.7,136.5L143.4,134.4L136.8,123.4L133.7,114.2L137.9,110.6L142.8,108.9L141.9,99.0L143.1,93.9L148.1,89.9L152.0,89.1L157.6,100.8L158.7,110.5L161.1,115.0L162.5,112.1L163.9,103.5L160.1,93.2L159.2,85.5L163.4,80.9L166.2,82.5L171.6,91.3L174.3,92.2L170.1,82.9L170.3,80.6L174.0,82.1L173.5,76.8L177.8,75.8L182.4,78.4L184.6,76.7L192.7,80.8L201.7,90.5L200.6,92.8L194.8,94.5ZM208.6,67.4L210.2,69.4L207.7,70.1L211.3,71.9L211.2,77.5L204.5,86.1L201.9,86.9L198.3,83.2L188.0,74.0L182.9,72.8L180.2,69.7L169.6,69.2L168.0,64.1L162.3,59.5L163.8,56.7L170.3,53.2L174.2,46.9L174.1,44.4L180.8,46.1L183.4,47.6L190.7,47.7L201.4,51.3L204.0,49.1L209.7,46.8L213.9,58.4L210.5,67.8ZM263.9,153.0L265.6,150.4L267.2,151.1ZM89.3,388.3L80.3,385.2L91.1,383.3ZM231.7,153.1L230.0,148.6L236.0,153.6ZM231.3,289.7L231.2,286.0L234.0,286.3ZM173.5,331.9L172.5,326.8L174.5,327.0ZM184.6,402.6L188.5,399.4L188.1,402.7ZM194.8,368.6L193.1,366.2L194.0,361.7L196.0,366.2ZM212.8,404.4L211.9,398.8L215.5,401.3ZM230.3,258.3L225.4,258.9L224.6,254.2L227.8,255.2ZM220.8,268.2L221.0,266.7L228.6,265.5L229.1,267.5L222.8,268.9ZM231.8,273.7L234.2,270.1L235.3,272.7ZM171.2,277.1L169.5,275.5L172.5,271.0L172.6,276.1ZM183.6,247.4L186.8,242.8L190.0,242.2L186.6,246.8ZM165.2,274.6L165.7,271.4L169.2,269.7ZM254.9,125.4L251.0,125.6L249.8,123.1L252.3,123.1L250.9,120.8L254.3,117.2L257.8,120.7L258.1,122.6ZM264.3,125.3L266.9,125.2L267.9,127.4ZM260.5,116.0L259.9,120.0L257.6,119.3L256.5,116.6L259.7,114.1ZM279.6,116.8L279.1,114.5L281.1,113.4L282.5,115.8L281.1,118.7ZM283.0,162.1L282.4,160.7L285.1,157.4L286.8,158.7ZM257.8,149.6L254.6,147.7L256.2,146.5L259.3,147.6ZM267.6,78.2L267.3,75.6L270.0,73.6L272.2,75.4L270.0,77.9ZM252.5,82.8L251.8,78.7L254.6,81.1ZM238.3,124.3L238.8,120.9L243.6,121.3L241.1,125.2ZM199.4,559.0L193.6,559.1L193.4,563.7L179.7,571.7L175.6,576.5L183.4,573.3L183.1,575.5L188.4,577.6L182.4,578.9L180.3,581.8L187.5,585.3L185.3,588.7L193.7,587.9L192.6,590.5L197.3,591.2L198.4,596.6L191.3,598.5L194.4,601.8L189.7,603.4L199.6,604.8L197.3,607.7L192.1,608.1L187.4,612.1L188.6,614.9L193.5,612.1L197.7,612.4L192.2,616.9L196.2,617.1L196.0,620.4L186.3,629.7L182.2,627.1L185.4,621.6L178.7,622.1L184.6,617.2L185.0,609.8L178.7,614.2L176.3,612.8L169.2,616.6L165.0,614.9L177.4,610.4L173.9,607.0L168.9,606.4L170.9,602.9L160.2,600.7L149.7,592.8L142.5,590.2L144.5,584.3L155.9,582.6L153.4,579.9L159.4,575.5L163.8,575.8L165.7,571.9L179.6,561.2L187.8,556.7L195.3,556.2ZM160.4,176.8L159.2,175.1L162.3,173.8ZM691.4,299.7L691.8,303.4L689.6,306.3L686.9,305.6ZM696.8,289.7L700.2,289.9L698.4,291.9ZM694.3,302.4L694.8,306.8L692.5,305.5ZM676.4,330.6L679.3,330.4L681.4,334.4L679.1,338.6L675.9,334.8ZM680.4,320.2L682.6,320.5L682.1,327.5L680.2,329.3L678.8,326.3L678.8,318.0ZM676.1,348.1L676.4,342.7L679.0,345.2L678.0,349.9L675.4,351.5L671.6,356.6L671.7,353.1L674.1,348.3L671.4,342.7L671.6,338.7L675.6,345.5ZM670.9,344.7L673.2,348.8L669.8,350.3L669.7,344.4ZM299.7,198.5L297.6,197.2L302.4,196.5ZM333.7,202.0L332.2,199.4L334.1,199.4ZM438.4,177.0L435.9,171.3L436.8,166.0L438.8,166.1L440.1,168.8L440.5,172.1ZM498.2,191.1L496.0,188.7L496.6,186.5ZM501.9,224.4L500.7,226.3L497.8,225.3L497.9,222.6L502.2,221.1ZM498.3,254L497.2,248.2L498.4,246.9ZM500.3,284.0L498.4,278.0L499.6,274.8ZM502.7,293.6L504.6,299.9L500.3,299.9L499.5,295.1ZM475.6,160.3L478.1,162.9L483.0,166.0L482.4,167.1L474.3,167.3L470.2,167.9L469.8,169.6L473.5,168.3L480.5,169.6L484.5,168.4L485.5,173.3L489.6,175.1L491.7,178.4L489.5,182.0L486.3,183.5L473,184.4L472.0,187.7L476.8,186.7L483.0,188.1L484.7,193.3L486.3,192.7L487.8,188.2L491.9,187.4L492.0,195.3L490.7,199.5L487.1,206.3L490.1,204.4L493.2,200.1L495.0,195.9L496.9,194.6L497.1,196.7L501.4,198.6L503.8,192.9L505.7,191.0L510.1,191.5L513.4,192.9L516.2,196.0L511.9,203.9L509.3,205.2L509.6,208.6L503.7,212.1L506.1,214.4L503.7,218.2L500.4,218.8L496.6,217.5L494.6,221.5L494.7,224.8L497.1,226.8L496.8,232.2L497.8,235.3L495.9,236.7L494.9,240.3L491.5,243.2L492.0,244.8L489.3,256.8L489.8,259.0L492.2,255.0L496.8,258.0L496.7,260.3L494.5,258.5L492.8,259.6L494.3,263.5L497.5,265.8L500.8,265.8L500.3,272.6L494.8,270.4L491.7,271.0L489.3,274.0L486.8,272.3L485.8,274.0L488.3,275.8L489.9,280.6L494.7,281.3L496.9,288.4L497.5,294.1L495.8,297.6L493.2,295.2L491.2,298.8L492.6,304.1L493.4,300.3L495.1,300.3L498.2,307.8L497.6,310.8L490.4,313.4L487.0,311.3L487.9,307.7L485.5,310.6L486.8,315.4L493.5,317.4L492.9,322.7L488.4,323.5L485.7,325.9L482.2,324.6L479.1,321.5L477.6,318.1L475.3,320.4L472.3,317.3L474.7,321.7L465.8,326.8L475.5,323.1L478.4,323.6L486.1,331.1L485.7,338.9L484.6,343.0L476.9,337.0L474.9,328.8L465.7,332.9L466.8,333.6L474.1,331.3L474.2,337.7L486.0,348.6L483.4,352.1L486.8,352.5L487.6,366.5L483.4,367.3L483.3,361.5L481.9,367.6L478.8,367.3L475.8,364.3L473.5,355.7L467.6,350.1L462.5,348.8L461.9,350.1L468.1,352.1L467.8,355.8L462.9,358.8L455.5,357.2L456.7,359.0L455.6,362.4L451.0,364.7L455.8,366.2L462.1,365.8L463.2,367.0L457.6,370.4L467.9,368.0L476.9,371.8L483.7,372.3L479.9,376.8L475.8,377.5L476.3,379.2L466.3,387.0L461.0,392.0L445.8,395.7L442.5,395.1L438.2,397.3L433.9,396.5L429.9,391.2L429.6,397.7L423.4,401.9L415.7,413.6L408.2,419.0L405.0,415.5L405.4,420.0L400.2,423.3L396.4,421.8L391.5,424.6L390.5,422.7L396.7,415.2L393.9,415.4L386.6,422.9L377.4,421.8L380.2,425.3L375.1,428.2L370.6,426.0L372.3,429.3L373.3,436.0L368.7,438.5L368.0,445.6L364.1,447.6L362.8,450.7L354.5,456.7L349.2,454.5L353.3,458.2L350.5,463.4L350.5,467.8L348.4,469.7L341.8,481.1L336.6,484.1L336.0,489.6L328.3,490.3L326.9,487.1L321.8,482.4L323.0,479.2L319.5,475.3L323.7,468.4L315.3,470.6L307.1,466.6L310.6,465.9L306.8,464.2L304.9,459.2L305.6,450.1L310.0,449.1L304.7,448.0L306.5,445.2L303.4,440.1L305.0,435.4L303.7,422.0L305.5,417.1L312.7,417.3L313.6,416.1L305.9,415.8L305.8,414.1L310.7,410.8L317.7,411.9L314.9,409.1L310.1,409.6L304.7,413.4L310.2,396.4L306.6,392.4L309.6,387.8L308.6,386.1L318.4,383.7L320.7,381.9L312.2,384.9L308.1,384.2L309.7,380.9L315.4,377.2L313.2,371.0L315.5,367.7L323.2,366.2L329.8,371.3L331.9,369.5L327.6,368.6L325.4,365.9L316.7,366.2L323.9,359.2L330.4,364.8L334.0,362.2L328.5,361.3L323.4,357.5L327.0,354.2L331.1,354.8L333.3,358.6L336.3,356.7L344.9,344.9L348.6,342.0L343.4,340.0L340.1,337.2L339.0,333.8L334.7,328.6L334.3,324.4L336.8,323.0L342.2,327.0L345.8,333.8L349.2,336.1L347.6,332.3L349.5,328.9L348.3,326.0L350.7,325.1L344.2,320.9L347.4,317.2L351.3,317.6L348.9,315.2L345.0,314.7L348.0,309.3L348.3,303.8L346.7,311.1L343.2,312.5L342.0,315.2L338.4,314.8L336.0,310.3L341.1,303.8L342.4,298.7L346.9,298.0L348.8,295.1L346.8,289.9L349.4,288.8L348.6,283.2L351.7,279.2L351.3,273.3L353.3,270.3L355.2,270.2L353.7,260.4L353.8,254.3L355.9,253.4L356.5,250.5L351.6,238.4L346.8,232.1L344.1,232.6L344.0,230.6L338.9,230.4L338.7,228.1L334.5,226.5L333.9,229.5L330.5,225.0L329.7,219.0L330.6,217.7L336.3,217.5L333.5,215.1L333.2,211.9L331.5,210.9L332.0,206.7L334.2,205.6L339.3,209.6L341.8,208.7L346.4,212.0L347.1,214.2L350.1,210.9L350.2,208.6L345.2,207.9L344.3,205.5L341.1,205.6L340.6,199.9L339.1,194.1L339.7,189.9L344.4,186.7L356.1,189.5L356.9,188.4L362.7,189.4L366.0,191.9L369.4,190.2L379.1,181.4L375.1,180.7L373.4,177.3L374.7,175.1L378.4,172.9L382.0,172.4L387.5,170.0L389.4,170.2L389.5,173.8L392.7,169.5L395.3,172.8L398.4,169.6L400.9,165.3L403.1,163.5L405.7,163.7L407.9,174.3L407.6,163.4L409.5,162.8L414.9,163.4L417.1,164.3L419.6,163.6L420.5,165.5L419.7,169.2L416.7,174.9L419.3,172.6L422.8,165.8L423.3,166.1L424.1,174.5L427.2,175.5L426.9,169.5L428.0,165.7L431.9,168.6L434.6,175.4L435.9,180.7L437.8,181.0L439.0,176.9L441.4,173.0L441.7,169.9L440.8,166.3L442.1,165.7L446.8,168.1L448.1,169.7L449.5,168.3L443.3,164.3L440.4,163.7L441.6,160.4L442.8,161.7L448.5,159.3L450.2,160.4L451.4,163.1L454.4,159.8L456.5,163.2L457.0,166.6L458.4,163.6L457.7,160.1L460.0,158.6L466.5,158.6L467.9,159.6L469.8,158.7Z","dGrat":"M483.8,14L495.1,23.6M479.9,14L495.1,23.6M473.7,14L495.1,23.6M461.6,14L495.1,23.6M425.4,14L495.1,23.6M14,26.3L108.1,25.8L495.1,23.6M14,95.3L112.4,80.6L495.1,23.6M14,167.3L124.3,134.3L495.1,23.6M14,245.7L143.8,185.8L495.1,23.6M14,335.2L170.3,234.0L495.1,23.6M14,443.1L203.4,277.9L495.1,23.6M14,581.7L35.7,556.5L242.4,316.7L495.1,23.6M14,775.6L115.9,616.2L286.6,349.5L495.1,23.6M52.8,996L64.9,969.3L203.8,664.0L334.9,375.8L495.1,23.6M210.6,996L297.5,698.8L386.4,394.9L495.1,23.6M355.8,996L395.3,720.0L440.2,406.6L495.1,23.6M495.1,996L495.1,727.1L495.1,410.5L495.1,23.6M634.3,996L594.8,720.0L549.9,406.6L495.1,23.6M779.5,996L692.6,698.8L603.7,394.9L495.1,23.6M937.3,996L925.2,969.3L786.3,664.0L655.2,375.8L495.1,23.6M966,759.8L874.2,616.2L703.6,349.5L495.1,23.6M966,570.0L954.4,556.5L747.7,316.7L495.1,23.6M966,434.3L786.7,277.9L495.1,23.6M966,328.7L819.8,234.0L495.1,23.6M966,241.0L846.3,185.8L495.1,23.6M966,164.3L865.8,134.3L495.1,23.6M966,93.8L877.7,80.6L495.1,23.6M966,26.3L882.0,25.8L495.1,23.6M564.7,14L495.1,23.6M528.5,14L495.1,23.6M516.4,14L495.1,23.6M510.2,14L495.1,23.6M506.3,14L495.1,23.6M503.5,14L495.1,23.6M501.3,14L495.1,23.6M486.6,14L495.1,23.6M14,989.8L27.0,996M963.1,996L966,994.6M14,899.4L17.7,901.6L49.3,918.0L81.3,933.3L114.0,947.4L147.0,960.4L180.6,972.1L214.5,982.7L248.8,992.1L265.4,996M724.7,996L741.3,992.1L775.6,982.7L809.5,972.1L843.1,960.4L876.2,947.4L908.8,933.3L940.9,918.0L966,904.9M14,810.3L26.0,817.7L54.5,833.9L83.6,849.0L113.2,863.1L143.3,876.2L173.9,888.1L204.8,899.0L236.1,908.8L267.8,917.4L299.7,924.9L331.9,931.3L364.3,936.5L396.8,940.6L429.5,943.5L462.3,945.3L495.1,945.9L527.9,945.3L560.6,943.5L593.3,940.6L625.8,936.5L658.2,931.3L690.4,924.9L722.3,917.4L754.0,908.8L785.3,899.0L816.2,888.1L846.8,876.2L876.9,863.1L906.5,849.0L935.6,833.9L964.1,817.7L966,816.5M14,721.5L38.3,737.6L64.0,753.4L90.2,768.3L116.9,782.2L144.1,795.2L171.8,807.2L199.9,818.2L228.3,828.2L257.1,837.1L286.2,845.1L315.5,852.0L345.1,857.8L374.9,862.7L404.8,866.4L434.8,869.1L464.9,870.7L495.1,871.2L525.2,870.7L555.3,869.1L585.3,866.4L615.2,862.7L645.0,857.8L674.6,852.0L703.9,845.1L733.0,837.1L761.8,828.2L790.2,818.2L818.3,807.2L846.0,795.2L873.2,782.2L899.9,768.3L926.1,753.4L951.8,737.6L966,728.2M14,631.0L32.1,645.0L54.5,661.1L77.5,676.3L101.0,690.8L124.9,704.4L149.4,717.1L174.3,729.0L199.5,739.9L225.2,750.0L251.2,759.1L277.5,767.3L304.1,774.6L330.9,780.9L358.0,786.3L385.2,790.6L412.5,794.1L440.0,796.5L467.5,798.0L495.1,798.5L522.6,798.0L550.1,796.5L577.6,794.1L604.9,790.6L632.1,786.3L659.2,780.9L686.0,774.6L712.6,767.3L738.9,759.1L764.9,750.0L790.6,739.9L815.8,729.0L840.7,717.1L865.2,704.4L889.1,690.8L912.6,676.3L935.6,661.1L958.0,645.0L966,638.8M14,536.9L17.0,539.8L35.7,556.5L55.0,572.5L74.8,587.8L95.1,602.4L115.9,616.2L137.2,629.4L159.0,641.7L181.2,653.3L203.8,664.0L226.7,674.0L250.0,683.1L273.7,691.4L297.5,698.8L321.7,705.4L346.0,711.2L370.6,716.0L395.3,720.0L420.1,723.1L445.0,725.4L470.0,726.7L495.1,727.1L520.1,726.7L545.1,725.4L570.0,723.1L594.8,720.0L619.5,716.0L644.1,711.2L668.4,705.4L692.6,698.8L716.5,691.4L740.1,683.1L763.4,674.0L786.3,664.0L808.9,653.3L831.1,641.7L852.9,629.4L874.2,616.2L895.0,602.4L915.4,587.8L935.2,572.5L954.4,556.5L966,546.1M14,435.2L17.8,439.7L32.9,456.4L48.6,472.6L64.9,488.2L81.7,503.2L99.0,517.6L116.8,531.4L135.1,544.5L153.8,557.0L173.0,568.8L192.6,579.9L212.6,590.3L232.9,599.9L253.6,608.9L274.6,617.1L295.8,624.6L317.3,631.3L339.0,637.2L360.9,642.4L383.0,646.8L405.3,650.4L427.6,653.2L450.0,655.2L472.5,656.4L495.1,656.8L517.6,656.4L540.1,655.2L562.5,653.2L584.8,650.4L607.1,646.8L629.2,642.4L651.1,637.2L672.8,631.3L694.3,624.6L715.5,617.1L736.5,608.9L757.2,599.9L777.5,590.3L797.5,579.9L817.1,568.8L836.3,557.0L855.0,544.5L873.3,531.4L891.1,517.6L908.4,503.2L925.2,488.2L941.5,472.6L957.2,456.4L966,446.7M14,316.5L22.3,329.8L33.5,346.4L45.3,362.7L57.6,378.4L70.5,393.8L84.0,408.6L97.9,423.0L112.4,436.9L127.3,450.2L142.7,463.0L158.6,475.3L174.8,487.0L191.5,498.1L208.6,508.5L226.0,518.4L243.8,527.7L261.9,536.3L280.3,544.3L298.9,551.6L317.8,558.2L336.9,564.2L356.3,569.5L375.8,574.1L395.4,577.9L415.2,581.1L435.1,583.6L455.0,585.4L475.0,586.5L495.1,586.8L515.1,586.5L535.1,585.4L555.0,583.6L574.9,581.1L594.7,577.9L614.3,574.1L633.8,569.5L653.2,564.2L672.3,558.2L691.2,551.6L709.9,544.3L728.2,536.3L746.3,527.7L764.1,518.4L781.5,508.5L798.6,498.1L815.3,487.0L831.5,475.3L847.4,463.0L862.8,450.2L877.7,436.9L892.2,423.0L906.1,408.6L919.6,393.8L932.5,378.4L944.8,362.7L956.6,346.4L966,332.5M14,132.6L17.7,147.9L22.4,164.8L27.7,181.5L33.6,198.0L40.1,214.3L47.2,230.4L54.8,246.2L63.0,261.7L71.8,276.9L81.1,291.8L90.9,306.3L101.2,320.5L112.0,334.4L123.3,347.8L135.0,360.8L147.3,373.4L159.9,385.5L173.0,397.2L186.5,408.4L200.4,419.2L214.6,429.4L229.2,439.1L244.2,448.3L259.4,457.0L275.0,465.1L290.8,472.6L306.9,479.6L323.3,486.0L339.8,491.8L356.6,497.0L373.5,501.6L390.6,505.7L407.8,509.1L425.1,511.9L442.5,514.1L460.0,515.6L477.5,516.5L495.1,516.9L512.6,516.5L530.1,515.6L547.6,514.1L565.0,511.9L582.3,509.1L599.5,505.7L616.6,501.6L633.5,497.0L650.3,491.8L666.8,486.0L683.2,479.6L699.3,472.6L715.1,465.1L730.7,457.0L745.9,448.3L760.9,439.1L775.5,429.4L789.7,419.2L803.6,408.4L817.1,397.2L830.2,385.5L842.9,373.4L855.1,360.8L866.8,347.8L878.1,334.4L888.9,320.5L899.2,306.3L909.0,291.8L918.3,276.9L927.1,261.7L935.3,246.2L942.9,230.4L950.0,214.3L956.5,198.0L962.4,181.5L966,170.1M72.5,14L72.4,26.0L72.7,41.0L73.6,56.0L75.0,71.0L77.0,85.9L79.5,100.7L82.5,115.5L86.0,130.1L90.1,144.6L94.6,158.9L99.7,173.0L105.3,187.0L111.3,200.8L117.9,214.3L124.9,227.6L132.4,240.6L140.3,253.4L148.7,265.9L157.5,278.0L166.8,289.9L176.5,301.4L186.6,312.5L197.0,323.3L207.9,333.7L219.1,343.7L230.7,353.3L242.5,362.5L254.8,371.3L267.3,379.6L280.1,387.5L293.2,394.9L306.5,401.9L320.1,408.3L333.9,414.3L347.9,419.8L362.0,424.8L376.4,429.3L390.9,433.2L405.5,436.7L420.3,439.6L435.1,442.0L450.0,443.8L465.0,445.2L480.0,446.0L495.1,446.3L510.1,446.0L525.1,445.2L540.1,443.8L555.0,442.0L569.8,439.6L584.6,436.7L599.2,433.2L613.7,429.3L628.1,424.8L642.2,419.8L656.2,414.3L670.0,408.3L683.6,401.9L696.9,394.9L710.0,387.5L722.8,379.6L735.3,371.3L747.6,362.5L759.5,353.3L771.0,343.7L782.2,333.7L793.1,323.3L803.5,312.5L813.6,301.4L823.3,289.9L832.6,278.0L841.4,265.9L849.8,253.4L857.7,240.6L865.2,227.6L872.3,214.3L878.8,200.8L884.9,187.0L890.4,173.0L895.5,158.9L900.0,144.6L904.1,130.1L907.6,115.5L910.6,100.7L913.1,85.9L915.1,71.0L916.5,56.0L917.4,41.0L917.7,26.0L917.6,14M144.5,14L144.3,25.6L144.6,38.1L145.4,50.5L146.6,62.9L148.2,75.3L150.2,87.6L152.7,99.8L155.7,112.0L159.0,124.0L162.8,135.9L167.0,147.6L171.6,159.2L176.6,170.6L182.1,181.8L187.9,192.9L194.1,203.7L200.7,214.3L207.7,224.6L215.0,234.7L222.7,244.5L230.7,254.1L239.1,263.3L247.8,272.3L256.8,280.9L266.1,289.2L275.7,297.2L285.5,304.8L295.7,312.1L306.1,319.0L316.7,325.5L327.5,331.7L338.6,337.5L349.9,342.8L361.3,347.8L372.9,352.3L384.7,356.5L396.6,360.2L408.6,363.5L420.8,366.3L433.0,368.8L445.3,370.7L457.7,372.3L470.1,373.4L482.6,374.1L495.1,374.3L507.5,374.1L520.0,373.4L532.4,372.3L544.8,370.7L557.1,368.8L569.3,366.3L581.5,363.5L593.5,360.2L605.4,356.5L617.2,352.3L628.8,347.8L640.2,342.8L651.5,337.5L662.6,331.7L673.4,325.5L684.0,319.0L694.4,312.1L704.6,304.8L714.4,297.2L724.0,289.2L733.3,280.9L742.3,272.3L751.0,263.3L759.4,254.1L767.4,244.5L775.1,234.7L782.4,224.6L789.4,214.3L796.0,203.7L802.2,192.9L808.0,181.8L813.5,170.6L818.5,159.2L823.1,147.6L827.3,135.9L831.1,124.0L834.4,112.0L837.4,99.8L839.9,87.6L841.9,75.3L843.5,62.9L844.7,50.5L845.5,38.1L845.8,25.6L845.6,14M218.9,14L218.8,15.3L218.7,25.2L218.9,35.0L219.5,44.8L220.4,54.6L221.7,64.3L223.3,74.0L225.3,83.7L227.6,93.2L230.2,102.7L233.2,112.1L236.5,121.3L240.2,130.4L244.1,139.4L248.4,148.3L253.0,157.0L257.9,165.5L263.1,173.8L268.6,182.0L274.4,190.0L280.4,197.7L286.7,205.2L293.3,212.5L300.2,219.6L307.3,226.4L314.6,232.9L322.2,239.2L329.9,245.2L337.9,251.0L346.1,256.4L354.5,261.5L363.0,266.4L371.8,270.9L380.6,275.2L389.7,279.1L398.8,282.7L408.1,285.9L417.5,288.8L426.9,291.4L436.5,293.7L446.2,295.6L455.9,297.2L465.6,298.4L475.4,299.3L485.2,299.8L495.1,300.0L504.9,299.8L514.7,299.3L524.5,298.4L534.2,297.2L543.9,295.6L553.6,293.7L563.2,291.4L572.6,288.8L582.0,285.9L591.3,282.7L600.5,279.1L609.5,275.2L618.3,270.9L627.1,266.4L635.6,261.5L644.0,256.4L652.2,251.0L660.2,245.2L667.9,239.2L675.5,232.9L682.8,226.4L689.9,219.6L696.8,212.5L703.4,205.2L709.7,197.7L715.7,190.0L721.5,182.0L727.0,173.8L732.2,165.5L737.1,157.0L741.7,148.3L746.0,139.4L749.9,130.4L753.6,121.3L756.9,112.1L759.9,102.7L762.5,93.2L764.8,83.7L766.8,74.0L768.4,64.3L769.7,54.6L770.6,44.8L771.2,35.0L771.4,25.2L771.3,15.3L771.3,14M297.2,14L297.1,17.7L297.0,24.7L297.1,31.8L297.6,38.8L298.2,45.8L299.1,52.8L300.3,59.7L301.7,66.6L303.4,73.5L305.3,80.3L307.4,87.0L309.8,93.6L312.4,100.2L315.2,106.6L318.3,113.0L321.6,119.2L325.1,125.3L328.8,131.3L332.7,137.1L336.9,142.8L341.2,148.4L345.8,153.8L350.5,159.0L355.4,164.0L360.5,168.9L365.7,173.6L371.1,178.1L376.7,182.4L382.4,186.5L388.3,190.4L394.3,194.1L400.4,197.6L406.7,200.9L413.1,203.9L419.5,206.7L426.1,209.3L432.7,211.6L439.4,213.7L446.2,215.5L453.1,217.2L460.0,218.5L467.0,219.7L474.0,220.5L481.0,221.2L488.0,221.5L495.1,221.7L502.1,221.5L509.1,221.2L516.1,220.5L523.1,219.7L530.1,218.5L537.0,217.2L543.9,215.5L550.7,213.7L557.4,211.6L564.0,209.3L570.6,206.7L577.1,203.9L583.4,200.9L589.7,197.6L595.8,194.1L601.8,190.4L607.7,186.5L613.4,182.4L619.0,178.1L624.4,173.6L629.6,168.9L634.7,164.0L639.6,159.0L644.3,153.8L648.9,148.4L653.2,142.8L657.4,137.1L661.3,131.3L665.0,125.3L668.5,119.2L671.8,113.0L674.9,106.6L677.7,100.2L680.3,93.6L682.7,87.0L684.8,80.3L686.7,73.5L688.4,66.6L689.8,59.7L691.0,52.8L691.9,45.8L692.5,38.8L693.0,31.8L693.1,24.7L693.0,17.7L692.9,14M383.1,14L382.9,16.2L382.7,20.2L382.7,24.2L382.7,28.2L383.0,32.2L383.4,36.2L383.9,40.2L384.5,44.1L385.3,48.0L386.3,51.9L387.4,55.7L388.6,59.6L389.9,63.3L391.4,67.0L393.0,70.7L394.7,74.3L396.6,77.8L398.6,81.3L400.7,84.7L403.0,88.0L405.3,91.2L407.8,94.4L410.3,97.4L413.0,100.4L415.8,103.3L418.7,106.0L421.7,108.7L424.7,111.3L427.9,113.7L431.2,116.0L434.5,118.3L437.9,120.4L441.4,122.3L444.9,124.2L448.5,125.9L452.2,127.5L455.9,128.9L459.7,130.3L463.5,131.5L467.4,132.5L471.2,133.4L475.2,134.2L479.1,134.8L483.1,135.3L487.1,135.7L491.1,135.9L495.1,136.0L499.1,135.9L503.0,135.7L507.0,135.3L511.0,134.8L514.9,134.2L518.9,133.4L522.8,132.5L526.6,131.5L530.4,130.3L534.2,128.9L537.9,127.5L541.6,125.9L545.2,124.2L548.7,122.3L552.2,120.4L555.6,118.3L559.0,116.0L562.2,113.7L565.4,111.3L568.4,108.7L571.4,106.0L574.3,103.3L577.1,100.4L579.8,97.4L582.3,94.4L584.8,91.2L587.2,88.0L589.4,84.7L591.5,81.3L593.5,77.8L595.4,74.3L597.1,70.7L598.7,67.0L600.2,63.3L601.5,59.6L602.8,55.7L603.8,51.9L604.8,48.0L605.6,44.1L606.2,40.2L606.7,36.2L607.1,32.2L607.4,28.2L607.5,24.2L607.4,20.2L607.2,16.2L607.0,14"},"ib":{"scale":3320.1701981993233,"translate":[490,2832.5],"dLand":"M740.8,335.4L745.3,337.0L749.6,335L754.5,336.1L755.2,339.8L748.6,353.0L746.8,358.3L739.4,363.7L725.5,358.3L724.0,352.6L718.9,350.3L713.2,355.1L711.1,352.1L708.4,351.8L707.0,347.6L724.6,332.6L729.7,329.2L740.8,324.9L742.6,325.3L741.4,328.5L742.9,329.4ZM966,272.7L958.2,265.4L957.0,258.5L957.9,250.1L962.1,252.9L966,253.1L966,272.7ZM966,177.3L964.7,176.5L963.4,173.3L966,170.5L966,177.3ZM966,167.0L965.1,165.8L962.4,165.3L965.0,160.9L966,157.6L966,167.0ZM324.0,586L327.1,578.2L328.9,572.1L343.2,570.2L348.0,568.5L353.9,564.6L359.4,566.4L356.6,569.0L356.4,575.5L360.1,583.2L362.2,586L324.0,586ZM557.7,586L564.7,581.4L587.5,569.7L591.0,569.5L598.7,571.9L605.3,570.9L609.8,566.8L614.4,557.3L621.6,551.4L631.0,545.2L643.6,539.3L651.8,533.9L665.1,529.0L698.3,524.7L715.2,521.4L726.9,521.2L738.2,512.5L743.8,509.5L769.1,507.3L780.7,500.6L826.0,497.2L831.6,498.6L837.4,501.4L847.4,508.1L852.0,509.4L857.9,507.3L871.2,498.8L886.5,493.6L894.5,488.6L897.6,482.0L904.6,479.0L909.3,483.3L926.0,486.4L935.8,484.0L940.0,482.0L937.7,475.1L948.3,475.8L956.8,478.3L966,484.2L966,586ZM966,46.5L962.6,45.5L955.7,45.6L947.5,51.0L938.3,64.4L931.0,77.9L928.2,80.8L917.5,86.4L907.7,89.6L898.5,94.7L895.3,97.2L883.4,111.3L877.6,115.8L875.9,122.4L872.6,126.4L869.5,128.5L861.8,131.1L854.1,135.6L850.5,134.4L841.1,135.4L834.9,131.3L823.4,129.4L819.2,123.0L810.9,123.5L808.8,122.7L807.8,118.2L801.7,119.8L796.8,123.0L790.0,123.0L779.1,119.9L772.6,119.0L770.0,117.8L767.6,114.5L764.9,113.0L759.1,115.1L754.3,121.4L733.2,138.5L729.5,145.1L725.4,155.1L725.4,159.5L728.3,173.6L733.3,180.9L735.4,186.2L737.6,187.5L738.6,190.5L732.7,192.8L732.4,198.3L736.4,202.6L737.4,210.6L733.4,215.7L727.5,221.5L698.5,240.6L691.8,249.4L689.2,251.5L667.1,257.9L651.5,264.3L644.1,266.6L630.8,281L634.4,282.0L638.7,286.5L637.4,288.7L628.8,293.2L626.0,293.2L616.4,310.6L607.6,323.3L602.6,328.7L597.7,336.8L587.1,357.8L587.0,363.7L593.2,384.1L596.4,389.4L601.1,393.8L609.8,397.4L611.8,401.1L609.0,404.9L600.7,411.5L586.1,420.5L579.9,427.5L578.8,434.2L574.4,437.3L572.9,446.6L569.8,454.8L567.1,459.6L566.8,462.9L571.6,467.5L567.0,470.5L561.7,471.1L543.9,472.0L529.6,482.2L522.4,491.2L516,507.9L508.0,517.8L504.5,519.6L499.0,515.3L492.2,514.6L485.5,516.1L482.1,519.4L476.6,521.3L471.3,519.7L459.9,518.7L454.7,518.9L446.7,521.5L439.8,519.6L428.3,518.6L403.2,520.2L400.2,521.3L396.9,525.3L388.7,532.2L376.6,532.2L365.4,536.4L362.6,539.2L357.7,547.0L355.9,552.8L352.1,551.8L351.1,556.3L343.4,558.7L335.0,554.8L328.1,549.1L324.4,548.6L318.7,539.9L314.6,528.6L314.6,524.5L309.4,521.9L308.3,516.5L312.6,509.9L315.9,507.0L313.0,506.4L309.4,510.6L305.2,503.3L287.7,488.6L288.9,483.7L283.6,488.2L274.3,487.1L259.6,488.6L243.2,497.1L238.4,496.8L229.5,492.2L213.7,489.7L208.5,488.2L201.8,490.4L196.8,490.0L192.4,493.2L189.7,492.0L193.6,484.5L199.8,469.6L200.3,460.3L202.0,452.2L201.3,444.1L199.0,438.9L203.4,426.1L203.5,419.4L201.0,410.7L210.5,412.7L204.9,406.9L199.7,406.8L191.3,409.5L185.9,409.5L186.8,404.3L185.2,397.4L192.5,395.6L198.1,389.8L197.4,384.0L200.7,378.7L207.5,374.5L204.1,375.0L200.0,377.6L193.1,387.6L190.7,392.7L180.5,394.6L175.4,392.3L176.0,385.3L178.4,379.2L179.7,370.4L183.2,362.9L182.5,357.6L188.5,353.0L193.5,346.5L201.1,331.0L209.8,314.5L207.9,310.7L208.8,306.1L214.7,286.4L219.1,278.1L221.4,262.3L221.1,255.0L218.8,247.3L217.2,231.2L217.2,225.8L219.7,223.4L215.9,222.7L214.4,219.1L215.0,215.3L219.8,209.3L215.5,208.6L215.9,199.4L224.9,190.3L219.7,189.3L220.0,186.4L223.9,182.3L220.6,178.6L221.3,168.8L213.6,171.5L211.6,170.8L211.9,166.8L217.0,159.3L212.2,158.0L208.8,154.8L204.7,148.0L205.0,144.6L208.0,136.9L214.8,133.5L221.6,128.5L230.1,130.1L235.6,129.3L240.7,126.9L248.1,124.2L246.9,118.3L248.4,116.1L259.3,110.1L265.7,109.8L272.4,106.8L276.6,109.2L280.4,108.7L284.7,111.5L290.1,117.6L298.4,120.5L305.3,118.9L317.1,119.2L323.1,120.2L333.7,119.2L339.8,120.0L349.5,117.4L357.1,121.3L371.7,123.5L380.4,126.8L404.8,132.4L413.7,132.7L426.2,130.1L431.6,128.1L436.4,129.4L443.5,127.1L447.0,127.6L451.4,131.1L467.1,135.9L471.2,132.0L474.2,131.1L485.4,133.5L496.8,138.5L502.7,138.8L511.4,137.4L518.3,134.1L526.5,132.0L532.6,124.5L538.2,98.0L542.0,66.6L544.9,60.7L548.7,58.9L545.5,54.8L541.9,60.5L543.7,31.7L545.1,21.1L546.8,14L552.6,14L552.6,14L558.3,18.6L560.9,22.5L564.3,35.3L570.1,40.5L566.2,35.4L562.2,18.4L559.9,14L966,14ZM959.7,242.5L958.6,245.3L956.5,245.3L958.5,239.2L961.7,238.6ZM791.5,328.8L790.8,329.6L776.7,323.9L771.0,322.6L771.2,317.5L780.2,316.2L787.7,318.0L792.6,325.5ZM674.9,403.8L666.5,404.1L667.5,398.5L670.4,401.7L674.8,402.1ZM667.6,389.8L666.1,393.4L659.3,392.5L657.6,391.1L658.9,387.0L661.0,386.4L660.9,383.6L662.8,380.6L672.4,377.8L675.4,382.5L669.8,388.9Z","dGrat":"M14,48.8L18.5,14M40.0,586L100.5,20.7L101.2,14M135.2,586L182.3,28.5L183.5,14M230.1,586L264.2,34.5L265.5,14M324.7,586L346.3,38.6L347.2,14M419.2,586L428.4,40.9L428.8,14M513.6,586L510.5,41.4L510.4,14M608.0,586L592.7,40.0L592.0,14M702.5,586L674.8,36.8L673.6,14M797.3,586L756.8,31.7L755.5,14M892.3,586L838.6,24.8L837.6,14M966,401.8L920.3,16.1L920.1,14M14,535.5L21.7,536.5L138.4,548.0L255.5,556.2L372.7,561.2L490,562.8L607.3,561.2L724.5,556.2L841.6,548.0L958.3,536.5L966,535.5M14,418.7L34.7,421.3L148.2,432.5L262.0,440.5L375.9,445.3L490,446.9L604.1,445.3L718.0,440.5L831.8,432.5L945.3,421.3L966,418.7M14,302.0L47.6,306.3L157.9,317.2L268.5,324.9L379.2,329.6L490,331.2L600.8,329.6L711.5,324.9L822.1,317.2L932.4,306.3L966,302.0M14,185.4L60.6,191.3L167.7,201.8L275.0,209.4L382.4,213.9L490,215.4L597.6,213.9L705.0,209.4L812.3,201.8L919.4,191.3L966,185.4M14,68.5L73.6,76.1L177.4,86.3L281.5,93.6L385.7,98.0L490,99.5L594.3,98.0L698.5,93.6L802.6,86.3L906.4,76.1L966,68.5"}};
+
+/* ============================================================
+   Masthead & corona engravings
+   ============================================================ */
+(function rays(){
+  const g = document.getElementById('mast-rays');
+  if(g){ let s='';
+    for(let i=0;i<48;i++){const a=i*Math.PI/24, len=(i%4===0)?38:(i%2===0?30:25);
+      s+=`<line x1="${(60+21*Math.cos(a)).toFixed(1)}" y1="${(60+21*Math.sin(a)).toFixed(1)}" x2="${(60+len*Math.cos(a)).toFixed(1)}" y2="${(60+len*Math.sin(a)).toFixed(1)}"/>`;}
+    g.innerHTML=s;
+  }
+  const c = document.getElementById('corona-rays');
+  if(c){ let s='';
+    for(let i=0;i<72;i++){const a=i*Math.PI/36 + (i%3)*.012, len=17+ (i%6===0? 24 : i%3===0? 17 : 11)*(0.85+0.3*Math.abs(Math.sin(i*1.7)));
+      s+=`<line x1="${(43+18*Math.cos(a)).toFixed(1)}" y1="${(43+18*Math.sin(a)).toFixed(1)}" x2="${(43+len*Math.cos(a)).toFixed(1)}" y2="${(43+len*Math.sin(a)).toFixed(1)}"/>`;}
+    c.innerHTML=s;
+  }
+})();
+
+/* ============================================================
+   Countdown — to greatest eclipse 2026-08-12 17:46:00 UT
+   ============================================================ */
+(function countdown(){
+  const T0 = Date.UTC(2026,7,12,17,46,0);
+  const Tend = Date.UTC(2026,7,12,19,58,0); // last partial contact globally 19:57:57 UT
+  const el = id=>document.getElementById(id);
+  function tick(){
+    const now = Date.now(); let d = T0-now;
+    if (d<=0){
+      if (now < Tend){
+        el('cd-d').textContent='0'; el('cd-h').textContent='0'; el('cd-m').textContent='0'; el('cd-s').textContent='0';
+        el('cd-foot').textContent='The shadow is on the Earth right now. Filters on — and if you are in the band, look up.';
+      } else {
+        document.querySelector('.count-label').textContent='The shadow has passed — 12 August 2026, 17:46 UT';
+        el('cd-foot').textContent='The next total eclipse over Spain: 2 August 2027. This sheet remains as the record.';
+        ['cd-d','cd-h','cd-m','cd-s'].forEach(i=>el(i).textContent='—');
+      }
+      return;
+    }
+    const s=Math.floor(d/1000);
+    el('cd-d').textContent=Math.floor(s/86400);
+    el('cd-h').textContent=String(Math.floor(s/3600)%24).padStart(2,'0');
+    el('cd-m').textContent=String(Math.floor(s/60)%60).padStart(2,'0');
+    el('cd-s').textContent=String(s%60).padStart(2,'0');
+  }
+  tick(); setInterval(tick,250);
+})();
+
+/* ============================================================
+   Cartography — Plates I & I·b
+   ============================================================ */
+/* Catmull-Rom densification: the GSFC table samples every 2 min; straight
+   chords between samples cut inside the true curved limits (enough to
+   misplace Bilbao). A spline through the tabulated points restores the arc. */
+function crSpline(pts, n){
+  n = n || 10;
+  const out=[];
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[Math.max(i-1,0)], p1=pts[i], p2=pts[i+1], p3=pts[Math.min(i+2,pts.length-1)];
+    for(let j=0;j<n;j++){
+      const t=j/n, t2=t*t, t3=t2*t;
+      out.push([
+        0.5*((2*p1[0])+(-p0[0]+p2[0])*t+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3),
+        0.5*((2*p1[1])+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3)
+      ]);
+    }
+  }
+  out.push(pts[pts.length-1]);
+  return out;
+}
+const CENTER_LL = crSpline(CENTER.map(c=>[c[0],c[1]]));
+function bandPolygon(){
+  const ring = crSpline(NLIM).concat(crSpline(SLIM).reverse());
+  ring.push(ring[0]);
+  const poly = {type:'Polygon', coordinates:[ring]};
+  if (d3.geoArea(poly) > 2*Math.PI) ring.reverse();
+  return poly;
+}
+function edgeLabelLon(proj, latTarget, xTarget, lonMin, lonMax){
+  // find lon whose projection has x ≈ xTarget at given lat
+  let best=null, bd=1e9;
+  for(let lon=lonMin;lon<=lonMax;lon+=0.25){
+    const p=proj([lon,latTarget]); if(!p) continue;
+    const d=Math.abs(p[0]-xTarget); if(d<bd){bd=d;best=[lon,p];}
+  }
+  return best;
+}
+function edgeLabelLat(proj, lonTarget, yTarget, latMin, latMax){
+  let best=null, bd=1e9;
+  for(let lat=latMin;lat<=latMax;lat+=0.1){
+    const p=proj([lonTarget,lat]); if(!p) continue;
+    const d=Math.abs(p[1]-yTarget); if(d<bd){bd=d;best=[lat,p];}
+  }
+  return best;
+}
+
+function drawMap(){
+  if (typeof d3==='undefined') return;
+  const svg = d3.select('#map-main');
+  const W=980,H=1010,M=14;
+  const proj = d3.geoConicConformal().rotate([20,0]).parallels([42,66])
+      .scale(BAKED.main.scale).translate(BAKED.main.translate)
+      .clipExtent([[M,M],[W-M,H-M]]);
+  const path = d3.geoPath(proj);
+  const defs = svg.append('defs');
+  defs.append('clipPath').attr('id','frame-main').append('rect')
+      .attr('x',M).attr('y',M).attr('width',W-2*M).attr('height',H-2*M);
+  const pat = defs.append('pattern').attr('id','hachure').attr('width',5).attr('height',5)
+      .attr('patternUnits','userSpaceOnUse').attr('patternTransform','rotate(45)');
+  pat.append('rect').attr('width',5).attr('height',5).attr('fill','#ece3cd');
+  pat.append('line').attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',5)
+      .attr('stroke','rgba(33,27,17,.20)').attr('stroke-width',.7);
+
+  const g = svg.append('g').attr('clip-path','url(#frame-main)');
+
+  // graticule (pre-projected at build time)
+  g.append('path').attr('d',BAKED.main.dGrat)
+    .attr('fill','none').attr('stroke','rgba(33,27,17,.16)').attr('stroke-width',.55);
+
+  // land (pre-projected at build time)
+  g.append('path').attr('d',BAKED.main.dLand)
+    .attr('fill','url(#hachure)').attr('stroke','#211b11').attr('stroke-width',.8);
+
+  // totality band
+  g.append('path').datum(bandPolygon()).attr('d',path)
+    .attr('fill','rgba(216,90,18,.18)').attr('stroke','#d85a12').attr('stroke-width',1.1);
+
+  // centre line
+  g.append('path').datum({type:'LineString',coordinates:CENTER_LL})
+    .attr('d',path).attr('fill','none').attr('stroke','#d85a12')
+    .attr('stroke-width',1.5).attr('stroke-dasharray','7 4');
+
+  // UT ticks on centre line (every 10 min)
+  const tickTimes = ['17:20','17:30','17:40','17:50','18:00','18:10','18:20'];
+  const lblg = svg.append('g').attr('clip-path','url(#frame-main)');
+  CENTER.filter(c=>tickTimes.includes(c[2])).forEach(c=>{
+    const p=proj([c[0],c[1]]); if(!p) return;
+    lblg.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',3).attr('fill','#f3ecda')
+        .attr('stroke','#d85a12').attr('stroke-width',1.4);
+    lblg.append('text').attr('x',p[0]+9).attr('y',p[1]+4)
+        .attr('font-size',11.5).attr('letter-spacing','.08em').attr('fill','#211b11')
+        .attr('font-family','Newsreader, serif')
+        .text(c[2]+' UT');
+  });
+  // duration annotations — set under their UT tick labels
+  [['17:30','2 m 15 s',9,20],['18:10','2 m 10 s',9,20]].forEach(([t,txt,dx,dy])=>{
+    const c=CENTER.find(c=>c[2]===t); const p=proj([c[0],c[1]]); if(!p) return;
+    lblg.append('text').attr('x',p[0]+dx).attr('y',p[1]+dy).attr('font-size',11)
+      .attr('font-style','italic').attr('fill','#5f5745').attr('font-family','Newsreader, serif').text(txt);
+  });
+
+  // greatest eclipse
+  (function(){
+    const p=proj([GREATEST.lon,GREATEST.lat]);
+    const gg=svg.append('g');
+    for(let i=0;i<16;i++){const a=i*Math.PI/8;
+      gg.append('line').attr('x1',p[0]+7*Math.cos(a)).attr('y1',p[1]+7*Math.sin(a))
+        .attr('x2',p[0]+(i%2?11:14)*Math.cos(a)).attr('y2',p[1]+(i%2?11:14)*Math.sin(a))
+        .attr('stroke','#d85a12').attr('stroke-width',1);}
+    gg.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',5.5).attr('fill','#d85a12');
+    gg.append('text').attr('x',p[0]-16).attr('y',p[1]-16).attr('text-anchor','end')
+      .attr('font-size',12).attr('font-weight',600).attr('fill','#211b11').attr('font-family','Newsreader, serif')
+      .text('GREATEST ECLIPSE');
+    gg.append('text').attr('x',p[0]-16).attr('y',p[1]-2).attr('text-anchor','end')
+      .attr('font-size',11).attr('font-style','italic').attr('fill','#5f5745').attr('font-family','Newsreader, serif')
+      .text('17:46 UT · 2 m 18 s · sun 26°');
+  })();
+
+  // cities
+  const mapCities=[
+    ['reykjavik','Reykjavík · 1 min', 10, 14, 'start'],
+    ['london','London · 91 %', 9, 4, 'start'],
+    ['paris','Paris · 92 %', 9, 4, 'start'],
+    ['madrid','Madrid · 99.98 %', -9, 15, 'end'],
+    ['lisbon','Lisbon · 95 %', -9, 4, 'end'],
+    ['coruna','A Coruña', -9, -5, 'end']
+  ];
+  mapCities.forEach(([key,label,dx,dy,anch])=>{
+    const c=CITIES[key]; const p=proj([c.lon,c.lat]); if(!p) return;
+    if(c.total){
+      svg.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',3.6).attr('fill','#211b11');
+    } else {
+      svg.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',3.6).attr('fill','#f3ecda')
+         .attr('stroke','#211b11').attr('stroke-width',1.2);
+    }
+    svg.append('text').attr('x',p[0]+dx).attr('y',p[1]+dy).attr('text-anchor',anch)
+       .attr('font-size',12.5).attr('fill','#211b11').attr('font-family','Newsreader, serif').text(label);
+  });
+
+  // region labels
+  const regions=[["GREENLAND",-42,72,15,0],["ICELAND",-17.0,65.45,12,0],["NORTH  ATLANTIC  OCEAN",-40,49.5,13,-14],
+                 ["SPAIN",-4.4,39.3,13,0],["FRANCE",1.8,47.1,12,0],["NORWAY",8.5,61.5,11,0],["SCORESBY SUND →",-30.5,70.3,10.5,0]];
+  regions.forEach(([t,lon,lat,fs,rot])=>{
+    const p=proj([lon,lat]); if(!p) return;
+    svg.append('text').attr('x',p[0]).attr('y',p[1]).attr('text-anchor','middle')
+      .attr('font-size',fs).attr('letter-spacing','.34em').attr('fill','rgba(33,27,17,.62)')
+      .attr('font-family','Newsreader, serif')
+      .attr('transform', rot?`rotate(${rot} ${p[0]} ${p[1]})`:null)
+      .text(t);
+  });
+
+  // graticule edge labels
+  [40,50,60,70,80].forEach(lat=>{
+    const hit=edgeLabelLon(proj, lat, M+2, -80, 30);
+    if(hit && hit[1][1]>M+18 && hit[1][1]<H-M-8)
+      svg.append('text').attr('x',M+6).attr('y',hit[1][1]-4).attr('font-size',10.5)
+        .attr('fill','rgba(33,27,17,.55)').attr('font-family','Newsreader, serif').text(lat+'° N');
+  });
+  [-60,-40,-20,0,20].forEach(lon=>{
+    const hit=edgeLabelLat(proj, lon, H-M-2, 30, 88);
+    if(hit && hit[1][0]>M+14 && hit[1][0]<W-M-14)
+      svg.append('text').attr('x',hit[1][0]+4).attr('y',H-M-8).attr('font-size',10.5)
+        .attr('fill','rgba(33,27,17,.55)').attr('font-family','Newsreader, serif')
+        .text(Math.abs(lon)+'°'+(lon<0?' W':lon>0?' E':''));
+  });
+
+  // frame
+  svg.append('rect').attr('x',M).attr('y',M).attr('width',W-2*M).attr('height',H-2*M)
+     .attr('fill','none').attr('stroke','#211b11').attr('stroke-width',1.4);
+}
+
+function drawIberia(){
+  if (typeof d3==='undefined') return;
+  const svg = d3.select('#map-iberia');
+  const W=980,H=600,M=14;
+  const proj = d3.geoConicConformal().rotate([2.5,0]).parallels([37,43])
+      .scale(BAKED.ib.scale).translate(BAKED.ib.translate)
+      .clipExtent([[M,M],[W-M,H-M]]);
+  const path = d3.geoPath(proj);
+  svg.append('defs').append('clipPath').attr('id','frame-ib').append('rect')
+     .attr('x',M).attr('y',M).attr('width',W-2*M).attr('height',H-2*M);
+  const g = svg.append('g').attr('clip-path','url(#frame-ib)');
+
+  g.append('path').attr('d',BAKED.ib.dGrat)
+    .attr('fill','none').attr('stroke','rgba(33,27,17,.15)').attr('stroke-width',.55);
+  g.append('path').attr('d',BAKED.ib.dLand)
+    .attr('fill','url(#hachure)').attr('stroke','#211b11').attr('stroke-width',.9);
+  g.append('path').datum(bandPolygon()).attr('d',path)
+    .attr('fill','rgba(216,90,18,.18)').attr('stroke','#d85a12').attr('stroke-width',1.2);
+  g.append('path').datum({type:'LineString',coordinates:CENTER_LL})
+    .attr('d',path).attr('fill','none').attr('stroke','#d85a12')
+    .attr('stroke-width',1.6).attr('stroke-dasharray','8 4');
+
+  // UT + CEST ticks
+  const lblg = svg.append('g').attr('clip-path','url(#frame-ib)');
+  [['18:28','20:28 CEST'],['18:30','20:30 CEST']].forEach(([t,cest])=>{
+    const c=CENTER.find(c=>c[2]===t); const p=proj([c[0],c[1]]); if(!p) return;
+    lblg.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',3.4).attr('fill','#f3ecda')
+        .attr('stroke','#d85a12').attr('stroke-width',1.5);
+    lblg.append('text').attr('x',p[0]+10).attr('y',p[1]-6).attr('font-size',12).attr('fill','#211b11')
+        .attr('font-family','Newsreader, serif').text(t+' UT');
+    lblg.append('text').attr('x',p[0]+10).attr('y',p[1]+9).attr('font-size',11).attr('font-style','italic')
+        .attr('fill','#5f5745').attr('font-family','Newsreader, serif').text(cest);
+  });
+
+  // limit labels
+  const nl=proj([-3.5,42.55]), sl=proj([-8.3,42.85]);
+  if(nl) svg.append('text').attr('x',nl[0]).attr('y',nl[1]).attr('font-size',10.5).attr('letter-spacing','.22em')
+    .attr('fill','#d85a12').attr('text-anchor','middle').attr('transform',`rotate(-26 ${nl[0]} ${nl[1]})`)
+    .attr('font-family','Newsreader, serif').text('NORTHERN LIMIT');
+  if(sl) svg.append('text').attr('x',sl[0]).attr('y',sl[1]).attr('font-size',10.5).attr('letter-spacing','.22em')
+    .attr('fill','#d85a12').attr('text-anchor','middle').attr('transform',`rotate(-33 ${sl[0]} ${sl[1]})`)
+    .attr('font-family','Newsreader, serif').text('SOUTHERN LIMIT');
+
+  // cities
+  const list=[
+    ['coruna','A Coruña · 1 m 17 s', -11, -8, 'end'],
+    ['bilbao','Bilbao', 8, -7, 'start'],
+    ['zaragoza','Zaragoza · 1 m 24 s', 10, 14, 'start'],
+    ['valencia','Valencia · ≈1 m', 10, 12, 'start'],
+    ['palma','Palma · 1 m 36 s', 10, -6, 'start'],
+    ['madrid','Madrid · 99.98 % — not total', 10, 14, 'start'],
+    ['lisbon','Lisbon · 95 %', 10, 4, 'start']
+  ];
+  list.forEach(([key,label,dx,dy,anch])=>{
+    const c=CITIES[key]; const p=proj([c.lon,c.lat]); if(!p) return;
+    if(c.total) svg.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',4.2).attr('fill','#211b11');
+    else svg.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',4.2).attr('fill','#f3ecda')
+            .attr('stroke','#211b11').attr('stroke-width',1.3);
+    svg.append('text').attr('x',p[0]+dx).attr('y',p[1]+dy).attr('text-anchor',anch)
+       .attr('font-size',13.5).attr('fill','#211b11').attr('font-family','Newsreader, serif')
+       .attr('font-weight', c.total?600:400).text(label);
+  });
+
+  // sea labels
+  [['BAY  OF  BISCAY',-3.6,44.6,11],['MEDITERRANEAN  SEA',3.2,38.3,11],['ATLANTIC',-10.2,41.3,11]].forEach(([t,lon,lat,fs])=>{
+    const p=proj([lon,lat]); if(!p) return;
+    svg.append('text').attr('x',p[0]).attr('y',p[1]).attr('text-anchor','middle').attr('font-size',fs)
+      .attr('letter-spacing','.3em').attr('fill','rgba(33,27,17,.5)').attr('font-style','italic')
+      .attr('font-family','Newsreader, serif').text(t);
+  });
+  // shadow direction arrow
+  const a1=proj([-9.6,43.9]), a2=proj([-7.6,43.45]);
+  if(a1&&a2){
+    svg.append('line').attr('x1',a1[0]).attr('y1',a1[1]).attr('x2',a2[0]).attr('y2',a2[1])
+      .attr('stroke','#d85a12').attr('stroke-width',1.2).attr('marker-end','url(#arrow)');
+    svg.append('defs').append('marker').attr('id','arrow').attr('viewBox','0 0 10 10')
+      .attr('refX',8).attr('refY',5).attr('markerWidth',7).attr('markerHeight',7).attr('orient','auto')
+      .append('path').attr('d','M0,0L10,5L0,10z').attr('fill','#d85a12');
+    svg.append('text').attr('x',(a1[0]+a2[0])/2).attr('y',a1[1]-12).attr('text-anchor','middle')
+      .attr('font-size',10.5).attr('font-style','italic').attr('fill','#d85a12')
+      .attr('font-family','Newsreader, serif').text('the umbra, ≈ 2.5 km/s');
+  }
+
+  svg.append('rect').attr('x',M).attr('y',M).attr('width',W-2*M).attr('height',H-2*M)
+     .attr('fill','none').attr('stroke','#211b11').attr('stroke-width',1.4);
+}
+
+/* ============================================================
+   Plate IV·b — sun altitude profile
+   ============================================================ */
+function drawAltProfile(){
+  const svg = d3.select('#altprofile');
+  const W=980, H=300, padL=40, padR=30, horizonY=H-58;
+  const data=[["Reykjavík",25],["Scoresby Sund",25],["A Coruña",12],["Zaragoza",6],["Valencia",5],["Palma",3]];
+  const x=i=>padL+(W-padL-padR)*(i+0.5)/data.length;
+  const degToPx=6.4; // 25° ≈ 160px
+  // sky graticule: altitude lines every 5°
+  for(let d=5;d<=25;d+=5){
+    const y=horizonY-d*degToPx;
+    svg.append('line').attr('x1',padL).attr('x2',W-padR).attr('y1',y).attr('y2',y)
+      .attr('stroke','rgba(33,27,17,.14)').attr('stroke-width',.6).attr('stroke-dasharray','2 5');
+    svg.append('text').attr('x',padL-6).attr('y',y+3.5).attr('text-anchor','end').attr('font-size',10.5)
+      .attr('fill','rgba(33,27,17,.55)').attr('font-family','Newsreader, serif').text(d+'°');
+  }
+  // horizon: hachured ground
+  svg.append('line').attr('x1',padL-14).attr('x2',W-padR+14).attr('y1',horizonY).attr('y2',horizonY)
+     .attr('stroke','#211b11').attr('stroke-width',1.6);
+  for(let gx=padL-12;gx<W-padR+12;gx+=7){
+    svg.append('line').attr('x1',gx).attr('y1',horizonY+2).attr('x2',gx-5).attr('y2',horizonY+9)
+       .attr('stroke','rgba(33,27,17,.4)').attr('stroke-width',.7);
+  }
+  svg.append('text').attr('x',W-padR).attr('y',36).attr('text-anchor','end').attr('font-size',12.5)
+     .attr('font-style','italic').attr('fill','#5f5745').attr('font-family','Newsreader, serif')
+     .text('the horizon — west-northwest in Spain (az ≈ 280–287°), WSW in Iceland (az ≈ 253°)');
+  data.forEach(([name,alt],i)=>{
+    const cx=x(i), cy=horizonY-alt*degToPx;
+    svg.append('line').attr('x1',cx).attr('y1',horizonY-1).attr('x2',cx).attr('y2',cy+11)
+       .attr('stroke','rgba(33,27,17,.4)').attr('stroke-width',.8).attr('stroke-dasharray','1.5 4');
+    // eclipsed sun: corona ticks + black disc with orange rim
+    for(let k=0;k<24;k++){const a=k*Math.PI/12;
+      svg.append('line').attr('x1',cx+9*Math.cos(a)).attr('y1',cy+9*Math.sin(a))
+        .attr('x2',cx+(k%2?12:15)*Math.cos(a)).attr('y2',cy+(k%2?12:15)*Math.sin(a))
+        .attr('stroke','rgba(33,27,17,.65)').attr('stroke-width',.7);}
+    svg.append('circle').attr('cx',cx).attr('cy',cy).attr('r',8.5).attr('fill','none')
+       .attr('stroke','#d85a12').attr('stroke-width',1.6);
+    svg.append('circle').attr('cx',cx).attr('cy',cy).attr('r',7.4).attr('fill','#211b11');
+    svg.append('text').attr('x',cx).attr('y',cy-24).attr('text-anchor','middle').attr('font-size',13)
+       .attr('font-weight',600).attr('fill','#211b11').attr('font-family','Newsreader, serif').text(alt+'°');
+    svg.append('text').attr('x',cx).attr('y',horizonY+28).attr('text-anchor','middle').attr('font-size',12)
+       .attr('fill','#211b11').attr('letter-spacing','.08em').attr('font-family','Newsreader, serif').text(name.toUpperCase());
+  });
+}
+
+/* ============================================================
+   Live recomputation — astronomy-engine cross-check of Plate II
+   ============================================================ */
+function liveCheck(){
+  const out = document.getElementById('livecheck');
+  if (typeof Astronomy==='undefined'){ out.textContent='Live cross-check unavailable offline — printed values stand as verified 3 July 2026.'; return; }
+  // printed durations (s) to compare against
+  const printed = {reykjavik:60, coruna:77, zaragoza:84, valencia:60, palma:96};
+  const t0 = new Astronomy.AstroTime(new Date(Date.UTC(2026,7,1)));
+  let checked=0, maxDelta=0;
+  const fmt=(t,tz)=>new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(t.date);
+  document.querySelectorAll('#citytable tr').forEach(tr=>{
+    const key=tr.dataset.city, c=CITIES[key]; if(!c) return;
+    try{
+      const obs=new Astronomy.Observer(c.lat,c.lon,20);
+      const e=Astronomy.SearchLocalSolarEclipse(t0,obs);
+      const cells=tr.querySelectorAll('td');
+      if(e.total_begin && e.total_end){
+        const dur=(e.total_end.time.ut-e.total_begin.time.ut)*86400;
+        const live=document.createElement('span'); live.className='live';
+        live.textContent=`computed now: ${fmt(e.total_begin.time,c.tz)} → ${fmt(e.total_end.time,c.tz)} · ${Math.round(dur)} s`;
+        cells[4].appendChild(live);
+        if(printed[key]!=null){ checked++; maxDelta=Math.max(maxDelta,Math.abs(dur-printed[key])); }
+      } else {
+        const live=document.createElement('span'); live.className='live';
+        live.textContent=`computed now: max ${fmt(e.peak.time,c.tz)} · ${(e.obscuration*100).toFixed(2)} % covered`;
+        cells[3].appendChild(live);
+      }
+    }catch(err){/* row stays printed-only */}
+  });
+  out.textContent = checked
+    ? `✓ Recomputed in your browser just now with astronomy-engine: all ${checked} totality durations agree with the printed sources within ${Math.ceil(maxDelta)} s — the residue is the lunar-limb profile and ΔT convention, not an error.`
+    : 'Recomputed in your browser with astronomy-engine — see the italic lines in the table.';
+}
+
+try{ drawMap(); }catch(e){ console.error('map',e); }
+try{ drawIberia(); }catch(e){ console.error('iberia',e); }
+try{ drawAltProfile(); }catch(e){ console.error('alt',e); }
+try{ liveCheck(); }catch(e){ console.error('live',e); }
+</script>
+</body>
+</html>

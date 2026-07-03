@@ -1,0 +1,10 @@
+{
+  "expert": "genius_curie",
+  "key": "fop-dossier",
+  "type": "doc",
+  "title": "FOP — a clinical dossier",
+  "desc": "Grounded, cited",
+  "brief": "A rigorous, beautifully typeset clinical report on fibrodysplasia ossificans progressiva (FOP, OMIM 135100) — the ultra-rare autosomal-dominant disorder (~1 in a million; ~800-900 confirmed cases worldwide) in which soft tissue progressively turns to bone. Opens with an at-a-glance stat panel and a collapsible exec-summary banner, then walks the clinical picture (the congenital great-toe tell, painful flare-ups, the axial-to-appendicular march of heterotopic ossification, and the iatrogenic catastrophe of biopsy/IM injection), the molecular mechanism (ACVR1/ALK2, R206H c.617G>A, GS-domain autoinhibition lost, the Activin-A neofunction and BMP-SMAD1/5/8 signalling, drawn as a clean wild-type-vs-mutant SVG), diagnosis and imaging, management today and what NOT to do, the July-2026 therapeutic landscape (palovarotene/Sohonos approved 2023; garetosmab and zilurgisertib under FDA priority review; fidrisertib's FALKON failure; saracatinib repurposing), Curie's repurposing angle, and an honest state-of-the-science close. Every clinical fact, gene coordinate, PDB id (3H9R) and ClinicalTrials.gov identifier (NCT03312634, NCT05394116, NCT05090891, NCT05039515, NCT04307953) verified against OMIM, UniProt (Q04771), RCSB PDB, ClinicalTrials.gov, PubMed/PMC and the IFOPA on 3 July 2026, with a working reference list. Includes a research/education, not medical advice line.",
+  "da": "Clinical-journal feature — warm bone/ivory paper (not arXiv white, not clinical-blue), Literata editorial serif headings over Source Sans 3 humanist body with IBM Plex Mono for gene notation and data, one deep oxblood accent (#7b2d26) for section rules, at-a-glance stat callouts and footnote-style citations, boxed SVG figure with caption, hairline tables with status pills, a teal reserved only for the physiologic/wild-type state; a modern, warm, authoritative medical-journal look, a different designer from every other library piece.",
+  "generated": "2026-07-03"
+}

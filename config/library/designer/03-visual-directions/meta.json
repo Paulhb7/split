@@ -1,0 +1,10 @@
+{
+  "expert": "designer",
+  "key": "visual-directions",
+  "type": "board",
+  "title": "3 visual directions",
+  "desc": "Palette · type · tone",
+  "brief": "A visual-directions board for Marée, a fictional iOS app for sea swimmers. Three distinct art directions are pinned to an atelier wall as paper cards — ① Sémaphore (bold maritime signal-flag graphics, high-contrast, chunky), ② Estran (soft naturalist sand/algae/driftwood, quiet and warm), ③ Abysse (deep dark marine with phosphorescent accents, nocturnal). Each card carries a one-line stance, a 5-swatch palette with hex, a real rendered Google-Font type pairing specimen, three tone words, and the SAME home-screen ('Now') mocked in that direction so the three are directly comparable, plus a 'choose this when' line. Clicking a card expands it to a larger screen with a short rationale. A closing strip states the Designer's recommendation: pick ② Estran, keeping Sémaphore as the alert state and Abysse as the night theme.",
+  "da": "Atelier wall — deep warm charcoal-brown ground (#26221E family), three directions as pinned paper cards (CSS-gradient paper texture, brass pin dot, ≤1° rotation each), Sora small-caps wall labels, warm hairlines; the wall stays neutral so each card's own palette pops.",
+  "generated": "2026-07-03"
+}

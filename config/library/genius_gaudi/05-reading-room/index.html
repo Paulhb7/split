@@ -1,0 +1,1449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Reading Room — a scholar's library, walkable in 3D</title>
+<meta name="description" content="An explorable three.js study: a double-height library with floor-to-ceiling walnut shelves, a mezzanine gallery, a rolling ladder, a forest-green leather chair, a lamp-lit desk and a tall arched window in warm afternoon light. Orbit, glide between four viewpoints, walk in first person, click any object for its material.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ======================================================================
+   THE READING ROOM — a scholar's library, walkable in 3D.
+   Gaudí, in Split. Architectural visualization, not a game.
+
+   Art direction — "scholar's library" (a different designer entirely):
+     · rich WALNUT wood — warm chocolate-brown shelving, floor, beams
+     · deep FOREST-GREEN leather upholstery (reading chair + desk pad)
+     · aged BRASS accents — lamp, ladder rail, hardware, sconces
+     · CREAM / ochre / oxblood book spines in warm procedural rows
+     · low warm AFTERNOON light through one tall arched window
+   Cozy, timeless, scholarly. NOT the pale warm-apartment viz.
+   Soft realistic daylight — a cool sky fill + one warm low key +
+   soft PCF shadows, ACES tone mapping, a faint dusty sunbeam.
+   Type: Cardo (bookish inscriptional serif) + Archivo (interface).
+   Everything procedural: no textures, no images, no build step.
+   Motion honours prefers-reduced-motion (no auto-drift, instant cuts).
+   ====================================================================== */
+:root{
+  --parchment:#EFE7D6;    /* warm cream — panel ground */
+  --parchment2:#E3D7BF;   /* aged card */
+  --ink:#241C12;          /* warm near-black text */
+  --ink2:#5A4C38;         /* secondary */
+  --dim:#8A785B;          /* tertiary / hairlines */
+  --line:rgba(36,28,18,.16);
+  --line2:rgba(36,28,18,.30);
+  --forest:#2E4633;       /* deep forest green — the leather */
+  --forest-d:#1E3123;
+  --brass:#B08D4C;        /* aged brass accent */
+  --brass-l:#CBA968;
+  --walnut:#4A2F1E;       /* rich walnut */
+  --oxblood:#7A2E22;      /* spine accent */
+  --glass:rgba(239,231,214,.86);
+  --glass-b:rgba(30,23,15,.72);
+  --disp:'Cardo',Georgia,'Times New Roman',serif;
+  --ui:'Archivo',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#191007;}
+body{
+  font-family:var(--ui);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+#scene{position:fixed;inset:0;display:block;}
+canvas{display:block;outline:none;}
+
+/* ---- masthead ---- */
+#masthead{
+  position:fixed;top:20px;left:22px;z-index:20;
+  pointer-events:none;user-select:none;
+  max-width:min(46vw,430px);
+}
+#masthead .kicker{
+  font-family:var(--ui);font-size:10.5px;font-weight:600;
+  letter-spacing:.36em;text-transform:uppercase;
+  color:var(--brass-l);
+  text-shadow:0 1px 3px rgba(0,0,0,.6);
+  margin-bottom:7px;
+}
+#masthead h1{
+  font-family:var(--disp);font-weight:700;
+  font-size:clamp(27px,4.4vw,46px);
+  line-height:.98;letter-spacing:.005em;
+  color:#F6EFDE;
+  text-shadow:0 2px 14px rgba(0,0,0,.62),0 1px 2px rgba(0,0,0,.5);
+}
+#masthead h1 em{font-style:italic;color:var(--brass-l);}
+#masthead .sub{
+  font-family:var(--disp);font-style:italic;
+  font-size:clamp(13px,1.5vw,16px);
+  color:#D9CBAE;margin-top:8px;line-height:1.34;
+  text-shadow:0 1px 6px rgba(0,0,0,.7);
+  max-width:38ch;
+}
+
+/* ---- "About this" collapsible ---- */
+#about{
+  position:fixed;top:20px;right:22px;z-index:30;
+  width:min(90vw,352px);
+  font-family:var(--ui);
+  pointer-events:auto;
+}
+#about details{
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(13px) saturate(1.12);
+  backdrop-filter:blur(13px) saturate(1.12);
+  border:1px solid rgba(176,141,76,.45);
+  border-radius:13px;
+  box-shadow:0 18px 48px -18px rgba(0,0,0,.66),
+             inset 0 1px 0 rgba(255,255,255,.5);
+  overflow:hidden;
+}
+#about summary{
+  list-style:none;cursor:pointer;user-select:none;
+  padding:12px 15px;
+  display:flex;align-items:center;gap:10px;
+  font-weight:600;font-size:12.5px;letter-spacing:.02em;
+  color:var(--ink);
+}
+#about summary::-webkit-details-marker{display:none;}
+#about summary .dot{
+  width:9px;height:9px;border-radius:50%;
+  background:radial-gradient(circle at 32% 30%,var(--brass-l),var(--walnut));
+  box-shadow:0 0 0 3px rgba(176,141,76,.18);flex:none;
+}
+#about summary .chev{
+  margin-left:auto;transition:transform .28s ease;
+  color:var(--dim);font-size:11px;
+}
+#about details[open] summary .chev{transform:rotate(180deg);}
+#about .body{
+  padding:2px 16px 16px;
+  border-top:1px solid var(--line);
+  font-size:12.4px;line-height:1.56;color:var(--ink2);
+  max-height:min(58vh,460px);overflow:auto;
+}
+#about .body h4{
+  font-family:var(--disp);font-weight:700;font-style:italic;
+  font-size:14px;color:var(--walnut);
+  margin:13px 0 3px;letter-spacing:.01em;
+}
+#about .body p{margin:0 0 2px;}
+#about .body .lede{
+  color:var(--ink);font-family:var(--disp);
+  font-size:13.4px;line-height:1.5;margin-top:12px;
+}
+#about .body strong{color:var(--ink);font-weight:600;}
+#about .body kbd{
+  font-family:var(--ui);font-size:10.5px;font-weight:600;
+  background:var(--parchment2);border:1px solid var(--line2);
+  border-bottom-width:2px;border-radius:4px;
+  padding:1px 5px;color:var(--ink);
+}
+#about .sig{
+  margin-top:14px;padding-top:11px;border-top:1px solid var(--line);
+  font-family:var(--disp);font-style:italic;font-size:12px;
+  color:var(--dim);
+}
+
+/* ---- viewpoint dock ---- */
+#dock{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+  z-index:20;display:flex;gap:8px;align-items:center;
+  padding:8px;
+  background:var(--glass-b);
+  -webkit-backdrop-filter:blur(15px) saturate(1.2);
+  backdrop-filter:blur(15px) saturate(1.2);
+  border:1px solid rgba(176,141,76,.4);
+  border-radius:15px;
+  box-shadow:0 20px 52px -16px rgba(0,0,0,.7),
+             inset 0 1px 0 rgba(255,255,255,.1);
+  max-width:calc(100vw - 32px);
+  flex-wrap:wrap;justify-content:center;
+}
+#dock .vp{
+  appearance:none;border:1px solid rgba(203,169,104,.28);
+  background:linear-gradient(180deg,rgba(74,47,30,.5),rgba(30,23,15,.5));
+  color:#E7DAC0;
+  font-family:var(--ui);font-size:12px;font-weight:600;
+  letter-spacing:.015em;
+  padding:8px 14px;border-radius:10px;cursor:pointer;
+  display:flex;align-items:center;gap:8px;
+  transition:transform .16s ease,background .2s ease,border-color .2s ease,color .2s ease;
+  white-space:nowrap;
+}
+#dock .vp .n{
+  font-family:var(--disp);font-style:italic;font-size:12px;
+  color:var(--brass-l);width:15px;text-align:center;flex:none;
+}
+#dock .vp:hover{
+  background:linear-gradient(180deg,rgba(96,62,40,.66),rgba(46,35,22,.66));
+  border-color:rgba(203,169,104,.6);color:#FBF4E4;
+  transform:translateY(-1px);
+}
+#dock .vp.on{
+  background:linear-gradient(180deg,var(--brass),var(--walnut));
+  border-color:var(--brass-l);color:#1a1206;
+}
+#dock .vp.on .n{color:#3a250f;}
+#dock .sep{width:1px;height:24px;background:rgba(203,169,104,.28);margin:0 2px;}
+#dock .vp.toggle.active{
+  background:linear-gradient(180deg,var(--forest),var(--forest-d));
+  border-color:#5c7a63;color:#DDECD9;
+}
+#dock .vp.toggle.active .n{color:#bfe0c4;}
+
+/* ---- object label ---- */
+#label{
+  position:fixed;z-index:25;pointer-events:none;
+  min-width:172px;max-width:264px;
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(12px) saturate(1.15);
+  backdrop-filter:blur(12px) saturate(1.15);
+  border:1px solid rgba(176,141,76,.5);
+  border-radius:11px;
+  box-shadow:0 16px 40px -14px rgba(0,0,0,.6),
+             inset 0 1px 0 rgba(255,255,255,.5);
+  padding:12px 14px;
+  opacity:0;transform:translateY(6px) scale(.98);
+  transition:opacity .2s ease,transform .2s ease;
+}
+#label.show{opacity:1;transform:translateY(0) scale(1);}
+#label .swatch{
+  width:100%;height:7px;border-radius:4px;margin-bottom:9px;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.14);
+}
+#label .name{
+  font-family:var(--disp);font-weight:700;font-size:16px;
+  color:var(--ink);line-height:1.05;letter-spacing:.005em;
+}
+#label .role{
+  font-family:var(--ui);font-size:10px;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:var(--brass);margin-top:4px;
+}
+#label .mat{
+  font-family:var(--disp);font-style:italic;
+  font-size:12.5px;color:var(--ink2);
+  margin-top:8px;line-height:1.42;
+}
+#label .dim{
+  font-family:var(--ui);font-size:10.5px;color:var(--dim);
+  margin-top:7px;padding-top:7px;border-top:1px solid var(--line);
+  letter-spacing:.02em;
+}
+
+/* ---- hint / walk overlay ---- */
+#hint{
+  position:fixed;left:50%;bottom:78px;transform:translateX(-50%);
+  z-index:18;pointer-events:none;
+  font-family:var(--ui);font-size:11px;font-weight:500;
+  letter-spacing:.04em;color:#E7DAC0;
+  background:rgba(30,23,15,.55);
+  border:1px solid rgba(176,141,76,.28);
+  padding:6px 13px;border-radius:20px;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
+  opacity:0;transition:opacity .5s ease;
+}
+#hint.show{opacity:1;}
+#hint kbd{
+  font-weight:700;color:var(--brass-l);
+  padding:0 2px;
+}
+#walkveil{
+  position:fixed;inset:0;z-index:15;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .3s ease;
+}
+#walkveil.show{opacity:1;}
+#walkveil .card{
+  font-family:var(--ui);text-align:center;color:#EFE3C8;
+  background:rgba(20,14,8,.62);
+  border:1px solid rgba(176,141,76,.34);
+  border-radius:14px;padding:18px 26px;
+  box-shadow:0 20px 60px -18px rgba(0,0,0,.7);
+}
+#walkveil .card b{
+  font-family:var(--disp);font-size:19px;font-weight:700;
+  color:#F6EFDE;display:block;margin-bottom:6px;
+}
+#walkveil .card span{font-size:12px;color:#CDBD9C;letter-spacing:.02em;}
+#walkveil .card kbd{
+  font-weight:700;color:var(--brass-l);margin:0 1px;
+}
+
+/* ---- loader ---- */
+#loader{
+  position:fixed;inset:0;z-index:60;
+  background:radial-gradient(120% 120% at 62% 30%,#2a1b0e,#150d05 70%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity .8s ease;
+}
+#loader.gone{opacity:0;pointer-events:none;}
+#loader .mk{
+  width:56px;height:56px;margin-bottom:20px;
+  border-radius:50%;
+  border:2px solid rgba(203,169,104,.22);
+  border-top-color:var(--brass-l);
+  animation:spin 1.05s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+#loader .t{
+  font-family:var(--disp);font-style:italic;font-size:16px;
+  color:#D9C9A6;letter-spacing:.02em;
+}
+#loader .t2{
+  font-family:var(--ui);font-size:10.5px;letter-spacing:.28em;
+  text-transform:uppercase;color:var(--brass);margin-top:8px;
+}
+
+/* ---- made-with ---- */
+#madewith{
+  position:fixed;right:16px;bottom:14px;z-index:12;
+  font-family:var(--ui);font-size:9.5px;letter-spacing:.22em;
+  text-transform:uppercase;color:rgba(203,169,104,.5);
+  pointer-events:none;user-select:none;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
+}
+
+@media (prefers-reduced-motion:reduce){
+  #loader .mk{animation:none;border-top-color:rgba(203,169,104,.22);}
+}
+@media (max-width:640px){
+  #masthead{max-width:64vw;}
+  #dock .vp .lbl{display:none;}
+  #dock .vp{padding:9px 11px;}
+  #about{width:min(92vw,352px);}
+}
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<div id="masthead">
+  <div class="kicker">Gaudí · Study № 05</div>
+  <h1>The <em>Reading</em> Room</h1>
+  <div class="sub">A double-height library in the low light of afternoon — walnut, green leather, and aged brass.</div>
+</div>
+
+<div id="about">
+  <details>
+    <summary><span class="dot"></span> About this room <span class="chev">▾</span></summary>
+    <div class="body">
+      <p class="lede">A quiet, scholarly library you can walk through — built as architecture, not a game level.</p>
+
+      <h4>Why</h4>
+      <p>A showcase for Split's library: prove that a <strong>space</strong> can be handed over as something you <em>move through</em>, not a flat render. One room, honestly lit, fully explorable.</p>
+
+      <h4>Context</h4>
+      <p>A double-height study, roughly <strong>7 × 6 m</strong>, west-facing: floor-to-ceiling walnut shelving, a mezzanine gallery on a slim stair, a rolling ladder, a leather reading chair, a lamp-lit desk, a tall arched window carrying the last warm hour of daylight.</p>
+
+      <h4>How to use it</h4>
+      <p><strong>Drag</strong> to orbit, <strong>scroll</strong> to zoom. Tap a <strong>viewpoint</strong> in the dock below to glide there. Press <kbd>Walk</kbd> for first-person <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> + mouse-look (<kbd>Esc</kbd> to leave). <strong>Click any object</strong> — shelves, chair, globe, ladder — for its name, material and size.</p>
+
+      <h4>What I assumed</h4>
+      <p>A timeless scholar's palette over any single trend: rich walnut, deep forest-green leather, aged brass, cream spines, warm afternoon key. Every surface is <strong>procedural</strong> — no photos, no textures. This is intent and feel, not a stamped construction drawing.</p>
+
+      <div class="sig">The straight line belongs to men; the light belongs to the room. — projected once, refined only when the room asked. —G.</div>
+    </div>
+  </details>
+</div>
+
+<div id="dock" role="group" aria-label="Saved viewpoints">
+  <button class="vp on" data-vp="0"><span class="n">1</span><span class="lbl">The Desk</span></button>
+  <button class="vp" data-vp="1"><span class="n">2</span><span class="lbl">The Mezzanine</span></button>
+  <button class="vp" data-vp="2"><span class="n">3</span><span class="lbl">The Ladder Wall</span></button>
+  <button class="vp" data-vp="3"><span class="n">4</span><span class="lbl">The Window Chair</span></button>
+  <span class="sep"></span>
+  <button class="vp toggle" id="walkBtn"><span class="n">▸</span><span class="lbl">Walk</span></button>
+</div>
+
+<div id="label" role="status" aria-live="polite">
+  <div class="swatch"></div>
+  <div class="name"></div>
+  <div class="role"></div>
+  <div class="mat"></div>
+  <div class="dim"></div>
+</div>
+
+<div id="hint"></div>
+
+<div id="walkveil">
+  <div class="card">
+    <b>Walking the room</b>
+    <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to move · move the mouse to look · <kbd>Esc</kbd> to step back out</span>
+  </div>
+</div>
+
+<div id="loader">
+  <div class="mk"></div>
+  <div class="t">Warming the afternoon light…</div>
+  <div class="t2">The Reading Room</div>
+</div>
+
+<div id="madewith">Made with Split</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+/* =====================================================================
+   0 · GLOBALS + HELPERS
+   ===================================================================== */
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const canvas = document.getElementById('scene');
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#20160c');
+// gentle warm haze so the far corners fall off softly
+scene.fog = new THREE.FogExp2('#241a0f', 0.011);
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.05, 120);
+
+/* material factory --------------------------------------------------- */
+function mat(color, o={}){
+  const m = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(color),
+    roughness: o.rough ?? 0.85,
+    metalness: o.metal ?? 0.0,
+    emissive: o.emissive ? new THREE.Color(o.emissive) : new THREE.Color('#000000'),
+    emissiveIntensity: o.ei ?? 0,
+    side: o.side ?? THREE.FrontSide,
+    transparent: o.transparent ?? false,
+    opacity: o.opacity ?? 1.0,
+    flatShading: o.flat ?? false,
+    envMapIntensity: o.env ?? 1.0,
+  });
+  if (o.name) m.userData.matName = o.name;
+  return m;
+}
+function box(w,h,d,material){ const g=new THREE.BoxGeometry(w,h,d); return new THREE.Mesh(g,material); }
+function cyl(rt,rb,h,material,seg=28,open=false){ const g=new THREE.CylinderGeometry(rt,rb,h,seg,1,open); return new THREE.Mesh(g,material); }
+function rnd(seed){ // deterministic pseudo-random (so the render is stable)
+  let s = Math.sin(seed*12.9898)*43758.5453; return s - Math.floor(s);
+}
+
+/* palette ------------------------------------------------------------ */
+const PAL = {
+  walnut:   '#4A2F1E',
+  walnutHi: '#63402A',
+  walnutLo: '#331E12',
+  oak:      '#7A5232',
+  brass:    '#B08D4C',
+  brassHi:  '#D8B978',
+  brassLo:  '#6E5426',
+  forest:   '#2E4633',
+  forestHi: '#3C5A44',
+  forestLo: '#1C2E21',
+  plasterW: '#D8C7A6',   // warm plaster upper walls
+  plasterS: '#C6B189',
+  parchment:'#EFE7D6',
+  floorDk:  '#3A241596',
+  glassW:   '#EAD9B0',
+  leaf:     '#3E5A3A',
+  leafDk:   '#2C4029',
+  terra:    '#8A5638',   // planter clay
+  ivory:    '#E8DCC0',
+};
+
+/* shared materials --------------------------------------------------- */
+const M = {
+  walnut:   mat(PAL.walnut,   {rough:0.62, env:0.6, name:'walnut'}),
+  walnutHi: mat(PAL.walnutHi, {rough:0.55, env:0.6, name:'walnut'}),
+  walnutLo: mat(PAL.walnutLo, {rough:0.7,  env:0.5, name:'walnut'}),
+  oak:      mat(PAL.oak,      {rough:0.72, env:0.5, name:'oak'}),
+  brass:    mat(PAL.brass,    {rough:0.34, metal:0.9, env:1.1, name:'brass'}),
+  brassDk:  mat(PAL.brassLo,  {rough:0.42, metal:0.85, env:1.0, name:'brass'}),
+  forest:   mat(PAL.forest,   {rough:0.52, env:0.5, name:'leather'}),
+  forestHi: mat(PAL.forestHi, {rough:0.5,  env:0.5, name:'leather'}),
+  plasterW: mat(PAL.plasterW, {rough:0.96, env:0.35, name:'plaster'}),
+  plasterS: mat(PAL.plasterS, {rough:0.97, env:0.3,  name:'plaster'}),
+  leaf:     mat(PAL.leaf,     {rough:0.85, name:'foliage', side:THREE.DoubleSide}),
+  leafDk:   mat(PAL.leafDk,   {rough:0.85, name:'foliage', side:THREE.DoubleSide}),
+  terra:    mat(PAL.terra,    {rough:0.9,  name:'terracotta'}),
+};
+
+/* =====================================================================
+   1 · ROOM SHELL  (double-height study, ~7w × 6d × 5.4h)
+   ===================================================================== */
+const W = 7.0, D = 6.0, H = 5.4;           // interior extents
+const room = new THREE.Group();
+scene.add(room);
+
+// --- floor: herringbone-ish walnut planks (procedural boxes) ---------
+const floorGrp = new THREE.Group();
+const plankMat  = mat('#4E3220', {rough:0.5, env:0.55, name:'walnut'});
+const plankMat2 = mat('#442A19', {rough:0.55, env:0.5, name:'walnut'});
+const pw = 0.5, pd = 0.5, gap = 0.012;
+for(let ix=0; ix<Math.ceil(W/pw)+1; ix++){
+  for(let iz=0; iz<Math.ceil(D/pd)+1; iz++){
+    const x = -W/2 + ix*pw + pw/2;
+    const z = -D/2 + iz*pd + pd/2;
+    if(x> W/2 || z> D/2) continue;
+    const p = box(pw-gap, 0.06, pd-gap, ((ix+iz)%2? plankMat: plankMat2));
+    p.position.set(x, 0.03, z);
+    p.rotation.y = (ix+iz)%2 ? 0.0 : Math.PI/2;
+    p.receiveShadow = true;
+    p.userData.pick = {name:'Walnut Floor', role:'Underfoot', mat:'Rift-sawn walnut planks, oiled matte — laid in a shallow herringbone.', dim:'~7.0 × 6.0 m', sw:'#4E3220'};
+    floorGrp.add(p);
+  }
+}
+room.add(floorGrp);
+
+// a threadbare warm rug under the reading nook
+const rug = box(2.5, 0.02, 3.2, mat('#6A3A2C', {rough:0.98, name:'wool'}));
+rug.position.set(-1.5, 0.075, 0.9);
+rug.receiveShadow = true;
+rug.userData.pick = {name:'Kilim Rug', role:'Reading nook', mat:'Hand-knotted wool, faded oxblood ground with an ivory medallion — a warm island for the chair.', dim:'2.5 × 3.2 m', sw:'#6A3A2C'};
+room.add(rug);
+// rug medallion inlay
+const rugIn = box(1.3, 0.021, 1.9, mat('#C9A97A', {rough:0.98, name:'wool'}));
+rugIn.position.set(-1.5, 0.078, 0.9);
+rugIn.userData.pick = rug.userData.pick;
+room.add(rugIn);
+
+// --- back wall + side walls + ceiling (warm plaster above shelving) --
+function wall(w,h,material,name){ const m=box(w,h,0.16,material); m.receiveShadow=true; m.userData.pick={name:name,role:'Enclosure',mat:'Warm hand-troweled lime plaster, the colour of old paper.',dim:`${w.toFixed(1)} × ${h.toFixed(1)} m`,sw:PAL.plasterW}; return m; }
+
+const backWall = wall(W, H, M.plasterW, 'Plaster Wall');
+backWall.position.set(0, H/2, -D/2 - 0.02);
+room.add(backWall);
+
+const leftWall = box(0.16, H, D, M.plasterS);
+leftWall.position.set(-W/2 - 0.02, H/2, 0);
+leftWall.receiveShadow = true;
+leftWall.userData.pick = {name:'Plaster Wall', role:'Enclosure', mat:'Warm hand-troweled lime plaster, the colour of old paper.', dim:`${D.toFixed(1)} × ${H.toFixed(1)} m`, sw:PAL.plasterS};
+room.add(leftWall);
+
+// right wall holds the tall arched window — build as segments around the arch
+const rightWallGrp = new THREE.Group();
+rightWallGrp.position.set(W/2 + 0.02, 0, 0);
+// solid piers front + back of window
+const winZ = 0.6, winW = 2.6, winSill = 0.7, winTop = 4.3;
+[[-D/2, (-D/2)+(D/2 - winW/2 + winZ)], null].forEach(()=>{});
+function rw(w, h, y, z){ const m=box(0.16,h,w,M.plasterS); m.position.set(0,y,z); m.receiveShadow=true; m.userData.pick={name:'Plaster Wall',role:'Enclosure',mat:'Warm hand-troweled lime plaster, the colour of old paper.',dim:`${w.toFixed(1)} × ${h.toFixed(1)} m`,sw:PAL.plasterS}; return m; }
+const frontDepth = (D/2) - (winZ + winW/2);
+const backDepth  = (D/2) - (-winZ + winW/2 - 0) ; // symmetric-ish
+rightWallGrp.add(rw(frontDepth, H, H/2,  D/2 - frontDepth/2));           // toward front
+rightWallGrp.add(rw(frontDepth, H, H/2, -D/2 + frontDepth/2));           // toward back
+rightWallGrp.add(rw(winW, winSill, winSill/2, winZ - winW/2 + winW/2));  // sill below window
+rightWallGrp.add(rw(winW, H - winTop, (winTop + H)/2 - 0, winZ - winW/2 + winW/2)); // above window
+room.add(rightWallGrp);
+
+// ceiling with coffered walnut beams
+const ceil = box(W, 0.16, D, M.plasterW);
+ceil.position.set(0, H, 0);
+ceil.receiveShadow = true;
+ceil.userData.pick = {name:'Plaster Ceiling', role:'Overhead', mat:'Lime plaster between deep walnut beams — the room breathes upward.', dim:'7.0 × 6.0 m', sw:PAL.plasterW};
+room.add(ceil);
+const beamMat = mat('#3E2617', {rough:0.6, env:0.5, name:'walnut'});
+for(let i=0;i<5;i++){
+  const bx = -W/2 + 0.9 + i*((W-1.8)/4);
+  const beam = box(0.22, 0.3, D, beamMat);
+  beam.position.set(bx, H - 0.16, 0);
+  beam.castShadow = true; beam.receiveShadow = true;
+  beam.userData.pick = {name:'Ceiling Beam', role:'Coffered ceiling', mat:'Solid walnut beam, chamfered edge — carries the eye the length of the room.', dim:'0.22 × 0.30 m section', sw:'#3E2617'};
+  room.add(beam);
+}
+
+/* =====================================================================
+   2 · BOOKS  (procedural spines — the soul of the room)
+   ===================================================================== */
+const SPINE_COLORS = [
+  '#7A2E22', // oxblood
+  '#8A4A2E', // russet
+  '#2E4633', // forest
+  '#3E5063', // slate blue
+  '#6E5426', // ochre brass
+  '#5A3A2A', // cocoa
+  '#847048', // olive tan
+  '#4A3A5A', // aubergine
+  '#B7A277', // faded cream (light)
+  '#C9B79A', // parchment
+  '#7A5232', // oak
+  '#385046', // teal-green
+];
+const bookGeoCache = {};
+function bookGeo(w,h,d){ const k=`${w.toFixed(3)}_${h.toFixed(3)}_${d.toFixed(3)}`; if(!bookGeoCache[k]) bookGeoCache[k]=new THREE.BoxGeometry(w,h,d); return bookGeoCache[k]; }
+const bookMatCache = {};
+function bookMat(hex){ if(!bookMatCache[hex]) bookMatCache[hex]=mat(hex,{rough:0.82, env:0.3, name:'book cloth'}); return bookMatCache[hex]; }
+
+// fill a shelf opening [x0..x1] at height y, depth from wall = zFront, facing +/-1 in x-or-z
+// axis 'z' → books face +x (spines toward +x); we set faceDir for spine orientation
+function fillShelfRow(group, len, y, spineDepth, faceAxis, faceSign, basePos, seedBase){
+  // len = usable width along the shelf; books stand along that axis
+  let cursor = 0.02;
+  let bi = 0;
+  while(cursor < len - 0.03){
+    const r1 = rnd(seedBase + bi*3.13);
+    const r2 = rnd(seedBase + bi*7.77 + 1.1);
+    const r3 = rnd(seedBase + bi*2.51 + 2.2);
+    const bw = 0.028 + r1*0.05;                 // spine thickness
+    if(cursor + bw > len - 0.02) break;
+    const bh = 0.22 + r2*0.11;                  // book height
+    const bd = spineDepth * (0.78 + r3*0.2);    // how deep it sits
+    const lean = (r3>0.94) ? (r1-0.5)*0.12 : 0; // occasional lean
+    const col = SPINE_COLORS[Math.floor(rnd(seedBase+bi*5.9)*SPINE_COLORS.length)];
+    let m;
+    if(faceAxis==='z'){
+      // shelf runs along Z; spine faces +x (faceSign). book width = bw along Z
+      m = new THREE.Mesh(bookGeo(bd, bh, bw), bookMat(col));
+      m.position.set(basePos.x + faceSign*(bd/2 - spineDepth/2 + 0.005),
+                     y + bh/2, basePos.z - len/2 + cursor + bw/2);
+      m.rotation.z = lean*0.4;
+      m.rotation.x = lean;
+    } else {
+      // shelf runs along X; spine faces +z (faceSign)
+      m = new THREE.Mesh(bookGeo(bw, bh, bd), bookMat(col));
+      m.position.set(basePos.x - len/2 + cursor + bw/2, y + bh/2,
+                     basePos.z + faceSign*(bd/2 - spineDepth/2 + 0.005));
+      m.rotation.x = lean*0.4;
+      m.rotation.z = lean;
+    }
+    m.castShadow = true; m.receiveShadow = true;
+    group.add(m);
+    cursor += bw + 0.004 + (r2>0.9? 0.02:0);
+    bi++;
+    // occasional stacked-flat pair as a bookend gap
+    if(r1>0.93 && cursor < len-0.18){
+      const stackH = 0.045;
+      for(let s=0;s<2;s++){
+        const sm = faceAxis==='z'
+          ? new THREE.Mesh(bookGeo(bd*0.9, stackH, 0.15), bookMat(SPINE_COLORS[(bi+s)%SPINE_COLORS.length]))
+          : new THREE.Mesh(bookGeo(0.15, stackH, bd*0.9), bookMat(SPINE_COLORS[(bi+s)%SPINE_COLORS.length]));
+        if(faceAxis==='z') sm.position.set(basePos.x + faceSign*(bd*0.45 - spineDepth/2+0.02), y+stackH/2+s*stackH, basePos.z - len/2 + cursor + 0.08);
+        else sm.position.set(basePos.x - len/2 + cursor + 0.08, y+stackH/2+s*stackH, basePos.z + faceSign*(bd*0.45 - spineDepth/2+0.02));
+        sm.castShadow=true; group.add(sm);
+      }
+      cursor += 0.17;
+    }
+  }
+}
+
+/* =====================================================================
+   3 · BOOKCASES  (floor-to-ceiling, back + left walls + mezzanine)
+   ===================================================================== */
+const caseMat  = M.walnut;
+const caseMat2 = M.walnutHi;
+const shelfMat = mat('#3F2717', {rough:0.6, env:0.5, name:'walnut'});
+
+// a single tall bookcase against a wall. Returns the group.
+// wallAxis: 'back' (faces +z, along X)  or  'left' (faces +x, along Z)
+function bookcase(centerX, centerZ, spanW, topH, wallAxis, seed, shelfCount, fillBooks=true){
+  const g = new THREE.Group();
+  const depth = 0.34;
+  const faceSign = wallAxis==='back' ? 1 : 1;
+  // carcass back panel
+  const back = wallAxis==='back'
+    ? box(spanW, topH, 0.04, caseMat2)
+    : box(0.04, topH, spanW, caseMat2);
+  back.position.set(centerX + (wallAxis==='left'? -depth/2:0), topH/2, centerZ + (wallAxis==='back'? -depth/2:0));
+  back.receiveShadow=true; g.add(back);
+  // side stiles
+  const stile = wallAxis==='back'
+    ? [ [-spanW/2,0,0.04,topH,depth], [spanW/2,0,0.04,topH,depth] ]
+    : [ [0,-spanW/2,depth,topH,0.04], [0,spanW/2,depth,topH,0.04] ];
+  stile.forEach(s=>{
+    const m = box(s[2], s[3], s[4], caseMat);
+    if(wallAxis==='back') m.position.set(centerX + s[0], topH/2, centerZ - depth/2 + depth/2);
+    else m.position.set(centerX - depth/2 + depth/2, topH/2, centerZ + s[1]);
+    m.castShadow=true; m.receiveShadow=true;
+    m.userData.pick = shelfPick(depth, topH);
+    g.add(m);
+  });
+  // shelves + book rows
+  const inner = spanW - 0.12;
+  const y0 = 0.09, yTop = topH - 0.14;
+  for(let i=0;i<=shelfCount;i++){
+    const y = y0 + (yTop - y0) * (i/shelfCount);
+    const sh = wallAxis==='back'
+      ? box(inner, 0.035, depth-0.03, shelfMat)
+      : box(depth-0.03, 0.035, inner, shelfMat);
+    if(wallAxis==='back') sh.position.set(centerX, y, centerZ - depth/2 + (depth-0.03)/2 + 0.01);
+    else sh.position.set(centerX - depth/2 + (depth-0.03)/2 + 0.01, y, centerZ);
+    sh.castShadow=true; sh.receiveShadow=true;
+    sh.userData.pick = shelfPick(depth, topH);
+    g.add(sh);
+    // fill the row above this shelf (except the very top)
+    if(fillBooks && i<shelfCount){
+      const yRow = y + 0.02;
+      if(wallAxis==='back'){
+        fillShelfRow(g, inner, yRow, depth-0.06, 'x', 1, {x:centerX, z:centerZ - depth/2 + (depth-0.06)/2 + 0.02}, seed*17.3 + i*4.1);
+      } else {
+        fillShelfRow(g, inner, yRow, depth-0.06, 'z', 1, {x:centerX - depth/2 + (depth-0.06)/2 + 0.02, z:centerZ}, seed*23.7 + i*4.1);
+      }
+    }
+  }
+  // crown moulding
+  const crown = wallAxis==='back'
+    ? box(spanW+0.06, 0.12, depth+0.05, caseMat2)
+    : box(depth+0.05, 0.12, spanW+0.06, caseMat2);
+  crown.position.set(centerX + (wallAxis==='left'? -depth/2 + depth/2 : 0), topH+0.02, centerZ + (wallAxis==='back'? -depth/2 + depth/2 : 0));
+  crown.castShadow=true; g.add(crown);
+  return g;
+}
+function shelfPick(depth, h){
+  return {name:'Walnut Bookcase', role:'Floor-to-ceiling', mat:'Solid rift-sawn walnut carcass with fixed shelves — waxed to a low sheen, every board cut with the grain.', dim:`${depth.toFixed(2)} m deep · ${h.toFixed(1)} m tall`, sw:PAL.walnut};
+}
+
+// BACK WALL — one long run, full height, split around a central break at the stair
+const backCaseL = bookcase(-1.9, -D/2 + 0.19, 3.0, H-0.1, 'back', 3.0, 7);
+const backCaseR = bookcase( 2.0, -D/2 + 0.19, 2.6, H-0.1, 'back', 5.0, 7);
+room.add(backCaseL, backCaseR);
+
+// LEFT WALL — full-height run (behind the reading chair)
+const leftCase = bookcase(-W/2 + 0.19, -0.6, 4.2, H-0.1, 'left', 8.0, 7);
+room.add(leftCase);
+
+/* =====================================================================
+   4 · MEZZANINE GALLERY + slim staircase + railing
+   ===================================================================== */
+const MEZ_Y = 2.8;                       // mezzanine deck height
+const mez = new THREE.Group();
+// deck (spans the back third of the room)
+const deckD = 1.9;
+const deck = box(W-0.4, 0.14, deckD, mat('#472B1A', {rough:0.55, env:0.55, name:'walnut'}));
+deck.position.set(0, MEZ_Y, -D/2 + deckD/2 + 0.2);
+deck.castShadow=true; deck.receiveShadow=true;
+deck.userData.pick = {name:'Mezzanine Deck', role:'Upper gallery', mat:'Walnut plank gallery floor on a hidden steel ledger — reached by the stair, lined with the tall books.', dim:`${(W-0.4).toFixed(1)} × ${deckD.toFixed(1)} m`, sw:'#472B1A'};
+mez.add(deck);
+// underside beams
+for(let i=0;i<5;i++){
+  const ub = box(0.12,0.16,deckD, beamMat);
+  ub.position.set(-W/2+0.6+i*((W-1.2)/4), MEZ_Y-0.15, -D/2+deckD/2+0.2);
+  ub.castShadow=true; mez.add(ub);
+}
+// upper bookcase on the mezzanine back wall
+const mezCaseL = bookcase(-1.9, -D/2+0.19, 3.0, H-MEZ_Y-0.35, 'back', 11.0, 4);
+mezCaseL.position.y = MEZ_Y + 0.07;
+const mezCaseR = bookcase(2.0, -D/2+0.19, 2.6, H-MEZ_Y-0.35, 'back', 13.0, 4);
+mezCaseR.position.y = MEZ_Y + 0.07;
+mez.add(mezCaseL, mezCaseR);
+
+// mezzanine railing — brass balusters + walnut cap along the front edge
+const railZ = -D/2 + deckD + 0.16;
+const railMat = M.brass;
+const capMat = M.walnutHi;
+const cap = box(W-0.4, 0.06, 0.08, capMat);
+cap.position.set(0, MEZ_Y+0.92, railZ);
+cap.castShadow=true;
+cap.userData.pick = {name:'Gallery Railing', role:'Mezzanine edge', mat:'Aged-brass balusters under a walnut handrail — the guard for the upper gallery.', dim:'0.92 m high', sw:PAL.brass};
+mez.add(cap);
+const railBase = box(W-0.4, 0.05, 0.06, capMat);
+railBase.position.set(0, MEZ_Y+0.14, railZ);
+mez.add(railBase);
+const nBal = 26;
+for(let i=0;i<=nBal;i++){
+  const bx = -(W-0.5)/2 + i*((W-0.5)/nBal);
+  const bal = cyl(0.014,0.014,0.76, railMat, 10);
+  bal.position.set(bx, MEZ_Y+0.52, railZ);
+  bal.castShadow=true;
+  bal.userData.pick = cap.userData.pick;
+  mez.add(bal);
+}
+// small side returns of railing
+[[-(W-0.4)/2, 1],[(W-0.4)/2,-1]].forEach(([rx,dir])=>{
+  const sc = box(0.08,0.06,deckD-0.05,capMat);
+  sc.position.set(rx, MEZ_Y+0.92, -D/2+deckD/2+0.18);
+  mez.add(sc);
+  for(let i=0;i<6;i++){
+    const bal = cyl(0.014,0.014,0.76,railMat,10);
+    bal.position.set(rx, MEZ_Y+0.52, -D/2+0.35+i*((deckD-0.4)/5));
+    bal.castShadow=true; bal.userData.pick=cap.userData.pick; mez.add(bal);
+  }
+});
+room.add(mez);
+
+// --- slim staircase: floor → mezzanine, against the right-front pier ---
+const stair = new THREE.Group();
+const steps = 11;
+const stepMat = mat('#4A2E1C', {rough:0.55, env:0.5, name:'walnut'});
+const stairX = W/2 - 0.75;
+const startZ = -D/2 + deckD + 0.35;
+for(let i=0;i<steps;i++){
+  const t = i/(steps-1);
+  const tread = box(0.9, 0.06, 0.30, stepMat);
+  const y = 0.09 + (MEZ_Y-0.02) * (i/steps);
+  const z = startZ + i*0.24;
+  tread.position.set(stairX, y, z);
+  tread.castShadow=true; tread.receiveShadow=true;
+  tread.userData.pick = {name:'Staircase', role:'To the gallery', mat:'A slim run of walnut treads on a single steel stringer — it climbs to the mezzanine without stealing the floor.', dim:`${steps} treads · rise to ${MEZ_Y.toFixed(1)} m`, sw:'#4A2E1C'};
+  stair.add(tread);
+  // riser
+  const riser = box(0.9,0.16,0.02,stepMat);
+  riser.position.set(stairX, y-0.11, z-0.14);
+  stair.add(riser);
+}
+// stair stringer + brass handrail
+const stringer = box(0.06, 0.4, steps*0.24+0.3, mat('#2E1B10',{rough:0.6,name:'walnut'}));
+stringer.position.set(stairX-0.44, MEZ_Y/2, startZ + steps*0.12);
+stringer.rotation.x = -Math.atan2(MEZ_Y, steps*0.24);
+stringer.position.y = MEZ_Y/2 - 0.05;
+stair.add(stringer);
+const handrail = cyl(0.02,0.02, Math.hypot(MEZ_Y, steps*0.24)+0.2, M.brass, 12);
+handrail.position.set(stairX+0.44, MEZ_Y/2+0.55, startZ + steps*0.12);
+handrail.rotation.x = Math.PI/2 - Math.atan2(MEZ_Y, steps*0.24);
+handrail.castShadow=true;
+handrail.userData.pick = {name:'Stair Handrail', role:'Brass grip', mat:'A single sweep of aged brass, worn bright where a hand has always fallen.', dim:'~2.9 m run', sw:PAL.brass};
+stair.add(handrail);
+// handrail posts
+for(let i=0;i<4;i++){
+  const post = cyl(0.016,0.016, 0.6, M.brass, 10);
+  const t=i/3;
+  post.position.set(stairX+0.44, 0.09 + (MEZ_Y-0.02)*t*0.9 + 0.3, startZ + t*(steps*0.24)+0.1);
+  post.castShadow=true; stair.add(post);
+}
+room.add(stair);
+
+/* =====================================================================
+   5 · ROLLING LADDER  (against the left bookcase)
+   ===================================================================== */
+const ladder = new THREE.Group();
+const ladderH = 3.4;
+const railMatL = M.brass;
+const railL = cyl(0.028,0.028, ladderH, railMatL, 14);
+const railR = cyl(0.028,0.028, ladderH, railMatL, 14);
+railL.position.set(0,-0.35,0); railR.position.set(0.5,-0.35,0);
+railL.userData.pick = railR.userData.pick = {name:'Rolling Ladder', role:'To reach the high shelves', mat:'Aged-brass rails on a walnut back with turned rungs — it rolls the length of the wall on a hidden brass track.', dim:`${ladderH.toFixed(1)} m tall`, sw:PAL.brass};
+railL.castShadow=true; railR.castShadow=true;
+ladder.add(railL, railR);
+const rungMat = mat('#5A3A24', {rough:0.5, env:0.5, name:'walnut'});
+for(let i=0;i<9;i++){
+  const rung = cyl(0.02,0.02,0.5, rungMat, 12);
+  rung.rotation.z = Math.PI/2;
+  rung.position.set(0.25, -0.35 - ladderH/2 + 0.28 + i*(ladderH-0.5)/8, 0);
+  rung.castShadow=true;
+  rung.userData.pick = railL.userData.pick;
+  ladder.add(rung);
+}
+// top hook + bottom wheels
+const hook = box(0.7,0.05,0.16, M.brass);
+hook.position.set(0.25, -0.35 + ladderH/2 + 0.02, -0.06);
+hook.castShadow=true; ladder.add(hook);
+[[0,0],[0.5,0]].forEach(([wx])=>{
+  const wheel = cyl(0.05,0.05,0.04, M.brassDk, 14);
+  wheel.rotation.z = Math.PI/2;
+  wheel.position.set(wx, -0.35 - ladderH/2 - 0.02, 0.05);
+  wheel.castShadow=true; ladder.add(wheel);
+});
+// lean the ladder against the left wall
+ladder.position.set(-W/2 + 0.55, 1.72, -1.6);
+ladder.rotation.z = -0.02;
+ladder.rotation.y = Math.PI/2;   // face the left bookcase
+ladder.rotation.x = 0.06;        // slight lean
+room.add(ladder);
+
+/* =====================================================================
+   6 · READING CHair (deep forest-green leather wing chair) + ottoman
+   ===================================================================== */
+const chair = new THREE.Group();
+const seatMat = M.forest, backMat = M.forestHi;
+// seat cushion
+const seat = box(0.78, 0.2, 0.74, seatMat);
+seat.position.set(0,0.5,0);
+seat.castShadow=true; seat.receiveShadow=true;
+chair.add(seat);
+// tufted look: shallow dimple boxes on the back
+const chBack = box(0.82, 0.95, 0.16, backMat);
+chBack.position.set(0,0.95,-0.32);
+chBack.rotation.x = -0.13;
+chBack.castShadow=true; chair.add(chBack);
+for(let ix=0;ix<3;ix++)for(let iy=0;iy<3;iy++){
+  const t = box(0.16,0.16,0.03, M.forest);
+  t.position.set(-0.24+ix*0.24, 0.66+iy*0.24, -0.245);
+  t.rotation.x=-0.13; chair.add(t);
+}
+// wings
+[[-0.42,1],[0.42,-1]].forEach(([wx,dir])=>{
+  const wing = box(0.12,0.85,0.6, backMat);
+  wing.position.set(wx,0.9,-0.05);
+  wing.rotation.x=-0.05;
+  wing.castShadow=true; chair.add(wing);
+  const arm = box(0.16,0.16,0.66, seatMat);
+  arm.position.set(wx,0.62,0.02);
+  arm.castShadow=true; chair.add(arm);
+});
+// front rail + turned legs (walnut)
+const rail = box(0.8,0.14,0.72, seatMat);
+rail.position.set(0,0.4,0); chair.add(rail);
+[[-0.34,-0.3],[0.34,-0.3],[-0.34,0.3],[0.34,0.3]].forEach(([lx,lz])=>{
+  const leg = cyl(0.035,0.045,0.34, M.walnutHi, 12);
+  leg.position.set(lx,0.17,lz);
+  leg.castShadow=true; chair.add(leg);
+});
+chair.traverse(o=>{ if(o.isMesh) o.userData.pick = {name:'Wing Chair', role:'The reading seat', mat:'Deep forest-green full-grain leather, hand-tufted back, on turned walnut legs — the one seat the whole room is arranged around.', dim:'0.82 m wide · 1.1 m tall', sw:PAL.forest}; });
+chair.position.set(-1.7, 0, 1.5);
+chair.rotation.y = 0.5;           // angled toward the window
+room.add(chair);
+
+// ottoman
+const ottoman = new THREE.Group();
+const otTop = box(0.62,0.16,0.46, M.forest);
+otTop.position.y=0.36; otTop.castShadow=true; ottoman.add(otTop);
+[[-0.24,-0.16],[0.24,-0.16],[-0.24,0.16],[0.24,0.16]].forEach(([lx,lz])=>{
+  const leg=cyl(0.03,0.038,0.3,M.walnutHi,10); leg.position.set(lx,0.15,lz); leg.castShadow=true; ottoman.add(leg);
+});
+ottoman.traverse(o=>{ if(o.isMesh) o.userData.pick={name:'Ottoman',role:'Footrest',mat:'A low forest-green leather stool to match the chair — for the long afternoons.',dim:'0.62 × 0.46 m',sw:PAL.forest}; });
+ottoman.position.set(-1.15,0,2.2); ottoman.rotation.y=0.5; room.add(ottoman);
+
+// side table with a stack of books + a cup
+const sideT = new THREE.Group();
+const stTop = cyl(0.26,0.26,0.04, M.walnutHi, 24);
+stTop.position.y=0.52; stTop.castShadow=true; sideT.add(stTop);
+const stPost = cyl(0.03,0.04,0.5, M.walnut, 12);
+stPost.position.y=0.26; sideT.add(stPost);
+const stFoot = cyl(0.16,0.18,0.03, M.walnut, 16);
+stFoot.position.y=0.02; sideT.add(stFoot);
+sideT.traverse(o=>{ if(o.isMesh) o.userData.pick={name:'Side Table',role:'By the chair',mat:'A small round pedestal in walnut — the resting place for the current book and a cup gone cold.',dim:'Ø0.52 m · 0.54 m high',sw:PAL.walnutHi}; });
+// stacked books on it
+const sb1 = box(0.3,0.05,0.22, bookMat('#7A2E22')); sb1.position.set(0,0.565,0); sideT.add(sb1);
+const sb2 = box(0.27,0.05,0.2, bookMat('#2E4633')); sb2.position.set(0.02,0.615,0.01); sideT.add(sb2);
+const sb3 = box(0.24,0.04,0.18, bookMat('#B7A277')); sb3.position.set(-0.01,0.66,-0.01); sideT.add(sb3);
+[sb1,sb2,sb3].forEach(b=>{b.castShadow=true; b.userData.pick={name:'A Book, Waiting',role:'On the side table',mat:'Cloth-bound, part-read, ribbon still in it.',dim:'octavo',sw:'#7A2E22'};});
+sideT.position.set(-0.75,0,1.7); room.add(sideT);
+
+/* =====================================================================
+   7 · DESK + LAMP + CHAIR  (against the window, warm brass light)
+   ===================================================================== */
+const desk = new THREE.Group();
+const deskTop = box(1.7,0.06,0.8, mat('#4A2E1C',{rough:0.45,env:0.6,name:'walnut'}));
+deskTop.position.y=0.76; deskTop.castShadow=true; deskTop.receiveShadow=true;
+deskTop.userData.pick = {name:'Writing Desk', role:'The work surface', mat:'A partner\'s desk in solid walnut with a leather-inset top and brass drawer pulls — set to catch the window light across the page.', dim:'1.7 × 0.8 m · 0.79 m high', sw:'#4A2E1C'};
+desk.add(deskTop);
+// green leather inset writing pad
+const pad = box(1.1,0.012,0.6, mat('#264030',{rough:0.55,name:'leather'}));
+pad.position.set(0,0.793,0); pad.receiveShadow=true;
+pad.userData.pick={name:'Desk Blotter',role:'Leather inset',mat:'A tooled forest-green leather writing pad let into the desktop, edged in gilt.',dim:'1.1 × 0.6 m',sw:'#264030'};
+desk.add(pad);
+// pedestals with drawers
+[[-0.72],[0.72]].forEach(([px])=>{
+  const ped = box(0.34,0.72,0.72, M.walnut);
+  ped.position.set(px,0.4,0); ped.castShadow=true; ped.receiveShadow=true;
+  ped.userData.pick = deskTop.userData.pick;
+  desk.add(ped);
+  for(let d=0;d<3;d++){
+    const pull = cyl(0.015,0.015,0.09, M.brass, 10);
+    pull.rotation.z=Math.PI/2;
+    pull.position.set(px,0.22+d*0.2,0.37);
+    desk.add(pull);
+  }
+});
+desk.position.set(1.8,0,1.2);
+desk.rotation.y = -0.55;    // angled to the window
+room.add(desk);
+
+// desk chair (green leather, brass casters)
+const dchair = new THREE.Group();
+const ds = box(0.5,0.12,0.5, M.forest); ds.position.y=0.48; ds.castShadow=true; dchair.add(ds);
+const db = box(0.5,0.6,0.1, M.forestHi); db.position.set(0,0.78,-0.22); db.rotation.x=-0.12; db.castShadow=true; dchair.add(db);
+const dpost = cyl(0.04,0.05,0.38, M.brassDk,12); dpost.position.y=0.28; dchair.add(dpost);
+for(let i=0;i<5;i++){
+  const a=i/5*Math.PI*2;
+  const spoke=box(0.28,0.04,0.05,M.walnut);
+  spoke.position.set(Math.cos(a)*0.16,0.1,Math.sin(a)*0.16);
+  spoke.rotation.y=-a; dchair.add(spoke);
+  const cst=cyl(0.03,0.03,0.03,M.brassDk,10); cst.rotation.z=Math.PI/2;
+  cst.position.set(Math.cos(a)*0.28,0.03,Math.sin(a)*0.28); dchair.add(cst);
+}
+dchair.traverse(o=>{ if(o.isMesh) o.userData.pick={name:'Desk Chair',role:'At the desk',mat:'A green-leather captain\'s chair on a brass star base — it swivels to the window when the light is right.',dim:'0.9 m tall',sw:PAL.forest}; });
+dchair.position.set(1.35,0,1.9); dchair.rotation.y=-0.55+Math.PI; room.add(dchair);
+
+// --- brass banker's lamp with a green glass shade (a light SOURCE) ---
+const lamp = new THREE.Group();
+const lbase = cyl(0.09,0.11,0.03, M.brass, 20); lbase.position.y=0.005; lamp.add(lbase);
+const lstem = cyl(0.014,0.014,0.24, M.brass,12); lstem.position.y=0.13; lamp.add(lstem);
+const lampShade = cyl(0.14,0.14,0.09, mat('#1E3A2A',{rough:0.28,env:0.9,name:'glass',emissive:'#7FBF7A',ei:0.0}), 24, true);
+lampShade.position.y=0.3; lampShade.rotation.x=Math.PI; // dome opening down
+// close the top of the shade
+const shadeTop = cyl(0.14,0.02,0.02, mat('#1E3A2A',{rough:0.28,env:0.9,name:'glass'}),24);
+shadeTop.position.y=0.35; lamp.add(shadeTop);
+lamp.add(lampShade);
+// warm bulb glow disc under the shade
+const glowMat = mat('#FFE6B0',{emissive:'#FFD98A',ei:1.6,rough:1,name:'lamplight'});
+const glow = cyl(0.11,0.11,0.005, glowMat, 20);
+glow.position.y=0.27; lamp.add(glow);
+lamp.traverse(o=>{ if(o.isMesh && !o.userData.pick) o.userData.pick={name:'Banker\'s Lamp',role:'Task light',mat:'A brass column under a green cased-glass shade — the pool of warm light that keeps the desk working after the sun has gone.',dim:'0.36 m high',sw:PAL.brass}; });
+lamp.position.set(1.05,0.793,0.85);
+lamp.rotation.y=-0.55;
+// place lamp relative to desk by parenting to desk-space
+desk.add(lamp);
+lamp.position.set(-0.35,0.79,-0.15);
+lamp.rotation.y=0;
+// the actual point light for the lamp
+const lampLight = new THREE.PointLight('#FFD79A', 6.5, 5.5, 2.2);
+lampLight.position.set(0,0.28,0);
+lampLight.castShadow=true;
+lampLight.shadow.mapSize.set(512,512);
+lampLight.shadow.bias=-0.0009;
+lampLight.shadow.radius=4;
+lamp.add(lampLight);
+
+// an open book + brass inkwell on the desk
+const openBook = new THREE.Group();
+const pageL = box(0.24,0.01,0.3, mat('#EDE4CE',{rough:0.95,name:'paper'})); pageL.position.set(-0.13,0,0); pageL.rotation.z=0.04;
+const pageR = box(0.24,0.01,0.3, mat('#EDE4CE',{rough:0.95,name:'paper'})); pageR.position.set(0.13,0,0); pageR.rotation.z=-0.04;
+const spine = box(0.03,0.03,0.31, bookMat('#7A2E22')); spine.position.set(0,-0.005,0);
+openBook.add(pageL,pageR,spine);
+openBook.traverse(o=>{if(o.isMesh){o.castShadow=true; o.userData.pick={name:'Open Book',role:'On the blotter',mat:'The book of the moment, laid open on the green pad — cream laid paper catching the window.',dim:'quarto',sw:'#EDE4CE'};}});
+openBook.position.set(0.25,0.8,0.05); desk.add(openBook);
+const inkwell = cyl(0.035,0.045,0.05, M.brass,16); inkwell.position.set(-0.35,0.815,0.18);
+inkwell.userData.pick={name:'Inkwell',role:'Brass',mat:'A capped brass inkwell, gone dark inside.',dim:'Ø0.09 m',sw:PAL.brass};
+inkwell.castShadow=true; desk.add(inkwell);
+
+/* =====================================================================
+   8 · TALL ARCHED WINDOW  (the warm afternoon light source)
+   ===================================================================== */
+const windowGrp = new THREE.Group();
+windowGrp.position.set(W/2 - 0.02, 0, winZ - winW/2 + winW/2); // centered in the pier gap
+const wx0 = 0;
+// warm glowing glass panel — emissive, so it reads as sunlit
+const glassGlow = mat('#F6D89A', {emissive:'#F4C878', ei:0.9, rough:0.2, env:0.8, transparent:true, opacity:0.92, name:'glass'});
+const glassPane = box(0.03, winTop-winSill, winW-0.1, glassGlow);
+glassPane.position.set(-0.02, (winSill+winTop)/2, 0);
+glassPane.userData.pick={name:'Arched Window',role:'The light',mat:'A tall round-headed window in a walnut frame — it holds the low western sun and lets it fall long across the floor.',dim:`${(winW).toFixed(1)} × ${(winTop).toFixed(1)} m`,sw:'#F6D89A'};
+windowGrp.add(glassPane);
+// arched head — half-disc of glass
+const archGeo = new THREE.CircleGeometry((winW-0.1)/2, 24, 0, Math.PI);
+const arch = new THREE.Mesh(archGeo, glassGlow);
+arch.position.set(-0.02, winTop, 0);
+arch.rotation.y = Math.PI/2;
+arch.rotation.z = 0; // sits as a semicircle above the rectangle
+windowGrp.add(arch);
+// walnut frame + muntins (glazing bars)
+const frameMat = mat('#3A2415',{rough:0.5,env:0.6,name:'walnut'});
+function muntinV(z){ const m=box(0.05,winTop-winSill,0.04,frameMat); m.position.set(-0.06,(winSill+winTop)/2,z); m.userData.pick=glassPane.userData.pick; windowGrp.add(m);}
+function muntinH(y){ const m=box(0.05,0.04,winW-0.1,frameMat); m.position.set(-0.06,y,0); m.userData.pick=glassPane.userData.pick; windowGrp.add(m);}
+[-0.87,-0.29,0.29,0.87].forEach(muntinV);
+[winSill+ (winTop-winSill)*0.33, winSill + (winTop-winSill)*0.66].forEach(muntinH);
+// outer frame
+const fl=box(0.1,winTop-winSill+0.1,0.12,frameMat); fl.position.set(-0.06,(winSill+winTop)/2, -winW/2+0.06);
+const fr=box(0.1,winTop-winSill+0.1,0.12,frameMat); fr.position.set(-0.06,(winSill+winTop)/2,  winW/2-0.06);
+const fb=box(0.14,0.12,winW,frameMat); fb.position.set(-0.06,winSill,0);
+[fl,fr,fb].forEach(f=>{f.userData.pick=glassPane.userData.pick; f.castShadow=true; windowGrp.add(f);});
+// arched frame ring (torus half)
+const ring = new THREE.Mesh(new THREE.TorusGeometry((winW-0.1)/2+0.03,0.05,10,24,Math.PI), frameMat);
+ring.position.set(-0.06,winTop,0); ring.rotation.y=Math.PI/2;
+ring.userData.pick=glassPane.userData.pick; windowGrp.add(ring);
+// deep window seat with a cushion
+const wseat = box(0.5,0.1,winW-0.2, M.walnutHi);
+wseat.position.set(-0.28,winSill,0); wseat.castShadow=true; wseat.receiveShadow=true;
+wseat.userData.pick={name:'Window Seat',role:'In the arch',mat:'A deep walnut sill-seat wide enough to fold up into, with a forest-green cushion in the last of the light.',dim:`${(winW-0.2).toFixed(1)} m long`,sw:PAL.walnutHi};
+windowGrp.add(wseat);
+const wcush = box(0.44,0.08,winW-0.3, M.forest);
+wcush.position.set(-0.28,winSill+0.09,0); wcush.castShadow=true; wcush.userData.pick=wseat.userData.pick;
+windowGrp.add(wcush);
+room.add(windowGrp);
+
+/* =====================================================================
+   9 · GLOBE, PLANTS, SCONCES, small dressing
+   ===================================================================== */
+// --- library globe on a walnut stand ---
+const globe = new THREE.Group();
+const orb = new THREE.Mesh(new THREE.SphereGeometry(0.28, 40, 32), mat('#5E7C8A',{rough:0.62,env:0.5,name:'globe'}));
+// continents as darker patches (procedural, low count)
+orb.position.y=0.9; orb.castShadow=true;
+orb.userData.pick={name:'Library Globe',role:'The world, to hand',mat:'A hand-tinted terrestrial globe — faded ocean blue and ochre land — cradled in a brass meridian on a turned walnut stand.',dim:'Ø0.56 m',sw:'#5E7C8A'};
+globe.add(orb);
+// land patches
+const landMat = mat('#9A7B4A',{rough:0.75,name:'globe'});
+for(let i=0;i<7;i++){
+  const s = 0.06+rnd(i*3.7)*0.12;
+  const patch = new THREE.Mesh(new THREE.SphereGeometry(0.285, 12, 10, rnd(i*2.1)*6.28, s*3, rnd(i*5.5)*3, s*2.5), landMat);
+  patch.position.y=0.9; patch.userData.pick=orb.userData.pick; globe.add(patch);
+}
+// brass meridian ring
+const meridian = new THREE.Mesh(new THREE.TorusGeometry(0.32,0.012,8,40), M.brass);
+meridian.position.y=0.9; meridian.rotation.x=0.4; meridian.castShadow=true;
+meridian.userData.pick=orb.userData.pick; globe.add(meridian);
+// stand
+const gp = cyl(0.03,0.04,0.55, M.walnut,12); gp.position.y=0.33; globe.add(gp);
+const gf = cyl(0.16,0.19,0.04, M.walnut,20); gf.position.y=0.04; gf.castShadow=true; globe.add(gf);
+globe.traverse(o=>{ if(o.isMesh && !o.userData.pick) o.userData.pick=orb.userData.pick; });
+globe.position.set(0.7,0,2.3); room.add(globe);
+
+// --- plants: a tall fig by the window + a fern on the mezzanine ---
+function plant(potR, potH, leaves, spread, hgt, seed){
+  const g = new THREE.Group();
+  const pot = cyl(potR, potR*0.8, potH, M.terra, 18);
+  pot.position.y=potH/2; pot.castShadow=true; pot.receiveShadow=true;
+  pot.userData.pick={name:'Potted Fig',role:'Living green',mat:'A fiddle-leaf fig in a hand-thrown terracotta pot — the one living thing, breathing by the window.',dim:`${hgt.toFixed(1)} m tall`,sw:PAL.leaf};
+  g.add(pot);
+  // soil
+  const soil = cyl(potR*0.92,potR*0.92,0.03, mat('#2A1D12',{rough:1,name:'soil'}),16); soil.position.y=potH; g.add(soil);
+  // trunk
+  const trunk = cyl(0.03,0.045, hgt-potH, mat('#6A4A32',{rough:0.9,name:'wood'}),8);
+  trunk.position.y=potH+(hgt-potH)/2; trunk.castShadow=true; g.add(trunk);
+  // leaves — flattened spheres as broad leaves
+  for(let i=0;i<leaves;i++){
+    const t=i/leaves;
+    const a=rnd(seed+i*4.1)*6.28;
+    const r=spread*(0.4+rnd(seed+i*2.3)*0.7);
+    const ly=potH + (hgt-potH)*(0.35+t*0.6);
+    const leaf=new THREE.Mesh(new THREE.SphereGeometry(0.11+rnd(seed+i)*0.06, 8,6), (i%2?M.leaf:M.leafDk));
+    leaf.scale.set(1,0.35,0.7);
+    leaf.position.set(Math.cos(a)*r, ly, Math.sin(a)*r);
+    leaf.rotation.set(rnd(seed+i*1.7)*0.6, a, rnd(seed+i*2.9)*0.6);
+    leaf.castShadow=true;
+    leaf.userData.pick=pot.userData.pick;
+    g.add(leaf);
+  }
+  return g;
+}
+const fig = plant(0.24,0.42, 26, 0.5, 2.2, 4.0);
+fig.position.set(2.55,0,2.6); room.add(fig);
+const fern = plant(0.16,0.22, 20, 0.35, 0.8, 9.0);
+fern.traverse(o=>{if(o.userData.pick) o.userData.pick={name:'Boston Fern',role:'On the gallery',mat:'A soft fern spilling over the mezzanine rail in a small terracotta pot.',dim:'0.8 m',sw:PAL.leaf};});
+fern.position.set(-3.0, MEZ_Y+0.14, -1.1); room.add(fern);
+
+// --- brass wall sconces flanking the back cases (warm point lights) ---
+function sconce(x,y,z){
+  const g=new THREE.Group();
+  const arm = box(0.04,0.04,0.18,M.brass); arm.position.z=0.09; g.add(arm);
+  const cupG = mat('#F3E4BE',{emissive:'#F2D08A',ei:1.4,rough:0.9,name:'glass'});
+  const cup = cyl(0.05,0.03,0.1, cupG, 14, true); cup.position.set(0,0.06,0.18); g.add(cup);
+  const back = cyl(0.05,0.05,0.02,M.brass,14); back.rotation.x=Math.PI/2; g.add(back);
+  g.traverse(o=>{if(o.isMesh) o.userData.pick={name:'Brass Sconce',role:'Warm accent',mat:'A little brass uplight with a frosted glass cup — it warms the spines between the tall cases.',dim:'0.2 m',sw:PAL.brass};});
+  const pl=new THREE.PointLight('#FFCE86', 2.2, 3.2, 2.4); pl.position.set(0,0.1,0.2); g.add(pl);
+  g.position.set(x,y,z); return g;
+}
+room.add(sconce(-0.2, 2.0, -D/2+0.16));   // back wall between cases (low)
+room.add(sconce(-0.2, MEZ_Y+1.5, -D/2+0.16)); // back wall between cases (mezz)
+
+/* =====================================================================
+   10 · LIGHTING  (soft, warm, afternoon)
+   ===================================================================== */
+// cool sky / warm bounce hemisphere — keeps shadows alive, not black
+const hemi = new THREE.HemisphereLight('#A9BBD6', '#4A3320', 0.55);
+scene.add(hemi);
+// low ambient warm fill
+const amb = new THREE.AmbientLight('#6A4E32', 0.35);
+scene.add(amb);
+
+// the KEY: a warm low sun coming through the arched window (from +x, low)
+const sun = new THREE.DirectionalLight('#FFC777', 3.1);
+sun.position.set(9, 4.5, 3.5);
+sun.target.position.set(-1.5, 1.0, 0.5);
+scene.add(sun.target);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 1;
+sun.shadow.camera.far = 26;
+sun.shadow.camera.left = -7;
+sun.shadow.camera.right = 7;
+sun.shadow.camera.top = 7;
+sun.shadow.camera.bottom = -7;
+sun.shadow.bias = -0.0006;
+sun.shadow.normalBias = 0.02;
+sun.shadow.radius = 4;
+scene.add(sun);
+
+// a soft warm bounce from the floor/window side (no shadow) to fill the front
+const bounce = new THREE.DirectionalLight('#E9B87A', 0.7);
+bounce.position.set(4, 1.5, 6);
+scene.add(bounce);
+
+// a faint cool fill from the room's open (camera) side so faces read
+const fill = new THREE.DirectionalLight('#9FB0CC', 0.3);
+fill.position.set(-4, 3, 5);
+scene.add(fill);
+
+// --- dusty sunbeam: a soft translucent cone from the window ---
+const beamMatG = new THREE.MeshBasicMaterial({ color:'#FFE0A0', transparent:true, opacity:0.055, depthWrite:false, side:THREE.DoubleSide, blending:THREE.AdditiveBlending });
+const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 2.4, 6.2, 24, 1, true), beamMatG);
+beam.position.set(2.0, 2.4, 1.0);
+beam.rotation.z = Math.PI/2.5;
+beam.rotation.y = 0.3;
+beam.renderOrder = 2;
+scene.add(beam);
+
+// floating dust motes in the beam
+const dustGeo = new THREE.BufferGeometry();
+const dustN = 240, dpos = new Float32Array(dustN*3);
+for(let i=0;i<dustN;i++){
+  dpos[i*3]   = 0.5 + rnd(i*1.1)*3.5;
+  dpos[i*3+1] = 0.6 + rnd(i*2.3)*3.6;
+  dpos[i*3+2] = -1.4 + rnd(i*3.7)*3.2;
+}
+dustGeo.setAttribute('position', new THREE.BufferAttribute(dpos,3));
+const dustMat = new THREE.PointsMaterial({ color:'#FFE8BE', size:0.014, transparent:true, opacity:0.5, depthWrite:false, blending:THREE.AdditiveBlending });
+const dust = new THREE.Points(dustGeo, dustMat);
+scene.add(dust);
+
+/* =====================================================================
+   11 · CAMERA VIEWPOINTS
+   ===================================================================== */
+const VIEWS = [
+  { // 1 · The Desk
+    name:'The Desk',
+    pos:new THREE.Vector3(0.0, 1.55, 3.4),
+    tgt:new THREE.Vector3(1.7, 0.9, 1.1),
+  },
+  { // 2 · The Mezzanine
+    name:'The Mezzanine',
+    pos:new THREE.Vector3(0.2, 2.0, 3.9),
+    tgt:new THREE.Vector3(0.0, MEZ_Y+0.4, -1.4),
+  },
+  { // 3 · The Ladder Wall
+    name:'The Ladder Wall',
+    pos:new THREE.Vector3(1.7, 1.9, 1.6),
+    tgt:new THREE.Vector3(-W/2+0.4, 2.0, -1.2),
+  },
+  { // 4 · The Window Chair
+    name:'The Window Chair',
+    pos:new THREE.Vector3(-2.0, 1.5, 3.6),
+    tgt:new THREE.Vector3(0.4, 1.1, 1.2),
+  },
+];
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.minDistance = 0.8;
+controls.maxDistance = 12;
+controls.maxPolarAngle = Math.PI*0.52;    // don't dip under the floor
+controls.minPolarAngle = Math.PI*0.12;
+controls.target.copy(VIEWS[0].tgt);
+camera.position.copy(VIEWS[0].pos);
+controls.update();
+
+// glide the camera to a saved view on an eased path
+let gliding = false, glideT = 0, glideDur = 1.35;
+let gFromP, gToP, gFromT, gToT;
+function goToView(i){
+  const v = VIEWS[i];
+  document.querySelectorAll('#dock .vp[data-vp]').forEach(b=>b.classList.toggle('on', +b.dataset.vp===i));
+  if(REDUCED){
+    camera.position.copy(v.pos); controls.target.copy(v.tgt); controls.update(); return;
+  }
+  gFromP = camera.position.clone();
+  gToP   = v.pos.clone();
+  gFromT = controls.target.clone();
+  gToT   = v.tgt.clone();
+  glideT = 0; gliding = true;
+}
+const easeInOut = t => t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+
+document.querySelectorAll('#dock .vp[data-vp]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{ if(walking) exitWalk(); goToView(+btn.dataset.vp); });
+});
+
+/* =====================================================================
+   12 · FIRST-PERSON WALK (PointerLock + WASD)
+   ===================================================================== */
+const walkControls = new PointerLockControls(camera, renderer.domElement);
+let walking = false;
+const move = { f:false, b:false, l:false, r:false };
+const vel = new THREE.Vector3();
+const dir = new THREE.Vector3();
+const walkBtn = document.getElementById('walkBtn');
+const walkveil = document.getElementById('walkveil');
+let savedCamPos = new THREE.Vector3(), savedTgt = new THREE.Vector3();
+
+function enterWalk(){
+  savedCamPos.copy(camera.position); savedTgt.copy(controls.target);
+  controls.enabled = false;
+  // drop to eye height near the desk
+  camera.position.set(0.0, 1.62, 2.6);
+  camera.lookAt(1.5, 1.5, 0.5);
+  walkControls.lock();
+}
+function exitWalk(){
+  if(walking) walkControls.unlock();
+}
+walkBtn.addEventListener('click', ()=>{ walking ? exitWalk() : enterWalk(); });
+walkControls.addEventListener('lock', ()=>{
+  walking = true; walkBtn.classList.add('active');
+  walkveil.classList.add('show'); hideLabel();
+  setTimeout(()=>walkveil.classList.remove('show'), 2200);
+});
+walkControls.addEventListener('unlock', ()=>{
+  walking = false; walkBtn.classList.remove('active'); walkveil.classList.remove('show');
+  controls.enabled = true;
+  camera.position.copy(savedCamPos); controls.target.copy(savedTgt); controls.update();
+});
+document.addEventListener('keydown', e=>{
+  if(!walking) return;
+  if(e.code==='KeyW'||e.code==='ArrowUp') move.f=true;
+  if(e.code==='KeyS'||e.code==='ArrowDown') move.b=true;
+  if(e.code==='KeyA'||e.code==='ArrowLeft') move.l=true;
+  if(e.code==='KeyD'||e.code==='ArrowRight') move.r=true;
+});
+document.addEventListener('keyup', e=>{
+  if(e.code==='KeyW'||e.code==='ArrowUp') move.f=false;
+  if(e.code==='KeyS'||e.code==='ArrowDown') move.b=false;
+  if(e.code==='KeyA'||e.code==='ArrowLeft') move.l=false;
+  if(e.code==='KeyD'||e.code==='ArrowRight') move.r=false;
+});
+// digit keys → viewpoints
+document.addEventListener('keydown', e=>{
+  if(e.key>='1' && e.key<='4'){ if(walking) exitWalk(); goToView(+e.key-1); }
+});
+
+/* =====================================================================
+   13 · CLICK-TO-LABEL (raycast pickable objects)
+   ===================================================================== */
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+const labelEl = document.getElementById('label');
+let downXY = null;
+
+function showLabel(pick, clientX, clientY){
+  labelEl.querySelector('.swatch').style.background =
+    `linear-gradient(120deg, ${pick.sw}, ${shade(pick.sw,0.7)})`;
+  labelEl.querySelector('.name').textContent = pick.name;
+  labelEl.querySelector('.role').textContent = pick.role || '';
+  labelEl.querySelector('.mat').textContent = pick.mat || '';
+  labelEl.querySelector('.dim').textContent = pick.dim || '';
+  // position, clamped to viewport
+  const w = 250, h = 150;
+  let x = clientX + 16, y = clientY - 10;
+  if(x + w > window.innerWidth) x = clientX - w - 16;
+  if(y + h > window.innerHeight) y = window.innerHeight - h - 12;
+  if(y < 12) y = 12;
+  labelEl.style.left = x+'px';
+  labelEl.style.top  = y+'px';
+  labelEl.classList.add('show');
+}
+function hideLabel(){ labelEl.classList.remove('show'); }
+function shade(hex, f){
+  const c = new THREE.Color(hex); c.multiplyScalar(f); return '#'+c.getHexString();
+}
+
+function pickAt(clientX, clientY){
+  pointer.x = (clientX/window.innerWidth)*2 - 1;
+  pointer.y = -(clientY/window.innerHeight)*2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(room.children, true);
+  for(const hit of hits){
+    let o = hit.object;
+    while(o && !o.userData.pick) o = o.parent;
+    if(o && o.userData.pick){ showLabel(o.userData.pick, clientX, clientY); return true; }
+  }
+  hideLabel(); return false;
+}
+canvas.addEventListener('pointerdown', e=>{ downXY = {x:e.clientX, y:e.clientY}; });
+canvas.addEventListener('pointerup', e=>{
+  if(walking) return;
+  if(!downXY) return;
+  const moved = Math.hypot(e.clientX-downXY.x, e.clientY-downXY.y);
+  if(moved < 6) pickAt(e.clientX, e.clientY);   // treat as a click, not a drag
+  downXY = null;
+});
+
+/* =====================================================================
+   14 · RESIZE + RENDER LOOP  (capped, reduced-motion aware)
+   ===================================================================== */
+addEventListener('resize', ()=>{
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+});
+
+const clock = new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+
+  // camera glide
+  if(gliding){
+    glideT += dt/glideDur;
+    const e = easeInOut(Math.min(glideT,1));
+    camera.position.lerpVectors(gFromP, gToP, e);
+    controls.target.lerpVectors(gFromT, gToT, e);
+    if(glideT>=1) gliding=false;
+  }
+
+  // walk movement
+  if(walking){
+    vel.x -= vel.x*8*dt; vel.z -= vel.z*8*dt;
+    dir.z = Number(move.f)-Number(move.b);
+    dir.x = Number(move.r)-Number(move.l);
+    dir.normalize();
+    const speed = 22;
+    if(move.f||move.b) vel.z -= dir.z*speed*dt;
+    if(move.l||move.r) vel.x -= dir.x*speed*dt;
+    walkControls.moveRight(-vel.x*dt);
+    walkControls.moveForward(-vel.z*dt);
+    // clamp inside the room
+    const o = walkControls.object;
+    o.position.x = Math.max(-W/2+0.4, Math.min(W/2-0.4, o.position.x));
+    o.position.z = Math.max(-D/2+0.4, Math.min(D/2-0.4, o.position.z));
+    o.position.y = 1.62;
+  } else {
+    controls.update();
+  }
+
+  // gentle dust drift (skipped under reduced-motion)
+  if(!REDUCED){
+    const t = clock.elapsedTime;
+    const p = dustGeo.attributes.position;
+    for(let i=0;i<dustN;i++){
+      p.array[i*3+1] += Math.sin(t*0.3 + i)*0.00018 - 0.00012;
+      if(p.array[i*3+1] < 0.5) p.array[i*3+1] = 4.0;
+    }
+    p.needsUpdate = true;
+  }
+
+  renderer.render(scene, camera);
+}
+animate();
+
+/* =====================================================================
+   15 · BOOT — hide loader, first hint
+   ===================================================================== */
+// This module only executes once three.js + addons have resolved from the
+// CDN and the scene above is fully built — so reaching here IS "ready".
+// We don't wait on window.load (which can lag behind ES-module resolution
+// under headless virtual-time and leave the loader stuck over a live scene).
+let booted = false;
+function boot(){
+  if(booted) return; booted = true;
+  const loader = document.getElementById('loader');
+  const hint = document.getElementById('hint');
+  // draw two frames so shadow maps + tone mapping are warm before the reveal
+  renderer.render(scene, camera);
+  requestAnimationFrame(()=>{
+    renderer.render(scene, camera);
+    setTimeout(()=>{
+      if(loader){ loader.classList.add('gone'); setTimeout(()=>loader.remove(), 850); }
+      if(hint){
+        hint.innerHTML = 'Drag to orbit · click any object for its material · <kbd>1–4</kbd> for viewpoints';
+        hint.classList.add('show');
+        setTimeout(()=>hint.classList.remove('show'), 6500);
+      }
+    }, REDUCED ? 100 : 480);
+  });
+}
+boot();
+// belt-and-braces: if anything above threw before boot(), still clear the loader
+setTimeout(()=>{ const l=document.getElementById('loader'); if(l && !l.classList.contains('gone')){ l.classList.add('gone'); setTimeout(()=>l.remove(),850);} }, 2600);
+
+// expose for a headless sanity check
+window.__scene = scene; window.__camera = camera; window.__views = VIEWS;
+</script>
+</body>
+</html>

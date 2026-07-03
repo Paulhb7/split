@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mutual Non-Disclosure Agreement — Atelier Nord SAS · Galerie Lumière SARL — Draft 1</title>
+<meta name="description" content="Ready-to-sign mutual NDA under French law, drafted in English, between Atelier Nord SAS and Galerie Lumière SARL. Working draft with margin annotations and drafting notes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&amp;display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#111111;
+    --gray:#767676;
+    --faint:#9a9a9a;
+    --hair:#dcdcdc;
+    --red:#8e1c22;
+    --measure:42rem;
+    --marginw:15rem;
+    --gutter:3.2rem;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ background:#ffffff; scroll-behavior:smooth; }
+  body{
+    font-family:"EB Garamond", Garamond, "Iowan Old Style", Georgia, serif;
+    font-size:17.5px;
+    line-height:1.62;
+    color:var(--ink);
+    background:#ffffff;
+    font-variant-numeric:oldstyle-nums;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  ::selection{ background:#efefef; }
+  a{ color:inherit; text-decoration:underline; text-decoration-color:#bdbdbd; text-underline-offset:3px; text-decoration-thickness:1px; }
+  a:hover{ text-decoration-color:var(--ink); }
+  em, i{ font-style:italic; }
+  strong, b{ font-weight:600; }
+
+  .page{
+    max-width:calc(var(--measure) + var(--gutter) + var(--marginw));
+    margin:0 auto;
+    padding:clamp(2.2rem,6vw,4.6rem) 1.4rem 7rem;
+  }
+
+  /* every row = text column + annotation margin */
+  .row{
+    display:grid;
+    grid-template-columns:minmax(0,var(--measure)) var(--marginw);
+    column-gap:var(--gutter);
+    align-items:start;
+  }
+  .row > .body{ min-width:0; }
+  .row > aside{
+    font-size:.8rem;
+    line-height:1.5;
+    color:var(--gray);
+    font-style:italic;
+    padding-top:.35rem;
+  }
+  .row > aside .tag{
+    display:block;
+    font-style:normal;
+    text-transform:uppercase;
+    letter-spacing:.18em;
+    font-size:.62rem;
+    font-weight:600;
+    color:var(--gray);
+    margin-bottom:.3rem;
+  }
+
+  .sc{ text-transform:uppercase; letter-spacing:.15em; font-size:.76em; font-weight:500; }
+  .hair{ border:0; border-top:1px solid var(--hair); margin:0; }
+
+  /* ---------- front matter (artifact exec summary) ---------- */
+  .front{
+    border-top:1px solid var(--ink);
+    border-bottom:1px solid var(--hair);
+    padding:1.1rem 0 1.2rem;
+    margin-bottom:3.4rem;
+  }
+  .front .kicker{
+    font-size:.66rem; letter-spacing:.24em; text-transform:uppercase;
+    font-weight:600; color:var(--gray); margin-bottom:.9rem;
+  }
+  .front dl{ display:grid; grid-template-columns:8.5rem 1fr; row-gap:.42rem; column-gap:1.2rem; }
+  .front dt{
+    font-size:.66rem; letter-spacing:.2em; text-transform:uppercase;
+    font-weight:600; color:var(--gray); padding-top:.32rem;
+  }
+  .front dd{ font-size:.92rem; line-height:1.5; }
+
+  /* ---------- title block ---------- */
+  .titleblock{ position:relative; text-align:center; margin:0 0 3rem; }
+  .refline{
+    font-size:.68rem; letter-spacing:.26em; text-transform:uppercase;
+    color:var(--gray); font-weight:500;
+    display:flex; justify-content:center; gap:1.6em; flex-wrap:wrap;
+    padding:.7rem 0; border-top:1px solid var(--hair); border-bottom:1px solid var(--hair);
+    margin-bottom:2.8rem;
+  }
+  h1{
+    font-weight:500;
+    font-size:clamp(1.55rem,4vw,2.12rem);
+    letter-spacing:.11em;
+    text-transform:uppercase;
+    line-height:1.32;
+  }
+  .subtitle{
+    font-style:italic; font-size:1.12rem; margin-top:.9rem; color:var(--ink);
+  }
+  .subtitle .amp{ font-style:normal; color:var(--gray); }
+
+  /* ---------- the stamp (single red element on the page) ---------- */
+  .stamp{
+    position:absolute;
+    top:4.6rem;
+    right:calc(-1 * (var(--marginw) + var(--gutter)) + 2.4rem);
+    transform:rotate(-7.5deg);
+    color:var(--red);
+    border:2px solid var(--red);
+    outline:1px solid var(--red);
+    outline-offset:3px;
+    border-radius:4px;
+    padding:.5rem 1.4rem .55rem 1.55rem;
+    text-align:center;
+    opacity:.88;
+    mix-blend-mode:multiply;
+    user-select:none;
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='3' seed='7'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='discrete' tableValues='0 .55 .9 1 1 1 1 1 1 1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='220' height='120' filter='url(%23g)'/%3E%3C/svg%3E");
+    -webkit-mask-size:110px 60px;
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='3' seed='7'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='discrete' tableValues='0 .55 .9 1 1 1 1 1 1 1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='220' height='120' filter='url(%23g)'/%3E%3C/svg%3E");
+    mask-size:110px 60px;
+  }
+  .stamp .word{
+    display:block;
+    font-size:1.9rem; font-weight:600; letter-spacing:.42em;
+    line-height:1; text-indent:.42em; /* balance tracking */
+  }
+  .stamp .sub{
+    display:block; margin-top:.35rem;
+    font-size:.56rem; font-weight:600; letter-spacing:.3em;
+    text-transform:uppercase; text-indent:.3em;
+  }
+
+  /* ---------- how-to-use note ---------- */
+  .howto{ margin-bottom:3.6rem; }
+  .howto h2{
+    font-size:.78rem; letter-spacing:.22em; text-transform:uppercase;
+    font-weight:600; margin-bottom:.9rem;
+  }
+  .howto ol{ list-style:none; counter-reset:howto; }
+  .howto li{
+    counter-increment:howto;
+    position:relative; padding-left:2.1rem; margin:.34rem 0;
+    font-size:.98rem;
+  }
+  .howto li::before{
+    content:counter(howto) ".";
+    position:absolute; left:0; top:0;
+    font-weight:500; color:var(--gray);
+  }
+
+  /* ---------- agreement typography ---------- */
+  .agreement p{ text-align:justify; hyphens:auto; -webkit-hyphens:auto; }
+  .between{ margin:1.4rem 0 .4rem; }
+  .between .lead{
+    font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; font-weight:600;
+    margin:1.6rem 0 .8rem; text-align:left;
+  }
+  .party{ position:relative; padding-left:2.1rem; margin:.6rem 0; text-align:justify; hyphens:auto; }
+  .party::before{ content:"—"; position:absolute; left:.2rem; color:var(--gray); }
+
+  .art{ margin-top:3rem; scroll-margin-top:2rem; }
+  .art h3{
+    font-size:.88rem; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
+    margin-bottom:1rem;
+  }
+  .art h3 .no{ display:inline-block; min-width:5.2rem; color:var(--ink); }
+
+  /* numbered clause with hanging indent */
+  .cl{
+    position:relative; padding-left:3.4rem; margin:.6rem 0;
+    text-align:justify; hyphens:auto; -webkit-hyphens:auto;
+  }
+  .cl > .n{
+    position:absolute; left:0; top:0;
+    font-weight:500; font-variant-numeric:lining-nums;
+  }
+  /* lettered sub-clause, second hanging level */
+  .sub{
+    position:relative; padding-left:2.3rem; margin:.42rem 0 .42rem 3.4rem;
+    text-align:justify; hyphens:auto; -webkit-hyphens:auto;
+  }
+  .sub > .n{ position:absolute; left:0; top:0; font-style:italic; color:var(--ink); }
+
+  .recital{ position:relative; padding-left:2.6rem; margin:.5rem 0; text-align:justify; hyphens:auto; }
+  .recital > .n{ position:absolute; left:0; top:0; font-weight:500; }
+
+  .defterm{ font-weight:600; }
+  .fr{ font-style:italic; }
+
+  .option-brackets{ color:var(--ink); }
+
+  /* ---------- disclaimer ---------- */
+  .disclaimer{
+    margin:3.2rem 0 0;
+    padding:1rem 0 1.1rem;
+    border-top:1px solid var(--hair);
+    border-bottom:1px solid var(--hair);
+    font-size:.82rem; line-height:1.55; color:#6d6d6d;
+  }
+  .disclaimer p + p{ margin-top:.55rem; }
+
+  /* ---------- signatures ---------- */
+  .sigs{ margin-top:3rem; }
+  .sigs .execline{ text-align:justify; hyphens:auto; margin-bottom:2.2rem; }
+  .sigrow{ display:grid; grid-template-columns:1fr 1fr; gap:2.6rem; }
+  .sigblock .for{
+    font-size:.72rem; letter-spacing:.2em; text-transform:uppercase; font-weight:600;
+    margin-bottom:1.1rem;
+  }
+  .sigblock .line{ border-bottom:1px solid var(--ink); height:3.4rem; margin-bottom:.45rem; }
+  .sigblock .fields{ font-size:.9rem; line-height:1.75; }
+  .sigblock .fields .lbl{ color:var(--gray); font-style:italic; }
+  .initials{
+    margin-top:2.4rem; font-size:.82rem; color:var(--gray); font-style:italic;
+  }
+
+  /* ---------- drafting notes ---------- */
+  .notes{ margin-top:4.6rem; }
+  .notes .rulehead{
+    display:flex; align-items:center; gap:1.2rem; margin-bottom:1.6rem;
+  }
+  .notes .rulehead::before, .notes .rulehead::after{
+    content:""; flex:1; border-top:1px solid var(--hair);
+  }
+  .notes h2{
+    font-size:.8rem; letter-spacing:.24em; text-transform:uppercase; font-weight:600;
+    white-space:nowrap;
+  }
+  .note{
+    position:relative; padding-left:2.6rem; margin:1.05rem 0;
+    font-size:.95rem; text-align:justify; hyphens:auto;
+  }
+  .note > .n{
+    position:absolute; left:0; top:.05rem;
+    font-weight:500; color:var(--gray);
+  }
+
+  /* ---------- colophon ---------- */
+  .colophon{
+    margin-top:4.4rem; padding-top:1.1rem;
+    border-top:1px solid var(--ink);
+    font-size:.78rem; line-height:1.6; color:var(--gray);
+  }
+  .colophon .demo{
+    font-weight:600; font-style:normal; letter-spacing:.16em; text-transform:uppercase;
+    font-size:.64rem; color:var(--gray); margin-bottom:.4rem;
+  }
+
+  /* ---------- narrow screens: margin notes fold inline ---------- */
+  @media (max-width: 920px){
+    .row{ grid-template-columns:minmax(0,1fr); }
+    .row > aside{
+      margin:.7rem 0 1rem;
+      padding:.15rem 0 .15rem 1rem;
+      border-left:2px solid var(--hair);
+      max-width:34rem;
+    }
+    .stamp{
+      position:static; display:inline-block; margin:1.6rem auto 0;
+      transform:rotate(-6deg);
+    }
+    .sigrow{ grid-template-columns:1fr; }
+    .front dl{ grid-template-columns:1fr; row-gap:.1rem; }
+    .front dd{ margin-bottom:.6rem; }
+  }
+
+  /* ---------- print ---------- */
+  @media print{
+    @page{ margin:2cm; }
+    body{ font-size:11.5pt; }
+    .page{ max-width:none; padding:0; }
+    .stamp{ print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+    .art{ break-inside:avoid-page; }
+    .sigs, .notes{ break-inside:avoid-page; }
+    a{ text-decoration:none; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <!-- ══════════════ artifact exec summary (Split header) ══════════════ -->
+  <header class="front row">
+    <div class="body">
+      <p class="kicker">Exec summary — read me first</p>
+      <dl>
+        <dt>Why</dt>
+        <dd>A ready-to-sign mutual NDA so Atelier Nord and Galerie Lumière can open retail-partnership talks without exposing either side’s numbers, designs, or supplier book.</dd>
+        <dt>Context</dt>
+        <dd>Two French companies, one agreement — French law, drafted in English. No diligence has started; both sides expect to disclose. This is Draft&nbsp;1, annotated for review.</dd>
+        <dt>How to use</dt>
+        <dd>Read the five-line note below, settle the Article&nbsp;9 option, then route to counsel and signature.</dd>
+        <dt>Assumed</dt>
+        <dd>Mutual (not one-way) obligations; a three-year term; no penalty clause; Paris commercial court; the non-solicit left as a flagged option. The parties are fictional — this is a showcase draft.</dd>
+      </dl>
+    </div>
+    <aside>
+      <span class="tag">Provenance</span>
+      Prepared by Lawyer, in Split · 3&nbsp;July&nbsp;2026 · template <em>nda-mutual</em>, FR&nbsp;variant.
+    </aside>
+  </header>
+
+  <!-- ══════════════ title ══════════════ -->
+  <div class="row">
+    <div class="body titleblock">
+      <div class="refline">
+        <span>Ref. AN·GL — NDA — 2026/07</span>
+        <span>Working draft — v.1</span>
+        <span>French law · English text</span>
+      </div>
+      <h1>Mutual Non-Disclosure<br>Agreement</h1>
+      <p class="subtitle">Atelier Nord SAS <span class="amp">·</span> Galerie Lumière SARL</p>
+      <div class="stamp" aria-label="Draft — for review, not for signature">
+        <span class="word">DRAFT</span>
+        <span class="sub">For review · not for signature</span>
+      </div>
+    </div>
+    <aside></aside>
+  </div>
+
+  <!-- ══════════════ how to use this draft ══════════════ -->
+  <section class="howto row">
+    <div class="body">
+      <h2>How to use this draft — five lines</h2>
+      <ol>
+        <li>Verify the party details in the preamble against each company’s Kbis extract — every identifier here is illustrative.</li>
+        <li>Decide the bracketed option at <a href="#art-9">Article&nbsp;9</a> (non-solicitation): keep it or strike it, and have both signatories initial the choice.</li>
+        <li>Complete place and date on the signature page; the Effective Date is the date of the last signature.</li>
+        <li>Have a licensed French attorney read the final text before either side signs — this document is a starting point, not advice.</li>
+        <li>Exchange two signed originals (wet ink or a reliable electronic signature); each Party keeps one.</li>
+      </ol>
+    </div>
+    <aside>
+      Five decisions, in order. Everything else in the draft is already settled and internally consistent.
+    </aside>
+  </section>
+
+  <!-- ══════════════ the agreement ══════════════ -->
+  <article class="agreement">
+
+    <!-- Parties -->
+    <div class="row">
+      <div class="body between">
+        <p class="lead">Between the undersigned</p>
+        <p class="party"><strong>Atelier Nord SAS</strong>, a simplified joint-stock company (<span class="fr">société par actions simplifiée</span>) organised under the laws of France, with a share capital of €120,000, registered with the Trade and Companies Register (RCS) of Lille Métropole under number 892&nbsp;456&nbsp;731, having its registered office at 14&nbsp;rue des Arts, 59000 Lille, France, represented by Ms&nbsp;Claire Fontaine, in her capacity as President (<span class="fr">Présidente</span>), duly empowered for the purposes hereof (“<strong>Atelier Nord</strong>”);</p>
+        <p class="lead">And</p>
+        <p class="party"><strong>Galerie Lumière SARL</strong>, a limited liability company (<span class="fr">société à responsabilité limitée</span>) organised under the laws of France, with a share capital of €40,000, registered with the Trade and Companies Register (RCS) of Paris under number 845&nbsp;210&nbsp;396, having its registered office at 27&nbsp;rue de Turenne, 75003 Paris, France, represented by Mr&nbsp;Julien Mercier, in his capacity as Manager (<span class="fr">Gérant</span>), duly empowered for the purposes hereof (“<strong>Galerie Lumière</strong>”);</p>
+        <p style="margin-top:1rem; text-align:justify;">each a “<strong>Party</strong>” and together the “<strong>Parties</strong>”.</p>
+      </div>
+      <aside>
+        <span class="tag">Check</span>
+        Names, RCS numbers, capital and signatories are placeholders in the shape of real ones. Pull both Kbis extracts and confirm the signatories’ authority before signature.
+      </aside>
+    </div>
+
+    <!-- Recitals -->
+    <div class="row">
+      <div class="body art" id="recitals">
+        <h3><span class="no">Recitals</span></h3>
+        <p class="recital"><span class="n">(A)</span>Atelier Nord designs and manufactures handcrafted lighting and homeware in Lille. Galerie Lumière operates retail gallery-boutiques in Paris.</p>
+        <p class="recital"><span class="n">(B)</span>The Parties wish to explore a potential retail partnership under which Galerie Lumière would present and sell Atelier Nord collections in its retail spaces, possibly including a co-branded line (the negotiations and evaluation together, as further defined below, the “Purpose”).</p>
+        <p class="recital"><span class="n">(C)</span>In the course of these discussions, each Party expects to disclose to the other information of a commercial, financial, technical or creative nature that it treats as confidential, and the Parties wish to record the terms on which such information will be protected.</p>
+        <p style="margin-top:1.2rem;"><span class="sc">Now, therefore, the Parties agree as follows:</span></p>
+      </div>
+      <aside></aside>
+    </div>
+
+    <!-- Article 1 -->
+    <div class="row">
+      <div class="body art" id="art-1">
+        <h3><span class="no">Article 1</span> Definitions</h3>
+        <p class="cl"><span class="n">1.1</span>“<span class="defterm">Confidential Information</span>” means any and all information, in whatever form or medium (oral, written, electronic, visual, or embodied in samples, prototypes or premises), disclosed by or on behalf of one Party (the “<span class="defterm">Disclosing Party</span>”) to the other Party (the “<span class="defterm">Receiving Party</span>”) in connection with the Purpose, whether before or after the Effective Date, that is identified as confidential at the time of disclosure or that a reasonable person would understand to be confidential from its nature or the circumstances of its disclosure. Confidential Information includes, without limitation, business and marketing plans, pricing and margin structures, supplier and customer lists, sales figures, designs, sketches, prototypes, manufacturing know-how, trade secrets (<span class="fr">secrets des affaires</span> within the meaning of Article L.151-1 of the French Commercial Code), and the existence, status and content of the Parties’ discussions.</p>
+        <p class="cl"><span class="n">1.2</span>“<span class="defterm">Purpose</span>” means the evaluation, discussion and negotiation of a potential retail partnership for the presentation and sale of Atelier Nord collections through Galerie Lumière’s retail spaces, including a possible co-branded product line, and any preparatory work reasonably related thereto.</p>
+        <p class="cl"><span class="n">1.3</span>“<span class="defterm">Representatives</span>” means, in respect of a Party, its corporate officers, directors, employees, and professional advisers bound by a duty of confidentiality (including counsel and accountants), in each case only to the extent they need to know Confidential Information for the Purpose.</p>
+        <p class="cl"><span class="n">1.4</span>“<span class="defterm">Effective Date</span>” means the date on which the last of the two Parties signs this Agreement.</p>
+      </div>
+      <aside>
+        <span class="tag">Note</span>
+        Broad by design — no marking requirement, so showroom conversations and unmarked prototypes are covered. The carve-outs in Article&nbsp;3 do the balancing.
+      </aside>
+    </div>
+
+    <!-- Article 2 -->
+    <div class="row">
+      <div class="body art" id="art-2">
+        <h3><span class="no">Article 2</span> Confidentiality obligations</h3>
+        <p class="cl"><span class="n">2.1</span>The Receiving Party shall keep the Disclosing Party’s Confidential Information strictly confidential and shall protect it with at least the same degree of care it applies to its own confidential information of a similar nature, and in no event less than a reasonable degree of care.</p>
+        <p class="cl"><span class="n">2.2</span>The Receiving Party shall use Confidential Information solely for the Purpose and for no other purpose whatsoever, including any purpose competitive with or detrimental to the Disclosing Party.</p>
+        <p class="cl"><span class="n">2.3</span>The Receiving Party may disclose Confidential Information only to those of its Representatives who need to know it for the Purpose, provided such Representatives are bound by confidentiality obligations at least as protective as this Agreement. The Receiving Party remains fully liable for any act or omission of its Representatives that would constitute a breach of this Agreement if committed by the Receiving Party itself.</p>
+        <p class="cl"><span class="n">2.4</span>The Receiving Party shall not copy or reproduce Confidential Information beyond what is reasonably necessary for the Purpose. All copies shall reproduce any confidentiality legends appearing on the original.</p>
+        <p class="cl"><span class="n">2.5</span>The Receiving Party shall notify the Disclosing Party promptly in writing upon becoming aware of any unauthorised use or disclosure of Confidential Information, and shall reasonably cooperate to limit its consequences.</p>
+      </div>
+      <aside></aside>
+    </div>
+
+    <!-- Article 3 -->
+    <div class="row">
+      <div class="body art" id="art-3">
+        <h3><span class="no">Article 3</span> Exclusions</h3>
+        <p class="cl"><span class="n">3.1</span>Confidential Information does not include information that the Receiving Party can demonstrate:</p>
+        <p class="sub"><span class="n">(a)</span>is or becomes generally available to the public other than through a breach of this Agreement by the Receiving Party or its Representatives;</p>
+        <p class="sub"><span class="n">(b)</span>was already lawfully known to the Receiving Party, free of any confidentiality restriction, before disclosure by the Disclosing Party;</p>
+        <p class="sub"><span class="n">(c)</span>was independently developed by the Receiving Party without use of or reference to the Disclosing Party’s Confidential Information; or</p>
+        <p class="sub"><span class="n">(d)</span>was lawfully received from a third party that, to the Receiving Party’s knowledge, owed no duty of confidentiality to the Disclosing Party in respect of it.</p>
+        <p class="cl"><span class="n">3.2</span>The Receiving Party bears the burden of proving that an exclusion applies, by contemporaneous written records.</p>
+      </div>
+      <aside>
+        <span class="tag">Note</span>
+        The four classic exclusions, plus the burden-of-proof line that most short NDAs forget — without 3.2, every dispute starts with an argument about who must prove what.
+      </aside>
+    </div>
+
+    <!-- Article 4 -->
+    <div class="row">
+      <div class="body art" id="art-4">
+        <h3><span class="no">Article 4</span> Compelled disclosure</h3>
+        <p class="cl"><span class="n">4.1</span>The Receiving Party may disclose Confidential Information to the extent required by applicable law, regulation, or a binding order of a court or competent authority, provided that it: (i)&nbsp;gives the Disclosing Party prompt prior written notice, to the extent legally permitted, so that the Disclosing Party may seek a protective measure; (ii)&nbsp;reasonably cooperates with any such effort at the Disclosing Party’s expense; and (iii)&nbsp;discloses only that portion of the Confidential Information it is legally required to disclose.</p>
+      </div>
+      <aside></aside>
+    </div>
+
+    <!-- Article 5 -->
+    <div class="row">
+      <div class="body art" id="art-5">
+        <h3><span class="no">Article 5</span> No licence — no commitment</h3>
+        <p class="cl"><span class="n">5.1</span>All Confidential Information remains the property of the Disclosing Party. Nothing in this Agreement grants the Receiving Party any right, title, licence or interest in or to any Confidential Information or any intellectual-property right of the Disclosing Party, by implication or otherwise.</p>
+        <p class="cl"><span class="n">5.2</span>Confidential Information is provided “as is”. The Disclosing Party makes no representation or warranty as to its accuracy or completeness, and accepts no liability for the Receiving Party’s use of it, without prejudice to Article&nbsp;8.</p>
+        <p class="cl"><span class="n">5.3</span>Nothing in this Agreement obliges either Party to disclose any particular information, to continue discussions, or to enter into the contemplated partnership or any other agreement. Each Party bears its own costs of the discussions.</p>
+      </div>
+      <aside>
+        <span class="tag">Note</span>
+        5.3 keeps pre-contractual freedom explicit: either side may walk away from the talks without owing the other an explanation — only the confidentiality survives.
+      </aside>
+    </div>
+
+    <!-- Article 6 -->
+    <div class="row">
+      <div class="body art" id="art-6">
+        <h3><span class="no">Article 6</span> Return or destruction</h3>
+        <p class="cl"><span class="n">6.1</span>Upon the Disclosing Party’s written request, or upon the end of the Parties’ discussions if earlier, the Receiving Party shall, at the Disclosing Party’s option, return or destroy all Confidential Information in its possession or control, including all copies, extracts and summaries, and shall confirm in writing that it has done so within fifteen (15) business days.</p>
+        <p class="cl"><span class="n">6.2</span>The Receiving Party may retain one archival copy where and for as long as required by applicable law or bona fide internal compliance policy, and copies held in automatic electronic back-ups, provided all retained material remains subject to this Agreement for as long as it is retained.</p>
+      </div>
+      <aside></aside>
+    </div>
+
+    <!-- Article 7 -->
+    <div class="row">
+      <div class="body art" id="art-7">
+        <h3><span class="no">Article 7</span> Term and survival</h3>
+        <p class="cl"><span class="n">7.1</span>This Agreement takes effect on the Effective Date and remains in force for a term of three (3) years. The obligations of confidentiality and restricted use in Articles&nbsp;2 to&nbsp;6 apply throughout that term to all Confidential Information disclosed during it.</p>
+        <p class="cl"><span class="n">7.2</span>Notwithstanding Article&nbsp;7.1, information that constitutes a trade secret (<span class="fr">secret des affaires</span>) within the meaning of Articles L.151-1 <span class="fr">et&nbsp;seq.</span> of the French Commercial Code remains protected under this Agreement for as long as it continues to qualify as such.</p>
+        <p class="cl"><span class="n">7.3</span>Expiry of this Agreement does not affect accrued rights or liabilities, nor the provisions of Articles&nbsp;8, 10 and 11, which survive.</p>
+      </div>
+      <aside>
+        <span class="tag">Note</span>
+        Three years flat, per the brief — longer than the French 24-month habit, and trade secrets outlive the term via&nbsp;7.2. See drafting note&nbsp;3.
+      </aside>
+    </div>
+
+    <!-- Article 8 -->
+    <div class="row">
+      <div class="body art" id="art-8">
+        <h3><span class="no">Article 8</span> Remedies</h3>
+        <p class="cl"><span class="n">8.1</span>Each Party acknowledges that a breach of this Agreement may cause the Disclosing Party harm that damages alone cannot adequately repair.</p>
+        <p class="cl"><span class="n">8.2</span>Accordingly, in the event of a breach or threatened breach, the Disclosing Party may seek any interim or protective measure available under French law, including summary proceedings before the judge for interim relief (<span class="fr">juge des référés</span>), without prejudice to any claim for damages or any other remedy available at law.</p>
+        <p class="cl"><span class="n">8.3</span>No failure or delay by a Party in exercising any right under this Agreement operates as a waiver of that right.</p>
+      </div>
+      <aside>
+        <span class="tag">Note</span>
+        The <span class="fr">référé</span> is the remedy that matters in practice — it stops the leak in days. Damages come later, if ever. No penalty clause here; see drafting note&nbsp;4.
+      </aside>
+    </div>
+
+    <!-- Article 9 — OPTION -->
+    <div class="row">
+      <div class="body art" id="art-9">
+        <h3><span class="no">Article 9</span> Non-solicitation <span style="letter-spacing:.1em;">[option]</span></h3>
+        <p class="cl"><span class="n">9.1</span><span class="option-brackets">[</span>During the term of this Agreement and for twelve (12) months thereafter, neither Party shall directly solicit for employment or engagement any employee of the other Party with whom it had material contact in connection with the Purpose, without the other Party’s prior written consent.</p>
+        <p class="cl"><span class="n">9.2</span>This Article does not prohibit general recruitment advertising not targeted at the other Party’s personnel, nor the hiring of a person who responds to such advertising or approaches a Party on their own initiative.<span class="option-brackets">]</span></p>
+      </div>
+      <aside>
+        <span class="tag">Option</span>
+        <span class="fr">Clause de non-sollicitation</span> — deliberately bracketed, not default. Keep it if the teams will mix on the shop floor; strike it if it would chill normal hiring. Either way, both signatories initial the choice in this margin. French courts read these clauses strictly — the narrow scope (12&nbsp;months, material contact only) is what keeps it enforceable.
+      </aside>
+    </div>
+
+    <!-- Article 10 -->
+    <div class="row">
+      <div class="body art" id="art-10">
+        <h3><span class="no">Article 10</span> General provisions</h3>
+        <p class="cl"><span class="n">10.1</span><em>Entire agreement.</em> This Agreement constitutes the entire agreement between the Parties concerning the confidentiality of the discussions and supersedes any prior understanding on that subject. It may be amended only in writing signed by both Parties.</p>
+        <p class="cl"><span class="n">10.2</span><em>No assignment.</em> Neither Party may assign or transfer this Agreement, in whole or in part, without the other Party’s prior written consent.</p>
+        <p class="cl"><span class="n">10.3</span><em>Severability.</em> If any provision of this Agreement is held invalid or unenforceable, the remainder continues in force, and the Parties shall replace the affected provision with a valid one reflecting their original intent as closely as possible.</p>
+        <p class="cl"><span class="n">10.4</span><em>No partnership.</em> Nothing in this Agreement creates any partnership, agency, joint venture or exclusive relationship between the Parties.</p>
+        <p class="cl"><span class="n">10.5</span><em>Notices.</em> Notices under this Agreement shall be in writing and delivered to the registered office of the addressee by hand against receipt, by registered letter with acknowledgment of receipt (<span class="fr">lettre recommandée avec accusé de réception</span>), or by e-mail confirmed by one of the foregoing.</p>
+        <p class="cl"><span class="n">10.6</span><em>Counterparts; signature.</em> This Agreement may be executed in counterparts, together constituting one instrument, and may be signed electronically; a reliable electronic signature within the meaning of Articles&nbsp;1366 and&nbsp;1367 of the French Civil Code has the same evidential force as a handwritten one.</p>
+        <p class="cl"><span class="n">10.7</span><em>Language.</em> The Parties confirm their express wish that this Agreement be drafted in the English language, each having had the opportunity to seek a French translation.</p>
+        <p class="cl"><span class="n">10.8</span><em>Personal data.</em> Each Party processes the business contact details of the other Party’s personnel as an independent controller, solely for managing the relationship contemplated by this Agreement, in accordance with applicable data-protection law.</p>
+      </div>
+      <aside></aside>
+    </div>
+
+    <!-- Article 11 -->
+    <div class="row">
+      <div class="body art" id="art-11">
+        <h3><span class="no">Article 11</span> Governing law — jurisdiction</h3>
+        <p class="cl"><span class="n">11.1</span>This Agreement is governed by and shall be construed in accordance with French law.</p>
+        <p class="cl"><span class="n">11.2</span>Any dispute arising out of or in connection with this Agreement, including its validity, interpretation, performance or termination, that the Parties cannot resolve amicably within thirty (30) days of written notice shall be submitted to the exclusive jurisdiction of the commercial court (<span class="fr">tribunal de commerce</span>) of Paris, notwithstanding plurality of defendants or third-party proceedings, and without prejudice to Article&nbsp;8.2.</p>
+      </div>
+      <aside>
+        <span class="tag">Note</span>
+        Paris, not Lille: the amicable-resolution window is short on purpose, and the carve-back to&nbsp;8.2 keeps the <span class="fr">référé</span> available immediately.
+      </aside>
+    </div>
+
+    <!-- Disclaimer (before signatures, per doctrine) -->
+    <div class="row">
+      <div class="body">
+        <div class="disclaimer">
+          <p>This document was generated from a Split legal-templates library. It is a starting point, not legal advice for a specific situation. Before signing, have it reviewed by a licensed attorney in the relevant jurisdiction. Split and its operators decline any liability arising from use of this document as-is.</p>
+          <p><span class="fr">Ce document a été généré à partir de la bibliothèque legal-templates de Split. Il constitue un point de départ et ne saurait remplacer l’avis d’un avocat compétent dans la juridiction concernée. Avant signature, faites-le relire par un professionnel du droit. Split et ses opérateurs déclinent toute responsabilité quant à son usage en l’état.</span></p>
+        </div>
+      </div>
+      <aside></aside>
+    </div>
+
+    <!-- Signatures -->
+    <div class="row">
+      <div class="body sigs">
+        <p class="execline">Executed in two (2) original counterparts, one for each Party. <span class="fr">Fait en deux exemplaires originaux.</span></p>
+        <div class="sigrow">
+          <div class="sigblock">
+            <p class="for">For Atelier Nord SAS</p>
+            <div class="line"></div>
+            <p class="fields">
+              <span class="lbl">Name</span> — Claire Fontaine<br>
+              <span class="lbl">Title</span> — President (<span class="fr">Présidente</span>)<br>
+              <span class="lbl">Place</span> — ____________________<br>
+              <span class="lbl">Date</span> — ____________________
+            </p>
+          </div>
+          <div class="sigblock">
+            <p class="for">For Galerie Lumière SARL</p>
+            <div class="line"></div>
+            <p class="fields">
+              <span class="lbl">Name</span> — Julien Mercier<br>
+              <span class="lbl">Title</span> — Manager (<span class="fr">Gérant</span>)<br>
+              <span class="lbl">Place</span> — ____________________<br>
+              <span class="lbl">Date</span> — ____________________
+            </p>
+          </div>
+        </div>
+        <p class="initials">Each page of the signed counterparts to be initialled by both signatories — including the margin of Article&nbsp;9, kept or struck.</p>
+      </div>
+      <aside></aside>
+    </div>
+
+  </article>
+
+  <!-- ══════════════ drafting notes ══════════════ -->
+  <section class="notes row">
+    <div class="body">
+      <div class="rulehead"><h2>Drafting notes</h2></div>
+
+      <p class="note"><span class="n">1.</span><strong>Why mutual.</strong> Retail talks are two-way: Atelier Nord opens its costings and unreleased designs; Galerie Lumière opens its footfall, margins and customer knowledge. Symmetric obligations (<a href="#art-2">Article&nbsp;2</a>) protect both flows with one paper, instead of a second NDA three weeks in.</p>
+
+      <p class="note"><span class="n">2.</span><strong>No marking requirement.</strong> Clause <a href="#art-1">1.1</a> protects what a reasonable person would understand to be confidential, not only stamped documents — showroom conversations and prototypes rarely get stamped. The balance comes from the four carve-outs of <a href="#art-3">Article&nbsp;3</a> and the written-records burden in&nbsp;3.2.</p>
+
+      <p class="note"><span class="n">3.</span><strong>The three-year term.</strong> Longer than the 24 months customary in short French NDAs, shorter than the five years often asked in US paper — sized to roughly two collection cycles. And <a href="#art-7">clause&nbsp;7.2</a> stops the term from silently expiring real trade secrets: those stay protected as long as they qualify under Article L.151-1 of the Commercial Code.</p>
+
+      <p class="note"><span class="n">4.</span><strong>Remedies without a penalty clause.</strong> <a href="#art-8">Article&nbsp;8</a> relies on interim relief (<span class="fr">référé</span>) plus actual damages. A <span class="fr">clause pénale</span> (Article&nbsp;1231-5 of the Civil Code) is available in France but invites judicial revision and hard bargaining at the wrong moment; add one only if a counterparty has a history of leaks.</p>
+
+      <p class="note"><span class="n">5.</span><strong>The bracketed non-solicit.</strong> <a href="#art-9">Article&nbsp;9</a> is an option, not a default, because the two teams will mingle at fairs and on the shop floor, and French courts read non-solicitation strictly. The scope is kept proportionate — twelve months, personnel with material contact only, general advertising carved out — so the clause holds up if the Parties keep it.</p>
+
+      <p class="note"><span class="n">6.</span><strong>English text, French law.</strong> Valid between two French commercial parties, and convenient if a non-French investor or partner later joins the talks. Clause <a href="#art-10">10.7</a> records the deliberate choice of language, and the French legal terms of art are anchored in italics where the English gloss is imperfect.</p>
+    </div>
+    <aside>
+      <span class="tag">Reading</span>
+      Six choices a counterparty’s counsel will probe first — reasoned here so the negotiation starts from the why, not the wording.
+    </aside>
+  </section>
+
+  <!-- ══════════════ colophon / demo disclaimer ══════════════ -->
+  <footer class="colophon row">
+    <div class="body">
+      <p class="demo">Showcase document — demonstration only</p>
+      <p>Atelier Nord SAS and Galerie Lumière SARL are fictional companies; all names, registration numbers, addresses and facts in this draft are invented for demonstration and any resemblance to existing entities is coincidental. Produced by <strong>Lawyer</strong> in Split from the <em>legal-templates</em> library (<em>nda-mutual</em>, FR variant) · 3&nbsp;July&nbsp;2026. Not legal advice; no attorney–client relationship is created.</p>
+    </div>
+    <aside></aside>
+  </footer>
+
+</main>
+</body>
+</html>

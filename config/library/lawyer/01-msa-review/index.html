@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contract Risk Review — Atelier Nord SAS × Shenzhen Brightline Electronics Ltd</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ivory:#F3EEE1;
+    --sheet:#FBF8F0;
+    --sheet-edge:#E4DCC8;
+    --navy:#1C2B4A;
+    --navy-deep:#111F3B;
+    --navy-soft:#3A4A6B;
+    --oxblood:#6E1D2A;
+    --oxblood-soft:#8A3542;
+    --amber:#8A651C;
+    --green:#3A5A42;
+    --hairline:#D9D0BA;
+    --hairline-navy:rgba(28,43,74,.22);
+    --quote-ink:#2E3D5E;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--ivory);
+    color:var(--navy);
+    font-family:"Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size:17px;
+    line-height:1.68;
+    padding:56px 20px 96px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .sheet{
+    max-width:940px;
+    margin:0 auto;
+    background:var(--sheet);
+    border:1px solid var(--sheet-edge);
+    box-shadow:0 1px 0 rgba(17,31,59,.06), 0 24px 60px -30px rgba(17,31,59,.25);
+    padding:0 0 88px;
+  }
+  .sheet-inner{
+    padding:64px 96px 0 150px;
+  }
+
+  /* ---------- Letterhead ---------- */
+  .letterhead{text-align:center;padding:64px 96px 0;}
+  .lh-rule-top{border-top:3px solid var(--navy-deep);border-bottom:1px solid var(--oxblood);height:5px;margin-bottom:40px;}
+  .lh-firm{
+    font-size:24px;font-weight:600;letter-spacing:.34em;text-transform:uppercase;
+    color:var(--navy-deep);text-indent:.34em;
+  }
+  .lh-office{
+    margin-top:8px;font-size:12.5px;letter-spacing:.30em;text-transform:uppercase;
+    color:var(--navy-soft);text-indent:.30em;
+  }
+  .lh-flourish{
+    margin:22px auto 0;width:220px;display:flex;align-items:center;gap:12px;color:var(--oxblood);
+  }
+  .lh-flourish::before,.lh-flourish::after{content:"";flex:1;border-top:1px solid var(--oxblood);opacity:.55;}
+  .lh-flourish span{font-size:11px;letter-spacing:.18em;}
+  .lh-doctype{
+    margin-top:22px;font-size:15px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--oxblood);text-indent:.22em;font-weight:500;
+  }
+  .lh-privilege{
+    margin-top:6px;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--navy-soft);text-indent:.14em;
+  }
+  .lh-rule-bottom{margin:36px 0 0;border-top:1px solid var(--hairline-navy);}
+
+  /* ---------- Memo meta ---------- */
+  .memo-meta{
+    margin:40px 0 0;border-bottom:1px solid var(--hairline-navy);padding-bottom:28px;
+  }
+  .memo-meta dl{display:grid;grid-template-columns:110px 1fr;row-gap:7px;column-gap:24px;}
+  .memo-meta dt{
+    font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--oxblood);
+    padding-top:4px;font-weight:600;
+  }
+  .memo-meta dd{font-size:16px;color:var(--navy);}
+  .memo-meta dd em{font-style:italic;color:var(--navy-soft);}
+
+  /* ---------- Demo banner ---------- */
+  .demo-banner{
+    margin:34px 0 0;border:1px solid var(--oxblood);
+    background:rgba(110,29,42,.045);
+    padding:14px 22px;display:flex;gap:16px;align-items:baseline;
+  }
+  .demo-banner b{
+    font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--oxblood);
+    white-space:nowrap;font-weight:700;
+  }
+  .demo-banner p{font-size:14px;color:var(--navy-soft);line-height:1.55;}
+
+  /* ---------- Exec summary ---------- */
+  .exec{
+    margin:40px 0 0;border:1px solid var(--hairline-navy);
+    padding:30px 34px 26px;background:rgba(28,43,74,.025);
+  }
+  .exec h2{
+    font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--navy-soft);
+    font-weight:600;margin-bottom:20px;
+  }
+  .exec-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px 36px;}
+  .exec-grid h3{
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--oxblood);
+    font-weight:600;margin-bottom:5px;
+  }
+  .exec-grid p{font-size:14.5px;line-height:1.6;color:var(--quote-ink);}
+
+  /* ---------- Section headings ---------- */
+  section.block{margin-top:64px;}
+  .sec-head{display:flex;align-items:baseline;gap:18px;margin-bottom:26px;}
+  .sec-head .num{
+    font-size:13px;letter-spacing:.12em;color:var(--oxblood);font-weight:600;white-space:nowrap;
+  }
+  .sec-head h2{
+    font-size:21px;font-weight:600;color:var(--navy-deep);letter-spacing:.01em;
+  }
+  .sec-head::after{content:"";flex:1;border-top:1px solid var(--hairline-navy);transform:translateY(-4px);}
+
+  /* ---------- Verdict ---------- */
+  .verdict{
+    border-left:3px solid var(--oxblood);padding:6px 0 6px 26px;margin-bottom:22px;
+  }
+  .verdict .line{
+    font-size:24px;line-height:1.35;font-weight:600;color:var(--navy-deep);
+  }
+  .verdict .line em{font-style:italic;color:var(--oxblood);}
+  .verdict-tally{display:flex;gap:28px;margin-top:16px;flex-wrap:wrap;}
+  .tally{display:flex;align-items:baseline;gap:9px;}
+  .tally .dot{width:9px;height:9px;border-radius:50%;display:inline-block;transform:translateY(-1px);}
+  .tally .n{font-weight:700;font-size:17px;}
+  .tally .lbl{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--navy-soft);}
+  .dot.r{background:var(--oxblood);}
+  .dot.a{background:var(--amber);}
+  .dot.g{background:var(--green);}
+  .verdict-body{font-size:16.5px;color:var(--quote-ink);max-width:64ch;}
+
+  /* ---------- Risk map table ---------- */
+  .filters{display:flex;gap:2px;margin-bottom:14px;flex-wrap:wrap;}
+  .filters span.fl-label{
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--navy-soft);
+    margin-right:14px;align-self:center;font-weight:600;
+  }
+  .filters button{
+    font-family:inherit;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    background:none;border:none;border-bottom:2px solid transparent;
+    color:var(--navy-soft);padding:6px 12px;cursor:pointer;font-weight:600;
+  }
+  .filters button:hover{color:var(--navy-deep);}
+  .filters button.active{color:var(--navy-deep);border-bottom-color:var(--oxblood);}
+  table.riskmap{width:100%;border-collapse:collapse;}
+  table.riskmap thead th{
+    font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--navy-soft);
+    text-align:left;font-weight:600;padding:0 14px 10px 0;border-bottom:2px solid var(--navy-deep);
+  }
+  table.riskmap tbody tr{border-bottom:1px solid var(--hairline);cursor:pointer;}
+  table.riskmap tbody tr:hover{background:rgba(28,43,74,.035);}
+  table.riskmap td{padding:11px 14px 11px 0;vertical-align:baseline;font-size:15px;}
+  td.cl-no{font-weight:700;color:var(--navy-deep);white-space:nowrap;width:34px;}
+  td.cl-name{font-weight:600;color:var(--navy-deep);white-space:nowrap;padding-right:22px;}
+  td.cl-flag{width:86px;white-space:nowrap;}
+  td.cl-why{color:var(--quote-ink);font-size:14.5px;}
+  .map-hint{margin-top:12px;font-size:12.5px;font-style:italic;color:var(--navy-soft);}
+
+  /* ---------- Chips ---------- */
+  .chip{
+    display:inline-block;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+    padding:3px 9px 2px;border:1px solid;line-height:1.5;background:var(--sheet);
+  }
+  .chip.red{color:var(--oxblood);border-color:var(--oxblood);}
+  .chip.amber{color:var(--amber);border-color:var(--amber);}
+  .chip.green{color:var(--green);border-color:var(--green);}
+
+  /* ---------- Clauses ---------- */
+  article.clause{
+    position:relative;margin-top:56px;padding-top:34px;border-top:1px solid var(--hairline);
+    scroll-margin-top:32px;
+  }
+  article.clause:first-of-type{border-top:none;margin-top:8px;padding-top:24px;}
+  .margin-chip{
+    position:absolute;left:-118px;top:36px;width:88px;text-align:center;
+  }
+  article.clause:first-of-type .margin-chip{top:26px;}
+  .margin-chip .chip{width:100%;padding:5px 0 4px;}
+  .margin-chip .chip-sub{
+    display:block;margin-top:6px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--navy-soft);line-height:1.5;
+  }
+  .clause h3{
+    font-size:19.5px;font-weight:600;color:var(--navy-deep);
+  }
+  .clause h3 .cnum{color:var(--oxblood);font-weight:700;margin-right:10px;}
+  .excerpt{
+    margin:20px 0 22px 26px;padding:2px 0 2px 24px;
+    border-left:2px solid var(--navy-deep);
+    font-size:15px;line-height:1.72;color:var(--quote-ink);
+  }
+  .excerpt p{margin-bottom:10px;}
+  .excerpt p:last-child{margin-bottom:0;}
+  .excerpt .sub{font-weight:700;color:var(--navy-deep);font-style:normal;margin-right:6px;}
+  .excerpt .src{
+    display:block;margin-top:10px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--navy-soft);font-style:normal;
+  }
+  .lbl-line{
+    font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;margin:22px 0 8px;
+  }
+  .lbl-line.bites{color:var(--oxblood);}
+  .lbl-line.fine{color:var(--green);}
+  .lbl-line.redl{color:var(--navy-deep);}
+  .clause p.body{font-size:16px;color:var(--navy);max-width:66ch;}
+  .clause p.body + p.body{margin-top:10px;}
+  .redline{
+    margin:10px 0 0;border:1px solid var(--hairline-navy);background:rgba(28,43,74,.025);
+    padding:20px 24px;font-size:15px;line-height:1.75;color:var(--navy);
+  }
+  .redline p + p{margin-top:12px;}
+  .redline del{
+    color:var(--oxblood);text-decoration:line-through;text-decoration-thickness:1.5px;
+  }
+  .redline ins{
+    color:var(--navy-deep);font-weight:600;text-decoration:underline;
+    text-decoration-color:rgba(17,31,59,.45);text-underline-offset:3px;font-style:normal;
+  }
+  .redline .rl-note{font-size:13.5px;font-style:italic;color:var(--navy-soft);}
+  .law-note{
+    margin:18px 0 0;padding:14px 20px;border-left:2px solid var(--oxblood);
+    background:rgba(110,29,42,.04);font-size:14px;line-height:1.65;color:var(--quote-ink);
+  }
+  .law-note b{
+    font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--oxblood);
+    display:block;margin-bottom:4px;
+  }
+  .backline{margin-top:18px;font-size:12px;}
+  .backline a{
+    color:var(--navy-soft);text-decoration:none;letter-spacing:.14em;text-transform:uppercase;
+    border-bottom:1px solid var(--hairline-navy);padding-bottom:1px;
+  }
+  .backline a:hover{color:var(--oxblood);border-bottom-color:var(--oxblood);}
+
+  /* ---------- Missing clauses ---------- */
+  .missing{list-style:none;counter-reset:miss;}
+  .missing li{
+    counter-increment:miss;position:relative;padding:16px 0 16px 58px;
+    border-bottom:1px solid var(--hairline);font-size:15.5px;color:var(--navy);
+  }
+  .missing li::before{
+    content:counter(miss, upper-alpha);
+    position:absolute;left:0;top:14px;width:34px;height:34px;
+    border:1px solid var(--oxblood);color:var(--oxblood);
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:700;
+  }
+  .missing li b{font-weight:600;color:var(--navy-deep);}
+  .missing li .why-miss{color:var(--quote-ink);font-size:14.5px;}
+
+  /* ---------- Priorities ---------- */
+  .tier{margin-top:34px;}
+  .tier:first-of-type{margin-top:6px;}
+  .tier-head{
+    display:flex;align-items:baseline;gap:14px;margin-bottom:16px;
+  }
+  .tier-head h3{
+    font-size:12px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;white-space:nowrap;
+  }
+  .tier-head.walk h3{color:var(--oxblood);}
+  .tier-head.trade h3{color:var(--amber);}
+  .tier-head.hold h3{color:var(--green);}
+  .tier-head span{font-size:13.5px;font-style:italic;color:var(--navy-soft);}
+  ol.prio{list-style:none;counter-reset:prio;}
+  ol.prio{counter-reset:prio var(--prio-start, 0);}
+  ol.prio li{
+    counter-increment:prio;position:relative;padding:12px 0 12px 60px;
+    border-bottom:1px solid var(--hairline);font-size:15.5px;
+  }
+  ol.prio li::before{
+    content:counter(prio);
+    position:absolute;left:6px;top:10px;
+    font-size:22px;font-weight:700;color:var(--navy-deep);font-variant-numeric:lining-nums;
+  }
+  ol.prio li b{font-weight:600;color:var(--navy-deep);}
+  ol.prio li .give{display:block;font-size:13.5px;font-style:italic;color:var(--navy-soft);margin-top:2px;}
+
+  /* ---------- Closing / signature ---------- */
+  .closing{margin-top:64px;border-top:1px solid var(--hairline-navy);padding-top:36px;}
+  .closing p{font-size:16px;max-width:64ch;color:var(--navy);}
+  .signature{margin-top:44px;}
+  .signature .sig-rule{width:260px;border-top:1px solid var(--navy-deep);margin-bottom:8px;}
+  .signature .sig-name{font-size:16px;font-weight:600;color:var(--navy-deep);}
+  .signature .sig-title{
+    font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--navy-soft);margin-top:2px;
+  }
+
+  /* ---------- Disclaimer / footer ---------- */
+  .disclaimer{
+    margin:64px 96px 0;border:1px solid var(--oxblood);
+    padding:22px 28px;background:rgba(110,29,42,.045);
+  }
+  .disclaimer b{
+    display:block;font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--oxblood);margin-bottom:8px;font-weight:700;
+  }
+  .disclaimer p{font-size:13.5px;line-height:1.65;color:var(--quote-ink);}
+  .colophon{
+    margin:36px 96px 0;display:flex;justify-content:space-between;align-items:baseline;
+    border-top:1px solid var(--hairline-navy);padding-top:18px;flex-wrap:wrap;gap:8px;
+  }
+  .colophon span{
+    font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--navy-soft);
+  }
+  .colophon .made{color:var(--oxblood);}
+
+  /* ---------- Filtering ---------- */
+  body[data-filter="red"]   article.clause:not(.f-red),
+  body[data-filter="amber"] article.clause:not(.f-amber),
+  body[data-filter="green"] article.clause:not(.f-green),
+  body[data-filter="red"]   tr.rm:not(.f-red),
+  body[data-filter="amber"] tr.rm:not(.f-amber),
+  body[data-filter="green"] tr.rm:not(.f-green){display:none;}
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:1024px){
+    .sheet-inner{padding:56px 64px 0 64px;}
+    .letterhead{padding:56px 64px 0;}
+    .disclaimer,.colophon{margin-left:64px;margin-right:64px;}
+    .margin-chip{position:static;width:auto;display:flex;align-items:baseline;gap:12px;margin-bottom:12px;}
+    .margin-chip .chip{width:auto;padding:3px 12px 2px;}
+    .margin-chip .chip-sub{margin-top:0;}
+  }
+  @media (max-width:640px){
+    body{padding:24px 8px 64px;}
+    .sheet-inner{padding:40px 26px 0;}
+    .letterhead{padding:40px 26px 0;}
+    .disclaimer,.colophon{margin-left:26px;margin-right:26px;}
+    .lh-firm{font-size:18px;letter-spacing:.24em;}
+    .memo-meta dl{grid-template-columns:86px 1fr;}
+    .exec-grid{grid-template-columns:1fr;}
+    .excerpt{margin-left:8px;}
+    td.cl-why{display:none;}
+    th.h-why{display:none;}
+  }
+  @media print{
+    body{background:#fff;padding:0;}
+    .sheet{box-shadow:none;border:none;max-width:none;}
+    .filters,.map-hint,.backline{display:none;}
+    article.clause{break-inside:avoid;}
+  }
+</style>
+</head>
+<body data-filter="all">
+<div class="sheet">
+
+  <!-- ================= LETTERHEAD ================= -->
+  <header class="letterhead">
+    <div class="lh-rule-top"></div>
+    <div class="lh-firm">Split &mdash; Office of Counsel</div>
+    <div class="lh-office">Advisory &amp; Contract Practice &middot; Paris</div>
+    <div class="lh-flourish"><span>&sect;</span></div>
+    <div class="lh-doctype">Memorandum &mdash; Contract Risk Review</div>
+    <div class="lh-privilege">Prepared for negotiation &middot; not for execution</div>
+    <div class="lh-rule-bottom"></div>
+  </header>
+
+  <div class="sheet-inner">
+
+    <!-- ================= MEMO META ================= -->
+    <div class="memo-meta">
+      <dl>
+        <dt>To</dt><dd>The founders, Atelier Nord SAS</dd>
+        <dt>From</dt><dd>The Lawyer &mdash; Split Office of Counsel</dd>
+        <dt>Date</dt><dd>3 July 2026</dd>
+        <dt>Re</dt><dd>Manufacturing &amp; Supply Agreement &mdash; draft received from Shenzhen Brightline Electronics Ltd</dd>
+        <dt>Matter</dt><dd>AN-2026-014</dd>
+        <dt>Mode</dt><dd><em>Contract review &middot; manufacturing &amp; supply (OEM) &middot; buyer side &middot; French-law lens &middot; playbook: none on file</em></dd>
+      </dl>
+    </div>
+
+    <!-- ================= DEMO BANNER ================= -->
+    <div class="demo-banner">
+      <b>Demo &mdash; not legal advice</b>
+      <p>Both parties and every clause quoted below are fictional, written for this demonstration of Split&rsquo;s contract-review skill. Nothing here is advice on any real agreement. The full disclaimer sits at the foot of this memorandum.</p>
+    </div>
+
+    <!-- ================= EXEC SUMMARY ================= -->
+    <div class="exec">
+      <h2>Executive summary &mdash; the story that travels with this document</h2>
+      <div class="exec-grid">
+        <div>
+          <h3>Why this exists</h3>
+          <p>Atelier Nord received Brightline&rsquo;s standard manufacturing agreement ahead of its first production run and asked one question: <em>should we sign this?</em> This memo answers it clause by clause.</p>
+        </div>
+        <div>
+          <h3>Context</h3>
+          <p>A French hardware startup, first OEM engagement, negotiating on the manufacturer&rsquo;s paper &mdash; which tilts, predictably, toward the manufacturer. Review is from the buyer&rsquo;s side, through a French-law lens.</p>
+        </div>
+        <div>
+          <h3>How to use it</h3>
+          <p>Read the verdict, then the risk map. Take the proposed redlines into negotiation in the priority order at the end. Do not sign before the five red flags move.</p>
+        </div>
+        <div>
+          <h3>What was assumed</h3>
+          <p>Atelier Nord sells to EU consumers; early-stage volumes (under 50,000 units a year); no house playbook on file, so market positions were used. Exhibits A&ndash;C were referenced in the draft but not provided &mdash; they could change the analysis.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= I. VERDICT ================= -->
+    <section class="block" id="verdict">
+      <div class="sec-head"><span class="num">I.</span><h2>Verdict</h2></div>
+      <div class="verdict">
+        <p class="line">Not signable as received &mdash; <em>five blockers</em>, five clauses to negotiate, two that are fine.</p>
+        <div class="verdict-tally">
+          <span class="tally"><span class="dot r"></span><span class="n">5</span><span class="lbl">Red &middot; blockers</span></span>
+          <span class="tally"><span class="dot a"></span><span class="n">5</span><span class="lbl">Amber &middot; negotiate</span></span>
+          <span class="tally"><span class="dot g"></span><span class="n">2</span><span class="lbl">Green &middot; acceptable</span></span>
+        </div>
+      </div>
+      <p class="verdict-body">The draft is a competent manufacturer-side document, not an ambush &mdash; but its five red clauses interlock. You would pay for tooling you do not own (Clause 4), improvements to your own design would belong to Brightline (Clause 5), your remedies would be capped at one purchase order while you indemnify them (Clause 8), you would carry six months of binding demand risk (Clause 2), and any attempt to enforce what remains would happen in Shenzhen, in Chinese, under Chinese law (Clause 11). Each is individually negotiable; together, as drafted, they make the relationship one-directional.</p>
+    </section>
+
+    <!-- ================= II. RISK MAP ================= -->
+    <section class="block" id="riskmap">
+      <div class="sec-head"><span class="num">II.</span><h2>Risk map at a glance</h2></div>
+      <div class="filters">
+        <span class="fl-label">Show</span>
+        <button type="button" data-set="all" class="active">All twelve</button>
+        <button type="button" data-set="red">Red only</button>
+        <button type="button" data-set="amber">Amber only</button>
+        <button type="button" data-set="green">Green only</button>
+      </div>
+      <table class="riskmap">
+        <thead>
+          <tr><th>Cl.</th><th>Subject</th><th>Flag</th><th class="h-why">The problem in one line</th></tr>
+        </thead>
+        <tbody>
+          <tr class="rm f-red"   data-target="clause-2"><td class="cl-no">2</td><td class="cl-name">Forecasts &amp; MOQs</td><td class="cl-flag"><span class="chip red">Red</span></td><td class="cl-why">Six months of binding forecast plus a 10,000-unit MOQ &mdash; startup-killing inventory liability.</td></tr>
+          <tr class="rm f-red"   data-target="clause-4"><td class="cl-no">4</td><td class="cl-name">Tooling</td><td class="cl-flag"><span class="chip red">Red</span></td><td class="cl-why">You pay for the moulds; Brightline owns them and never has to release them.</td></tr>
+          <tr class="rm f-red"   data-target="clause-5"><td class="cl-no">5</td><td class="cl-name">Intellectual property</td><td class="cl-flag"><span class="chip red">Red</span></td><td class="cl-why">Improvements to your own design vest in the manufacturer, licensed back only for the term.</td></tr>
+          <tr class="rm f-red"   data-target="clause-8"><td class="cl-no">8</td><td class="cl-name">Limitation of liability</td><td class="cl-flag"><span class="chip red">Red</span></td><td class="cl-why">Their exposure capped at one purchase order; yours uncapped &mdash; and recall costs excluded.</td></tr>
+          <tr class="rm f-red"   data-target="clause-11"><td class="cl-no">11</td><td class="cl-name">Governing law &amp; arbitration</td><td class="cl-flag"><span class="chip red">Red</span></td><td class="cl-why">PRC law, Shenzhen seat, Chinese language &mdash; every other clause becomes unenforceable in practice.</td></tr>
+          <tr class="rm f-amber" data-target="clause-1"><td class="cl-no">1</td><td class="cl-name">Appointment &amp; exclusivity</td><td class="cl-flag"><span class="chip amber">Amber</span></td><td class="cl-why">One-way exclusivity: you are locked to them; they remain free to serve your competitors.</td></tr>
+          <tr class="rm f-amber" data-target="clause-3"><td class="cl-no">3</td><td class="cl-name">Price &amp; payment</td><td class="cl-flag"><span class="chip amber">Amber</span></td><td class="cl-why">Unilateral repricing on 15 days&rsquo; notice; 100% paid before goods leave the factory gate.</td></tr>
+          <tr class="rm f-amber" data-target="clause-6"><td class="cl-no">6</td><td class="cl-name">Inspection &amp; acceptance</td><td class="cl-flag"><span class="chip amber">Amber</span></td><td class="cl-why">Deemed acceptance seven days after EXW &mdash; while the container is still at sea.</td></tr>
+          <tr class="rm f-amber" data-target="clause-7"><td class="cl-no">7</td><td class="cl-name">Warranty</td><td class="cl-flag"><span class="chip amber">Amber</span></td><td class="cl-why">Six months from the factory gate against the two years you owe French consumers.</td></tr>
+          <tr class="rm f-amber" data-target="clause-10"><td class="cl-no">10</td><td class="cl-name">Term &amp; termination</td><td class="cl-flag"><span class="chip amber">Amber</span></td><td class="cl-why">They can leave on 90 days&rsquo; notice; you are locked in for three years.</td></tr>
+          <tr class="rm f-green" data-target="clause-9"><td class="cl-no">9</td><td class="cl-name">Confidentiality</td><td class="cl-flag"><span class="chip green">Green</span></td><td class="cl-why">Mutual, purpose-limited, five-year tail with a trade-secret carve-out. Market standard.</td></tr>
+          <tr class="rm f-green" data-target="clause-12"><td class="cl-no">12</td><td class="cl-name">Force majeure</td><td class="cl-flag"><span class="chip green">Green</span></td><td class="cl-why">Mutual, with notice, mitigation and a 90-day exit. Cost increases expressly excluded.</td></tr>
+        </tbody>
+      </table>
+      <p class="map-hint">Rows are clickable &mdash; each jumps to the full clause analysis below.</p>
+    </section>
+
+    <!-- ================= III. CLAUSE BY CLAUSE ================= -->
+    <section class="block" id="clauses">
+      <div class="sec-head"><span class="num">III.</span><h2>Clause-by-clause review</h2></div>
+
+      <!-- Clause 1 -->
+      <article class="clause f-amber" id="clause-1">
+        <div class="margin-chip"><span class="chip amber">Amber</span><span class="chip-sub">Negotiate</span></div>
+        <h3><span class="cnum">Clause 1</span>Appointment &amp; exclusivity</h3>
+        <blockquote class="excerpt">
+          <p><span class="sub">1.1</span>Buyer hereby appoints Manufacturer as its exclusive manufacturer of the Products worldwide for the Term. Buyer shall not, directly or indirectly, procure the Products or any substantially similar products from any third party.</p>
+          <p><span class="sub">1.2</span>Nothing in this Agreement shall restrict Manufacturer from developing, manufacturing or supplying similar or competing products for any other customer.</p>
+          <span class="src">Draft as received &mdash; Brightline paper</span>
+        </blockquote>
+        <p class="lbl-line bites">Why it bites</p>
+        <p class="body">The exclusivity runs one way. Atelier Nord is barred from any second source &mdash; even for overflow, even if Brightline&rsquo;s quality or delivery collapses short of the material-breach threshold in Clause 10 &mdash; while Brightline stays free to build &ldquo;similar&rdquo; products for your competitors, with everything it learns tooling up your line. Sole-source dependency is survivable for a startup; sole-source dependency with no reciprocal capacity commitment and no performance conditions is not. Note also that exclusivity is exactly what Brightline wants most from this document &mdash; which makes it your best trade currency (see Priorities).</p>
+        <p class="lbl-line redl">Proposed redline</p>
+        <div class="redline">
+          <p>1.1 Buyer appoints Manufacturer as its exclusive manufacturer of the Products <del>worldwide for the Term</del> <ins>for the Term, provided that such exclusivity shall (a) lapse automatically if Manufacturer&rsquo;s on-time delivery falls below 95% or its lot rejection rate exceeds the agreed AQL in any two consecutive quarters, and (b) not prevent Buyer from qualifying and sourcing up to 20% of its annual volume from a second source for supply-continuity purposes</ins>. <del>Buyer shall not, directly or indirectly, procure the Products or any substantially similar products from any third party.</del></p>
+          <p>1.2 <ins>Manufacturer shall not use Buyer&rsquo;s Intellectual Property, tooling or confidential information in developing, manufacturing or supplying products for any other customer, and shall reserve for Buyer the monthly capacity set out in Exhibit D.</ins> <span class="rl-note">&mdash; keep their freedom to serve others, but fence it off from your IP and secure your capacity in exchange for the exclusivity they are asking for.</span></p>
+        </div>
+        <p class="backline"><a href="#riskmap">&uarr; Back to risk map</a></p>
+      </article>
+
+      <!-- Clause 2 -->
+      <article class="clause f-red" id="clause-2">
+        <div class="margin-chip"><span class="chip red">Red</span><span class="chip-sub">Blocker</span></div>
+        <h3><span class="cnum">Clause 2</span>Forecasts &amp; minimum order quantities</h3>
+        <blockquote class="excerpt">
+          <p><span class="sub">2.1</span>Buyer shall provide Manufacturer with a rolling twelve (12) month forecast, updated monthly. The first six (6) months of each forecast shall constitute a firm and binding commitment to purchase the forecast quantities.</p>
+          <p><span class="sub">2.2</span>Each purchase order shall be for no fewer than ten thousand (10,000) units per Product SKU. Manufacturer may reject any purchase order below the Minimum Order Quantity.</p>
+          <p><span class="sub">2.3</span>Buyer shall reimburse Manufacturer for all raw materials and components procured against the binding portion of the forecast, whether or not incorporated into finished Products.</p>
+          <span class="src">Draft as received &mdash; Brightline paper</span>
+        </blockquote>
+        <p class="lbl-line bites">Why it bites</p>
+        <p class="body">This is the clause most likely to sink the company, because it converts a forecast &mdash; a guess &mdash; into debt. A first-time hardware startup cannot predict demand six months out; if launch volumes disappoint, Atelier Nord still owes Brightline six months of purchases at 10,000 units per SKU, plus every component Brightline bought against that forecast, with no obligation on Brightline to mitigate, re-use or resell any of it. On seed-stage cash, one soft quarter under this clause is insolvency, not inconvenience.</p>
+        <p class="lbl-line redl">Proposed redline</p>
+        <div class="redline">
+          <p>2.1 &hellip; The first <del>six (6) months</del> <ins>sixty (60) days</ins> of each forecast shall constitute a firm and binding commitment; <ins>the following thirty (30) days may vary by up to &plusmn;25%, and the remainder of the forecast is non-binding and for planning purposes only</ins>.</p>
+          <p>2.2 Each purchase order shall be for no fewer than <del>ten thousand (10,000)</del> <ins>two thousand five hundred (2,500)</ins> units per Product SKU<ins>, or such lower quantity as corresponds to one production batch</ins>.</p>
+          <p>2.3 Buyer shall reimburse Manufacturer for <del>all raw materials and components procured against the binding portion of the forecast</del> <ins>long-lead-time components identified in an agreed list (Exhibit E), procured against the binding portion of the forecast, at documented cost, net of Manufacturer&rsquo;s reasonable efforts to cancel, return, resell or re-allocate such components</ins>, whether or not incorporated into finished Products.</p>
+        </div>
+        <p class="backline"><a href="#riskmap">&uarr; Back to risk map</a></p>
+      </article>
+
+      <!-- Clause 3 -->
+      <article class="clause f-amber" id="clause-3">
+        <div class="margin-chip"><span class="chip amber">Amber</span><span class="chip-sub">Negotiate</span></div>
+        <h3><span class="cnum">Clause 3</span>Price &amp; payment</h3>
+        <blockquote class="excerpt">
+          <p><span class="sub">3.1</span>Prices for the Products are as set out in Exhibit B, EXW Shenzhen (Incoterms).</p>
+          <p><span class="sub">3.2</span>Manufacturer may adjust the prices upon fifteen (15) days&rsquo; written notice to reflect changes in the cost of raw materials, components, labour or energy.</p>
+          <p><span class="sub">3.3</span>Buyer shall pay fifty percent (50%) of the value of each purchase order upon issuance of the purchase order, and the balance prior to shipment.</p>
+          <span class="src">Draft as received &mdash; Brightline paper</span>
+        </blockquote>
+        <p class="lbl-line bites">Why it bites</p>
+        <p class="body">Clause 3.2 means there is no price in this contract &mdash; only an opening quotation Brightline can move on two weeks&rsquo; notice, with no cap, no index and no proof required. Clause 3.3 means Atelier Nord has paid 100% before the goods leave the factory; combined with EXW terms (risk passes at Brightline&rsquo;s gate) and the seven-day deemed acceptance in Clause 6, you would routinely discover defects in goods you have fully paid for, with no payment leverage left. Exhibit B was not provided &mdash; the actual numbers could move this flag either way.</p>
+        <p class="lbl-line redl">Proposed redline</p>
+        <div class="redline">
+          <p>3.1 Prices &hellip; <del>EXW Shenzhen</del> <ins>FOB Shenzhen</ins> (Incoterms)<ins>, fixed for each calendar quarter</ins>.</p>
+          <p>3.2 <del>Manufacturer may adjust the prices upon fifteen (15) days&rsquo; written notice to reflect changes in the cost of raw materials, components, labour or energy.</del> <ins>Prices may be adjusted once per calendar quarter, by written agreement, to reflect documented changes in the cost of the indexed inputs listed in Exhibit B, capped at &plusmn;5% per quarter. If a substantiated increase above the cap is proposed, Buyer may terminate the affected SKUs without liability beyond firm purchase orders already placed.</ins></p>
+          <p>3.3 Buyer shall pay <del>fifty percent (50%)</del> <ins>thirty percent (30%)</ins> of the value of each purchase order upon issuance, and the balance <del>prior to shipment</del> <ins>net thirty (30) days after the Products pass incoming inspection under Clause 6</ins>.</p>
+        </div>
+        <p class="backline"><a href="#riskmap">&uarr; Back to risk map</a></p>
+      </article>
+
+      <!-- Clause 4 -->
+      <article class="clause f-red" id="clause-4">
+        <div class="margin-chip"><span class="chip red">Red</span><span class="chip-sub">Blocker</span></div>
+        <h3><span class="cnum">Clause 4</span>Tooling</h3>
+        <blockquote class="excerpt">
+          <p><span class="sub">4.1</span>Buyer shall bear the cost of all tooling, moulds, jigs and test fixtures required for the manufacture of the Products (&ldquo;Tooling&rdquo;), as set out in Exhibit C.</p>
+          <p><span class="sub">4.2</span>Notwithstanding Buyer&rsquo;s payment under Clause 4.1, all Tooling shall be and remain the sole and exclusive property of Manufacturer.</p>
+          <p><span class="sub">4.3</span>Manufacturer shall have no obligation to release or transfer any Tooling to Buyer or to any third party at any time, including upon expiry or termination of this Agreement.</p>
+          <span class="src">Draft as received &mdash; Brightline paper</span>
+        </blockquote>
+        <p class="lbl-line bites">Why it bites</p>
+        <p class="body">This is hostage capital. Atelier Nord finances the moulds &mdash; typically the largest upfront cost in a hardware program &mdash; and receives nothing for it: no title, no lien, no release right, ever. If the relationship sours, prices jump under Clause 3.2, or Brightline exercises its 90-day exit under Clause 10, the product cannot be manufactured anywhere else without re-tooling from scratch: months of delay and a second six-figure bill, with the original moulds sitting in the counterparty&rsquo;s plant as leverage. Paid-for tooling that you do not own converts every future negotiation into a ransom discussion.</p>
+        <p class="lbl-line redl">Proposed redline</p>
+        <div class="redline">
+          <p>4.2 <del>Notwithstanding Buyer&rsquo;s payment under Clause 4.1, all Tooling shall be and remain the sole and exclusive property of Manufacturer.</del> <ins>All Tooling paid for by Buyer shall be and remain the sole and exclusive property of Buyer. Manufacturer shall mark each item of Tooling as &ldquo;Property of Atelier Nord SAS&rdquo;, maintain it in good working order (fair wear and tear excepted), insure it, and not use it for any other customer.</ins></p>
+          <p>4.3 <del>Manufacturer shall have no obligation to release or transfer any Tooling to Buyer or to any third party at any time, including upon expiry or termination of this Agreement.</del> <ins>Manufacturer shall release the Tooling, together with associated CAD files, tooling drawings and process documentation, to Buyer or its nominee within fifteen (15) days of written request, subject only to payment of undisputed invoices then due. Buyer may audit the Tooling on reasonable notice once per year.</ins></p>
+        </div>
+        <p class="backline"><a href="#riskmap">&uarr; Back to risk map</a></p>
+      </article>
+
+      <!-- Clause 5 -->
+      <article class="clause f-red" id="clause-5">
+        <div class="margin-chip"><span class="chip red">Red</span><span class="chip-sub">Blocker</span></div>
+        <h3><span class="cnum">Clause 5</span>Intellectual property</h3>
+        <blockquote class="excerpt">
+          <p><span class="sub">5.1</span>Buyer grants Manufacturer a non-exclusive licence to use Buyer&rsquo;s designs, drawings and specifications solely to perform its obligations under this Agreement.</p>
+          <p><span class="sub">5.2</span>Any modifications, improvements, process know-how or derivative works created by Manufacturer in the course of manufacturing, whether based on Buyer&rsquo;s designs or otherwise, shall be the sole and exclusive property of Manufacturer, and are hereby licensed to Buyer on a non-exclusive basis for the Term of this Agreement.</p>
+          <span class="src">Draft as received &mdash; Brightline paper</span>
+        </blockquote>
+        <p class="lbl-line bites">Why it bites</p>
+        <p class="body">Clause 5.2 quietly transfers the crown jewels. Every design-for-manufacturing revision, every tweak to your enclosure, every process refinement <em>to your own product</em> becomes Brightline&rsquo;s property, licensed back to you only for the Term. Walk away &mdash; or be walked away from under Clause 10 &mdash; and the licence dies: Atelier Nord could find itself unable to manufacture the current revision of its own device, because the as-built design now legally belongs to its former manufacturer. Combined with Clause 4 (they keep the tools) and Clause 1.2 (they may serve competitors), this clause is the lock on the cage.</p>
+        <p class="lbl-line redl">Proposed redline</p>
+        <div class="redline">
+          <p>5.2 Any modifications, improvements or derivative works <del>created by Manufacturer in the course of manufacturing, whether based on Buyer&rsquo;s designs or otherwise, shall be the sole and exclusive property of Manufacturer, and are hereby licensed to Buyer on a non-exclusive basis for the Term of this Agreement</del> <ins>of or to Buyer&rsquo;s designs, specifications or Products, whenever and by whomever created, shall be the sole and exclusive property of Buyer, and Manufacturer hereby assigns them to Buyer as they arise, including the right to file for registered protection. Manufacturer retains ownership of its general-purpose manufacturing processes and know-how of general application not specific to the Products, and grants Buyer a perpetual, irrevocable, royalty-free licence to the extent any such know-how is embodied in the Products or required to manufacture them</ins>.</p>
+        </div>
+        <div class="law-note">
+          <b>French-law note</b>
+          French law construes intellectual-property assignments narrowly: transfers must be express, and their scope delimited (the logic of art. L.131-3 of the Code de la propri&eacute;t&eacute;-intellectuelle). There is no American-style &ldquo;work made for hire&rdquo; shortcut. That cuts both ways &mdash; it is precisely why the assignment back to Atelier Nord in the redline must be explicit, present-tense and delimited, not implied.
+        </div>
+        <p class="backline"><a href="#riskmap">&uarr; Back to risk map</a></p>
+      </article>
+
+      <!-- Clause 6 -->
+      <article class="clause f-amber" id="clause-6">
+        <div class="margin-chip"><span class="chip amber">Amber</span><span class="chip-sub">Negotiate</span></div>
+        <h3><span class="cnum">Clause 6</span>Quality, inspection &amp; acceptance</h3>
+        <blockquote class="excerpt">
+          <p><span class="sub">6.1</span>The Products shall conform to the Specifications set out in Exhibit A.</p>
+          <p><span class="sub">6.2</span>Buyer shall inspect the Products within seven (7) days of delivery EXW Shenzhen. Products not rejected in writing within such period shall be deemed irrevocably accepted.</p>
+          <p><span class="sub">6.3</span>Rejected Products shall be returned to Manufacturer at Buyer&rsquo;s cost for analysis by Manufacturer, whose determination as to the cause of any alleged defect shall be final.</p>
+          <span class="src">Draft as received &mdash; Brightline paper</span>
+        </blockquote>
+        <p class="lbl-line bites">Why it bites</p>
+        <p class="body">Seven days from EXW means the acceptance window closes while the container is still on the water &mdash; sea freight from Shenzhen to Le Havre takes four to five weeks. As drafted, every shipment is &ldquo;irrevocably accepted&rdquo; before anyone at Atelier Nord has physically seen a unit, and 6.3 then makes Brightline judge and party on any defect it deigns to consider. The clause also shortens what the default rules would give you: under the Vienna Sales Convention, which would otherwise govern a France&ndash;China sale, the buyer has a reasonable period to examine and notify (arts. 38&ndash;39 CISG) &mdash; the draft both excludes the Convention (Clause 11) and replaces its standard with an impossible one.</p>
+        <p class="lbl-line redl">Proposed redline</p>
+        <div class="redline">
+          <p>6.2 Buyer shall inspect the Products within <del>seven (7) days of delivery EXW Shenzhen</del> <ins>thirty (30) days of arrival at Buyer&rsquo;s designated facility. Latent defects may be notified within thirty (30) days of discovery, and no acceptance shall waive claims for defects not reasonably discoverable on incoming inspection</ins>. Products not rejected in writing within such period shall be deemed <del>irrevocably</del> accepted.</p>
+          <p>6.3 Rejected Products shall be returned to Manufacturer at <del>Buyer&rsquo;s</del> <ins>Manufacturer&rsquo;s</ins> cost for analysis <del>by Manufacturer, whose determination as to the cause of any alleged defect shall be final</del> <ins>. If the parties disagree on the cause of a defect, an independent laboratory jointly appointed shall determine it, its findings binding and its costs borne by the party found responsible. Sampling for incoming inspection shall follow the AQL levels agreed in Exhibit A</ins>.</p>
+        </div>
+        <p class="backline"><a href="#riskmap">&uarr; Back to risk map</a></p>
+      </article>
+
+      <!-- Clause 7 -->
+      <article class="clause f-amber" id="clause-7">
+        <div class="margin-chip"><span class="chip amber">Amber</span><span class="chip-sub">Negotiate</span></div>
+        <h3><span class="cnum">Clause 7</span>Warranty</h3>
+        <blockquote class="excerpt">
+          <p><span class="sub">7.1</span>Manufacturer warrants that the Products will be free from defects in workmanship for a period of six (6) months from the date of delivery EXW Shenzhen.</p>
+          <p><span class="sub">7.2</span>Manufacturer&rsquo;s sole obligation, and Buyer&rsquo;s exclusive remedy, in respect of any breach of this warranty shall be the repair or replacement of the defective Product.</p>
+          <p><span class="sub">7.3</span>This warranty does not extend to defects arising from Buyer&rsquo;s design, and all other warranties, express or implied, are disclaimed to the maximum extent permitted by law.</p>
+          <span class="src">Draft as received &mdash; Brightline paper</span>
+        </blockquote>
+        <p class="lbl-line bites">Why it bites</p>
+        <p class="body">The warranty gap lands on your P&amp;L. A seller of consumer goods in France owes its customers the two-year legal guarantee of conformity (garantie l&eacute;gale de conformit&eacute;, Code de la consommation) &mdash; that obligation is mandatory and does not shrink because your supplier gave you less. Six months from the factory gate is, after freight, customs, warehousing and retail shelf time, perhaps three months of real coverage after the first unit reaches a customer: Atelier Nord would carry roughly 21 of 24 months of field-failure risk alone. Repair-or-replace as the exclusive remedy also excludes the costs that actually hurt &mdash; return freight, rework labour, and any systematic defect across a batch.</p>
+        <p class="lbl-line redl">Proposed redline</p>
+        <div class="redline">
+          <p>7.1 Manufacturer warrants that the Products will be free from defects in <ins>materials and</ins> workmanship for a period of <del>six (6) months from the date of delivery EXW Shenzhen</del> <ins>twenty-four (24) months from delivery to the end customer, or thirty (30) months from delivery to Buyer, whichever expires first</ins>.</p>
+          <p>7.2 &hellip; repair or replacement of the defective Product<ins>, including freight in both directions and Buyer&rsquo;s reasonable handling costs</ins>.</p>
+          <p><ins>7.4 (new &mdash; epidemic failure) If Products exhibiting the same root-cause defect exceed two percent (2%) of any delivered batch or of units fielded in any rolling six-month period, Manufacturer shall, in addition to Clause 7.2: conduct and share a root-cause analysis, implement corrective action across work in progress and inventory, and bear the reasonable, documented costs of any recall or field-repair campaign to the extent attributable to the defect.</ins></p>
+        </div>
+        <p class="backline"><a href="#riskmap">&uarr; Back to risk map</a></p>
+      </article>
+
+      <!-- Clause 8 -->
+      <article class="clause f-red" id="clause-8">
+        <div class="margin-chip"><span class="chip red">Red</span><span class="chip-sub">Blocker</span></div>
+        <h3><span class="cnum">Clause 8</span>Limitation of liability &amp; indemnity</h3>
+        <blockquote class="excerpt">
+          <p><span class="sub">8.1</span>Manufacturer&rsquo;s aggregate liability under or in connection with this Agreement shall not exceed the price paid by Buyer under the specific purchase order giving rise to the claim.</p>
+          <p><span class="sub">8.2</span>In no event shall Manufacturer be liable for any indirect, incidental, special or consequential damages, loss of profit, loss of business, or the costs of any product recall, however arising.</p>
+          <p><span class="sub">8.3</span>Buyer shall indemnify and hold harmless Manufacturer against all third-party claims arising out of or in connection with the Products, except to the extent caused by Manufacturer&rsquo;s wilful misconduct.</p>
+          <span class="src">Draft as received &mdash; Brightline paper</span>
+        </blockquote>
+        <p class="lbl-line bites">Why it bites</p>
+        <p class="body">Read 8.1 and 8.3 together and the asymmetry is stark: Brightline&rsquo;s total exposure is one purchase order, while Atelier Nord indemnifies Brightline &mdash; uncapped &mdash; for essentially everything the product does in the world, including harm caused by Brightline&rsquo;s own manufacturing defects (only &ldquo;wilful misconduct&rdquo; is carved out; negligence is not). And 8.2 excludes recall costs by name &mdash; for a consumer-hardware company, the recall is not a hypothetical, it is the single largest realistic loss scenario, and this clause hands all of it to you even when the defect was theirs.</p>
+        <p class="lbl-line redl">Proposed redline</p>
+        <div class="redline">
+          <p>8.1 <del>Manufacturer&rsquo;s</del> <ins>Each party&rsquo;s</ins> aggregate liability &hellip; shall not exceed <del>the price paid by Buyer under the specific purchase order giving rise to the claim</del> <ins>the greater of (a) the amounts paid or payable by Buyer under this Agreement in the twelve (12) months preceding the claim and (b) EUR 500,000</ins>.</p>
+          <p>8.2 &hellip; <del>or the costs of any product recall, however arising</del> <ins>. The limitations in this Clause 8 shall not apply to: death or personal injury; gross negligence or wilful misconduct; breach of Clause 5 (Intellectual Property) or Clause 9 (Confidentiality); or the costs of a recall or field-repair campaign to the extent caused by a defect in materials or workmanship</ins>.</p>
+          <p>8.3 <del>Buyer shall indemnify and hold harmless Manufacturer against all third-party claims arising out of or in connection with the Products, except to the extent caused by Manufacturer&rsquo;s wilful misconduct.</del> <ins>Each party shall indemnify the other against third-party claims to the extent caused by its own breach, negligence or wilful misconduct. Manufacturer shall in addition indemnify Buyer against claims that components selected and sourced by Manufacturer infringe third-party intellectual-property rights.</ins></p>
+        </div>
+        <div class="law-note">
+          <b>French-law note</b>
+          Under French law, a limitation clause cannot empty the debtor&rsquo;s essential obligation of its substance (C. civ. art. 1170 &mdash; such a clause is deemed unwritten), and no cap survives faute lourde or dol (the logic of C. civ. art. 1231-3). A one-PO cap on a manufacturer&rsquo;s core duty to deliver conforming goods would be vulnerable on both grounds &mdash; <em>if French law applied</em>. The draft chooses PRC law (Clause 11), which is precisely why that clause, not this one, is where those guardrails are won or lost.
+        </div>
+        <p class="backline"><a href="#riskmap">&uarr; Back to risk map</a></p>
+      </article>
+
+      <!-- Clause 9 -->
+      <article class="clause f-green" id="clause-9">
+        <div class="margin-chip"><span class="chip green">Green</span><span class="chip-sub">Acceptable</span></div>
+        <h3><span class="cnum">Clause 9</span>Confidentiality</h3>
+        <blockquote class="excerpt">
+          <p><span class="sub">9.1</span>Each party shall keep confidential all non-public information disclosed by the other party in connection with this Agreement, shall use it solely to perform this Agreement, and shall protect it with no less than reasonable care.</p>
+          <p><span class="sub">9.2</span>These obligations survive for five (5) years after expiry or termination of this Agreement and, in respect of trade secrets, for so long as the information remains a trade secret.</p>
+          <p><span class="sub">9.3</span>Standard exclusions apply: information publicly available, independently developed, rightfully received from a third party, or required to be disclosed by law or a competent authority.</p>
+          <span class="src">Draft as received &mdash; Brightline paper</span>
+        </blockquote>
+        <p class="lbl-line fine">Why it is fine</p>
+        <p class="body">Mutual, purpose-limited, a five-year tail with an indefinite trade-secret carve-out, and orthodox exclusions &mdash; this is market standard and even slightly better than many OEM drafts. One refinement worth asking for, though not worth a fight: an express flow-down obliging Brightline to bind its subcontractors and affiliates to equivalent terms before they see your designs. Note that the real confidentiality risk in this deal sits in Clauses 1.2 and 5.2, not here &mdash; a clean NDA clause does not help if the improvements themselves belong to the other side.</p>
+        <p class="backline"><a href="#riskmap">&uarr; Back to risk map</a></p>
+      </article>
+
+      <!-- Clause 10 -->
+      <article class="clause f-amber" id="clause-10">
+        <div class="margin-chip"><span class="chip amber">Amber</span><span class="chip-sub">Negotiate</span></div>
+        <h3><span class="cnum">Clause 10</span>Term &amp; termination</h3>
+        <blockquote class="excerpt">
+          <p><span class="sub">10.1</span>This Agreement shall have an initial term of three (3) years, automatically renewing for successive one (1) year periods unless either party gives one hundred eighty (180) days&rsquo; written notice of non-renewal.</p>
+          <p><span class="sub">10.2</span>Manufacturer may terminate this Agreement for convenience upon ninety (90) days&rsquo; written notice. Buyer may terminate only for a material breach by Manufacturer that remains uncured sixty (60) days after written notice.</p>
+          <p><span class="sub">10.3</span>Upon termination for any reason, Buyer shall purchase all finished goods, work in progress and raw materials then held by Manufacturer.</p>
+          <span class="src">Draft as received &mdash; Brightline paper</span>
+        </blockquote>
+        <p class="lbl-line bites">Why it bites</p>
+        <p class="body">The exit doors are unequal. Brightline can walk on 90 days&rsquo; notice &mdash; potentially stranding you mid-production with your moulds behind its fence (Clause 4) and your improved design in its name (Clause 5) &mdash; while Atelier Nord is locked for three years unless it can prove uncured material breach, a threshold that slow quality erosion never quite crosses. Clause 10.3 then makes leaving expensive in every scenario, including one where <em>they</em> terminate: an unbounded buy-out of whatever inventory they happen to hold, compounding the binding-forecast exposure in Clause 2. One notch below red only because the cure-based exit does exist; treat it as a package with Clauses 1, 2 and 4.</p>
+        <p class="lbl-line redl">Proposed redline</p>
+        <div class="redline">
+          <p>10.2 <del>Manufacturer</del> <ins>Either party</ins> may terminate this Agreement for convenience upon <del>ninety (90)</del> <ins>one hundred eighty (180)</ins> days&rsquo; written notice<ins>, not effective before the eighteenth (18th) month of the Term</ins>. <ins>Buyer may additionally terminate on thirty (30) days&rsquo; notice for a material breach remaining uncured sixty (60) days after written notice, or immediately upon Manufacturer&rsquo;s insolvency.</ins></p>
+          <p>10.3 Upon termination <del>for any reason</del> <ins>other than for Manufacturer&rsquo;s breach</ins>, Buyer shall purchase <del>all finished goods, work in progress and raw materials then held by Manufacturer</del> <ins>finished goods and work in progress attributable to firm purchase orders, and long-lead components under Clause 2.3, at documented cost and net of mitigation. Manufacturer shall provide reasonable transition assistance, including a final production run at then-current prices and the tooling release under Clause 4.3</ins>.</p>
+        </div>
+        <p class="backline"><a href="#riskmap">&uarr; Back to risk map</a></p>
+      </article>
+
+      <!-- Clause 11 -->
+      <article class="clause f-red" id="clause-11">
+        <div class="margin-chip"><span class="chip red">Red</span><span class="chip-sub">Blocker</span></div>
+        <h3><span class="cnum">Clause 11</span>Governing law &amp; arbitration</h3>
+        <blockquote class="excerpt">
+          <p><span class="sub">11.1</span>This Agreement shall be governed by the laws of the People&rsquo;s Republic of China, excluding its conflict-of-laws rules and excluding the United Nations Convention on Contracts for the International Sale of Goods.</p>
+          <p><span class="sub">11.2</span>Any dispute arising out of or in connection with this Agreement shall be finally settled by arbitration in Shenzhen, administered by an arbitration commission designated by Manufacturer, before a sole arbitrator, with proceedings conducted in the Chinese language.</p>
+          <span class="src">Draft as received &mdash; Brightline paper</span>
+        </blockquote>
+        <p class="lbl-line bites">Why it bites</p>
+        <p class="body">Home law, home seat, home language, and an arbitral institution the counterparty picks &mdash; this clause quietly determines the value of all the others, because a right you cannot realistically enforce is a suggestion. For a French startup, arbitrating in Shenzhen, in Mandarin, under PRC law, before a sole arbitrator, is an economic impossibility below seven-figure claims. Note the tell in 11.1: the draft goes out of its way to exclude the Vienna Sales Convention (CISG) &mdash; the one neutral, well-tested body of sales law that would otherwise apply by default between French and Chinese parties, both states being contracting parties. Keep arbitration itself: an arbitral award travels into mainland China under the New York Convention far better than a French court judgment would. The fight is over law, seat and language &mdash; not over arbitration.</p>
+        <p class="lbl-line redl">Proposed redline</p>
+        <div class="redline">
+          <p>11.1 This Agreement shall be governed by <del>the laws of the People&rsquo;s Republic of China, excluding its conflict-of-laws rules and excluding the United Nations Convention on Contracts for the International Sale of Goods</del> <ins>the United Nations Convention on Contracts for the International Sale of Goods and, for matters not governed by it, French law</ins>. <span class="rl-note">Fallback if refused: Swiss law with CISG &mdash; a recognised neutral in EU&ndash;China manufacturing deals.</span></p>
+          <p>11.2 Any dispute &hellip; shall be finally settled <del>by arbitration in Shenzhen, administered by an arbitration commission designated by Manufacturer, before a sole arbitrator, with proceedings conducted in the Chinese language</del> <ins>under the ICC Rules of Arbitration, seated in Geneva, in the English language, before a sole arbitrator for claims up to EUR 1,000,000 and three arbitrators above</ins>. <span class="rl-note">Fallback: SIAC in Singapore &mdash; a common midpoint both sides can present internally as neutral.</span></p>
+        </div>
+        <p class="backline"><a href="#riskmap">&uarr; Back to risk map</a></p>
+      </article>
+
+      <!-- Clause 12 -->
+      <article class="clause f-green" id="clause-12">
+        <div class="margin-chip"><span class="chip green">Green</span><span class="chip-sub">Acceptable</span></div>
+        <h3><span class="cnum">Clause 12</span>Force majeure</h3>
+        <blockquote class="excerpt">
+          <p><span class="sub">12.1</span>Neither party shall be liable for any failure or delay caused by events beyond its reasonable control, including acts of God, war, epidemic, fire, flood or governmental action, provided the affected party notifies the other within ten (10) days and uses reasonable efforts to mitigate. Increases in the cost of materials, components or labour shall not constitute force majeure.</p>
+          <p><span class="sub">12.2</span>If a force majeure event continues for more than ninety (90) days, either party may terminate the affected purchase orders without liability.</p>
+          <span class="src">Draft as received &mdash; Brightline paper</span>
+        </blockquote>
+        <p class="lbl-line fine">Why it is fine</p>
+        <p class="body">Mutual, with a notice duty, a mitigation duty, a 90-day exit for either side, and &mdash; unusually disciplined for a manufacturer&rsquo;s draft &mdash; an express statement that cost increases are not force majeure, which closes the loophole most abused in supply relationships. No changes proposed. It is worth pausing on the contrast: the same drafter who wrote this balanced clause wrote Clause 8. The imbalance elsewhere is a choice, not a house style &mdash; which tells you it is negotiable.</p>
+        <p class="backline"><a href="#riskmap">&uarr; Back to risk map</a></p>
+      </article>
+
+    </section>
+
+    <!-- ================= IV. MISSING CLAUSES ================= -->
+    <section class="block" id="missing">
+      <div class="sec-head"><span class="num">IV.</span><h2>What the draft doesn&rsquo;t say</h2></div>
+      <p class="body" style="max-width:66ch;margin-bottom:22px;">Silence in a contract is drafting too. Protections a manufacturing agreement of this kind should contain, and this one omits:</p>
+      <ul class="missing">
+        <li><b>Regulatory compliance for the EU market.</b> <span class="why-miss">No warranty that Products as manufactured will conform to the EU requirements applicable to consumer electronics (CE marking support, RoHS, REACH, WEEE documentation). Atelier Nord bears those obligations at import; the party controlling materials and process should stand behind them.</span></li>
+        <li><b>Manufacturer-side IP indemnity.</b> <span class="why-miss">Brightline selects and sources components. If one of them infringes a third party&rsquo;s patent, the infringement claim will land on the importer &mdash; you. Addressed in the Clause 8 redline; if that redline is resisted, it must survive as a standalone clause.</span></li>
+        <li><b>Insurance.</b> <span class="why-miss">No obligation on Brightline to carry product-liability cover. Ask for evidence of a policy at a sensible level (EUR 5 million per occurrence is a common ask at this scale) naming the risk, renewed annually.</span></li>
+        <li><b>Subcontracting control.</b> <span class="why-miss">Nothing prevents Brightline from quietly subcontracting production. Require prior written consent, plus flow-down of quality, confidentiality and compliance obligations.</span></li>
+        <li><b>Labour &amp; environmental compliance.</b> <span class="why-miss">No warranty of compliance with applicable labour, safety and environmental laws, and no audit right. Beyond ethics, EU supply-chain due-diligence expectations make this a commercial necessity for a consumer brand.</span></li>
+        <li><b>Business continuity &amp; data escrow.</b> <span class="why-miss">No escrow of build documentation (BOM, test procedures, firmware-flashing images, as-built CAD). Paired with the tooling-release right in Clause 4.3, an escrow turns &ldquo;we could re-source in theory&rdquo; into a plan.</span></li>
+      </ul>
+    </section>
+
+    <!-- ================= V. PRIORITIES ================= -->
+    <section class="block" id="priorities">
+      <div class="sec-head"><span class="num">V.</span><h2>Negotiation priorities</h2></div>
+
+      <div class="tier">
+        <div class="tier-head walk"><h3>Tier one &mdash; walk-away points</h3><span>these move, or the deal does not close</span></div>
+        <ol class="prio" style="--prio-start:0;">
+          <li><b>Tooling title (Clause 4).</b> You pay, you own, released on demand with the drawings. Without this, every later negotiation happens with your moulds behind their fence.</li>
+          <li><b>IP in your own design (Clause 5).</b> Improvements and DFM revisions to your product are assigned to you as they arise; Brightline keeps only its generic process know-how.</li>
+          <li><b>Forum and law (Clause 11).</b> Neutral seat, English language, CISG-based law. Concede this and every other clause you win becomes decorative.</li>
+          <li><b>Liability symmetry (Clause 8).</b> Mutual 12-month cap with carve-outs; the one-way indemnity deleted; manufacturing-defect recall costs inside the cap&rsquo;s carve-outs.</li>
+          <li><b>Forecast &amp; MOQ sizing (Clause 2).</b> Sixty days binding with tiered flexibility; batch-sized MOQs; component liability limited to an agreed long-lead list, net of mitigation.</li>
+        </ol>
+      </div>
+
+      <div class="tier">
+        <div class="tier-head trade"><h3>Tier two &mdash; trade currency</h3><span>real asks, and what to sell them for</span></div>
+        <ol class="prio" style="--prio-start:5;">
+          <li><b>Exclusivity (Clause 1).</b> Brightline wants it badly &mdash; so sell it, gated on performance and capped by a 20% second-source right, in exchange for tier-one concessions on tooling and MOQs.<span class="give">Give: keep them exclusive while they perform. Get: Clauses 2 and 4.</span></li>
+          <li><b>Warranty term &amp; epidemic failure (Clause 7).</b> Push for 24 months and the epidemic-failure clause; accept 18 months from delivery-to-Buyer as a fallback if the 2% epidemic trigger survives.<span class="give">Give: warranty length. Never give: the epidemic-failure mechanism.</span></li>
+          <li><b>Term &amp; exit symmetry (Clause 10).</b> Accept the three-year term if convenience termination becomes mutual from month 18 and the termination buy-out is scoped to firm orders.<span class="give">Give: the long term they want. Get: a door that opens from your side too.</span></li>
+          <li><b>Price mechanics &amp; payment (Clause 3).</b> Accept indexed quarterly adjustments (capped) in exchange for 30/70 payment with the balance after inspection, FOB terms.<span class="give">Give: indexation. Get: your payment leverage back.</span></li>
+        </ol>
+      </div>
+
+      <div class="tier">
+        <div class="tier-head hold"><h3>Tier three &mdash; accept as drafted</h3><span>do not spend negotiating capital here</span></div>
+        <ol class="prio" style="--prio-start:9;">
+          <li><b>Confidentiality (Clause 9)</b> and <b>force majeure (Clause 12)</b> are fair as written. Ask for the subcontractor flow-down on Clause 9 as a courtesy point, and move on. Signalling that you know what <em>not</em> to fight is itself leverage.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ================= CLOSING ================= -->
+    <div class="closing">
+      <p>For completeness: the drafting throughout is professional and internally consistent, the definitions are clean, and the two green clauses are genuinely fair &mdash; this reads like a counterparty that negotiates seriously and expects you to. The whole document was reviewed, not only the clauses flagged above; Exhibits A&ndash;C were referenced but not provided, and should be reviewed before signature as they carry the specifications, prices and tooling costs on which several flags depend. Given the amounts at stake for a first production run, have a licensed attorney &mdash; ideally one with China manufacturing experience &mdash; review the final negotiated text before execution.</p>
+      <div class="signature">
+        <div class="sig-rule"></div>
+        <div class="sig-name">The Lawyer</div>
+        <div class="sig-title">Split &mdash; Office of Counsel &middot; Matter AN-2026-014</div>
+      </div>
+    </div>
+
+  </div><!-- /sheet-inner -->
+
+  <!-- ================= DISCLAIMER ================= -->
+  <div class="disclaimer">
+    <b>Demonstration document &mdash; not legal advice</b>
+    <p>Atelier Nord SAS, Shenzhen Brightline Electronics Ltd, the agreement quoted, and the matter reference are entirely fictional, created to demonstrate the contract-review capability of Split&rsquo;s Lawyer expert. This memorandum is a risk assessment for discussion, not legal advice, and not a substitute for a licensed attorney. Before signing any real agreement of this kind, have it reviewed by counsel qualified in the relevant jurisdictions. Split and its operators decline any liability arising from use of this document.</p>
+  </div>
+
+  <div class="colophon">
+    <span>Contract risk review &middot; 12 clauses &middot; buyer side &middot; French-law lens</span>
+    <span class="made">Made with Split &mdash; Lawyer expert &middot; 2026</span>
+  </div>
+
+</div><!-- /sheet -->
+
+<script>
+(function(){
+  // Filter: show all / red / amber / green — drives both the risk map and the clause articles via CSS.
+  var buttons = document.querySelectorAll('.filters button');
+  function setFilter(name){
+    document.body.setAttribute('data-filter', name);
+    buttons.forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-set') === name);
+    });
+  }
+  buttons.forEach(function(b){
+    b.addEventListener('click', function(){ setFilter(b.getAttribute('data-set')); });
+  });
+
+  // Risk-map rows jump to their clause. Reset the filter first so the target is never hidden.
+  document.querySelectorAll('tr.rm').forEach(function(row){
+    row.addEventListener('click', function(){
+      setFilter('all');
+      var target = document.getElementById(row.getAttribute('data-target'));
+      if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+})();
+</script>
+</body>
+</html>

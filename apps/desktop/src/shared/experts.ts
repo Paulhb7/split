@@ -79,6 +79,11 @@ export interface DeliverableExample {
   desc: string;
   /** Launch-ready instruction filled into the composer on click. */
   prompt: string;
+  /** Piece folder under `config/library/<slug>/` (e.g. "01-agentic-ai") when a
+   * real showcase deliverable backs this card — the Gallery then swaps the
+   * faux-render SVG for the piece's thumbnail and offers "open the real piece"
+   * (see `library_index` in lib.rs). Absent → SVG fallback, no viewer. */
+  lib?: string;
 }
 
 /** True when the expert is hidden from the active picker (composer, @-mention,

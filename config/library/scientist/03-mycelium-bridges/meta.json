@@ -1,0 +1,10 @@
+{
+  "expert": "scientist",
+  "key": "mycelium-bridges",
+  "type": "graph",
+  "title": "Mycelium idea bridges",
+  "desc": "Two fields, connected",
+  "brief": "An interactive idea-bridge map connecting mycology and materials science, treating mycelium as a structural material. A d3 force-directed graph places concepts from each field as nodes in two hues, with bridge ideas as glowing connector nodes (mycelium composites, self-healing living material, acoustic panels, mushroom packaging, mycelium bricks, Fine Mycelium leather, fungal electronics, mycotecture off-planet, Fungateria, insulation biocomposites, fungal computing, mycorrhizal carbon storage). Clicking any node opens a side panel with a two-sentence explanation and one real, July-2026-verified reference. 35 curated nodes, no generated filler.",
+  "da": "Bioluminescent forest: deep moss-charcoal background, spore-white jade and chanterelle-amber glowing nodes, glowing gold bridges, organic curved links, drifting spores, serif Fraunces labels, quiet legend, hover pulse.",
+  "generated": "2026-07-03"
+}

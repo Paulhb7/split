@@ -1,0 +1,10 @@
+{
+  "expert": "engineer",
+  "key": "apex-racer",
+  "type": "app",
+  "title": "Apex",
+  "desc": "Arcade racer, playable",
+  "brief": "A genuinely playable pseudo-3D arcade racer in the classic road-into-the-horizon style (segmented-road projection, à la SEGA OutRun), pure Canvas2D in one self-contained file. You accelerate, brake and steer a punchy red car down a winding coast highway with hills, curves and roadside palms, rocks and signs whipping past; centrifugal force pushes you wide on the corners so drifting and near-misses feel good. A live speedometer, a distance/score counter, a lap and checkpoint tracker, and a countdown timer you extend by blasting through glowing checkpoint gates. Traffic cars to weave through, with escalating speed and density. Crash is a spin-out and slow-down, not instant death; run the clock to zero and it's game over with a distance score, a saved best and restart. Keyboard (arrows/WASD, P to pause) plus on-screen touch pads, real 60fps fixed-timestep loop, easing, dust/drift particles, screen shake and WebAudio blips (muted by default), prefers-reduced-motion respected.",
+  "da": "Bright arcade-cabinet daytime: vivid cyan sky with a warm glowing sun and puffy clouds, saturated green roadside over warm grey asphalt with red-and-white rumble strips, a punchy red #7 player car, chunky 90s-arcade HUD in a bold condensed racing display face (Racing Sans One) — sunny and energetic, explicitly not synthwave-neon.",
+  "generated": "2026-07-03"
+}

@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mycelium idea bridges · where mycology meets materials science</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Spline+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<style>
+  :root{
+    --bg0:#0a120e;          /* deep moss-charcoal */
+    --bg1:#0d1813;
+    --bg2:#101f18;
+    --ink:#e9f2e7;          /* spore-white */
+    --ink-dim:#9db2a4;
+    --ink-faint:#5f7568;
+    --hair:rgba(150,190,165,.14);
+
+    --myco-core:#e2f3e2;    /* spore-white with jade cast */
+    --myco-glow:#5fd39a;    /* bioluminescent jade */
+    --mat-core:#ffdca0;     /* chanterelle cream */
+    --mat-glow:#e5a44c;     /* chanterelle amber */
+    --bridge-core:#fff6dc;  /* luminous ivory */
+    --bridge-glow:#ffd06a;  /* amber-gold halo */
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(120% 90% at 78% 8%, rgba(90,155,110,.10), transparent 55%),
+      radial-gradient(130% 110% at 12% 100%, rgba(230,164,76,.08), transparent 60%),
+      linear-gradient(160deg, var(--bg1), var(--bg0) 60%, #070d0a);
+    color:var(--ink);
+    font-family:"Spline Sans",-apple-system,system-ui,sans-serif;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  #spores{position:fixed;inset:0;z-index:0;pointer-events:none}
+  #stage{position:fixed;inset:0;z-index:1}
+  svg{display:block;width:100%;height:100%;cursor:grab}
+  svg:active{cursor:grabbing}
+
+  /* ---------- links ---------- */
+  .link{fill:none;stroke:rgba(150,196,168,.16);stroke-width:1.1px;transition:stroke .35s, stroke-width .35s, opacity .35s}
+  .link.hot{stroke:rgba(255,232,178,.62);stroke-width:1.7px}
+  .link.dim{opacity:.06}
+
+  /* ---------- nodes ---------- */
+  .node{cursor:pointer}
+  .halo{opacity:.85;transition:opacity .4s}
+  .core{transition:transform .3s cubic-bezier(.2,.9,.25,1), filter .3s}
+  .ring{fill:none;stroke-width:1.1px;opacity:0}
+  .node text{
+    font-family:"Fraunces",serif;
+    font-optical-sizing:auto;
+    fill:var(--ink);
+    text-anchor:middle;
+    paint-order:stroke;
+    stroke:rgba(6,12,9,.85);
+    stroke-width:3px;
+    stroke-linejoin:round;
+    pointer-events:none;
+    transition:opacity .35s, fill .35s;
+    -webkit-user-select:none;user-select:none;
+  }
+  .node.myco text{font-weight:400}
+  .node.mat text{font-weight:400}
+  .node.bridge text{font-weight:600;fill:#fff6dc}
+  .node.faded{opacity:.16}
+  .node.faded text{opacity:.10}
+  .node.sel .ring{opacity:.9}
+  .node.sel .core{filter:brightness(1.18)}
+
+  /* ---------- title ---------- */
+  #title{position:fixed;z-index:5;top:26px;left:30px;max-width:min(46vw,520px)}
+  #title .kicker{
+    font-family:"Spline Sans";font-size:11px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--myco-glow);opacity:.85;margin:0 0 10px;
+  }
+  #title h1{
+    font-family:"Fraunces",serif;font-weight:500;font-optical-sizing:auto;
+    font-size:clamp(28px,3.4vw,46px);line-height:1.02;margin:0;letter-spacing:-.01em;
+    color:var(--ink);
+  }
+  #title h1 em{font-style:italic;font-weight:400;color:var(--mat-glow)}
+  #title p.sub{
+    font-family:"Fraunces",serif;font-weight:300;font-size:clamp(13px,1.15vw,16px);
+    line-height:1.45;color:var(--ink-dim);margin:12px 0 0;max-width:42ch;
+  }
+
+  /* ---------- about (exec summary) ---------- */
+  #about{margin-top:16px;font-family:"Spline Sans"}
+  #about summary{
+    display:inline-flex;align-items:center;gap:8px;cursor:pointer;list-style:none;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);
+    border:1px solid var(--hair);border-radius:20px;padding:6px 13px;
+    background:rgba(12,22,17,.55);backdrop-filter:blur(6px);transition:color .25s,border-color .25s;
+  }
+  #about summary:hover{color:var(--ink);border-color:rgba(150,196,168,.4)}
+  #about summary::-webkit-details-marker{display:none}
+  #about summary .dot{width:6px;height:6px;border-radius:50%;background:var(--bridge-glow);box-shadow:0 0 8px var(--bridge-glow)}
+  #about[open] summary .dot{background:var(--myco-glow);box-shadow:0 0 8px var(--myco-glow)}
+  #about .card{
+    margin-top:10px;max-width:min(52vw,540px);
+    background:rgba(11,20,15,.82);backdrop-filter:blur(10px);
+    border:1px solid var(--hair);border-radius:14px;padding:16px 18px;
+    box-shadow:0 24px 60px -30px rgba(0,0,0,.8);
+  }
+  #about .card h4{
+    font-family:"Spline Sans";font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--mat-glow);margin:0 0 3px;
+  }
+  #about .card h4:not(:first-child){margin-top:13px}
+  #about .card p{font-size:12.5px;line-height:1.55;color:var(--ink-dim);margin:0}
+  #about .card p b{color:var(--ink);font-weight:500}
+
+  /* ---------- legend ---------- */
+  #legend{
+    position:fixed;z-index:5;left:30px;bottom:26px;
+    background:rgba(11,20,15,.66);backdrop-filter:blur(8px);
+    border:1px solid var(--hair);border-radius:14px;padding:14px 16px;
+    display:flex;flex-direction:column;gap:10px;min-width:186px;
+  }
+  #legend .lg-h{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:1px}
+  #legend .row{display:flex;align-items:center;gap:11px;cursor:pointer;padding:2px 0;transition:opacity .25s}
+  #legend .row.off{opacity:.32}
+  #legend .sw{width:13px;height:13px;border-radius:50%;flex:0 0 auto}
+  #legend .sw.myco{background:radial-gradient(circle at 35% 30%,#fff,var(--myco-glow));box-shadow:0 0 10px var(--myco-glow)}
+  #legend .sw.mat{background:radial-gradient(circle at 35% 30%,#fff2d8,var(--mat-glow));box-shadow:0 0 10px var(--mat-glow)}
+  #legend .sw.bridge{width:15px;height:15px;background:radial-gradient(circle at 35% 30%,#fff,var(--bridge-glow));box-shadow:0 0 14px var(--bridge-glow),0 0 4px #fff}
+  #legend .lb{font-family:"Fraunces",serif;font-size:14px;color:var(--ink)}
+  #legend .ct{margin-left:auto;font-size:11px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+  #legend .hint{font-size:10.5px;color:var(--ink-faint);line-height:1.4;margin-top:2px;max-width:20ch}
+
+  /* ---------- side panel ---------- */
+  #panel{
+    position:fixed;z-index:8;top:0;right:0;height:100%;width:min(400px,90vw);
+    background:linear-gradient(180deg, rgba(13,24,18,.96), rgba(9,15,12,.98));
+    backdrop-filter:blur(14px);
+    border-left:1px solid rgba(150,196,168,.18);
+    box-shadow:-40px 0 90px -50px rgba(0,0,0,.9);
+    transform:translateX(102%);transition:transform .5s cubic-bezier(.16,1,.3,1);
+    display:flex;flex-direction:column;padding:30px 30px 26px;
+  }
+  #panel.open{transform:translateX(0)}
+  #panel .close{
+    position:absolute;top:20px;right:22px;width:30px;height:30px;border-radius:50%;
+    border:1px solid var(--hair);background:transparent;color:var(--ink-dim);cursor:pointer;
+    font-size:16px;line-height:1;transition:color .2s,border-color .2s;
+  }
+  #panel .close:hover{color:var(--ink);border-color:rgba(150,196,168,.45)}
+  #panel .chip{
+    display:inline-flex;align-items:center;gap:7px;align-self:flex-start;
+    font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    padding:5px 12px;border-radius:20px;border:1px solid var(--hair);color:var(--ink-dim);
+  }
+  #panel .chip .cdot{width:7px;height:7px;border-radius:50%}
+  #panel h2{
+    font-family:"Fraunces",serif;font-weight:500;font-optical-sizing:auto;
+    font-size:30px;line-height:1.08;letter-spacing:-.01em;margin:16px 0 0;color:var(--ink);
+  }
+  #panel .blurb{
+    font-family:"Fraunces",serif;font-weight:300;font-size:16.5px;line-height:1.55;
+    color:var(--ink-dim);margin:16px 0 0;
+  }
+  #panel .conn{margin-top:20px}
+  #panel .conn .lab{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:9px}
+  #panel .conn .tags{display:flex;flex-wrap:wrap;gap:7px}
+  #panel .conn .tag{
+    font-family:"Fraunces",serif;font-size:12.5px;padding:4px 10px;border-radius:8px;cursor:pointer;
+    border:1px solid var(--hair);color:var(--ink-dim);transition:color .2s,border-color .2s,background .2s;
+  }
+  #panel .conn .tag:hover{color:var(--ink);border-color:rgba(150,196,168,.4);background:rgba(150,196,168,.06)}
+  #panel .ref{
+    margin-top:auto;padding-top:20px;border-top:1px solid var(--hair);
+  }
+  #panel .ref .lab{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+  #panel .ref a{
+    color:var(--bridge-glow);text-decoration:none;font-size:13.5px;line-height:1.5;
+    font-family:"Fraunces",serif;display:inline-flex;gap:6px;align-items:baseline;
+    border-bottom:1px solid rgba(255,208,106,.28);transition:border-color .2s;
+  }
+  #panel .ref a:hover{border-color:var(--bridge-glow)}
+  #panel .ref a .arr{font-family:"Spline Sans";opacity:.7}
+
+  /* ---------- sources drawer ---------- */
+  #srcBtn{
+    position:fixed;z-index:6;right:26px;bottom:26px;
+    font-family:"Spline Sans";font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink-dim);background:rgba(11,20,15,.66);backdrop-filter:blur(8px);
+    border:1px solid var(--hair);border-radius:22px;padding:11px 18px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:9px;transition:color .2s,border-color .2s;
+  }
+  #srcBtn:hover{color:var(--ink);border-color:rgba(150,196,168,.42)}
+  #srcBtn .dot{width:6px;height:6px;border-radius:50%;background:var(--mat-glow);box-shadow:0 0 8px var(--mat-glow)}
+  #srcSheet{
+    position:fixed;z-index:9;inset:0;background:rgba(6,11,8,.72);backdrop-filter:blur(4px);
+    opacity:0;pointer-events:none;transition:opacity .35s;display:flex;justify-content:center;align-items:flex-start;
+  }
+  #srcSheet.open{opacity:1;pointer-events:auto}
+  #srcSheet .inner{
+    margin-top:min(9vh,90px);width:min(720px,92vw);max-height:78vh;overflow:auto;
+    background:linear-gradient(180deg,rgba(14,25,19,.98),rgba(9,15,12,.99));
+    border:1px solid rgba(150,196,168,.2);border-radius:18px;padding:30px 34px;
+    box-shadow:0 40px 100px -40px rgba(0,0,0,.9);
+  }
+  #srcSheet h3{font-family:"Fraunces",serif;font-weight:500;font-size:24px;margin:0 0 4px}
+  #srcSheet .sub{font-size:12.5px;color:var(--ink-dim);margin:0 0 20px;line-height:1.5}
+  #srcSheet ol{margin:0;padding:0;list-style:none;counter-reset:s}
+  #srcSheet li{
+    counter-increment:s;padding:11px 0 11px 34px;position:relative;border-top:1px solid var(--hair);
+  }
+  #srcSheet li:before{
+    content:counter(s,decimal-leading-zero);position:absolute;left:0;top:12px;
+    font-family:"Spline Sans";font-size:10.5px;color:var(--ink-faint);letter-spacing:.05em;
+  }
+  #srcSheet li a{color:var(--ink);text-decoration:none;font-family:"Fraunces",serif;font-size:15px;line-height:1.35;border-bottom:1px solid transparent;transition:border-color .2s,color .2s}
+  #srcSheet li a:hover{color:var(--bridge-glow);border-color:var(--bridge-glow)}
+  #srcSheet li .u{display:block;font-family:"Spline Sans";font-size:11px;color:var(--ink-faint);margin-top:3px;word-break:break-all}
+  #srcSheet .closeS{position:absolute;top:22px;right:26px;background:none;border:none;color:var(--ink-dim);font-size:22px;cursor:pointer;line-height:1}
+  #srcSheet .note{margin-top:20px;padding-top:16px;border-top:1px solid var(--hair);font-size:11.5px;color:var(--ink-faint);line-height:1.55}
+
+  /* first-run hint */
+  #hint{
+    position:fixed;z-index:5;left:50%;bottom:32px;transform:translateX(-50%);
+    font-family:"Fraunces",serif;font-style:italic;font-size:14px;color:var(--ink-dim);
+    background:rgba(11,20,15,.5);border:1px solid var(--hair);border-radius:20px;padding:8px 18px;
+    backdrop-filter:blur(6px);pointer-events:none;transition:opacity .6s;
+    display:flex;align-items:center;gap:9px;
+  }
+  #hint .p{width:7px;height:7px;border-radius:50%;background:var(--bridge-glow);box-shadow:0 0 10px var(--bridge-glow);animation:pulse 2.2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.6)}}
+
+  @media (max-width:760px){
+    #title{max-width:70vw;top:20px;left:18px}
+    #about .card{max-width:80vw}
+    #legend{left:18px;bottom:18px}
+    #hint{display:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="spores"></canvas>
+<div id="stage"></div>
+
+<div id="title">
+  <p class="kicker">Split · Scientist · Idea bridge</p>
+  <h1>Mycelium <em>idea bridges</em></h1>
+  <p class="sub">Two fields — the biology of fungal threads and the science of engineered materials — and the load-bearing analogies that let one grow the other.</p>
+
+  <details id="about">
+    <summary><span class="dot"></span> About this piece</summary>
+    <div class="card">
+      <h4>Why</h4>
+      <p>A map of the strongest analogies between <b>mycology</b> and <b>materials science</b> — the idea that a fungus's branching body can be grown, tuned, and killed into a structural material.</p>
+      <h4>Context</h4>
+      <p>The mycelium-materials market was ~<b>US$3.6 B in 2025</b> and is projected to reach ~US$7.9 B by 2035. Every dated claim, company, and paper here was verified against July-2026 sources; each node carries one real reference.</p>
+      <h4>How to use it</h4>
+      <p>Drag to explore. <b>Amber nodes</b> are materials-science concepts, <b>jade nodes</b> are mycology, <b>glowing gold nodes</b> are the bridges. Click any node for a two-sentence explanation and its source.</p>
+      <h4>What I assumed</h4>
+      <p>Source field = mycology · Donor = materials science · Boundary = structural / functional materials (not food or medicine) · 35 curated nodes, no generated filler.</p>
+    </div>
+  </details>
+</div>
+
+<div id="legend">
+  <div class="lg-h">Legend — click to isolate</div>
+  <div class="row" data-type="myco"><span class="sw myco"></span><span class="lb">Mycology</span><span class="ct" id="ct-myco"></span></div>
+  <div class="row" data-type="bridge"><span class="sw bridge"></span><span class="lb">Bridge idea</span><span class="ct" id="ct-bridge"></span></div>
+  <div class="row" data-type="mat"><span class="sw mat"></span><span class="lb">Materials science</span><span class="ct" id="ct-mat"></span></div>
+  <div class="hint">Bridges connect a fungal mechanism to a material property.</div>
+</div>
+
+<button id="srcBtn"><span class="dot"></span> Sources</button>
+
+<div id="hint"><span class="p"></span> Tap a glowing node</div>
+
+<aside id="panel">
+  <button class="close" aria-label="Close">✕</button>
+  <span class="chip"><span class="cdot"></span><span class="ctype"></span></span>
+  <h2></h2>
+  <p class="blurb"></p>
+  <div class="conn">
+    <div class="lab">Connects</div>
+    <div class="tags"></div>
+  </div>
+  <div class="ref">
+    <div class="lab">Reference · verified July 2026</div>
+    <a href="#" target="_blank" rel="noopener"><span class="rt"></span><span class="arr">↗</span></a>
+  </div>
+</aside>
+
+<div id="srcSheet">
+  <div class="inner">
+    <button class="closeS" aria-label="Close">✕</button>
+    <h3>Sources</h3>
+    <p class="sub">Every node's claim is anchored to one real, working reference, checked against July-2026 sources. Preprints (arXiv, Research Square) are flagged as not yet peer-reviewed.</p>
+    <ol id="srcList"></ol>
+    <p class="note">Honesty note: MycoWorks (Fine Mycelium leather / Hermès Sylvania) became insolvent in October 2025; its intellectual property was acquired into a new Denver entity in 2026 — the material and the Hermès collaboration are real and historic, the original company is not currently operating. Mechanical figures for mycelium remain well below concrete; the honest claim is <em>tunability and non-structural fit</em>, not a steel replacement.</p>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Mycelium idea bridges — d3 force-directed map
+   Art direction: bioluminescent forest
+   ============================================================ */
+
+const FIELD = {
+  myco:   {label:"Mycology",          core:"#e2f3e2", glow:"#5fd39a", r:10},
+  mat:    {label:"Materials science", core:"#ffdca0", glow:"#e5a44c", r:10},
+  bridge: {label:"Bridge idea",       core:"#fff6dc", glow:"#ffd06a", r:17}
+};
+
+const NODES = [
+  /* ---------- MYCOLOGY ---------- */
+  {id:"M1", type:"myco", label:"Hyphae",
+   blurb:"Fungi grow as hyphae — microscopic branching tubes a few microns wide that extend at their tips and fuse into a mesh. Their walls are stiffened by chitin, the same polymer that armours insect shells.",
+   ref:{t:"Material Function of Mycelium-Based Bio-Composite: A Review — Frontiers in Materials (2021)", u:"https://www.frontiersin.org/journals/materials/articles/10.3389/fmats.2021.737377/full"}},
+  {id:"M2", type:"myco", label:"Mycelium network",
+   blurb:"The mycelium is the collective felt of hyphae — a self-assembling, three-dimensional network that colonises whatever it can digest. Grown in a mould it becomes a continuous solid with no glue, heat, or cutting.",
+   ref:{t:"Mycelium-based composites: an updated comprehensive overview — Biotechnology Advances (2025)", u:"https://www.sciencedirect.com/science/article/pii/S0734975025000035"}},
+  {id:"M3", type:"myco", label:"Chitin & glucan walls",
+   blurb:"Hyphal walls are a chitin–glucan composite: crystalline chitin fibrils in a softer polysaccharide matrix. Shifting that ratio during growth moves the material from soft and rubbery to stiff and board-like.",
+   ref:{t:"Advanced materials from fungal mycelium: fabrication and tuning of physical properties — Scientific Reports (2017)", u:"https://www.nature.com/articles/srep41292"}},
+  {id:"M4", type:"myco", label:"Fruiting body",
+   blurb:"The mushroom is only the reproductive organ; the working body is the hidden mycelium below. Different species yield mats with very different density, colour, and hand-feel.",
+   ref:{t:"Our Fine Mycelium Materials — MycoWorks", u:"https://www.mycoworks.com/materials"}},
+  {id:"M5", type:"myco", label:"Lignocellulose digestion",
+   blurb:"Fungi secrete enzymes that break down lignin and cellulose in dead plant matter, letting them feed on straw, sawdust, and crop residue. That appetite for agricultural waste is what makes them cheap manufacturing 'workers'.",
+   ref:{t:"The Fungus Among Us: Innovations and Applications of Mycelium-Based Composites — PMC (2025)", u:"https://pmc.ncbi.nlm.nih.gov/articles/PMC12387367/"}},
+  {id:"M6", type:"myco", label:"Reishi / Ganoderma",
+   blurb:"Ganoderma species grow dense, tough mats prized for leather-like sheets. MycoWorks' patented Fine Mycelium steers this growth so hyphae interlock into a stronger, more uniform tissue.",
+   ref:{t:"MycoWorks — Wikipedia (company history, incl. 2025 insolvency)", u:"https://en.wikipedia.org/wiki/MycoWorks"}},
+  {id:"M7", type:"myco", label:"Neurospora crassa",
+   blurb:"Red bread mould, a fast-growing lab workhorse, was used as the living scaffold in 2025's self-healing building material. Its dense hyphal mesh houses bacteria and keeps the material metabolically alive.",
+   ref:{t:"Living fungus-based building material repairs itself for over a month — ScienceDaily (Apr 2025)", u:"https://www.sciencedaily.com/releases/2025/04/250416135352.htm"}},
+  {id:"M8", type:"myco", label:"Electrical signalling",
+   blurb:"Fungal networks generate spikes of electrical potential and shift their impedance in response to light, chemicals, and touch. That makes living mycelium a candidate substrate for sensing and unconventional computing.",
+   ref:{t:"Fungal electronics — Biosystems / arXiv (Adamatzky, 2021) · preprint", u:"https://arxiv.org/abs/2111.11231"}},
+  {id:"M9", type:"myco", label:"Mycorrhizal networks",
+   blurb:"Underground, fungi wire themselves to plant roots and trade nutrients for plant carbon across vast distances. In 2026 SPUN published the first global map of these networks — long enough to reach the Sun nearly a billion times over.",
+   ref:{t:"First global map of mycorrhizal fungi reveals true scale of underground networks — phys.org (June 2026)", u:"https://phys.org/news/2026-06-global-mycorrhizal-fungi-reveals-true.html"}},
+  {id:"M10", type:"myco", label:"Biomineralising symbiosis",
+   blurb:"Fungi readily co-culture with bacteria, sharing a scaffold while the microbes do chemistry the fungus can't. Pairing mycelium with calcite-precipitating bacteria turns a soft mat into a mineral-reinforced solid.",
+   ref:{t:"Self-healing fungus-based building material lasts over a month — ScienceDaily (Apr 2025)", u:"https://www.sciencedaily.com/releases/2025/04/250416135352.htm"}},
+  {id:"M11", type:"myco", label:"Spent substrate",
+   blurb:"After a mushroom harvest, tonnes of colonised straw and sawdust are discarded as 'spent substrate'. Re-grown or re-bound, that same waste becomes the feedstock for acoustic and packaging panels.",
+   ref:{t:"Mycelium-bound composites from agro-industrial waste for broadband acoustic absorption — Materials & Design (2025)", u:"https://www.sciencedirect.com/science/article/pii/S0264127525000115"}},
+
+  /* ---------- MATERIALS SCIENCE ---------- */
+  {id:"X1", type:"mat", label:"Composite materials",
+   blurb:"A composite marries a load-bearing reinforcement with a binder that transfers stress between fibres. Mycelium is unusual: the fungus grows the binder in place, threading living fibre through a substrate of dead plant particles.",
+   ref:{t:"A Review of Mycelium-Based Composites in Architectural and Design Applications — Sustainability / MDPI (2025)", u:"https://www.mdpi.com/2071-1050/17/24/11350"}},
+  {id:"X2", type:"mat", label:"Strength & modulus",
+   blurb:"How much a material resists pulling (strength) and stretching (elastic modulus) sets what it can be used for. Mycelium composites are still weak versus concrete, but their stiffness can be tuned several-fold by feedstock and growth time.",
+   ref:{t:"Gradient porous structures of mycelium: a quantitative structure–mechanical property analysis — Scientific Reports (2023)", u:"https://www.nature.com/articles/s41598-023-45842-5"}},
+  {id:"X3", type:"mat", label:"Thermal insulation",
+   blurb:"Low thermal conductivity comes from trapping air in a fine, tortuous pore network. Biohm's mycelium insulation reaches ~0.03 W/m·K, competitive with the polystyrene foams it aims to replace.",
+   ref:{t:"Biohm: Mycelium & Food Waste to Create Regenerative Construction Materials — vegconomist", u:"https://vegconomist.com/materials/biohm-regenerative-construction-materials/"}},
+  {id:"X4", type:"mat", label:"Acoustic absorption",
+   blurb:"Porous, tortuous materials dissipate sound by turning air motion into heat inside their pores. Mycelium's open hyphal foam absorbs broadband noise, especially when 3D-printed molds add Helmholtz-tuned perforations.",
+   ref:{t:"Mycelium-bound composites for broadband acoustic absorption — Materials & Design (2025)", u:"https://www.sciencedirect.com/science/article/pii/S0264127525000115"}},
+  {id:"X5", type:"mat", label:"Fire resistance",
+   blurb:"Char-forming materials that release little heat and smoke resist flame spread. Mycelium composites show lower peak heat-release and smoke than EPS and many synthetic foams.",
+   ref:{t:"A Review of Mycelium-Based Composites in Architectural and Design Applications — MDPI (2025)", u:"https://www.mdpi.com/2071-1050/17/24/11350"}},
+  {id:"X6", type:"mat", label:"Self-healing materials",
+   blurb:"Materials that repair their own cracks extend service life and cut waste, usually via embedded capsules or vascular networks. A living material heals differently — its resident organisms simply grow back.",
+   ref:{t:"Living fungus-based building material repairs itself for over a month — ScienceDaily (Apr 2025)", u:"https://www.sciencedaily.com/releases/2025/04/250416135352.htm"}},
+  {id:"X7", type:"mat", label:"Biofabrication",
+   blurb:"Biofabrication grows a product from living cells instead of machining or moulding it from stock. Mycelium turns a factory into a farm: seed, feed, grow to shape in days, then heat-kill.",
+   ref:{t:"Ecovative — We grow better materials", u:"https://ecovative.com/"}},
+  {id:"X8", type:"mat", label:"Foam / plastic replacement",
+   blurb:"Expanded polystyrene is light, cheap, and effectively immortal in landfill. Grown mushroom foam matches its cushioning while composting in about a month, using roughly a tenth of plastic's energy.",
+   ref:{t:"IKEA switches to biodegradable mushroom-based packaging (Ecovative) — Global Citizen", u:"https://www.globalcitizen.org/en/content/mushroom-fungi-packaging-ikea-decompose-ecovative/"}},
+  {id:"X9", type:"mat", label:"Leather & textiles",
+   blurb:"Animal leather carries heavy land, water, and tanning burdens; plastic 'vegan' leather is fossil-derived. Fungal sheets aim to match leather's strength and hand without either.",
+   ref:{t:"Our Fine Mycelium Materials — MycoWorks", u:"https://www.mycoworks.com/materials"}},
+  {id:"X10", type:"mat", label:"Load-bearing structure",
+   blurb:"Structural materials must carry compression without crushing. Mycelium bricks blended with clay and lime reach ~3.5–3.8 N/mm² — enough for non-load-bearing walls, not yet a column.",
+   ref:{t:"Development and Performance Evaluation of Mycelium-Based Bricks for Rural Housing — Research Square (2025) · preprint", u:"https://www.researchsquare.com/article/rs-7894429/v1"}},
+  {id:"X11", type:"mat", label:"Carbon-negative",
+   blurb:"Embodied carbon is the emissions baked into a material before it is ever used. Because mycelium eats farm waste and locks carbon into its body, well-made panels can be carbon-negative.",
+   ref:{t:"Mycelium is 'part of the solution' to carbon-negative buildings — Dezeen", u:"https://www.dezeen.com/2021/06/25/carbon-negative-buildings-mycelium-insulation-fire-proofing/"}},
+  {id:"X12", type:"mat", label:"Additive manufacturing",
+   blurb:"3D printing places material only where structure needs it, and shapes internal geometry no mould can. Robotic extrusion of fungal paste prints acoustic and structural parts, then lets the fungus fuse them solid.",
+   ref:{t:"Advanced Architectural Acoustics through Robotic Extrusion-Based AM of Fungal Biomaterials — Applied Sciences / MDPI (2025)", u:"https://www.mdpi.com/2076-3417/15/10/5587"}},
+
+  /* ---------- BRIDGES ---------- */
+  {id:"B1", type:"bridge", label:"Mycelium composites",
+   blurb:"The load-bearing bridge: hyphae grow through loose agri-waste and bind it into a rigid, lightweight foam with no glue or heat. This single idea underwrites packaging, insulation, panels, and bricks.",
+   ref:{t:"Mycelium-based composites: an updated comprehensive overview — Biotechnology Advances (2025)", u:"https://www.sciencedirect.com/science/article/pii/S0734975025000035"}},
+  {id:"B2", type:"bridge", label:"Mushroom packaging",
+   blurb:"Ecovative's MycoComposite grows protective foam around a product in a week and composts in ~30 days, using a fraction of plastic's energy. IKEA and Dell have piloted it to retire styrofoam.",
+   ref:{t:"IKEA switches to biodegradable mushroom-based packaging (Ecovative) — Global Citizen", u:"https://www.globalcitizen.org/en/content/mushroom-fungi-packaging-ikea-decompose-ecovative/"}},
+  {id:"B3", type:"bridge", label:"Fine Mycelium leather",
+   blurb:"MycoWorks engineered hyphae to interlock into a leather-grade sheet, which Hermès finished into the 2021 'Sylvania' Victoria bag — matching leather on tensile, abrasion, and colourfastness tests. (MycoWorks went insolvent in Oct 2025; its IP moved to a new Denver entity in 2026.)",
+   ref:{t:"Introducing Sylvania by Hermès — MycoWorks", u:"https://www.mycoworks.com/introducing-sylvania-by-hermes"}},
+  {id:"B4", type:"bridge", label:"Acoustic panels",
+   blurb:"Spent-mushroom foam grown in 3D-printed molds delivers broadband sound absorption, with Helmholtz perforations tuned for low frequencies. It converts a waste stream directly into acoustic ceiling tiles.",
+   ref:{t:"Mycelium-Based Composites for Interior Architecture: Acoustic Ceiling Components — PMC (2025)", u:"https://pmc.ncbi.nlm.nih.gov/articles/PMC12650300/"}},
+  {id:"B5", type:"bridge", label:"Self-healing living material",
+   blurb:"A 2025 Montana State team grew Neurospora crassa into a scaffold, then added Sporosarcina pasteurii bacteria that mineralise calcite — keeping the material alive and self-repairing for over a month. Published in Cell Reports Physical Science.",
+   ref:{t:"Living fungus-based building material repairs itself for over a month — ScienceDaily (Apr 2025)", u:"https://www.sciencedaily.com/releases/2025/04/250416135352.htm"}},
+  {id:"B6", type:"bridge", label:"Mycelium bricks",
+   blurb:"The Living's 40-ft Hy-Fi tower (MoMA PS1, 2014) stacked ~10,000 grown, compostable bricks, engineered by Arup. Newer clay/lime-mycelium bricks push compressive strength toward non-load-bearing wall use.",
+   ref:{t:"Tower of 'grown' bio-bricks by The Living opens at MoMA PS1 (Hy-Fi) — Dezeen", u:"https://www.dezeen.com/2014/07/01/tower-of-grown-bio-bricks-by-the-living-opens-at-moma-ps1-gallery/"}},
+  {id:"B7", type:"bridge", label:"Insulation biocomposites",
+   blurb:"Grown panels trap air in a fine hyphal foam, reaching thermal conductivity near polystyrene while being fire-safer and compostable. Biohm and Mogu are commercialising them for walls and ceilings.",
+   ref:{t:"Biohm: Mycelium & Food Waste to Create Regenerative Construction Materials — vegconomist", u:"https://vegconomist.com/materials/biohm-regenerative-construction-materials/"}},
+  {id:"B8", type:"bridge", label:"Fungal electronics",
+   blurb:"Living mycelium spikes and changes impedance to light, gas, and pressure, so it can act as a self-growing sensor. In 2025 researchers bioprinted fungal networks onto stretchable electronics — 'mycoelectronics'.",
+   ref:{t:"Mycoelectronics: Bioprinted living fungal bioelectronics for artificial sensation — PNAS (2025)", u:"https://www.pnas.org/doi/abs/10.1073/pnas.2530456123"}},
+  {id:"B9", type:"bridge", label:"Mycotecture off-planet",
+   blurb:"NASA's Mycotecture Off Planet (Lynn Rothschild, Ames) grows habitat walls by seeding fungi into inflatable frames packed with wood chips. In 2025 it won a $2M NIAC Phase III award toward a demonstration mission.",
+   ref:{t:"NASA Advances Research to Grow Habitats in Space from Fungi (2025)", u:"https://www.nasa.gov/news-release/nasa-advances-research-to-grow-habitats-in-space-from-fungi/"}},
+  {id:"B10", type:"bridge", label:"Fungateria (ELMs)",
+   blurb:"The EU-funded Fungateria project fuses mycelium with bacteria to make adaptable, self-healing 'engineered living materials' that survive drought and heat. The consortium runs its collaboration into late 2026.",
+   ref:{t:"From mushrooms to new architecture: the rise of living, self-healing buildings — Horizon Magazine (EU)", u:"https://projects.research-and-innovation.ec.europa.eu/en/horizon-magazine/mushrooms-new-architecture-rise-living-self-healing-buildings"}},
+  {id:"B11", type:"bridge", label:"Fungal computing",
+   blurb:"Fungal networks solve routing and transport problems as they forage, and their electrical dynamics can be read as a reservoir computer. Andrew Adamatzky's Bristol lab builds sensing and computing devices from living fungi.",
+   ref:{t:"Fungal architecture — arXiv (Adamatzky et al., 2019) · preprint", u:"https://arxiv.org/pdf/1912.13262"}},
+  {id:"B12", type:"bridge", label:"Carbon storage",
+   blurb:"Beyond built materials, living fungal networks route roughly 4 billion tonnes of CO₂-equivalent of plant carbon into soil each year — about 11% of human CO₂ emissions. SPUN's 2026 global map argues these networks are a climate asset worth protecting.",
+   ref:{t:"First global map of mycorrhizal fungi reveals true scale of underground networks — EurekAlert (2026)", u:"https://www.eurekalert.org/news-releases/1131131"}}
+];
+
+const LINKS = [
+  /* mycology internal */
+  ["M1","M2"],["M1","M3"],["M2","M5"],["M2","M11"],["M4","M6"],["M2","M9"],["M7","M10"],["M8","M9"],
+  /* materials internal */
+  ["X1","X2"],["X1","X7"],["X3","X4"],["X7","X8"],["X10","X1"],["X11","X7"],
+  /* cross seed: chitin gives strength */
+  ["M3","X2"],
+  /* bridges */
+  ["B1","M2"],["B1","M5"],["B1","X1"],["B1","X7"],
+  ["B2","M11"],["B2","X8"],["B2","X7"],
+  ["B3","M6"],["B3","M4"],["B3","X9"],
+  ["B4","M11"],["B4","X4"],["B4","X12"],
+  ["B5","M7"],["B5","M10"],["B5","X6"],
+  ["B6","M2"],["B6","X10"],["B6","X1"],
+  ["B7","M5"],["B7","X3"],["B7","X5"],
+  ["B8","M8"],["B8","X6"],["B8","X7"],
+  ["B9","M2"],["B9","X7"],["B9","X10"],
+  ["B10","M10"],["B10","X6"],["B10","X7"],
+  ["B11","M8"],["B11","M9"],["B11","X7"],
+  ["B12","M9"],["B12","X11"]
+];
+
+/* ---------- setup ---------- */
+const byId = new Map(NODES.map(n=>[n.id,n]));
+const links = LINKS.map(([s,t])=>({source:s,target:t}));
+
+// neighbour adjacency
+const nbr = new Map(NODES.map(n=>[n.id,new Set([n.id])]));
+links.forEach(l=>{ nbr.get(l.source).add(l.target); nbr.get(l.target).add(l.source); });
+
+const stage = document.getElementById("stage");
+let W = window.innerWidth, H = window.innerHeight;
+
+const svg = d3.select(stage).append("svg").attr("viewBox",[0,0,W,H]);
+
+// defs: glow filters
+const defs = svg.append("defs");
+defs.append("filter").attr("id","soft").attr("x","-120%").attr("y","-120%").attr("width","340%").attr("height","340%")
+  .html('<feGaussianBlur stdDeviation="7"/>');
+const glow = defs.append("filter").attr("id","glow").attr("x","-120%").attr("y","-120%").attr("width","340%").attr("height","340%");
+glow.append("feGaussianBlur").attr("stdDeviation","2.4").attr("result","b");
+const gm = glow.append("feMerge"); gm.append("feMergeNode").attr("in","b"); gm.append("feMergeNode").attr("in","SourceGraphic");
+
+const root = svg.append("g");
+
+// zoom / pan
+svg.call(d3.zoom().scaleExtent([0.45,3]).on("zoom",(e)=>root.attr("transform",e.transform)));
+
+const linkSel = root.append("g").selectAll("path")
+  .data(links).join("path").attr("class","link");
+
+const nodeSel = root.append("g").selectAll("g")
+  .data(NODES).join("g")
+  .attr("class",d=>"node "+d.type)
+  .call(d3.drag()
+    .on("start",dragStart).on("drag",dragged).on("end",dragEnd))
+  .on("click",(e,d)=>{ e.stopPropagation(); openPanel(d); })
+  .on("mouseenter",(e,d)=>{ if(!selected) highlight(d.id,true); })
+  .on("mouseleave",()=>{ if(!selected) clearHighlight(); });
+
+// ambient halo (soft light)
+nodeSel.append("circle").attr("class","halo")
+  .attr("r",d=> (d.type==="bridge"?d3Radius(d)*2.4:d3Radius(d)*2.0))
+  .attr("fill",d=>FIELD[d.type].glow)
+  .attr("filter","url(#soft)")
+  .attr("opacity",d=>d.type==="bridge"?0.30:0.20)
+  .each(function(d){
+    if(d.type==="bridge"){
+      const dur = (2.8 + Math.random()*1.6).toFixed(2)+"s";
+      const r0 = d3Radius(d)*2.4;
+      d3.select(this).append("animate").attr("attributeName","r")
+        .attr("values",`${r0};${r0*1.28};${r0}`).attr("dur",dur).attr("repeatCount","indefinite");
+      d3.select(this).append("animate").attr("attributeName","opacity")
+        .attr("values","0.34;0.14;0.34").attr("dur",dur).attr("repeatCount","indefinite");
+    }
+  });
+
+// selection ring
+nodeSel.append("circle").attr("class","ring")
+  .attr("r",d=>d3Radius(d)+6)
+  .attr("stroke",d=>FIELD[d.type].glow);
+
+// core node (radial gradient per type)
+["myco","mat","bridge"].forEach(t=>{
+  const g = defs.append("radialGradient").attr("id","g-"+t).attr("cx","35%").attr("cy","30%").attr("r","75%");
+  g.append("stop").attr("offset","0%").attr("stop-color","#ffffff");
+  g.append("stop").attr("offset","45%").attr("stop-color",FIELD[t].core);
+  g.append("stop").attr("offset","100%").attr("stop-color",FIELD[t].glow);
+});
+nodeSel.append("circle").attr("class","core")
+  .attr("r",d=>d3Radius(d))
+  .attr("fill",d=>"url(#g-"+d.type+")")
+  .attr("filter","url(#glow)")
+  .attr("stroke",d=>d.type==="bridge"?"rgba(255,246,220,.9)":"rgba(255,255,255,.35)")
+  .attr("stroke-width",d=>d.type==="bridge"?1.2:0.6);
+
+// labels
+nodeSel.append("text")
+  .attr("dy",d=>d3Radius(d)+15)
+  .attr("font-size",d=>d.type==="bridge"?"14.5px":"12px")
+  .text(d=>d.label);
+
+function d3Radius(d){ return FIELD[d.type].r; }
+
+/* ---------- simulation ---------- */
+const sim = d3.forceSimulation(NODES)
+  .force("link", d3.forceLink(links).id(d=>d.id)
+    .distance(l=> (l.source.type==="bridge"||l.target.type==="bridge")?96:70)
+    .strength(0.42))
+  .force("charge", d3.forceManyBody().strength(-340))
+  .force("center", d3.forceCenter(W/2, H/2))
+  .force("collide", d3.forceCollide().radius(d=> d3Radius(d)+ (d.type==="bridge"?30:24)).iterations(2))
+  .force("x", d3.forceX(W/2).strength(0.03))
+  .force("y", d3.forceY(H/2).strength(0.045))
+  .on("tick",ticked);
+
+function ticked(){
+  linkSel.attr("d",d=>{
+    const dx=d.target.x-d.source.x, dy=d.target.y-d.source.y;
+    const dr=Math.sqrt(dx*dx+dy*dy)*1.9;
+    return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+  });
+  nodeSel.attr("transform",d=>`translate(${d.x},${d.y})`);
+}
+
+function dragStart(e,d){ if(!e.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; }
+function dragged(e,d){ d.fx=e.x; d.fy=e.y; }
+function dragEnd(e,d){ if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; }
+
+/* ---------- highlight ---------- */
+function highlight(id, soft){
+  const near = nbr.get(id);
+  nodeSel.classed("faded", n=>!near.has(n.id));
+  linkSel.classed("hot", l=> (l.source.id===id||l.target.id===id))
+         .classed("dim", l=> !(l.source.id===id||l.target.id===id));
+}
+function clearHighlight(){
+  if(activeFilter){ applyFilter(activeFilter); return; }
+  nodeSel.classed("faded",false);
+  linkSel.classed("hot",false).classed("dim",false);
+}
+
+/* ---------- side panel ---------- */
+const panel = document.getElementById("panel");
+let selected = null;
+function openPanel(d){
+  selected = d.id;
+  document.getElementById("hint")?.style && (document.getElementById("hint").style.opacity=0);
+  const f = FIELD[d.type];
+  panel.querySelector(".chip .cdot").style.background = f.glow;
+  panel.querySelector(".chip .cdot").style.boxShadow = "0 0 10px "+f.glow;
+  panel.querySelector(".ctype").textContent = f.label;
+  panel.querySelector("h2").textContent = d.label;
+  panel.querySelector(".blurb").textContent = d.blurb;
+  const a = panel.querySelector(".ref a");
+  a.href = d.ref.u; a.querySelector(".rt").textContent = d.ref.t;
+
+  // connections
+  const tags = panel.querySelector(".conn .tags");
+  tags.innerHTML="";
+  const conns = [...nbr.get(d.id)].filter(x=>x!==d.id).map(x=>byId.get(x));
+  conns.sort((a,b)=>a.type.localeCompare(b.type));
+  conns.forEach(c=>{
+    const el=document.createElement("span");
+    el.className="tag"; el.textContent=c.label;
+    el.style.borderColor = FIELD[c.type].glow+"55";
+    el.onclick=()=>openPanel(c);
+    tags.appendChild(el);
+  });
+
+  nodeSel.classed("sel", n=>n.id===d.id);
+  highlight(d.id);
+  panel.classList.add("open");
+}
+function closePanel(){
+  selected=null; panel.classList.remove("open");
+  nodeSel.classed("sel",false);
+  clearHighlight();
+}
+panel.querySelector(".close").onclick=closePanel;
+svg.on("click",()=>{ if(selected) closePanel(); });
+
+/* ---------- legend filter ---------- */
+let activeFilter=null;
+function applyFilter(type){
+  nodeSel.classed("faded", n=> n.type!==type && !(nbr.get(n.id) && [...nbr.get(n.id)].some(id=>byId.get(id).type===type)) );
+  // simpler: fade nodes not of type and not connected to type
+  nodeSel.classed("faded", n=>{
+    if(n.type===type) return false;
+    for(const id of nbr.get(n.id)){ if(byId.get(id).type===type) return false; }
+    return true;
+  });
+  linkSel.classed("dim", l=> !(l.source.type===type||l.target.type===type))
+         .classed("hot", l=> (l.source.type===type||l.target.type===type));
+}
+document.querySelectorAll("#legend .row").forEach(row=>{
+  row.onclick=()=>{
+    const t=row.dataset.type;
+    if(activeFilter===t){ activeFilter=null; document.querySelectorAll("#legend .row").forEach(r=>r.classList.remove("off")); clearHighlight(); return; }
+    activeFilter=t;
+    document.querySelectorAll("#legend .row").forEach(r=>r.classList.toggle("off", r.dataset.type!==t));
+    if(selected) closePanel();
+    applyFilter(t);
+  };
+});
+// counts
+document.getElementById("ct-myco").textContent   = NODES.filter(n=>n.type==="myco").length;
+document.getElementById("ct-mat").textContent    = NODES.filter(n=>n.type==="mat").length;
+document.getElementById("ct-bridge").textContent = NODES.filter(n=>n.type==="bridge").length;
+
+/* ---------- sources sheet ---------- */
+const srcSheet=document.getElementById("srcSheet");
+const seen=new Set(); const srcList=document.getElementById("srcList");
+NODES.forEach(n=>{
+  if(seen.has(n.ref.u)) return; seen.add(n.ref.u);
+  const li=document.createElement("li");
+  li.innerHTML=`<a href="${n.ref.u}" target="_blank" rel="noopener">${n.ref.t}</a><span class="u">${n.ref.u}</span>`;
+  srcList.appendChild(li);
+});
+// extra context source (market)
+(()=>{ const u="https://www.gminsights.com/industry-analysis/mycelium-market";
+  const li=document.createElement("li");
+  li.innerHTML=`<a href="${u}" target="_blank" rel="noopener">Mycelium Market Size & Share 2026–2035 — Global Market Insights</a><span class="u">${u}</span>`;
+  srcList.appendChild(li);
+})();
+document.getElementById("srcBtn").onclick=()=>srcSheet.classList.add("open");
+srcSheet.querySelector(".closeS").onclick=()=>srcSheet.classList.remove("open");
+srcSheet.onclick=(e)=>{ if(e.target===srcSheet) srcSheet.classList.remove("open"); };
+
+/* ---------- drifting spores background ---------- */
+const cv=document.getElementById("spores"), cx=cv.getContext("2d");
+let spores=[];
+function initSpores(){
+  cv.width=W; cv.height=H;
+  const n=Math.round((W*H)/26000);
+  spores=Array.from({length:n},()=>({
+    x:Math.random()*W, y:Math.random()*H,
+    r:Math.random()*1.6+0.4,
+    vx:(Math.random()-0.5)*0.12, vy:(-Math.random()*0.18-0.03),
+    a:Math.random()*0.5+0.15, t:Math.random()*Math.PI*2,
+    hue:Math.random()<0.28?"230,164,76":"120,210,160"
+  }));
+}
+function drawSpores(){
+  cx.clearRect(0,0,W,H);
+  for(const s of spores){
+    s.x+=s.vx; s.y+=s.vy; s.t+=0.02;
+    if(s.y<-4){ s.y=H+4; s.x=Math.random()*W; }
+    if(s.x<-4)s.x=W+4; if(s.x>W+4)s.x=-4;
+    const tw=s.a*(0.55+0.45*Math.sin(s.t));
+    cx.beginPath(); cx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    cx.fillStyle=`rgba(${s.hue},${tw})`;
+    cx.shadowBlur=6; cx.shadowColor=`rgba(${s.hue},${tw})`;
+    cx.fill();
+  }
+  cx.shadowBlur=0;
+  requestAnimationFrame(drawSpores);
+}
+initSpores(); drawSpores();
+
+/* ---------- resize ---------- */
+window.addEventListener("resize",()=>{
+  W=window.innerWidth; H=window.innerHeight;
+  svg.attr("viewBox",[0,0,W,H]);
+  sim.force("center", d3.forceCenter(W/2,H/2));
+  sim.force("x", d3.forceX(W/2).strength(0.03));
+  sim.force("y", d3.forceY(H/2).strength(0.045));
+  sim.alpha(0.3).restart();
+  initSpores();
+});
+
+/* fade the hint after first interaction / delay */
+setTimeout(()=>{ const h=document.getElementById("hint"); if(h) h.style.opacity=0; }, 7000);
+</script>
+</body>
+</html>

@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R.M.S. Titanic — A Statistical Exhibit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<style>
+  :root{
+    --paper:#ece0c3;
+    --paper-lt:#f5ecd8;
+    --paper-dk:#e2d3ae;
+    --ink:#20404a;
+    --ink-soft:#3a5a63;
+    --ink-faint:rgba(32,64,74,.42);
+    --patina:#4e8577;
+    --patina-dk:#2f6154;
+    --patina-lt:#7dab9c;
+    --rule:rgba(32,64,74,.55);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:
+      radial-gradient(1200px 700px at 50% -10%, rgba(255,250,235,.65), transparent 60%),
+      radial-gradient(1400px 900px at 50% 115%, rgba(97,74,32,.16), transparent 60%),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Old Standard TT',Georgia,serif;
+    font-size:16px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .38 0 0 0 0 .31 0 0 0 0 .18 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .sheet{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:34px 30px 60px}
+
+  /* ---------- about (exec summary) ---------- */
+  details.about{
+    border:1px solid var(--rule);
+    background:var(--paper-lt);
+    margin:0 0 30px;
+    font-size:14.5px;
+  }
+  details.about summary{
+    cursor:pointer;list-style:none;
+    padding:9px 16px;
+    font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--ink-soft);
+    display:flex;align-items:center;gap:12px;
+  }
+  details.about summary::-webkit-details-marker{display:none}
+  details.about summary::before{content:"❧";color:var(--patina);letter-spacing:0;font-size:14px}
+  details.about summary .hint{margin-left:auto;letter-spacing:.12em;color:var(--ink-faint);font-style:italic;text-transform:none;font-size:12.5px}
+  details.about[open] summary{border-bottom:1px solid rgba(32,64,74,.25)}
+  .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 30px;padding:16px 20px 18px}
+  .about-grid h4{
+    font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--patina-dk);font-weight:700;margin-bottom:3px;
+  }
+  .about-grid p{color:var(--ink-soft);font-size:14px;line-height:1.5}
+
+  /* ---------- masthead ---------- */
+  .masthead{text-align:center;margin-bottom:14px}
+  .rule-double{border:0;border-top:3px solid var(--ink);position:relative;margin:0 0 3px}
+  .rule-double::after{content:"";display:block;border-top:1px solid var(--ink);margin-top:3px}
+  .rule-double.flip{margin:3px 0 0}
+  .rule-double.flip{border-top-width:1px}
+  .rule-double.flip::after{border-top-width:3px}
+  .masthead .series{
+    font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--ink-soft);
+    margin:14px 0 10px;
+  }
+  .masthead .series b{color:var(--patina-dk);font-weight:700}
+  .masthead h1{
+    font-family:'Cinzel',serif;font-weight:800;
+    font-size:clamp(38px,6.6vw,68px);letter-spacing:.08em;line-height:1.04;
+    color:var(--ink);
+  }
+  .masthead .sub{
+    font-family:'Old Standard TT',serif;font-style:italic;font-weight:400;
+    font-size:clamp(16px,2.2vw,21px);color:var(--ink-soft);margin:10px 0 4px;
+  }
+  .masthead .provenance{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px}
+  .ornament{display:flex;align-items:center;justify-content:center;gap:14px;margin:12px 0}
+  .ornament .line{height:1px;background:var(--rule);flex:0 1 190px}
+  .ornament svg{display:block}
+
+  /* ---------- ledger ---------- */
+  .ledger{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    border:1px solid var(--ink);margin:26px 0 0;background:var(--paper-lt);
+  }
+  .ledger .cell{padding:16px 10px 13px;text-align:center;border-left:1px solid rgba(32,64,74,.25)}
+  .ledger .cell:first-child{border-left:0}
+  .ledger .label{font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--ink-soft)}
+  .ledger .value{
+    font-family:'Cinzel',serif;font-weight:700;font-size:clamp(24px,3.1vw,36px);
+    line-height:1.1;color:var(--ink);margin-top:2px;
+  }
+  .ledger .value small{font-size:.48em;font-weight:700;color:var(--patina-dk);letter-spacing:.02em}
+  .ledger-note{
+    text-align:center;font-style:italic;font-size:13.5px;color:var(--ink-soft);
+    padding:7px 0 0;
+  }
+
+  /* ---------- ticket filters ---------- */
+  .booking{
+    margin:22px 0 8px;border:1px solid var(--rule);background:var(--paper-lt);
+    padding:13px 18px 15px;display:flex;flex-wrap:wrap;gap:12px 34px;align-items:center;justify-content:center;
+  }
+  .booking .group{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .booking .glabel{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-soft);margin-right:2px}
+  .chip{
+    font-family:'Old Standard TT',serif;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink);background:transparent;border:1px solid var(--rule);
+    padding:5px 13px 4px;cursor:pointer;transition:all .14s ease;position:relative;
+  }
+  .chip:hover{border-color:var(--patina-dk);color:var(--patina-dk)}
+  .chip.on{background:var(--ink);color:var(--paper-lt);border-color:var(--ink);box-shadow:inset 0 -2px 0 var(--patina)}
+  .chip:focus-visible{outline:2px solid var(--patina);outline-offset:2px}
+
+  /* ---------- plates ---------- */
+  .plate{
+    position:relative;border:1px solid var(--ink);background:var(--paper-lt);
+    margin:34px 0 0;padding:30px 34px 26px;
+  }
+  .plate::before{
+    content:"";position:absolute;inset:6px;border:1px solid rgba(78,133,119,.55);pointer-events:none;
+  }
+  .plate .corner{
+    position:absolute;width:7px;height:7px;background:var(--patina);
+    transform:rotate(45deg);z-index:2;
+  }
+  .plate .corner.tl{top:2.5px;left:2.5px}.plate .corner.tr{top:2.5px;right:2.5px}
+  .plate .corner.bl{bottom:2.5px;left:2.5px}.plate .corner.br{bottom:2.5px;right:2.5px}
+  .plate-head{text-align:center;margin-bottom:6px}
+  .plate-head .no{
+    font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--patina-dk);font-weight:700;
+  }
+  .plate-head h2{
+    font-family:'Cinzel',serif;font-weight:700;font-size:clamp(19px,2.6vw,25px);
+    letter-spacing:.03em;margin:4px 0 5px;
+  }
+  .plate-head .cap{font-style:italic;font-size:14.5px;color:var(--ink-soft);max-width:640px;margin:0 auto}
+  .plate .foot{
+    margin-top:14px;padding-top:10px;border-top:1px solid rgba(32,64,74,.22);
+    font-size:12.5px;font-style:italic;color:var(--ink-faint);text-align:center;
+  }
+  .divider{display:flex;align-items:center;justify-content:center;gap:12px;margin:36px auto 0;max-width:520px}
+  .divider .line{height:1px;background:var(--rule);flex:1}
+  .divider .diamond{width:6px;height:6px;background:var(--patina);transform:rotate(45deg)}
+
+  /* small multiples */
+  .sm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:16px;margin-top:16px}
+  .sm-panel{border:1px solid rgba(32,64,74,.35);background:var(--paper);padding:12px 14px 8px}
+  .sm-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;border-bottom:1px solid rgba(32,64,74,.2);padding-bottom:6px;margin-bottom:6px}
+  .sm-head .who{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
+  .sm-head .rate{font-family:'Cinzel',serif;font-weight:700;font-size:19px;color:var(--patina-dk);white-space:nowrap}
+  .sm-head .rate small{font-family:'Old Standard TT',serif;font-weight:400;font-size:11.5px;color:var(--ink-faint);font-style:italic;letter-spacing:.02em}
+  .sm-panel svg{width:100%;height:auto;display:block}
+
+  svg text{font-family:'Old Standard TT',serif}
+  svg .num{font-family:'Cinzel',serif;font-weight:600}
+  .chart-wrap svg{width:100%;height:auto;display:block;margin-top:10px}
+
+  /* plate V */
+  .wcf{display:grid;grid-template-columns:1fr 1.25fr;gap:30px;margin-top:18px;align-items:center}
+  .wcf-num .row{display:flex;align-items:baseline;gap:14px;padding:9px 0;border-bottom:1px solid rgba(32,64,74,.18)}
+  .wcf-num .row:last-child{border-bottom:0}
+  .wcf-num .big{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(27px,3.6vw,39px);color:var(--ink);min-width:132px;text-align:right}
+  .wcf-num .big.patina{color:var(--patina-dk)}
+  .wcf-num .lbl{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);line-height:1.45}
+  .wcf-num .lbl i{display:block;text-transform:none;letter-spacing:.02em;font-size:12.5px;color:var(--ink-faint)}
+  .wcf-ratio{
+    margin-top:12px;text-align:center;font-family:'Old Standard TT',serif;font-style:italic;
+    font-size:16.5px;color:var(--ink-soft);border:1px solid rgba(78,133,119,.6);padding:10px 14px;background:var(--paper);
+  }
+  .wcf-ratio b{color:var(--patina-dk);font-style:normal;font-weight:900}
+  #wcfBars svg{width:100%;height:auto;display:block}
+  .wcf-childnote{margin-top:14px;font-style:italic;font-size:14px;color:var(--ink-soft);text-align:center}
+
+  /* curator notes */
+  .notes{margin-top:38px}
+  .notes-head{text-align:center;margin-bottom:18px}
+  .notes-head h2{font-family:'Cinzel',serif;font-weight:700;font-size:23px}
+  .notes-head .no{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--patina-dk);font-weight:700}
+  .note{
+    display:grid;grid-template-columns:74px 1fr;gap:20px;align-items:start;
+    border-top:1px solid rgba(32,64,74,.28);padding:20px 6px;
+  }
+  .note:last-child{border-bottom:1px solid rgba(32,64,74,.28)}
+  .note .rn{
+    font-family:'Cinzel',serif;font-weight:700;font-size:36px;color:var(--patina);
+    text-align:center;line-height:1;padding-top:2px;
+  }
+  .note h3{font-family:'Cinzel',serif;font-weight:600;font-size:16px;letter-spacing:.02em;margin-bottom:6px}
+  .note p{font-size:15px;color:var(--ink-soft)}
+  .note p b{color:var(--ink);font-weight:700}
+
+  /* colophon */
+  .colophon{margin-top:44px;text-align:center}
+  .colophon .meta{font-size:12.5px;font-style:italic;color:var(--ink-faint);max-width:760px;margin:14px auto 0;line-height:1.6}
+  .colophon .mark{
+    margin-top:16px;font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--patina-dk);
+  }
+
+  /* tooltip */
+  #tip{
+    position:fixed;z-index:50;pointer-events:none;display:none;
+    background:var(--paper-lt);border:1px solid var(--ink);color:var(--ink);
+    font-family:'Old Standard TT',serif;font-size:12.5px;line-height:1.4;
+    padding:6px 10px;max-width:240px;box-shadow:3px 3px 0 rgba(32,64,74,.18);
+  }
+  #tip b{font-family:'Cinzel',serif;font-weight:600;font-size:11px}
+
+  @media (max-width:760px){
+    .sheet{padding:22px 14px 40px}
+    .plate{padding:22px 16px 20px}
+    .ledger{grid-template-columns:repeat(2,1fr)}
+    .ledger .cell:nth-child(3){border-left:0;border-top:1px solid rgba(32,64,74,.25)}
+    .ledger .cell:nth-child(4){border-top:1px solid rgba(32,64,74,.25)}
+    .about-grid{grid-template-columns:1fr}
+    .wcf{grid-template-columns:1fr}
+    .note{grid-template-columns:46px 1fr;gap:12px}
+    .note .rn{font-size:30px}
+  }
+</style>
+</head>
+<body>
+<!-- shared engraving patterns -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <pattern id="hatchNavy" width="5" height="5" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="5" stroke="#20404a" stroke-width="1.1" opacity=".55"/>
+    </pattern>
+    <pattern id="hatchNavyLt" width="5" height="5" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="5" stroke="#20404a" stroke-width="1" opacity=".3"/>
+    </pattern>
+    <pattern id="hatchPatina" width="5" height="5" patternTransform="rotate(-45)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="5" stroke="#2f6154" stroke-width="1.1" opacity=".6"/>
+    </pattern>
+  </defs>
+</svg>
+
+<div class="sheet">
+
+  <details class="about">
+    <summary>About this exhibit <span class="hint">curator’s brief — click to unfold</span></summary>
+    <div class="about-grid">
+      <div><h4>Why</h4><p>A showcase analysis of the classic Titanic passenger dataset: who survived the night of 14–15 April 1912, and what the manifest itself says about why — class, sex, age, fare and family, quantified.</p></div>
+      <div><h4>Context</h4><p>The data is the standard 891-passenger teaching extract of the Titanic manifest (not the full passenger list, and no crew). All 891 rows are embedded in this file; every figure recomputes from them, live.</p></div>
+      <div><h4>How to use</h4><p>Read top to bottom like a museum panel. Use the booking-office buttons to restrict every plate to a class, a sex, or both; hover any bar, ribbon or fare tick for the exact count.</p></div>
+      <div><h4>What was assumed</h4><p>177 passengers with no recorded age are excluded from age-based figures only. “Child” means under 16. Family size = siblings/spouses + parents/children + self. Fares are kept in pounds as recorded; 15 zero-fare tickets plot at the left edge.</p></div>
+    </div>
+  </details>
+
+  <header class="masthead">
+    <hr class="rule-double">
+    <div class="series">Data Analyst Series — <b>Exhibit Panel No. III</b> — The Library of Split</div>
+    <div class="ornament" aria-hidden="true">
+      <span class="line"></span>
+      <svg width="30" height="34" viewBox="0 0 30 34">
+        <g fill="none" stroke="#2f6154" stroke-width="1.6" stroke-linecap="round">
+          <circle cx="15" cy="6" r="3.4"/>
+          <line x1="15" y1="9.4" x2="15" y2="27"/>
+          <line x1="8" y1="13.5" x2="22" y2="13.5"/>
+          <path d="M6 21 C6 27.5 10.5 30.5 15 31 C19.5 30.5 24 27.5 24 21 L21 23.5 M24 21 L26.8 23"/>
+          <path d="M6 21 L3.2 23 M6 21 L9 23.5" />
+        </g>
+      </svg>
+      <span class="line"></span>
+    </div>
+    <h1>R.M.S. TITANIC</h1>
+    <div class="sub">A Statistical Account of the Souls Aboard — Survival by Class, Sex &amp; Circumstance</div>
+    <div class="provenance">North Atlantic · night of 14–15 April 1912 · 891 passengers of record</div>
+    <hr class="rule-double flip">
+  </header>
+
+  <!-- ledger -->
+  <section class="ledger" id="ledger" aria-label="Key figures">
+    <div class="cell"><div class="label">Souls in view</div><div class="value" id="lgN">—</div></div>
+    <div class="cell"><div class="label">Saved</div><div class="value" id="lgS">—</div></div>
+    <div class="cell"><div class="label">Lost</div><div class="value" id="lgL">—</div></div>
+    <div class="cell"><div class="label">Median fare</div><div class="value" id="lgF">—</div></div>
+  </section>
+  <div class="ledger-note" id="lgNote">All classes · all passengers</div>
+
+  <!-- booking office / filters -->
+  <nav class="booking" aria-label="Filters">
+    <div class="group" id="fCls">
+      <span class="glabel">Berth</span>
+      <button class="chip on" data-v="all">All classes</button>
+      <button class="chip" data-v="1">First</button>
+      <button class="chip" data-v="2">Second</button>
+      <button class="chip" data-v="3">Third</button>
+    </div>
+    <div class="group" id="fSex">
+      <span class="glabel">Passengers</span>
+      <button class="chip on" data-v="all">Everyone</button>
+      <button class="chip" data-v="f">Women</button>
+      <button class="chip" data-v="m">Men</button>
+    </div>
+  </nav>
+
+  <!-- PLATE I -->
+  <section class="plate" id="plate1">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+    <div class="plate-head">
+      <div class="no">Plate I</div>
+      <h2>Survival by Class, Sex &amp; Age</h2>
+      <div class="cap">Six small multiples, one per berth and sex. Bars give the share saved within each age band; the figure at top right is the group’s overall rate.</div>
+    </div>
+    <div class="sm-grid" id="smGrid"></div>
+    <div class="foot" id="smFoot">Age bands use the 714 passengers whose age was recorded; each panel’s headline rate uses everyone in the group.</div>
+  </section>
+
+  <!-- PLATE II -->
+  <section class="plate" id="plate2">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+    <div class="plate-head">
+      <div class="no">Plate II</div>
+      <h2>The Flow of Fortune</h2>
+      <div class="cap">Every passenger traced from berth, through sex, to outcome. Ribbon breadth is people; verdigris reaches the boats, hatched slate does not.</div>
+    </div>
+    <div class="chart-wrap" id="sankey"></div>
+    <div class="foot">Hover a ribbon for its exact count. The two right-hand ribbons per sex show how sharply the odds divided at the rail.</div>
+  </section>
+
+  <!-- PLATE III -->
+  <section class="plate" id="plate3">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+    <div class="plate-head">
+      <div class="no">Plate III</div>
+      <h2>The Price of Passage</h2>
+      <div class="cap">Each tick is one ticket, placed by fare (logarithmic scale, pounds as recorded). Verdigris ticks were saved; slate were lost. The diamond marks each berth’s median.</div>
+    </div>
+    <div class="chart-wrap" id="fares"></div>
+    <div class="foot" id="faresFoot"></div>
+  </section>
+
+  <!-- PLATE IV -->
+  <section class="plate" id="plate4">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+    <div class="plate-head">
+      <div class="no">Plate IV</div>
+      <h2>The Company You Kept</h2>
+      <div class="cap">Share saved by travelling-party size — the passenger, their siblings and spouse, parents and children aboard.</div>
+    </div>
+    <div class="chart-wrap" id="family"></div>
+    <div class="foot">Across the full sample the curve rises from 30.4% travelling alone to 72.4% in parties of four — then collapses below 20% for parties of five or more, 54 of whose 62 members were berthed in third class.</div>
+  </section>
+
+  <!-- PLATE V -->
+  <section class="plate" id="plate5">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+    <div class="plate-head">
+      <div class="no">Plate V</div>
+      <h2>“Women and Children First,” Quantified</h2>
+      <div class="cap">The order was real, and the manifest can measure it — though it was administered through the ship’s classes, not around them.</div>
+    </div>
+    <div class="wcf">
+      <div class="wcf-num" id="wcfNums"></div>
+      <div>
+        <div id="wcfBars"></div>
+        <div class="wcf-childnote" id="wcfChild"></div>
+      </div>
+    </div>
+    <div class="foot" id="wcfFoot"></div>
+  </section>
+
+  <div class="divider" aria-hidden="true"><span class="line"></span><span class="diamond"></span><span class="line"></span></div>
+
+  <!-- curator's notes -->
+  <section class="notes">
+    <div class="notes-head">
+      <div class="no">Findings</div>
+      <h2>Curator’s Notes</h2>
+    </div>
+    <div class="note">
+      <div class="rn">I</div>
+      <div>
+        <h3>Class was the strongest single line in the ledger.</h3>
+        <p>First class survived at <b>63.0%</b>, second at <b>47.3%</b>, third at <b>24.2%</b> — and the gradient holds <em>within</em> each sex: women fell from <b>96.8%</b> in first to <b>92.1%</b> in second to <b>50.0%</b> in third; men from <b>36.9%</b> to <b>15.7%</b> to <b>13.5%</b>. The purse tells the same story: the median fare of the saved was <b>£26.0</b>, against <b>£10.5</b> for the lost.</p>
+      </div>
+    </div>
+    <div class="note">
+      <div class="rn">II</div>
+      <div>
+        <h3>“Women and children first” is measurable — and class-filtered.</h3>
+        <p>Women survived at <b>74.2%</b> against <b>18.9%</b> for men — <b>3.9×</b> the rate. Children under 16 survived at <b>59.0%</b> against <b>17.4%</b> for adult men. Yet the order passed through the decks unevenly: every second-class child in the sample lived (<b>19 of 19</b>), while in third class fewer than half did (<b>25 of 58</b>, 43.1%). A third-class woman’s odds (<b>50.0%</b>) were only just above a first-class man’s (<b>36.9%</b>).</p>
+      </div>
+    </div>
+    <div class="note">
+      <div class="rn">III</div>
+      <div>
+        <h3>A small family helped; a large one was a liability.</h3>
+        <p>Survival climbs with company — <b>30.4%</b> alone, <b>55.3%</b> in pairs, <b>72.4%</b> in parties of four — then collapses to <b>20.0%</b>, <b>13.6%</b> and <b>16.0%</b> for parties of five, six and seven-plus. The large parties were overwhelmingly third-class (<b>54 of 62</b> passengers), so scale and steerage compounded: harder to gather, and starting further from the boats.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    <div class="divider" aria-hidden="true"><span class="line"></span><span class="diamond"></span><span class="line"></span></div>
+    <div class="meta">
+      Source: the classic 891-passenger Titanic teaching extract (Data Science Dojo mirror of the canonical training split), embedded in this file in full.
+      It covers passengers of record only — neither the complete manifest nor the crew — so rates describe this sample, not the whole ship.
+      Method: 177 unrecorded ages excluded from age-based figures only; “child” = under 16; family size = SibSp + Parch + self; fares in pounds as recorded, 15 zero-fare tickets plotted at the left edge of Plate III.
+    </div>
+    <div class="mark">Made with Split · Data Analyst</div>
+  </footer>
+</div>
+
+<div id="tip" role="tooltip"></div>
+
+<script>
+'use strict';
+/* ============ data ============ */
+const RAW='0|3|m|22|1|0|7.25|S;1|1|f|38|1|0|71.28|C;1|3|f|26|0|0|7.92|S;1|1|f|35|1|0|53.1|S;0|3|m|35|0|0|8.05|S;0|3|m||0|0|8.46|Q;0|1|m|54|0|0|51.86|S;0|3|m|2|3|1|21.07|S;1|3|f|27|0|2|11.13|S;1|2|f|14|1|0|30.07|C;1|3|f|4|1|1|16.7|S;1|1|f|58|0|0|26.55|S;0|3|m|20|0|0|8.05|S;0|3|m|39|1|5|31.27|S;0|3|f|14|0|0|7.85|S;1|2|f|55|0|0|16|S;0|3|m|2|4|1|29.12|Q;1|2|m||0|0|13|S;0|3|f|31|1|0|18|S;1|3|f||0|0|7.22|C;0|2|m|35|0|0|26|S;1|2|m|34|0|0|13|S;1|3|f|15|0|0|8.03|Q;1|1|m|28|0|0|35.5|S;0|3|f|8|3|1|21.07|S;1|3|f|38|1|5|31.39|S;0|3|m||0|0|7.22|C;0|1|m|19|3|2|263|S;1|3|f||0|0|7.88|Q;0|3|m||0|0|7.9|S;0|1|m|40|0|0|27.72|C;1|1|f||1|0|146.52|C;1|3|f||0|0|7.75|Q;0|2|m|66|0|0|10.5|S;0|1|m|28|1|0|82.17|C;0|1|m|42|1|0|52|S;1|3|m||0|0|7.23|C;0|3|m|21|0|0|8.05|S;0|3|f|18|2|0|18|S;1|3|f|14|1|0|11.24|C;0|3|f|40|1|0|9.47|S;0|2|f|27|1|0|21|S;0|3|m||0|0|7.9|C;1|2|f|3|1|2|41.58|C;1|3|f|19|0|0|7.88|Q;0|3|m||0|0|8.05|S;0|3|m||1|0|15.5|Q;1|3|f||0|0|7.75|Q;0|3|m||2|0|21.68|C;0|3|f|18|1|0|17.8|S;0|3|m|7|4|1|39.69|S;0|3|m|21|0|0|7.8|S;1|1|f|49|1|0|76.73|C;1|2|f|29|1|0|26|S;0|1|m|65|0|1|61.98|C;1|1|m||0|0|35.5|S;1|2|f|21|0|0|10.5|S;0|3|m|28.5|0|0|7.23|C;1|2|f|5|1|2|27.75|S;0|3|m|11|5|2|46.9|S;0|3|m|22|0|0|7.23|C;1|1|f|38|0|0|80|;0|1|m|45|1|0|83.47|S;0|3|m|4|3|2|27.9|S;0|1|m||0|0|27.72|C;1|3|m||1|1|15.25|C;1|2|f|29|0|0|10.5|S;0|3|m|19|0|0|8.16|S;1|3|f|17|4|2|7.92|S;0|3|m|26|2|0|8.66|S;0|2|m|32|0|0|10.5|S;0|3|f|16|5|2|46.9|S;0|2|m|21|0|0|73.5|S;0|3|m|26|1|0|14.45|C;1|3|m|32|0|0|56.5|S;0|3|m|25|0|0|7.65|S;0|3|m||0|0|7.9|S;0|3|m||0|0|8.05|S;1|2|m|0.83|0|2|29|S;1|3|f|30|0|0|12.47|S;0|3|m|22|0|0|9|S;1|3|m|29|0|0|9.5|S;1|3|f||0|0|7.79|Q;0|1|m|28|0|0|47.1|S;1|2|f|17|0|0|10.5|S;1|3|f|33|3|0|15.85|S;0|3|m|16|1|3|34.38|S;0|3|m||0|0|8.05|S;1|1|f|23|3|2|263|S;0|3|m|24|0|0|8.05|S;0|3|m|29|0|0|8.05|S;0|3|m|20|0|0|7.85|S;0|1|m|46|1|0|61.17|S;0|3|m|26|1|2|20.57|S;0|3|m|59|0|0|7.25|S;0|3|m||0|0|8.05|S;0|1|m|71|0|0|34.65|C;1|1|m|23|0|1|63.36|C;1|2|f|34|0|1|23|S;0|2|m|34|1|0|26|S;0|3|f|28|0|0|7.9|S;0|3|m||0|0|7.9|S;0|1|m|21|0|1|77.29|S;0|3|m|33|0|0|8.65|S;0|3|m|37|2|0|7.92|S;0|3|m|28|0|0|7.9|S;1|3|f|21|0|0|7.65|S;1|3|m||0|0|7.78|S;0|3|m|38|0|0|7.9|S;1|3|f||1|0|24.15|Q;0|1|m|47|0|0|52|S;0|3|f|14.5|1|0|14.45|C;0|3|m|22|0|0|8.05|S;0|3|f|20|1|0|9.82|S;0|3|f|17|0|0|14.46|C;0|3|m|21|0|0|7.92|S;0|3|m|70.5|0|0|7.75|Q;0|2|m|29|1|0|21|S;0|1|m|24|0|1|247.52|C;0|3|f|2|4|2|31.27|S;0|2|m|21|2|0|73.5|S;0|3|m||0|0|8.05|S;0|2|m|32.5|1|0|30.07|C;1|2|f|32.5|0|0|13|S;0|1|m|54|0|1|77.29|S;1|3|m|12|1|0|11.24|C;0|3|m||0|0|7.75|Q;1|3|m|24|0|0|7.14|S;1|3|f||1|1|22.36|C;0|3|m|45|0|0|6.97|S;0|3|m|33|0|0|7.9|C;0|3|m|20|0|0|7.05|S;0|3|f|47|1|0|14.5|S;1|2|f|29|1|0|26|S;0|2|m|25|0|0|13|S;0|2|m|23|0|0|15.05|C;1|1|f|19|0|2|26.28|S;0|1|m|37|1|0|53.1|S;0|3|m|16|0|0|9.22|S;0|1|m|24|0|0|79.2|C;0|3|f||0|2|15.25|C;1|3|f|22|0|0|7.75|S;1|3|f|24|1|0|15.85|S;0|3|m|19|0|0|6.75|Q;0|2|m|18|0|0|11.5|S;0|2|m|19|1|1|36.75|S;1|3|m|27|0|0|7.8|S;0|3|f|9|2|2|34.38|S;0|2|m|36.5|0|2|26|S;0|2|m|42|0|0|13|S;0|2|m|51|0|0|12.53|S;1|1|f|22|1|0|66.6|S;0|3|m|55.5|0|0|8.05|S;0|3|m|40.5|0|2|14.5|S;0|3|m||0|0|7.31|S;0|1|m|51|0|1|61.38|C;1|3|f|16|0|0|7.73|Q;0|3|m|30|0|0|8.05|S;0|3|m||0|0|8.66|S;0|3|m||8|2|69.55|S;0|3|m|44|0|1|16.1|S;1|2|f|40|0|0|15.75|S;0|3|m|26|0|0|7.78|S;0|3|m|17|0|0|8.66|S;0|3|m|1|4|1|39.69|S;1|3|m|9|0|2|20.52|S;1|1|f||0|1|55|S;0|3|f|45|1|4|27.9|S;0|1|m||0|0|25.93|S;0|3|m|28|0|0|56.5|S;0|1|m|61|0|0|33.5|S;0|3|m|4|4|1|29.12|Q;1|3|f|1|1|1|11.13|S;0|3|m|21|0|0|7.92|S;0|1|m|56|0|0|30.7|C;0|3|m|18|1|1|7.85|S;0|3|m||3|1|25.47|S;0|1|f|50|0|0|28.71|C;0|2|m|30|0|0|13|S;0|3|m|36|0|0|0|S;0|3|f||8|2|69.55|S;0|2|m||0|0|15.05|C;0|3|m|9|4|2|31.39|S;1|2|m|1|2|1|39|S;1|3|f|4|0|2|22.02|S;0|1|m||0|0|50|S;1|3|f||1|0|15.5|Q;1|1|m|45|0|0|26.55|S;0|3|m|40|1|1|15.5|Q;0|3|m|36|0|0|7.9|S;1|2|f|32|0|0|13|S;0|2|m|19|0|0|13|S;1|3|f|19|1|0|7.85|S;1|2|m|3|1|1|26|S;1|1|f|44|0|0|27.72|C;1|1|f|58|0|0|146.52|C;0|3|m||0|0|7.75|Q;0|3|m|42|0|1|8.4|S;1|3|f||0|0|7.75|Q;0|2|f|24|0|0|13|S;0|3|m|28|0|0|9.5|S;0|3|m||8|2|69.55|S;0|3|m|34|0|0|6.5|S;0|3|m|45.5|0|0|7.22|C;1|3|m|18|0|0|8.05|S;0|3|f|2|0|1|10.46|S;0|3|m|32|1|0|15.85|S;1|3|m|26|0|0|18.79|C;1|3|f|16|0|0|7.75|Q;1|1|m|40|0|0|31|C;0|3|m|24|0|0|7.05|S;1|2|f|35|0|0|21|S;0|3|m|22|0|0|7.25|S;0|2|m|30|0|0|13|S;0|3|m||1|0|7.75|Q;1|1|f|31|1|0|113.28|C;1|3|f|27|0|0|7.92|S;0|2|m|42|1|0|27|S;1|1|f|32|0|0|76.29|C;0|2|m|30|0|0|10.5|S;1|3|m|16|0|0|8.05|S;0|2|m|27|0|0|13|S;0|3|m|51|0|0|8.05|S;0|3|m||0|0|7.9|S;1|1|m|38|1|0|90|S;0|3|m|22|0|0|9.35|S;1|2|m|19|0|0|10.5|S;0|3|m|20.5|0|0|7.25|S;0|2|m|18|0|0|13|S;0|3|f||3|1|25.47|S;1|1|f|35|1|0|83.47|S;0|3|m|29|0|0|7.78|S;0|2|m|59|0|0|13.5|S;1|3|f|5|4|2|31.39|S;0|2|m|24|0|0|10.5|S;0|3|f||0|0|7.55|S;0|2|m|44|1|0|26|S;1|2|f|8|0|2|26.25|S;0|2|m|19|0|0|10.5|S;0|2|m|33|0|0|12.28|S;0|3|f||1|0|14.45|C;1|3|f||1|0|15.5|Q;0|2|m|29|0|0|10.5|S;0|3|m|22|0|0|7.12|S;0|3|m|30|0|0|7.22|C;0|1|m|44|2|0|90|Q;0|3|f|25|0|0|7.78|S;1|2|f|24|0|2|14.5|S;1|1|m|37|1|1|52.55|S;0|2|m|54|1|0|26|S;0|3|m||0|0|7.25|S;0|3|f|29|1|1|10.46|S;0|1|m|62|0|0|26.55|S;0|3|m|30|1|0|16.1|S;0|3|f|41|0|2|20.21|S;1|3|f|29|0|2|15.25|C;1|1|f||0|0|79.2|C;1|1|f|30|0|0|86.5|S;1|1|f|35|0|0|512.33|C;1|2|f|50|0|1|26|S;0|3|m||0|0|7.75|Q;1|3|m|3|4|2|31.39|S;0|1|m|52|1|1|79.65|S;0|1|m|40|0|0|0|S;0|3|f||0|0|7.75|Q;0|2|m|36|0|0|10.5|S;0|3|m|16|4|1|39.69|S;1|3|m|25|1|0|7.78|S;1|1|f|58|0|1|153.46|S;1|1|f|35|0|0|135.63|S;0|1|m||0|0|31|S;1|3|m|25|0|0|0|S;1|2|f|41|0|1|19.5|S;0|1|m|37|0|1|29.7|C;1|3|f||0|0|7.75|Q;1|1|f|63|1|0|77.96|S;0|3|f|45|0|0|7.75|S;0|2|m||0|0|0|S;0|3|m|7|4|1|29.12|Q;1|3|f|35|1|1|20.25|S;0|3|m|65|0|0|7.75|Q;0|3|m|28|0|0|7.85|S;0|3|m|16|0|0|9.5|S;1|3|m|19|0|0|8.05|S;0|1|m||0|0|26|S;0|3|m|33|0|0|8.66|C;1|3|m|30|0|0|9.5|S;0|3|m|22|0|0|7.9|S;1|2|m|42|0|0|13|S;1|3|f|22|0|0|7.75|Q;1|1|f|26|0|0|78.85|S;1|1|f|19|1|0|91.08|C;0|2|m|36|0|0|12.88|C;0|3|f|24|0|0|8.85|S;0|3|m|24|0|0|7.9|S;0|1|m||0|0|27.72|C;0|3|m|23.5|0|0|7.23|C;0|1|f|2|1|2|151.55|S;1|1|m||0|0|30.5|S;1|1|f|50|0|1|247.52|C;1|3|f||0|0|7.75|Q;1|3|m||2|0|23.25|Q;0|3|m|19|0|0|0|S;1|2|f||0|0|12.35|Q;0|3|m||0|0|8.05|S;1|1|m|0.92|1|2|151.55|S;1|1|f||0|0|110.88|C;1|1|f|17|1|0|108.9|C;0|2|m|30|1|0|24|C;1|1|f|30|0|0|56.93|C;1|1|f|24|0|0|83.16|C;1|1|f|18|2|2|262.38|C;0|2|f|26|1|1|26|S;0|3|m|28|0|0|7.9|S;0|2|m|43|1|1|26.25|S;1|3|f|26|0|0|7.85|S;1|2|f|24|1|0|26|S;0|2|m|54|0|0|14|S;1|1|f|31|0|2|164.87|S;1|1|f|40|1|1|134.5|C;0|3|m|22|0|0|7.25|S;0|3|m|27|0|0|7.9|S;1|2|f|30|0|0|12.35|Q;1|2|f|22|1|1|29|S;0|3|m||8|2|69.55|S;1|1|f|36|0|0|135.63|C;0|3|m|61|0|0|6.24|S;1|2|f|36|0|0|13|S;1|3|f|31|1|1|20.52|S;1|1|f|16|0|1|57.98|C;1|3|f||2|0|23.25|Q;0|1|m|45.5|0|0|28.5|S;0|1|m|38|0|1|153.46|S;0|3|m|16|2|0|18|S;1|1|f||1|0|133.65|S;0|3|m||0|0|7.9|S;0|1|m|29|1|0|66.6|S;1|1|f|41|0|0|134.5|C;1|3|m|45|0|0|8.05|S;0|1|m|45|0|0|35.5|S;1|2|m|2|1|1|26|S;1|1|f|24|3|2|263|S;0|2|m|28|0|0|13|S;0|2|m|25|0|0|13|S;0|2|m|36|0|0|13|S;1|2|f|24|0|0|13|S;1|2|f|40|0|0|13|S;1|3|f||1|0|16.1|S;1|3|m|3|1|1|15.9|S;0|3|m|42|0|0|8.66|S;0|3|m|23|0|0|9.22|S;0|1|m||0|0|35|S;0|3|m|15|1|1|7.23|C;0|3|m|25|1|0|17.8|S;0|3|m||0|0|7.22|C;0|3|m|28|0|0|9.5|S;1|1|f|22|0|1|55|S;0|2|f|38|0|0|13|S;1|3|f||0|0|7.88|Q;1|3|f||0|0|7.88|Q;0|3|m|40|1|4|27.9|S;0|2|m|29|1|0|27.72|C;0|3|f|45|0|1|14.45|C;0|3|m|35|0|0|7.05|S;0|3|m||1|0|15.5|Q;0|3|m|30|0|0|7.25|S;1|1|f|60|1|0|75.25|C;1|3|f||0|0|7.23|C;1|3|f||0|0|7.75|Q;1|1|f|24|0|0|69.3|C;1|1|m|25|1|0|55.44|C;0|3|m|18|1|0|6.5|S;0|3|m|19|0|0|8.05|S;0|1|m|22|0|0|135.63|C;0|3|f|3|3|1|21.07|S;1|1|f||1|0|82.17|C;1|3|f|22|0|0|7.25|S;0|1|m|27|0|2|211.5|C;0|3|m|20|0|0|4.01|C;0|3|m|19|0|0|7.78|S;1|1|f|42|0|0|227.53|C;1|3|f|1|0|2|15.74|C;0|3|m|32|0|0|7.92|S;1|1|f|35|1|0|52|S;0|3|m||0|0|7.9|S;0|2|m|18|0|0|73.5|S;0|3|m|1|5|2|46.9|S;1|2|f|36|0|0|13|S;0|3|m||0|0|7.73|Q;1|2|f|17|0|0|12|C;1|1|m|36|1|2|120|S;1|3|m|21|0|0|7.8|S;0|3|m|28|2|0|7.92|S;1|1|f|23|1|0|113.28|C;1|3|f|24|0|2|16.7|S;0|3|m|22|0|0|7.8|S;0|3|f|31|0|0|7.85|S;0|2|m|46|0|0|26|S;0|2|m|23|0|0|10.5|S;1|2|f|28|0|0|12.65|S;1|3|m|39|0|0|7.92|S;0|3|m|26|0|0|8.05|S;0|3|f|21|1|0|9.82|S;0|3|m|28|1|0|15.85|S;0|3|f|20|0|0|8.66|S;0|2|m|34|1|0|21|S;0|3|m|51|0|0|7.75|S;1|2|m|3|1|1|18.75|S;0|3|m|21|0|0|7.78|S;0|3|f||3|1|25.47|S;0|3|m||0|0|7.9|S;0|3|m||0|0|6.86|Q;1|1|f|33|1|0|90|Q;0|2|m||0|0|0|S;1|3|m|44|0|0|7.92|S;0|3|f||0|0|8.05|S;1|2|f|34|1|1|32.5|S;1|2|f|18|0|2|13|S;0|2|m|30|0|0|13|S;0|3|f|10|0|2|24.15|S;0|3|m||0|0|7.9|C;0|3|m|21|0|0|7.73|Q;0|3|m|29|0|0|7.88|S;0|3|f|28|1|1|14.4|S;0|3|m|18|1|1|20.21|S;0|3|m||0|0|7.25|S;1|2|f|28|1|0|26|S;1|2|f|19|0|0|26|S;0|3|m||0|0|7.75|Q;1|3|m|32|0|0|8.05|S;1|1|m|28|0|0|26.55|S;1|3|f||1|0|16.1|S;1|2|f|42|1|0|26|S;0|3|m|17|0|0|7.12|S;0|1|m|50|1|0|55.9|S;1|1|f|14|1|2|120|S;0|3|f|21|2|2|34.38|S;1|2|f|24|2|3|18.75|S;0|1|m|64|1|4|263|S;0|2|m|31|0|0|10.5|S;1|2|f|45|1|1|26.25|S;0|3|m|20|0|0|9.5|S;0|3|m|25|1|0|7.78|S;1|2|f|28|0|0|13|S;1|3|m||0|0|8.11|S;1|1|m|4|0|2|81.86|S;1|2|f|13|0|1|19.5|S;1|1|m|34|0|0|26.55|S;1|3|f|5|2|1|19.26|C;1|1|m|52|0|0|30.5|S;0|2|m|36|1|2|27.75|S;0|3|m||1|0|19.97|S;0|1|m|30|0|0|27.75|C;1|1|m|49|1|0|89.1|C;0|3|m||0|0|8.05|S;1|3|m|29|0|0|7.9|C;0|1|m|65|0|0|26.55|S;1|1|f||1|0|51.86|S;1|2|f|50|0|0|10.5|S;0|3|m||0|0|7.75|Q;1|1|m|48|0|0|26.55|S;0|3|m|34|0|0|8.05|S;0|1|m|47|0|0|38.5|S;0|2|m|48|0|0|13|S;0|3|m||0|0|8.05|S;0|3|m|38|0|0|7.05|S;0|2|m||0|0|0|S;0|1|m|56|0|0|26.55|S;0|3|m||0|0|7.72|Q;1|3|f|0.75|2|1|19.26|C;0|3|m||0|0|7.25|S;0|3|m|38|0|0|8.66|S;1|2|f|33|1|2|27.75|S;1|2|f|23|0|0|13.79|C;0|3|f|22|0|0|9.84|S;0|1|m||0|0|52|S;0|2|m|34|1|0|21|S;0|3|m|29|1|0|7.05|S;0|3|m|22|0|0|7.52|S;1|3|f|2|0|1|12.29|S;0|3|m|9|5|2|46.9|S;0|2|m||0|0|0|S;0|3|m|50|0|0|8.05|S;1|3|f|63|0|0|9.59|S;1|1|m|25|1|0|91.08|C;0|3|f||3|1|25.47|S;1|1|f|35|1|0|90|S;0|1|m|58|0|0|29.7|C;0|3|m|30|0|0|8.05|S;1|3|m|9|1|1|15.9|S;0|3|m||1|0|19.97|S;0|3|m|21|0|0|7.25|S;0|1|m|55|0|0|30.5|S;0|1|m|71|0|0|49.5|C;0|3|m|21|0|0|8.05|S;0|3|m||0|0|14.46|C;1|1|f|54|1|0|78.27|C;0|3|m||0|0|15.1|S;0|1|f|25|1|2|151.55|S;0|3|m|24|0|0|7.8|S;0|3|m|17|0|0|8.66|S;0|3|f|21|0|0|7.75|Q;0|3|f||0|0|7.63|Q;0|3|f|37|0|0|9.59|S;1|1|f|16|0|0|86.5|S;0|1|m|18|1|0|108.9|C;1|2|f|33|0|2|26|S;1|1|m||0|0|26.55|S;0|3|m|28|0|0|22.52|S;1|3|m|26|0|0|56.5|S;1|3|m|29|0|0|7.75|Q;0|3|m||0|0|8.05|S;1|1|m|36|0|0|26.29|S;1|1|f|54|1|0|59.4|C;0|3|m|24|0|0|7.5|S;0|1|m|47|0|0|34.02|S;1|2|f|34|0|0|10.5|S;0|3|m||0|0|24.15|Q;1|2|f|36|1|0|26|S;0|3|m|32|0|0|7.9|S;1|1|f|30|0|0|93.5|S;0|3|m|22|0|0|7.9|S;0|3|m||0|0|7.22|C;1|1|f|44|0|1|57.98|C;0|3|m||0|0|7.23|C;0|3|m|40.5|0|0|7.75|Q;1|2|f|50|0|0|10.5|S;0|1|m||0|0|221.78|S;0|3|m|39|0|0|7.92|S;0|2|m|23|2|1|11.5|S;1|2|f|2|1|1|26|S;0|3|m||0|0|7.23|C;0|3|m|17|1|1|7.23|C;1|3|f||0|2|22.36|C;0|3|f|30|0|0|8.66|S;1|2|f|7|0|2|26.25|S;0|1|m|45|0|0|26.55|S;1|1|f|30|0|0|106.42|C;0|3|m||0|0|14.5|S;1|1|f|22|0|2|49.5|C;1|1|f|36|0|2|71|S;0|3|f|9|4|2|31.27|S;0|3|f|11|4|2|31.27|S;1|2|m|32|1|0|26|S;0|1|m|50|1|0|106.42|C;0|1|m|64|0|0|26|S;1|2|f|19|1|0|26|S;1|2|m||0|0|13.86|C;0|3|m|33|1|1|20.52|S;1|2|m|8|1|1|36.75|S;1|1|m|17|0|2|110.88|C;0|2|m|27|0|0|26|S;0|3|m||0|0|7.83|Q;1|3|m|22|0|0|7.22|C;1|3|f|22|0|0|7.78|S;0|1|m|62|0|0|26.55|S;1|1|f|48|1|0|39.6|C;0|1|m||0|0|227.53|C;1|1|f|39|1|1|79.65|S;1|3|f|36|1|0|17.4|S;0|3|m||0|0|7.75|Q;0|3|m|40|0|0|7.9|S;0|2|m|28|0|0|13.5|S;0|3|m||0|0|8.05|S;0|3|f||0|0|8.05|S;0|3|m|24|2|0|24.15|S;0|3|m|19|0|0|7.9|S;0|3|f|29|0|4|21.07|S;0|3|m||0|0|7.23|C;1|3|m|32|0|0|7.85|S;1|2|m|62|0|0|10.5|S;1|1|f|53|2|0|51.48|S;1|1|m|36|0|0|26.39|S;1|3|f||0|0|7.75|Q;0|3|m|16|0|0|8.05|S;0|3|m|19|0|0|14.5|S;1|2|f|34|0|0|13|S;1|1|f|39|1|0|55.9|S;0|3|f||1|0|14.46|C;1|3|m|32|0|0|7.92|S;1|2|f|25|1|1|30|S;1|1|f|39|1|1|110.88|C;0|2|m|54|0|0|26|S;0|1|m|36|0|0|40.12|C;0|3|m||0|0|8.71|C;1|1|f|18|0|2|79.65|S;0|2|m|47|0|0|15|S;1|1|m|60|1|1|79.2|C;0|3|m|22|0|0|8.05|S;0|3|m||0|0|8.05|S;0|3|m|35|0|0|7.12|S;1|1|f|52|1|0|78.27|C;0|3|m|47|0|0|7.25|S;0|3|f||0|2|7.75|Q;0|2|m|37|1|0|26|S;0|3|m|36|1|1|24.15|S;1|2|f||0|0|33|S;0|3|m|49|0|0|0|S;0|3|m||0|0|7.22|C;1|1|m|49|1|0|56.93|C;1|2|f|24|2|1|27|S;0|3|m||0|0|7.9|S;0|1|m||0|0|42.4|S;0|3|m|44|0|0|8.05|S;1|1|m|35|0|0|26.55|C;0|3|m|36|1|0|15.55|S;0|3|m|30|0|0|7.9|S;1|1|m|27|0|0|30.5|S;1|2|f|22|1|2|41.58|C;1|1|f|40|0|0|153.46|S;0|3|f|39|1|5|31.27|S;0|3|m||0|0|7.05|S;1|3|f||1|0|15.5|Q;0|3|m||0|0|7.75|Q;0|3|m|35|0|0|8.05|S;1|2|f|24|1|2|65|S;0|3|m|34|1|1|14.4|S;0|3|f|26|1|0|16.1|S;1|2|f|4|2|1|39|S;0|2|m|26|0|0|10.5|S;0|3|m|27|1|0|14.45|C;1|1|m|42|1|0|52.55|S;1|3|m|20|1|1|15.74|C;0|3|m|21|0|0|7.85|S;0|3|m|21|0|0|16.1|S;0|1|m|61|0|0|32.32|S;0|2|m|57|0|0|12.35|Q;1|1|f|21|0|0|77.96|S;0|3|m|26|0|0|7.9|S;0|3|m||0|0|7.73|Q;1|1|m|80|0|0|30|S;0|3|m|51|0|0|7.05|S;1|1|m|32|0|0|30.5|C;0|1|m||0|0|0|S;0|3|f|9|3|2|27.9|S;1|2|f|28|0|0|13|S;0|3|m|32|0|0|7.92|S;0|2|m|31|1|1|26.25|S;0|3|f|41|0|5|39.69|S;0|3|m||1|0|16.1|S;0|3|m|20|0|0|7.85|S;1|1|f|24|0|0|69.3|C;0|3|f|2|3|2|27.9|S;1|3|m||0|0|56.5|S;1|3|f|0.75|2|1|19.26|C;1|1|m|48|1|0|76.73|C;0|3|m|19|0|0|7.9|S;1|1|m|56|0|0|35.5|C;0|3|m||0|0|7.55|S;1|3|f|23|0|0|7.55|S;0|3|m||0|0|7.9|S;1|2|f|18|0|1|23|S;0|3|m|21|0|0|8.43|S;1|3|f||0|0|7.83|Q;0|3|f|18|0|0|6.75|Q;0|2|m|24|2|0|73.5|S;0|3|m||0|0|7.9|S;0|3|f|32|1|1|15.5|Q;0|2|m|23|0|0|13|S;0|1|m|58|0|2|113.28|C;1|1|m|50|2|0|133.65|S;0|3|m|40|0|0|7.22|C;0|1|m|47|0|0|25.59|S;0|3|m|36|0|0|7.5|S;1|3|m|20|1|0|7.92|S;0|2|m|32|2|0|73.5|S;0|2|m|25|0|0|13|S;0|3|m||0|0|7.78|S;0|3|m|43|0|0|8.05|S;1|1|f||1|0|52|S;1|2|f|40|1|1|39|S;0|1|m|31|1|0|52|S;0|2|m|70|0|0|10.5|S;1|2|m|31|0|0|13|S;0|2|m||0|0|0|S;0|3|m|18|0|0|7.78|S;0|3|m|24.5|0|0|8.05|S;1|3|f|18|0|0|9.84|S;0|3|f|43|1|6|46.9|S;1|1|m|36|0|1|512.33|C;0|3|f||0|0|8.14|Q;1|1|m|27|0|0|76.73|C;0|3|m|20|0|0|9.22|S;0|3|m|14|5|2|46.9|S;0|2|m|60|1|1|39|S;0|2|m|25|1|2|41.58|C;0|3|m|14|4|1|39.69|S;0|3|m|19|0|0|10.17|S;0|3|m|18|0|0|7.8|S;1|1|f|15|0|1|211.34|S;1|1|m|31|1|0|57|S;1|3|f|4|0|1|13.42|C;1|3|m||0|0|56.5|S;0|3|m|25|0|0|7.22|C;0|1|m|60|0|0|26.55|S;0|2|m|52|0|0|13.5|S;0|3|m|44|0|0|8.05|S;1|3|f||0|0|7.73|Q;0|1|m|49|1|1|110.88|C;0|3|m|42|0|0|7.65|S;1|1|f|18|1|0|227.53|C;1|1|m|35|0|0|26.29|S;0|3|f|18|0|1|14.45|C;0|3|m|25|0|0|7.74|Q;0|3|m|26|1|0|7.85|S;0|2|m|39|0|0|26|S;1|2|f|45|0|0|13.5|S;1|1|m|42|0|0|26.29|S;1|1|f|22|0|0|151.55|S;1|3|m||1|1|15.25|C;1|1|f|24|0|0|49.5|C;0|1|m||0|0|26.55|S;1|1|m|48|1|0|52|S;0|3|m|29|0|0|9.48|S;0|2|m|52|0|0|13|S;0|3|m|19|0|0|7.65|S;1|1|f|38|0|0|227.53|C;1|2|f|27|0|0|10.5|S;0|3|m||0|0|15.5|Q;0|3|m|33|0|0|7.78|S;1|2|f|6|0|1|33|S;0|3|m|17|1|0|7.05|S;0|2|m|34|0|0|13|S;0|2|m|50|0|0|13|S;1|1|m|27|1|0|53.1|S;0|3|m|20|0|0|8.66|S;1|2|f|30|3|0|21|S;1|3|f||0|0|7.74|Q;0|2|m|25|1|0|26|S;0|3|f|25|1|0|7.92|S;1|1|f|29|0|0|211.34|S;0|3|m|11|0|0|18.79|C;0|2|m||0|0|0|S;0|2|m|23|0|0|13|S;0|2|m|23|0|0|13|S;0|3|m|28.5|0|0|16.1|S;0|3|f|48|1|3|34.38|S;1|1|m|35|0|0|512.33|C;0|3|m||0|0|7.9|S;0|3|m||0|0|7.9|S;1|1|m||0|0|30|S;0|1|m|36|1|0|78.85|S;1|1|f|21|2|2|262.38|C;0|3|m|24|1|0|16.1|S;1|3|m|31|0|0|7.92|S;0|1|m|70|1|1|71|S;0|3|m|16|1|1|20.25|S;1|2|f|30|0|0|13|S;0|1|m|19|1|0|53.1|S;0|3|m|31|0|0|7.75|Q;1|2|f|4|1|1|23|S;1|3|m|6|0|1|12.47|S;0|3|m|33|0|0|9.5|S;0|3|m|23|0|0|7.9|S;1|2|f|48|1|2|65|S;1|2|m|0.67|1|1|14.5|S;0|3|m|28|0|0|7.8|S;0|2|m|18|0|0|11.5|S;0|3|m|34|0|0|8.05|S;1|1|f|33|0|0|86.5|S;0|3|m||0|0|14.5|S;0|3|m|41|0|0|7.12|S;1|3|m|20|0|0|7.23|C;1|1|f|36|1|2|120|S;0|3|m|16|0|0|7.78|S;1|1|f|51|1|0|77.96|S;0|1|m||0|0|39.6|C;0|3|f|30.5|0|0|7.75|Q;0|3|m||1|0|24.15|Q;0|3|m|32|0|0|8.36|S;0|3|m|24|0|0|9.5|S;0|3|m|48|0|0|7.85|S;0|2|f|57|0|0|10.5|S;0|3|m||0|0|7.22|C;1|2|f|54|1|3|23|S;0|3|m|18|0|0|7.75|S;0|3|m||0|0|7.75|Q;1|3|f|5|0|0|12.47|S;0|3|m||0|0|7.74|Q;1|1|f|43|0|1|211.34|S;1|3|f|13|0|0|7.23|C;1|1|f|17|1|0|57|S;0|1|m|29|0|0|30|S;0|3|m||1|2|23.45|S;0|3|m|25|0|0|7.05|S;0|3|m|25|0|0|7.25|S;1|3|f|18|0|0|7.5|S;0|3|m|8|4|1|29.12|Q;1|3|m|1|1|2|20.57|S;0|1|m|46|0|0|79.2|C;0|3|m||0|0|7.75|Q;0|2|m|16|0|0|26|S;0|3|f||8|2|69.55|S;0|1|m||0|0|30.7|C;0|3|m|25|0|0|7.9|S;0|2|m|39|0|0|13|S;1|1|f|49|0|0|25.93|S;1|3|f|31|0|0|8.68|S;0|3|m|30|0|0|7.23|C;0|3|f|30|1|1|24.15|S;0|2|m|34|0|0|13|S;1|2|f|31|1|1|26.25|S;1|1|m|11|1|2|120|S;1|3|m|0.42|0|1|8.52|C;1|3|m|27|0|0|6.97|S;0|3|m|31|0|0|7.78|S;0|1|m|39|0|0|0|S;0|3|f|18|0|0|7.78|S;0|2|m|39|0|0|13|S;1|1|f|33|1|0|53.1|S;0|3|m|26|0|0|7.89|S;0|3|m|39|0|0|24.15|S;0|2|m|35|0|0|10.5|S;0|3|f|6|4|2|31.27|S;0|3|m|30.5|0|0|8.05|S;0|1|m||0|0|0|S;0|3|f|23|0|0|7.92|S;0|2|m|31|1|1|37|C;0|3|m|43|0|0|6.45|S;0|3|m|10|3|2|27.9|S;1|1|f|52|1|1|93.5|S;1|3|m|27|0|0|8.66|S;0|1|m|38|0|0|0|S;1|3|f|27|0|1|12.47|S;0|3|m|2|4|1|39.69|S;0|3|m||0|0|6.95|Q;0|3|m||0|0|56.5|S;1|2|m|1|0|2|37|C;1|3|m||0|0|7.75|Q;1|1|f|62|0|0|80|;1|3|f|15|1|0|14.45|C;1|2|m|0.83|1|1|18.75|S;0|3|m||0|0|7.23|C;0|3|m|23|0|0|7.85|S;0|3|m|18|0|0|8.3|S;1|1|f|39|1|1|83.16|C;0|3|m|21|0|0|8.66|S;0|3|m||0|0|8.05|S;1|3|m|32|0|0|56.5|S;1|1|m||0|0|29.7|C;0|3|m|20|0|0|7.92|S;0|2|m|16|0|0|10.5|S;1|1|f|30|0|0|31|C;0|3|m|34.5|0|0|6.44|C;0|3|m|17|0|0|8.66|S;0|3|m|42|0|0|7.55|S;0|3|m||8|2|69.55|S;0|3|m|35|0|0|7.9|C;0|2|m|28|0|1|33|S;1|1|f||1|0|89.1|C;0|3|m|4|4|2|31.27|S;0|3|m|74|0|0|7.78|S;0|3|f|9|1|1|15.25|C;1|1|f|16|0|1|39.4|S;0|2|f|44|1|0|26|S;1|3|f|18|0|1|9.35|S;1|1|f|45|1|1|164.87|S;1|1|m|51|0|0|26.55|S;1|3|f|24|0|3|19.26|C;0|3|m||0|0|7.23|C;0|3|m|41|2|0|14.11|S;0|2|m|21|1|0|11.5|S;1|1|f|48|0|0|25.93|S;0|3|f||8|2|69.55|S;0|2|m|24|0|0|13|S;1|2|f|42|0|0|13|S;1|2|f|27|1|0|13.86|C;0|1|m|31|0|0|50.5|S;0|3|m||0|0|9.5|S;1|3|m|4|1|1|11.13|S;0|3|m|26|0|0|7.9|S;1|1|f|47|1|1|52.55|S;0|1|m|33|0|0|5|S;0|3|m|47|0|0|9|S;1|2|f|28|1|0|24|C;1|3|f|15|0|0|7.22|C;0|3|m|20|0|0|9.85|S;0|3|m|19|0|0|7.9|S;0|3|m||0|0|7.9|S;1|1|f|56|0|1|83.16|C;1|2|f|25|0|1|26|S;0|3|m|33|0|0|7.9|S;0|3|f|22|0|0|10.52|S;0|2|m|28|0|0|10.5|S;0|3|m|25|0|0|7.05|S;0|3|f|39|0|5|29.12|Q;0|2|m|27|0|0|13|S;1|1|f|19|0|0|30|S;0|3|f||1|2|23.45|S;1|1|m|26|0|0|30|C;0|3|m|32|0|0|7.75|Q';
+const P = RAW.split(';').map(r=>{
+  const p=r.split('|');
+  return {s:+p[0], c:+p[1], x:p[2], a:p[3]===''?null:+p[3], sb:+p[4], pa:+p[5], f:+p[6], e:p[7]};
+});
+
+const INK='#20404a', INKS='#3a5a63', PATINA='#4e8577', PATINAD='#2f6154', FAINT='rgba(32,64,74,.42)';
+const CLS_NAME={1:'First class',2:'Second class',3:'Third class'};
+const SEX_NAME={f:'Women',m:'Men'};
+const pct=(k,n)=> n? (100*k/n).toFixed(1)+'%':'—';
+const fmt=d3.format(',');
+
+/* ============ state & filters ============ */
+const state={cls:'all', sex:'all'};
+function view(){ return P.filter(d=>(state.cls==='all'||d.c===+state.cls)&&(state.sex==='all'||d.x===state.sex)); }
+
+function wireChips(id,key){
+  const box=document.getElementById(id);
+  box.querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>{
+    box.querySelectorAll('.chip').forEach(o=>o.classList.remove('on'));
+    b.classList.add('on');
+    state[key]=b.dataset.v;
+    renderAll();
+  }));
+}
+wireChips('fCls','cls'); wireChips('fSex','sex');
+
+/* ============ tooltip ============ */
+const tip=document.getElementById('tip');
+function tipShow(html,ev){ tip.innerHTML=html; tip.style.display='block'; tipMove(ev); }
+function tipMove(ev){
+  const pad=14, w=tip.offsetWidth, h=tip.offsetHeight;
+  let x=ev.clientX+pad, y=ev.clientY+pad;
+  if(x+w>window.innerWidth-8) x=ev.clientX-w-pad;
+  if(y+h>window.innerHeight-8) y=ev.clientY-h-pad;
+  tip.style.left=x+'px'; tip.style.top=y+'px';
+}
+function tipHide(){ tip.style.display='none'; }
+function bindTip(sel,html){
+  sel.on('mouseenter',(ev,d)=>tipShow(html(d),ev))
+     .on('mousemove',(ev)=>tipMove(ev))
+     .on('mouseleave',tipHide);
+}
+
+/* ============ ledger ============ */
+function renderLedger(){
+  const V=view(), n=V.length, s=V.filter(d=>d.s).length;
+  const med=n? d3.median(V,d=>d.f):0;
+  document.getElementById('lgN').textContent=fmt(n);
+  document.getElementById('lgS').innerHTML=fmt(s)+' <small>'+pct(s,n)+'</small>';
+  document.getElementById('lgL').innerHTML=fmt(n-s)+' <small>'+pct(n-s,n)+'</small>';
+  document.getElementById('lgF').textContent='£'+(med??0).toFixed(2).replace(/\.00$/,'');
+  const c=state.cls==='all'?'All classes':CLS_NAME[+state.cls];
+  const x=state.sex==='all'?'all passengers':SEX_NAME[state.sex].toLowerCase();
+  document.getElementById('lgNote').textContent=c+' · '+x;
+}
+
+/* ============ PLATE I — small multiples ============ */
+const BANDS=[{lo:0,hi:16,l:'Under 16'},{lo:16,hi:31,l:'16–30'},{lo:31,hi:46,l:'31–45'},{lo:46,hi:200,l:'46 & over'}];
+function renderSmall(){
+  const grid=document.getElementById('smGrid'); grid.innerHTML='';
+  const classes=state.cls==='all'?[1,2,3]:[+state.cls];
+  const sexes=state.sex==='all'?['f','m']:[state.sex];
+  classes.forEach(c=>sexes.forEach(x=>{
+    const grp=P.filter(d=>d.c===c&&d.x===x);
+    const sv=grp.filter(d=>d.s).length;
+    const panel=document.createElement('div'); panel.className='sm-panel';
+    panel.innerHTML='<div class="sm-head"><div class="who">'+CLS_NAME[c]+' · '+SEX_NAME[x]+'</div>'+
+      '<div class="rate">'+pct(sv,grp.length)+' <small>of '+grp.length+'</small></div></div>';
+    const W=300,H=158,ML=8,MR=8,MT=20,MB=34, cw=(W-ML-MR)/BANDS.length;
+    const svg=d3.create('svg').attr('viewBox','0 0 '+W+' '+H);
+    const y=d3.scaleLinear().domain([0,100]).range([H-MB,MT]);
+    BANDS.forEach((b,i)=>{
+      const cell=grp.filter(d=>d.a!==null&&d.a>=b.lo&&d.a<b.hi);
+      const k=cell.filter(d=>d.s).length, n=cell.length;
+      const cx=ML+i*cw, bw=Math.min(40,cw-22), bx=cx+(cw-bw)/2;
+      // full-height ghost
+      svg.append('rect').attr('x',bx).attr('y',y(100)).attr('width',bw).attr('height',y(0)-y(100))
+         .attr('fill','none').attr('stroke',FAINT).attr('stroke-width',.8).attr('stroke-dasharray','2 3');
+      if(n>0){
+        const r=100*k/n;
+        const bar=svg.append('rect').attr('x',bx).attr('y',y(r)).attr('width',bw).attr('height',Math.max(y(0)-y(r),1.2))
+          .attr('fill',PATINA).attr('stroke',PATINAD).attr('stroke-width',1);
+        bindTip(bar,()=>'<b>'+CLS_NAME[c]+' · '+SEX_NAME[x]+'</b><br>'+b.l+': '+k+' of '+n+' saved ('+r.toFixed(1)+'%)');
+        svg.append('text').attr('class','num').attr('x',bx+bw/2).attr('y',Math.max(13,y(r)-5))
+          .attr('text-anchor','middle').attr('font-size',12.5).attr('fill',INK).text(Math.round(r)+'%');
+        svg.append('text').attr('x',bx+bw/2).attr('y',H-9).attr('text-anchor','middle')
+          .attr('font-size',10).attr('fill',FAINT).attr('font-style','italic').text('n='+n);
+      } else {
+        svg.append('text').attr('x',bx+bw/2).attr('y',y(6)).attr('text-anchor','middle')
+          .attr('font-size',13).attr('fill',FAINT).text('—');
+      }
+      svg.append('text').attr('x',cx+cw/2).attr('y',H-21).attr('text-anchor','middle')
+        .attr('font-size',10.5).attr('letter-spacing','.06em').attr('fill',INKS).text(b.l.toUpperCase());
+    });
+    svg.append('line').attr('x1',ML).attr('x2',W-MR).attr('y1',y(0)+.5).attr('y2',y(0)+.5).attr('stroke',INK).attr('stroke-width',1);
+    panel.appendChild(svg.node());
+    grid.appendChild(panel);
+  }));
+}
+
+/* ============ PLATE II — sankey ============ */
+function renderSankey(){
+  const V=view();
+  const el=d3.select('#sankey'); el.selectAll('*').remove();
+  const W=940,H=470,NW=16,PT=34,PB=18,GAP=26;
+  const X=[150,470,806];
+  const svg=el.append('svg').attr('viewBox','0 0 '+W+' '+H);
+
+  const classes=[1,2,3].filter(c=>V.some(d=>d.c===c));
+  const sexes=['f','m'].filter(x=>V.some(d=>d.x===x));
+  const outs=[{k:1,l:'Saved'},{k:0,l:'Lost'}].filter(o=>V.some(d=>d.s===o.k));
+  const total=V.length;
+  const usable=H-PT-PB;
+  const maxNodes=Math.max(classes.length,sexes.length,outs.length);
+  const scale=(usable-GAP*(maxNodes-1))/total;
+
+  function layout(keys,count){
+    const arr=keys.map(k=>({k,n:count(k)})).filter(o=>o.n>0);
+    const th=d3.sum(arr,o=>o.n)*scale+GAP*(arr.length-1);
+    let yy=PT+(usable-th)/2;
+    arr.forEach(o=>{o.y=yy;o.h=o.n*scale;yy+=o.h+GAP;});
+    const m={}; arr.forEach(o=>m[o.k]=o); return m;
+  }
+  const N0=layout(classes,c=>V.filter(d=>d.c===c).length);
+  const N1=layout(sexes,x=>V.filter(d=>d.x===x).length);
+  const N2=layout(outs.map(o=>o.k),k=>V.filter(d=>d.s===k).length);
+
+  function ribbon(x0,y0,x1,y1,t){
+    const m=(x0+x1)/2;
+    return 'M'+x0+','+y0+' C'+m+','+y0+' '+m+','+y1+' '+x1+','+y1+
+           ' L'+x1+','+(y1+t)+' C'+m+','+(y1+t)+' '+m+','+(y0+t)+' '+x0+','+(y0+t)+' Z';
+  }
+
+  // links class -> sex
+  const so={}, to={};
+  classes.forEach(c=>so[c]=N0[c].y); sexes.forEach(x=>to[x]=N1[x].y);
+  const alpha={1:.42,2:.3,3:.2};
+  classes.forEach(c=>sexes.forEach(x=>{
+    const n=V.filter(d=>d.c===c&&d.x===x).length; if(!n)return;
+    const t=n*scale;
+    const path=svg.append('path')
+      .attr('d',ribbon(X[0]+NW,so[c],X[1],to[x],t))
+      .attr('fill',INK).attr('opacity',alpha[c]).attr('stroke','none');
+    bindTip(path,()=>'<b>'+CLS_NAME[c]+' → '+SEX_NAME[x]+'</b><br>'+n+' passengers');
+    path.on('mouseenter.o',function(){d3.select(this).attr('opacity',Math.min(alpha[c]+.18,.75));})
+        .on('mouseleave.o',function(){d3.select(this).attr('opacity',alpha[c]);});
+    so[c]+=t; to[x]+=t;
+  }));
+  // links sex -> outcome
+  const so2={}, to2={};
+  sexes.forEach(x=>so2[x]=N1[x].y); outs.forEach(o=>to2[o.k]=N2[o.k].y);
+  sexes.forEach(x=>outs.forEach(o=>{
+    const grp=V.filter(d=>d.x===x), n=grp.filter(d=>d.s===o.k).length; if(!n)return;
+    const t=n*scale;
+    const path=svg.append('path')
+      .attr('d',ribbon(X[1]+NW,so2[x],X[2],to2[o.k],t))
+      .attr('fill',o.k? PATINA:'url(#hatchNavy)')
+      .attr('opacity',o.k?.55:.9).attr('stroke','none');
+    bindTip(path,()=>'<b>'+SEX_NAME[x]+' → '+o.l+'</b><br>'+n+' of '+grp.length+' ('+pct(n,grp.length)+')');
+    if(o.k) path.on('mouseenter.o',function(){d3.select(this).attr('opacity',.75);})
+                .on('mouseleave.o',function(){d3.select(this).attr('opacity',.55);});
+    so2[x]+=t; to2[o.k]+=t;
+  }));
+
+  // nodes + labels
+  function node(x,o,label,side,fill){
+    svg.append('rect').attr('x',x).attr('y',o.y).attr('width',NW).attr('height',o.h)
+      .attr('fill',fill).attr('stroke',INK).attr('stroke-width',1);
+    if(side==='m'){
+      // one line, left of the node, paper halo so it reads over ribbons
+      const t=svg.append('text').attr('x',x-10).attr('y',o.y+o.h/2+4)
+        .attr('text-anchor','end').attr('fill',INK)
+        .attr('stroke','#f5ecd8').attr('stroke-width',4).attr('paint-order','stroke')
+        .attr('stroke-linejoin','round');
+      t.append('tspan').attr('font-size',11.5).attr('letter-spacing','.14em').text(label.toUpperCase()+'  ');
+      t.append('tspan').attr('class','num').attr('font-size',14).attr('fill',PATINAD).text(fmt(o.n));
+      return;
+    }
+    const tx = side==='l'? x-10 : x+NW+10;
+    const anchor = side==='l'?'end':'start';
+    const ty = o.y+o.h/2;
+    const g=svg.append('text').attr('x',tx).attr('y',ty-2).attr('text-anchor',anchor)
+      .attr('font-size',13).attr('fill',INK);
+    g.append('tspan').attr('font-size',11.5).attr('letter-spacing','.14em').text(label.toUpperCase());
+    const g2=svg.append('text').attr('class','num').attr('x',tx).attr('y',ty+14)
+      .attr('text-anchor',anchor).attr('font-size',14).attr('fill',PATINAD);
+    g2.text(fmt(o.n));
+  }
+  classes.forEach(c=>node(X[0],N0[c],CLS_NAME[c],'l',INK));
+  sexes.forEach(x=>node(X[1],N1[x],SEX_NAME[x],'m','#4f6e76'));
+  outs.forEach(o=>node(X[2],N2[o.k],o.l,'r',o.k?PATINA:INK));
+
+  // column captions
+  const caps=[['BERTH',X[0]+NW/2],['SEX',X[1]+NW/2],['OUTCOME',X[2]+NW/2]];
+  caps.forEach(cp=>svg.append('text').attr('x',cp[1]).attr('y',H-2).attr('text-anchor','middle')
+    .attr('font-size',10.5).attr('letter-spacing','.28em').attr('fill',FAINT).text(cp[0]));
+}
+
+/* ============ PLATE III — fares ============ */
+function renderFares(){
+  const el=d3.select('#fares'); el.selectAll('*').remove();
+  const classes=state.cls==='all'?[1,2,3]:[+state.cls];
+  const RH=76, ML=200, MR=46, W=940, H=classes.length*RH+46;
+  const svg=el.append('svg').attr('viewBox','0 0 '+W+' '+H);
+  const x=d3.scaleLog().domain([1,560]).range([ML,W-MR]);
+  const ticks=[1,2,5,10,20,50,100,200,500];
+
+  // grid + axis
+  ticks.forEach(t=>{
+    svg.append('line').attr('x1',x(t)).attr('x2',x(t)).attr('y1',10).attr('y2',classes.length*RH+6)
+      .attr('stroke',INK).attr('opacity',.12);
+    svg.append('text').attr('x',x(t)).attr('y',classes.length*RH+24).attr('text-anchor','middle')
+      .attr('font-size',11.5).attr('fill',INKS).text('£'+t);
+  });
+  svg.append('line').attr('x1',ML-6).attr('x2',W-MR+6).attr('y1',classes.length*RH+6).attr('y2',classes.length*RH+6)
+    .attr('stroke',INK).attr('stroke-width',1);
+  svg.append('text').attr('x',(ML+W-MR)/2).attr('y',classes.length*RH+42).attr('text-anchor','middle')
+    .attr('font-size',10.5).attr('letter-spacing','.26em').attr('fill',FAINT).text('FARE, POUNDS — LOG SCALE');
+
+  classes.forEach((c,ri)=>{
+    const grp=P.filter(d=>d.c===c&&(state.sex==='all'||d.x===state.sex));
+    const cy=ri*RH+RH/2+4;
+    const med=grp.length? d3.median(grp,d=>d.f):0;
+    // row label
+    svg.append('text').attr('x',ML-22).attr('y',cy-8).attr('text-anchor','end')
+      .attr('font-size',11.5).attr('letter-spacing','.16em').attr('fill',INK).text(CLS_NAME[c].toUpperCase());
+    svg.append('text').attr('x',ML-22).attr('y',cy+10).attr('text-anchor','end')
+      .attr('font-size',11.5).attr('font-style','italic').attr('fill',FAINT)
+      .text('n='+grp.length+' · median £'+med.toFixed(2).replace(/\.00$/,''));
+    // row separator
+    if(ri>0) svg.append('line').attr('x1',ML-6).attr('x2',W-MR+6).attr('y1',ri*RH+4).attr('y2',ri*RH+4)
+      .attr('stroke',INK).attr('opacity',.14);
+    // ticks: lost first, saved on top
+    [[0,'rgba(32,64,74,.34)'],[1,'rgba(78,133,119,.85)']].forEach(pair=>{
+      grp.forEach((d,i)=>{
+        if(d.s!==pair[0])return;
+        const jit=((i*37)%15)-7;
+        const line=svg.append('line')
+          .attr('x1',x(Math.max(d.f,1))).attr('x2',x(Math.max(d.f,1)))
+          .attr('y1',cy+jit-8).attr('y2',cy+jit+8)
+          .attr('stroke',pair[1]).attr('stroke-width',1.15);
+        bindTip(line,()=>'<b>'+CLS_NAME[c]+' · '+SEX_NAME[d.x]+(d.a!==null?', age '+d.a:'')+'</b><br>Fare £'+d.f+' — '+(d.s?'saved':'lost'));
+      });
+    });
+    // median diamond
+    if(grp.length){
+      const mx=x(Math.max(med,1));
+      svg.append('rect').attr('x',-5).attr('y',-5).attr('width',10).attr('height',10)
+        .attr('transform','translate('+mx+','+cy+') rotate(45)')
+        .attr('fill',PATINAD).attr('stroke','#f5ecd8').attr('stroke-width',1.4);
+    }
+    // outlier note
+    if(c===1){
+      const top=d3.max(grp,d=>d.f)||0;
+      if(top>500){
+        svg.append('text').attr('x',x(505)).attr('y',cy-26).attr('text-anchor','end')
+          .attr('font-size',11.5).attr('font-style','italic').attr('fill',PATINAD)
+          .text('£512 — the dearest ticket in the sample →');
+      }
+    }
+  });
+  const sx=state.sex==='all'?'':' ('+SEX_NAME[state.sex].toLowerCase()+' only)';
+  document.getElementById('faresFoot').textContent=
+    'Median fares'+sx+': first £'+(d3.median(P.filter(d=>d.c===1&&(state.sex==='all'||d.x===state.sex)),d=>d.f)||0).toFixed(2)+
+    ' · second £'+(d3.median(P.filter(d=>d.c===2&&(state.sex==='all'||d.x===state.sex)),d=>d.f)||0).toFixed(2)+
+    ' · third £'+(d3.median(P.filter(d=>d.c===3&&(state.sex==='all'||d.x===state.sex)),d=>d.f)||0).toFixed(2)+
+    '. Fifteen zero-fare tickets (staff passage and the like) sit at the left edge.';
+}
+
+/* ============ PLATE IV — family size ============ */
+function renderFamily(){
+  const el=d3.select('#family'); el.selectAll('*').remove();
+  const V=view();
+  const groups=[{k:1,l:'Alone'},{k:2,l:'Two'},{k:3,l:'Three'},{k:4,l:'Four'},{k:5,l:'Five'},{k:6,l:'Six'},{k:7,l:'Seven +'}];
+  const W=940,H=330,ML=56,MR=20,MT=26,MB=58;
+  const svg=el.append('svg').attr('viewBox','0 0 '+W+' '+H);
+  const xb=d3.scaleBand().domain(groups.map(g=>g.k)).range([ML,W-MR]).paddingInner(.42).paddingOuter(.18);
+  const y=d3.scaleLinear().domain([0,100]).range([H-MB,MT]);
+  // y grid
+  [0,25,50,75,100].forEach(t=>{
+    svg.append('line').attr('x1',ML-4).attr('x2',W-MR).attr('y1',y(t)).attr('y2',y(t))
+      .attr('stroke',INK).attr('opacity',t===0?.7:.12).attr('stroke-width',t===0?1:.8);
+    svg.append('text').attr('x',ML-10).attr('y',y(t)+4).attr('text-anchor','end')
+      .attr('font-size',11.5).attr('fill',INKS).text(t+'%');
+  });
+  groups.forEach(g=>{
+    const cell=V.filter(d=>Math.min(d.sb+d.pa+1,7)===g.k);
+    const n=cell.length, k=cell.filter(d=>d.s).length;
+    const bx=xb(g.k), bw=xb.bandwidth();
+    if(n>0){
+      const r=100*k/n;
+      const bar=svg.append('rect').attr('x',bx).attr('y',y(r)).attr('width',bw).attr('height',Math.max(y(0)-y(r),1.4))
+        .attr('fill',PATINA).attr('stroke',PATINAD).attr('stroke-width',1.1);
+      bindTip(bar,()=>'<b>Party of '+(g.k===7?'seven or more':g.l.toLowerCase())+'</b><br>'+k+' of '+n+' saved ('+r.toFixed(1)+'%)');
+      svg.append('text').attr('class','num').attr('x',bx+bw/2).attr('y',Math.max(16,y(r)-8))
+        .attr('text-anchor','middle').attr('font-size',16).attr('fill',INK).text(r.toFixed(1)+'%');
+      svg.append('text').attr('x',bx+bw/2).attr('y',H-MB+34).attr('text-anchor','middle')
+        .attr('font-size',11).attr('font-style','italic').attr('fill',FAINT).text('n='+n);
+    } else {
+      svg.append('text').attr('x',bx+bw/2).attr('y',y(4)).attr('text-anchor','middle')
+        .attr('font-size',14).attr('fill',FAINT).text('—');
+    }
+    svg.append('text').attr('x',bx+bw/2).attr('y',H-MB+18).attr('text-anchor','middle')
+      .attr('font-size',11).attr('letter-spacing','.12em').attr('fill',INKS).text(g.l.toUpperCase());
+  });
+  svg.append('text').attr('x',(ML+W-MR)/2).attr('y',H-4).attr('text-anchor','middle')
+    .attr('font-size',10.5).attr('letter-spacing','.26em').attr('fill',FAINT).text('TRAVELLING-PARTY SIZE, SELF INCLUDED');
+}
+
+/* ============ PLATE V — women & children first ============ */
+function renderWCF(){
+  const scope=P.filter(d=>state.cls==='all'||d.c===+state.cls);
+  const women=scope.filter(d=>d.x==='f'), men=scope.filter(d=>d.x==='m');
+  const kids=scope.filter(d=>d.a!==null&&d.a<16);
+  const amen=scope.filter(d=>d.a!==null&&d.a>=16&&d.x==='m');
+  const rw=women.length?women.filter(d=>d.s).length/women.length:0;
+  const rm=men.length?men.filter(d=>d.s).length/men.length:0;
+  const ratio=rm>0? (rw/rm):null;
+
+  const nums=document.getElementById('wcfNums');
+  function row(v,big,lbl,sub){return '<div class="row"><div class="big'+(big?' patina':'')+'">'+v+'</div><div class="lbl">'+lbl+'<i>'+sub+'</i></div></div>';}
+  nums.innerHTML=
+    row(pct(women.filter(d=>d.s).length,women.length),true,'of women saved',women.filter(d=>d.s).length+' of '+women.length)+
+    row(pct(men.filter(d=>d.s).length,men.length),false,'of men saved',men.filter(d=>d.s).length+' of '+men.length)+
+    row(pct(kids.filter(d=>d.s).length,kids.length),true,'of children under 16',kids.filter(d=>d.s).length+' of '+kids.length+' with recorded age')+
+    row(pct(amen.filter(d=>d.s).length,amen.length),false,'of men 16 &amp; over',amen.filter(d=>d.s).length+' of '+amen.length+' with recorded age')+
+    (ratio? '<div class="wcf-ratio">A woman aboard was <b>×'+ratio.toFixed(1)+'</b> as likely to be saved as a man.</div>':'');
+
+  // divided bars
+  const el=d3.select('#wcfBars'); el.selectAll('*').remove();
+  const rows=[
+    {l:'Women',g:women},
+    {l:'Children under 16',g:kids},
+    {l:'Men 16 & over',g:amen}
+  ].filter(r=>r.g.length>0);
+  const W=520,RH=64,H=rows.length*RH+30,ML=8,MR=8;
+  const svg=el.append('svg').attr('viewBox','0 0 '+W+' '+H);
+  const x=d3.scaleLinear().domain([0,1]).range([ML,W-MR]);
+  rows.forEach((r,i)=>{
+    const yy=i*RH+24;
+    const n=r.g.length,k=r.g.filter(d=>d.s).length,share=k/n;
+    svg.append('text').attr('x',ML).attr('y',yy-7)
+      .attr('font-size',11).attr('letter-spacing','.18em').attr('fill',INKS).text(r.l.toUpperCase());
+    svg.append('text').attr('x',W-MR).attr('y',yy-7).attr('text-anchor','end')
+      .attr('font-size',11).attr('font-style','italic').attr('fill',FAINT).text(k+' saved · '+(n-k)+' lost');
+    // lost (hatched, full width beneath)
+    const lost=svg.append('rect').attr('x',x(0)).attr('y',yy).attr('width',x(1)-x(0)).attr('height',24)
+      .attr('fill','url(#hatchNavyLt)').attr('stroke',INK).attr('stroke-width',1);
+    bindTip(lost,()=>'<b>'+r.l+' — lost</b><br>'+(n-k)+' of '+n+' ('+pct(n-k,n)+')');
+    // saved
+    if(k>0){
+      const sv=svg.append('rect').attr('x',x(0)).attr('y',yy).attr('width',Math.max(x(share)-x(0),1.5)).attr('height',24)
+        .attr('fill',PATINA).attr('stroke',PATINAD).attr('stroke-width',1);
+      bindTip(sv,()=>'<b>'+r.l+' — saved</b><br>'+k+' of '+n+' ('+pct(k,n)+')');
+      svg.append('text').attr('class','num')
+        .attr('x',share>.18? x(share)-7 : x(share)+7)
+        .attr('y',yy+16.5)
+        .attr('text-anchor',share>.18?'end':'start')
+        .attr('font-size',13)
+        .attr('fill',share>.18?'#f5ecd8':PATINAD)
+        .text((100*share).toFixed(1)+'%');
+    }
+  });
+
+  // children-by-class note
+  const cn=document.getElementById('wcfChild');
+  if(state.cls==='all'){
+    cn.innerHTML='Administered through the decks: second-class children survived <b>19 of 19</b>; third-class children, <b>25 of 58</b>.';
+  } else {
+    const k=kids.filter(d=>d.s).length;
+    cn.innerHTML=kids.length? 'In '+CLS_NAME[+state.cls].toLowerCase()+', children under 16 survived <b>'+k+' of '+kids.length+'</b> ('+pct(k,kids.length)+').':'No recorded children in this berth.';
+  }
+  document.getElementById('wcfFoot').textContent=
+    (state.sex!=='all'?'The sex filter is not applied to this plate — it exists to compare the sexes. ':'')+
+    'Groups overlap by design (girls under 16 count as both women and children). Ages are known for 714 of 891 passengers.'+
+    (state.cls!=='all'?' Figures restricted to '+CLS_NAME[+state.cls].toLowerCase()+'.':'');
+}
+
+/* ============ render all ============ */
+function renderAll(){
+  renderLedger();
+  renderSmall();
+  renderSankey();
+  renderFares();
+  renderFamily();
+  renderWCF();
+}
+renderAll();
+</script>
+</body>
+</html>

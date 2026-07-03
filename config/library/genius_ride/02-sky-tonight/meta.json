@@ -1,0 +1,10 @@
+{
+  "expert": "genius_ride",
+  "key": "sky-tonight",
+  "type": "sky",
+  "title": "Sky tonight",
+  "desc": "Live, where you are",
+  "brief": "A genuinely live sky briefing for Paris: every time the page opens, it recomputes tonight's sky in the browser (astronomy-engine) — planet rise/set and altitudes, the Moon's phase drawn accurately with distance and apparent size, a ranked list of what's actually worth stepping outside for, a 'tonight's one thing' spotlight, and a cardinal horizon strip showing where everything sits at 23:00 local, with real bright stars plotted. ISS passes for the next 48 h are propagated client-side with satellite.js from an embedded CelesTrak element set, honestly labelled with its epoch and age — the only thing on the page that isn't computed live, and it says so.",
+  "da": "Planetarium nocturne: deep midnight-blue ground, moon-silver and pale-ice text on thin constellation-line hairlines, one warm star-gold reserved for tonight's highlight, Outfit throughout, glow kept to a whisper.",
+  "generated": "2026-07-03"
+}

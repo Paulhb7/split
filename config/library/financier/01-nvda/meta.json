@@ -1,0 +1,10 @@
+{
+  "expert": "financier",
+  "key": "nvda",
+  "type": "deck",
+  "title": "NVIDIA deep-dive",
+  "desc": "Comps, verdict, charts",
+  "brief": "An investor-grade examination of NVIDIA (NVDA) as of July 2026: the business mix after Q1 FY27's record $81.6B print, the ~$725B hyperscaler capex cycle funding it, twenty-four months of real price tape including the June 2026 sector repricing, valuation against AMD, Broadcom, TSMC and Microsoft, the bull case versus the bear case, the China export-control position carried at zero, a ledger of risks, and a reasoned BUY verdict with bear/base/bull scenario bands — every dated figure web-verified against July-2026 sources and cited on the closing slide.",
+  "da": "GTC keynote — pure-black slides, NVIDIA green #76B900 as the single accent, DM Sans grotesk throughout (no serif, no mono), huge green stat numerals, green-on-black charts, dark-gray #161616 panels with thin #2a2a2a hairlines, airy keynote spacing.",
+  "generated": "2026-07-03"
+}

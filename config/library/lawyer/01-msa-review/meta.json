@@ -1,0 +1,10 @@
+{
+  "expert": "lawyer",
+  "key": "msa-review",
+  "type": "doc",
+  "title": "Contract risk review",
+  "desc": "Clause-by-clause flags",
+  "brief": "A clause-by-clause risk review of a realistic 12-clause manufacturing and supply agreement between Atelier Nord SAS (fictional French hardware startup) and Shenzhen Brightline Electronics Ltd (fictional OEM): each key clause excerpt reproduced, flagged red/amber/green with why it bites and the proposed redline, covering IP ownership, tooling, MOQs, liability caps, warranty, termination, governing law and arbitration, ending with a tiered negotiation priority list — French-law lens, plain English, visible demo disclaimer.",
+  "da": "White-shoe counsel letterhead: ivory sheet, deep navy with oxblood accents, tracked small-caps masthead, Source Serif 4 body, indented clause quotes, risk chips in the margin, del/ins redlines.",
+  "generated": "2026-07-03"
+}

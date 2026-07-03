@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tactical Breakdown — Morocco 1-1 Netherlands (3-2 pens) · World Cup 2026 R32</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Rock+Salt&family=Archivo+Narrow:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    /* tactician's chalkboard — deep slate-green, chalk-white, marker warmth */
+    --board:#14261e;            /* deep chalkboard green */
+    --board-2:#182c22;
+    --board-hi:#1c3329;
+    --chalk:#eef2e6;            /* chalk white */
+    --chalk-dim:#b9c3ad;        /* faded chalk */
+    --chalk-faint:#7f8c73;      /* smudge */
+    --line:#cdd6c0;            /* pitch line chalk */
+    --marker-mar:#e4572e;       /* Morocco red marker */
+    --marker-ned:#f4a300;       /* Netherlands orange marker (Oranje) */
+    --marker-yellow:#f2d675;    /* chalk highlighter */
+    --edge:rgba(205,214,192,.16);
+    --edge-2:rgba(205,214,192,.28);
+    --panel:#0f1d16;
+    --shadow:rgba(0,0,0,.42);
+    --serif:'Archivo Narrow',sans-serif;
+    --sans:'Inter',system-ui,sans-serif;
+    --chalkhead:'Rock Salt',cursive;
+    --chalkhand:'Caveat',cursive;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--board);
+    color:var(--chalk);
+    font-family:var(--sans);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+    overflow-x:hidden;
+  }
+  /* chalk-dust texture + vignette + faint slate grain, all in CSS */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(1100px 700px at 78% -8%, rgba(120,160,130,.10), transparent 60%),
+      radial-gradient(900px 900px at 8% 108%, rgba(90,130,105,.08), transparent 62%),
+      radial-gradient(circle at 50% 40%, transparent 55%, rgba(0,0,0,.34) 100%);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;
+    background-image:
+      radial-gradient(rgba(238,242,230,.9) .5px, transparent .6px),
+      radial-gradient(rgba(238,242,230,.55) .5px, transparent .6px);
+    background-size:3px 3px, 7px 7px;
+    background-position:0 0, 2px 3px;
+    mix-blend-mode:screen;
+  }
+  .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:34px 26px 90px}
+
+  /* ————— chalk rail / masthead ————— */
+  .masthead{border-bottom:1.5px solid var(--edge-2);padding-bottom:20px;margin-bottom:20px}
+  .kicker{
+    font-family:var(--serif);text-transform:uppercase;letter-spacing:.32em;
+    font-size:11px;color:var(--chalk-dim);font-weight:600;display:flex;gap:12px;align-items:center;flex-wrap:wrap
+  }
+  .kicker .dot{width:5px;height:5px;border-radius:50%;background:var(--marker-mar);box-shadow:0 0 8px var(--marker-mar)}
+  h1{
+    font-family:var(--chalkhead);
+    font-size:clamp(24px,4.6vw,46px);
+    line-height:1.14;font-weight:400;color:var(--chalk);
+    margin:16px 0 6px;letter-spacing:.4px;
+    text-shadow:0 1px 0 rgba(0,0,0,.35);
+  }
+  h1 .accent{color:var(--marker-mar)}
+  .dek{font-family:var(--chalkhand);font-size:clamp(18px,2.4vw,25px);color:var(--chalk-dim);font-weight:600;letter-spacing:.3px}
+  .byline{margin-top:12px;font-size:12.5px;color:var(--chalk-faint);font-family:var(--serif);letter-spacing:.06em;text-transform:uppercase}
+
+  /* ————— About / exec summary ————— */
+  details.about{
+    background:linear-gradient(180deg,var(--board-hi),var(--board-2));
+    border:1px solid var(--edge-2);border-left:3px solid var(--marker-yellow);
+    border-radius:4px;margin:20px 0 30px;overflow:hidden;
+    box-shadow:0 10px 30px -18px var(--shadow);
+  }
+  details.about>summary{
+    cursor:pointer;list-style:none;padding:14px 18px;
+    font-family:var(--serif);text-transform:uppercase;letter-spacing:.18em;font-size:12px;font-weight:700;color:var(--chalk);
+    display:flex;align-items:center;gap:10px;user-select:none
+  }
+  details.about>summary::-webkit-details-marker{display:none}
+  details.about>summary .chev{margin-left:auto;transition:transform .25s;color:var(--chalk-dim);font-size:14px}
+  details.about[open]>summary .chev{transform:rotate(90deg)}
+  .about-body{padding:2px 20px 20px;border-top:1px dashed var(--edge)}
+  .about-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px 26px;margin-top:16px}
+  .about-grid h4{font-family:var(--serif);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--marker-yellow);margin-bottom:5px;font-weight:700}
+  .about-grid p{font-size:13.5px;color:var(--chalk-dim);line-height:1.55}
+
+  /* ————— scoreline strip ————— */
+  .scoreline{
+    display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:18px;
+    background:var(--panel);border:1px solid var(--edge);border-radius:6px;
+    padding:20px 22px;margin-bottom:14px;position:relative;overflow:hidden;
+  }
+  .scoreline::before{content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(115deg,transparent 0 22px,rgba(205,214,192,.02) 22px 23px)}
+  .team-blk{display:flex;flex-direction:column;gap:3px;position:relative}
+  .team-blk.away{align-items:flex-end;text-align:right}
+  .team-name{font-family:var(--chalkhead);font-size:clamp(18px,3vw,27px);letter-spacing:.4px}
+  .team-name.mar{color:var(--marker-mar)}
+  .team-name.ned{color:var(--marker-ned)}
+  .team-sub{font-size:11px;color:var(--chalk-faint);font-family:var(--serif);text-transform:uppercase;letter-spacing:.12em}
+  .score-core{text-align:center;position:relative}
+  .score-nums{font-family:var(--serif);font-weight:700;font-size:clamp(30px,6vw,52px);letter-spacing:.02em;line-height:1}
+  .score-pens{font-family:var(--chalkhand);font-size:16px;color:var(--marker-yellow);font-weight:700;margin-top:4px}
+  .score-tag{font-size:10.5px;color:var(--chalk-faint);font-family:var(--serif);text-transform:uppercase;letter-spacing:.16em;margin-top:6px}
+
+  /* ————— section shell ————— */
+  section{margin-top:40px}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px;flex-wrap:wrap}
+  .sec-head .num{font-family:var(--chalkhead);font-size:15px;color:var(--marker-mar);opacity:.9}
+  .sec-head h2{font-family:var(--chalkhead);font-size:clamp(18px,3vw,27px);font-weight:400;letter-spacing:.3px;color:var(--chalk)}
+  .sec-sub{color:var(--chalk-dim);font-size:14px;max-width:64ch;margin-bottom:4px}
+  .rule{height:1px;background:linear-gradient(90deg,var(--edge-2),transparent);margin:12px 0 22px}
+
+  /* ————— the interactive board ————— */
+  .board-shell{
+    background:radial-gradient(120% 140% at 50% 0%, var(--board-hi), var(--board-2) 70%);
+    border:1px solid var(--edge-2);border-radius:8px;padding:0;overflow:hidden;
+    box-shadow:0 24px 60px -30px var(--shadow),inset 0 0 90px rgba(0,0,0,.28);
+  }
+  .phase-bar{
+    display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px;border-bottom:1px solid var(--edge);
+    background:linear-gradient(180deg,rgba(0,0,0,.16),transparent);
+  }
+  .phase-btn{
+    font-family:var(--serif);text-transform:uppercase;letter-spacing:.12em;font-size:11.5px;font-weight:600;
+    color:var(--chalk-dim);background:transparent;border:1px solid var(--edge-2);
+    padding:8px 14px;border-radius:20px;cursor:pointer;transition:all .18s;position:relative
+  }
+  .phase-btn:hover{color:var(--chalk);border-color:var(--chalk-faint);transform:translateY(-1px)}
+  .phase-btn[aria-selected="true"]{color:var(--board);background:var(--chalk);border-color:var(--chalk);font-weight:700;box-shadow:0 0 0 3px rgba(238,242,230,.12)}
+  .phase-btn .k{opacity:.5;margin-right:6px;font-family:var(--serif)}
+
+  .board-main{display:grid;grid-template-columns:1.55fr 1fr;gap:0}
+  @media(max-width:860px){.board-main{grid-template-columns:1fr}}
+  .pitch-pane{padding:16px 14px 18px;position:relative}
+  .read-pane{padding:20px 20px 22px;border-left:1px dashed var(--edge)}
+  @media(max-width:860px){.read-pane{border-left:none;border-top:1px dashed var(--edge)}}
+
+  svg.pitch{width:100%;height:auto;display:block;overflow:visible}
+  /* chalk drawing primitives */
+  .pl{fill:none;stroke:var(--line);stroke-width:1.4;opacity:.62}
+  .pl-thin{fill:none;stroke:var(--line);stroke-width:.9;opacity:.4}
+  .node{stroke-width:1.6}
+  .node-mar{fill:var(--marker-mar);stroke:#ffd9cc}
+  .node-ned{fill:var(--marker-ned);stroke:#4a2f00;fill-opacity:.95}
+  .node-lbl{font-family:var(--serif);font-size:8.4px;font-weight:700;fill:var(--chalk);text-anchor:middle;letter-spacing:.02em}
+  .node-num{font-family:var(--serif);font-size:8.6px;font-weight:700;text-anchor:middle;dominant-baseline:central}
+  .num-on-mar{fill:#fff}
+  .num-on-ned{fill:#2a1c00}
+  .arrow-mar{stroke:var(--marker-mar);stroke-width:2.4;fill:none;stroke-linecap:round;filter:url(#rough)}
+  .arrow-ned{stroke:var(--marker-ned);stroke-width:2.4;fill:none;stroke-linecap:round;filter:url(#rough)}
+  .lane{stroke:var(--marker-yellow);stroke-width:2;fill:none;stroke-dasharray:2 5;stroke-linecap:round;opacity:.9}
+  .press-ring{fill:none;stroke:var(--marker-mar);stroke-width:1.4;stroke-dasharray:3 4;opacity:.85}
+  .zone-heat{opacity:.9}
+  .annot{font-family:var(--chalkhand);font-size:15px;fill:var(--chalk);font-weight:600}
+  .annot-red{fill:#ffb59e}
+  .annot-org{fill:#ffcf7a}
+  .annot-yl{fill:var(--marker-yellow)}
+  .anim-fade{opacity:0;animation:fadein .5s ease forwards}
+  @keyframes fadein{to{opacity:1}}
+  @keyframes dash{to{stroke-dashoffset:0}}
+  .draw-in{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:dash .8s ease forwards}
+
+  /* formation caption chips under pitch */
+  .form-row{display:flex;justify-content:space-between;gap:10px;margin-top:12px;font-family:var(--serif);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .form-chip{display:flex;align-items:center;gap:7px;color:var(--chalk-dim)}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .sw-mar{background:var(--marker-mar)}
+  .sw-ned{background:var(--marker-ned)}
+
+  /* read pane content */
+  .phase-title{font-family:var(--chalkhead);font-size:16px;color:var(--chalk);margin-bottom:2px;letter-spacing:.3px}
+  .phase-kicker{font-family:var(--serif);text-transform:uppercase;letter-spacing:.16em;font-size:10.5px;color:var(--marker-yellow);font-weight:700;margin-bottom:10px}
+  .phase-body p{font-size:13.5px;color:var(--chalk-dim);margin-bottom:10px;line-height:1.6}
+  .phase-body strong{color:var(--chalk);font-weight:600}
+  .legend{margin-top:16px;padding-top:14px;border-top:1px dashed var(--edge);display:flex;flex-direction:column;gap:7px}
+  .leg-row{display:flex;align-items:center;gap:9px;font-size:11.5px;color:var(--chalk-faint);font-family:var(--serif);letter-spacing:.04em}
+  .leg-ico{width:26px;height:0;border-top:2.4px solid;flex:none}
+  .leg-dot{width:11px;height:11px;border-radius:50%;flex:none}
+  .leg-dash{width:26px;border-top:2px dashed;flex:none}
+
+  /* ————— stat strip ————— */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:6px}
+  .stat-card{background:var(--panel);border:1px solid var(--edge);border-radius:6px;padding:15px 16px;position:relative;overflow:hidden}
+  .stat-card .lab{font-family:var(--serif);text-transform:uppercase;letter-spacing:.14em;font-size:10px;color:var(--chalk-faint);font-weight:600}
+  .bar-cmp{display:flex;height:9px;border-radius:5px;overflow:hidden;margin:11px 0 8px;background:rgba(0,0,0,.3)}
+  .bar-mar{background:var(--marker-mar)}
+  .bar-ned{background:var(--marker-ned)}
+  .cmp-nums{display:flex;justify-content:space-between;font-family:var(--serif);font-weight:700;font-size:15px}
+  .cmp-nums .m{color:var(--marker-mar)}
+  .cmp-nums .n{color:var(--marker-ned)}
+
+  /* ————— duel card ————— */
+  .duel{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:stretch;background:var(--panel);border:1px solid var(--edge-2);border-radius:8px;padding:20px;margin-top:6px}
+  @media(max-width:640px){.duel{grid-template-columns:1fr;text-align:center}}
+  .duel-side h3{font-family:var(--chalkhead);font-size:16px;margin-bottom:2px}
+  .duel-side.mar h3{color:var(--marker-mar)}
+  .duel-side.ned h3{color:var(--marker-ned)}
+  .duel-side .rolelab{font-family:var(--serif);text-transform:uppercase;letter-spacing:.12em;font-size:10px;color:var(--chalk-faint);margin-bottom:9px}
+  .duel-side p{font-size:13px;color:var(--chalk-dim)}
+  .vs{align-self:center;font-family:var(--chalkhead);font-size:20px;color:var(--chalk-faint)}
+  @media(max-width:640px){.vs{transform:rotate(90deg)}}
+
+  /* ————— Diego verdict ————— */
+  .verdict{background:linear-gradient(140deg,var(--board-hi),var(--panel));border:1px solid var(--edge-2);border-left:4px solid var(--marker-mar);border-radius:6px;padding:24px 26px;margin-top:6px;position:relative}
+  .verdict::before{content:"“";position:absolute;top:2px;left:14px;font-family:Georgia,serif;font-size:70px;color:var(--edge-2);line-height:1}
+  .verdict .who{font-family:var(--serif);text-transform:uppercase;letter-spacing:.2em;font-size:11px;color:var(--marker-mar);font-weight:700;margin-bottom:10px}
+  .verdict p{font-family:var(--chalkhand);font-size:19px;color:var(--chalk);line-height:1.5;margin-bottom:12px}
+  .verdict p:last-child{margin-bottom:0}
+  .verdict .sign{font-family:var(--chalkhead);font-size:14px;color:var(--chalk-dim);text-align:right;margin-top:14px}
+
+  .break-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+  @media(max-width:640px){.break-grid{grid-template-columns:1fr}}
+  .break-card{border:1px solid var(--edge);border-radius:6px;padding:18px 20px;background:var(--panel)}
+  .break-card h4{font-family:var(--serif);text-transform:uppercase;letter-spacing:.12em;font-size:12px;margin-bottom:9px;display:flex;align-items:center;gap:8px}
+  .break-card.why h4{color:var(--marker-yellow)}
+  .break-card.risk h4{color:var(--marker-mar)}
+  .break-card p{font-size:13.5px;color:var(--chalk-dim)}
+  .adjust{margin-top:16px;background:linear-gradient(120deg,rgba(228,87,46,.12),transparent);border:1px dashed var(--marker-mar);border-radius:6px;padding:18px 20px}
+  .adjust h4{font-family:var(--chalkhead);font-size:15px;color:var(--marker-mar);margin-bottom:7px}
+  .adjust p{font-size:14px;color:var(--chalk);font-family:var(--chalkhand);font-weight:600}
+
+  /* ————— shootout ladder ————— */
+  .pk-wrap{background:var(--panel);border:1px solid var(--edge);border-radius:8px;padding:20px 22px;margin-top:6px}
+  .pk-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+  @media(max-width:560px){.pk-grid{grid-template-columns:1fr}}
+  .pk-col h4{font-family:var(--chalkhead);font-size:15px;margin-bottom:12px}
+  .pk-col.mar h4{color:var(--marker-mar)}
+  .pk-col.ned h4{color:var(--marker-ned)}
+  .pk-row{display:flex;align-items:center;gap:11px;padding:7px 0;border-bottom:1px dashed var(--edge)}
+  .pk-row:last-child{border-bottom:none}
+  .pk-taker{font-size:13px;color:var(--chalk);flex:1;font-weight:500}
+  .pk-mark{font-family:var(--serif);font-weight:700;font-size:12px;width:74px;text-align:right;letter-spacing:.04em}
+  .pk-mark.goal{color:#9fd88a}
+  .pk-mark.miss{color:var(--marker-mar)}
+  .pk-mark.save{color:var(--marker-yellow)}
+  .pk-ball{width:15px;height:15px;border-radius:50%;flex:none;border:1.5px solid}
+  .pk-ball.goal{background:#9fd88a;border-color:#cdeec0}
+  .pk-ball.miss{background:transparent;border-color:var(--marker-mar)}
+  .pk-ball.save{background:transparent;border-color:var(--marker-yellow)}
+  .pk-final{margin-top:16px;text-align:center;font-family:var(--chalkhand);font-size:18px;color:var(--chalk)}
+  .pk-final b{color:var(--marker-mar)}
+
+  /* ————— sources ————— */
+  .src{margin-top:44px;border-top:1.5px solid var(--edge-2);padding-top:20px}
+  .src h3{font-family:var(--serif);text-transform:uppercase;letter-spacing:.16em;font-size:12px;color:var(--chalk-dim);margin-bottom:12px}
+  .src ol{list-style:none;counter-reset:s;display:grid;gap:8px}
+  .src li{counter-increment:s;font-size:12.5px;color:var(--chalk-faint);padding-left:26px;position:relative;line-height:1.5}
+  .src li::before{content:"["counter(s)"]";position:absolute;left:0;font-family:var(--serif);color:var(--marker-mar);font-weight:700;font-size:11px}
+  .src a{color:var(--chalk-dim);text-decoration:none;border-bottom:1px dotted var(--chalk-faint)}
+  .src a:hover{color:var(--chalk)}
+  .footnote{margin-top:22px;font-size:11.5px;color:var(--chalk-faint);font-family:var(--serif);letter-spacing:.04em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;border-top:1px dashed var(--edge);padding-top:14px}
+  .footnote .badge{border:1px solid var(--edge-2);border-radius:20px;padding:3px 11px;color:var(--chalk-dim)}
+
+  .cite{font-size:10px;vertical-align:super;color:var(--marker-mar);font-family:var(--serif);font-weight:700;margin-left:1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ————— MASTHEAD ————— -->
+  <header class="masthead">
+    <div class="kicker">
+      <span class="dot"></span>
+      <span>Split · Maradona · Tactical Room</span>
+      <span>◦</span>
+      <span>FIFA World Cup 2026 · Round of 32</span>
+      <span>◦</span>
+      <span>Monterrey · 29 Jun 2026</span>
+    </div>
+    <h1>Seventy per cent of the ball, and it still went to <span class="accent">penalties</span></h1>
+    <p class="dek">How Morocco strangled the Dutch — and where a smarter Oranje would have hurt them</p>
+    <div class="byline">A chalkboard read of Morocco 1-1 Netherlands (3-2 pens) · drawn by Diego</div>
+  </header>
+
+  <!-- ————— ABOUT / EXEC SUMMARY ————— -->
+  <details class="about" open>
+    <summary>About this breakdown <span class="chev">▸</span></summary>
+    <div class="about-body">
+      <div class="about-grid">
+        <div>
+          <h4>Why</h4>
+          <p>The boss wanted a deep tactical read of a real, decided World Cup 2026 knockout match — the shape, the press, the duel that swung it, drawn on the board and explained in plain words.</p>
+        </div>
+        <div>
+          <h4>Context</h4>
+          <p>Round of 32, Estadio BBVA Monterrey. Morocco 1-1 Netherlands after extra time; Morocco won 3-2 on penalties and drew Canada in the last 16. Data verified against <em>football-data</em> (event 760488) and match reports below.</p>
+        </div>
+        <div>
+          <h4>How to use it</h4>
+          <p>Use the phase toggles — <em>Build-up · Press · Transition · Set-piece</em> — to redraw the board for each moment of the game. Read the right panel for what's happening, then Diego's verdict below.</p>
+        </div>
+        <div>
+          <h4>What I assumed</h4>
+          <p>You wanted the tactician's eye, not a bare box score — so this leads with shape and duels. Player positions are drawn from the confirmed XIs and reports; exact heat coordinates are illustrative of role, not GPS.</p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ————— SCORELINE ————— -->
+  <div class="scoreline">
+    <div class="team-blk home">
+      <div class="team-name mar">MOROCCO</div>
+      <div class="team-sub">4-3-3 · Regragui · won the last 16 ticket</div>
+    </div>
+    <div class="score-core">
+      <div class="score-nums">1&nbsp;–&nbsp;1</div>
+      <div class="score-pens">3-2 on penalties</div>
+      <div class="score-tag">AET · Round of 32</div>
+    </div>
+    <div class="team-blk away">
+      <div class="team-name ned">NETHERLANDS</div>
+      <div class="team-sub">3-4-2-1 · Koeman · out</div>
+    </div>
+  </div>
+
+  <!-- ————— SECTION 1 · THE BOARD ————— -->
+  <section id="board">
+    <div class="sec-head">
+      <span class="num">01</span>
+      <h2>The board</h2>
+    </div>
+    <p class="sec-sub">Four moments of the same match. Tap a phase — the shape, the arrows and the lanes redraw. Morocco in red, the Netherlands in Oranje.</p>
+    <div class="rule"></div>
+
+    <div class="board-shell">
+      <!-- phase toggles -->
+      <div class="phase-bar" role="tablist" aria-label="Match phase">
+        <button class="phase-btn" role="tab" aria-selected="true"  data-phase="buildup"><span class="k">1</span>Build-up</button>
+        <button class="phase-btn" role="tab" aria-selected="false" data-phase="press"><span class="k">2</span>Press</button>
+        <button class="phase-btn" role="tab" aria-selected="false" data-phase="transition"><span class="k">3</span>Transition</button>
+        <button class="phase-btn" role="tab" aria-selected="false" data-phase="setpiece"><span class="k">4</span>Set-piece</button>
+      </div>
+
+      <div class="board-main">
+        <!-- PITCH -->
+        <div class="pitch-pane">
+          <!-- viewBox: full pitch, Morocco attacking left→right. 100 wide (x, along length) x 64 tall (y) -->
+          <svg class="pitch" viewBox="0 0 100 64" role="img" aria-labelledby="pitchdesc">
+            <title id="pitchdesc">Tactical pitch diagram; shape updates by phase</title>
+            <defs>
+              <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"/>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="1.1" xChannelSelector="R" yChannelSelector="G"/>
+              </filter>
+              <marker id="ah-mar" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 L1.8,3 Z" fill="var(--marker-mar)"/>
+              </marker>
+              <marker id="ah-ned" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 L1.8,3 Z" fill="var(--marker-ned)"/>
+              </marker>
+              <marker id="ah-yl" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 L1.8,3 Z" fill="var(--marker-yellow)"/>
+              </marker>
+              <radialGradient id="heat" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"  stop-color="var(--marker-mar)" stop-opacity="0.5"/>
+                <stop offset="55%" stop-color="var(--marker-mar)" stop-opacity="0.22"/>
+                <stop offset="100%" stop-color="var(--marker-mar)" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+
+            <!-- pitch markings -->
+            <g>
+              <rect x="2" y="2" width="96" height="60" class="pl"/>
+              <line x1="50" y1="2" x2="50" y2="62" class="pl"/>
+              <circle cx="50" cy="32" r="9" class="pl"/>
+              <circle cx="50" cy="32" r="0.7" fill="var(--line)" opacity=".6"/>
+              <!-- left box (Morocco defends? no — Morocco attacks left→right, so left goal = Morocco's own) -->
+              <rect x="2" y="16" width="14" height="32" class="pl-thin"/>
+              <rect x="2" y="24.5" width="5" height="15" class="pl-thin"/>
+              <rect x="84" y="16" width="14" height="32" class="pl-thin"/>
+              <rect x="93" y="24.5" width="5" height="15" class="pl-thin"/>
+              <circle cx="11" cy="32" r="0.6" fill="var(--line)" opacity=".5"/>
+              <circle cx="89" cy="32" r="0.6" fill="var(--line)" opacity=".5"/>
+              <path d="M16 26 A 9 9 0 0 1 16 38" class="pl-thin"/>
+              <path d="M84 26 A 9 9 0 0 0 84 38" class="pl-thin"/>
+            </g>
+
+            <!-- direction-of-play chalk arrow (Morocco →) -->
+            <g opacity="0.5">
+              <line x1="43" y1="60" x2="57" y2="60" class="arrow-mar" marker-end="url(#ah-mar)" stroke-width="1.6"/>
+              <text x="50" y="58" class="node-lbl" style="fill:var(--chalk-faint);font-size:6px">MOROCCO ATTACK →</text>
+            </g>
+
+            <!-- ============ DYNAMIC LAYER ============ -->
+            <g id="dyn"></g>
+          </svg>
+
+          <div class="form-row">
+            <span class="form-chip"><span class="swatch sw-mar"></span> Morocco 4-3-3</span>
+            <span class="form-chip" id="phaseNote">Both shapes at rest</span>
+            <span class="form-chip"><span class="swatch sw-ned"></span> Netherlands 3-4-2-1</span>
+          </div>
+        </div>
+
+        <!-- READ PANE -->
+        <div class="read-pane">
+          <div class="phase-kicker" id="rKick">Phase 1 of 4</div>
+          <div class="phase-title" id="rTitle">Building out — Morocco with the ball</div>
+          <div class="phase-body" id="rBody"></div>
+
+          <div class="legend" id="legend"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ————— SECTION 2 · THE NUMBERS ————— -->
+  <section id="numbers">
+    <div class="sec-head"><span class="num">02</span><h2>What the numbers said</h2></div>
+    <p class="sec-sub">Morocco owned the game on paper. The Netherlands built a wall, took their one good chance, and nearly stole it on nerve. <span class="cite">1</span></p>
+    <div class="rule"></div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="lab">Possession</div>
+        <div class="bar-cmp"><div class="bar-mar" style="width:70.1%"></div><div class="bar-ned" style="width:29.9%"></div></div>
+        <div class="cmp-nums"><span class="m">70.1%</span><span class="n">29.9%</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="lab">Shots on target</div>
+        <div class="bar-cmp"><div class="bar-mar" style="width:71.4%"></div><div class="bar-ned" style="width:28.6%"></div></div>
+        <div class="cmp-nums"><span class="m">5</span><span class="n">2</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="lab">Corners won</div>
+        <div class="bar-cmp"><div class="bar-mar" style="width:61.5%"></div><div class="bar-ned" style="width:38.5%"></div></div>
+        <div class="cmp-nums"><span class="m">8</span><span class="n">5</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="lab">Passes played</div>
+        <div class="bar-cmp"><div class="bar-mar" style="width:70.3%"></div><div class="bar-ned" style="width:29.7%"></div></div>
+        <div class="cmp-nums"><span class="m">879</span><span class="n">371</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="lab">Fouls committed</div>
+        <div class="bar-cmp"><div class="bar-mar" style="width:45.5%"></div><div class="bar-ned" style="width:54.5%"></div></div>
+        <div class="cmp-nums"><span class="m">15</span><span class="n">18</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="lab">GK saves made</div>
+        <div class="bar-cmp"><div class="bar-mar" style="width:16.7%"></div><div class="bar-ned" style="width:83.3%"></div></div>
+        <div class="cmp-nums"><span class="m">1</span><span class="n">5</span></div>
+      </div>
+    </div>
+    <p class="sec-sub" style="margin-top:16px;color:var(--chalk-faint);font-size:12.5px">Source: football-data (event 760488), full-time team statistics. 90-minute figures; the tie went to extra time then penalties.</p>
+  </section>
+
+  <!-- ————— SECTION 3 · THE DUEL ————— -->
+  <section id="duel">
+    <div class="sec-head"><span class="num">03</span><h2>The duel that decided it</h2></div>
+    <p class="sec-sub">Down Morocco's right, one lane was worth the whole match: Hakimi bombing on, into the corridor Koeman handed to a converted centre-back.</p>
+    <div class="rule"></div>
+    <div class="duel">
+      <div class="duel-side mar">
+        <h3>Achraf Hakimi</h3>
+        <div class="rolelab">Morocco · Right-back / winger #2</div>
+        <p>The engine of everything wide-right — overlapping Brahim Díaz, stretching the last line. Hit the crossbar with a clear chance in the second half and buried nothing but effort into that flank all night. <span class="cite">2</span> <span class="cite">3</span></p>
+      </div>
+      <div class="vs">vs</div>
+      <div class="duel-side ned">
+        <h3>Micky van de Ven</h3>
+        <div class="rolelab">Netherlands · Left wing-back #15</div>
+        <p>A centre-back asked to play left wing-back after Koeman's switch to a back three — blistering pace to recover, but forced to defend a one-v-one he was never built to start. The mismatch Morocco kept dialling. <span class="cite">4</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ————— SECTION 4 · DIEGO ————— -->
+  <section id="verdict">
+    <div class="sec-head"><span class="num">04</span><h2>Diego's read</h2></div>
+    <p class="sec-sub">Why it worked, where it broke, and the one thing I'd have changed at half-time.</p>
+    <div class="rule"></div>
+
+    <div class="verdict">
+      <div class="who">The verdict</div>
+      <p>Listen. Morocco played the braver football — seventy per cent of the ball is not an accident, it is a plan carried out by men who trust each other. They pinned the Dutch back and made Hakimi the whole right wing. That is beautiful, and it is <em>correct</em>.</p>
+      <p>But football punishes the team that dominates and does not kill. Two shots on target for the Netherlands — <strong>two</strong> — and one of them, Gakpo's, was enough to lead in the 72nd minute. Morocco needed Issa Diop, a centre-half, to head them level in stoppage time. When you are that much better and you still need your defender's forehead, the game is telling you something.</p>
+      <p>And then the lottery. Both sides shook — the bar, the post, Bounou's hands. That is not tactics any more, that is nerve. Morocco had more of it. Deserved on the ball; earned on the penalty spot.</p>
+      <div class="sign">— Diego</div>
+    </div>
+
+    <div class="break-grid">
+      <div class="break-card why">
+        <h4>◆ Why the plan worked</h4>
+        <p>The moment Koeman went to a back three with Van de Ven at left wing-back, he handed Morocco a target. Hakimi and Brahim Díaz doubled up that side, dragged the wing-back inside-out, and turned 70% possession into a slow suffocation. The Dutch couldn't press three-versus-two in build-up, so they sat — and sitting against Morocco means corners, second balls, and Diop arriving late. That's exactly the goal they conceded.</p>
+      </div>
+      <div class="break-card risk">
+        <h4>◆ Where it breaks</h4>
+        <p>Possession without a knife is a trap. Morocco funnelled everything wide and crossed into a box owned by Van Dijk and Aké — 6ft giants who win the first header all day. Five on target from all that territory is thin. And a team that presses high leaves Gakpo one pass from Summerville behind the line — which is the exact move that scored. Control the game, gift the counter: that's the tightrope.</p>
+      </div>
+    </div>
+
+    <div class="adjust">
+      <h4>✎ The one adjustment I'd make</h4>
+      <p>Stop crossing into the tall men. At half-time I move Brahim Díaz permanently inside off the right, let Hakimi own the touchline alone, and I tell Saibari to attack the <em>near-post cut-back</em>, not the far-post header. Van Dijk can't head a ball that never goes airborne. Pull it back along the floor to the penalty spot and you score in the 60th, not the shootout.</p>
+    </div>
+  </section>
+
+  <!-- ————— SECTION 5 · THE SHOOTOUT ————— -->
+  <section id="shootout">
+    <div class="sec-head"><span class="num">05</span><h2>The lottery, kick by kick</h2></div>
+    <p class="sec-sub">A shootout of survivors — the woodwork and the goalkeepers did the talking before Saibari settled it. <span class="cite">5</span></p>
+    <div class="rule"></div>
+    <div class="pk-wrap">
+      <div class="pk-grid">
+        <div class="pk-col mar">
+          <h4>Morocco (3)</h4>
+          <div class="pk-row"><span class="pk-ball miss"></span><span class="pk-taker">Neil El Aynaoui</span><span class="pk-mark miss">off the bar</span></div>
+          <div class="pk-row"><span class="pk-ball goal"></span><span class="pk-taker">Morocco converts</span><span class="pk-mark goal">scored</span></div>
+          <div class="pk-row"><span class="pk-ball miss"></span><span class="pk-taker">Achraf Hakimi</span><span class="pk-mark miss">off the post</span></div>
+          <div class="pk-row"><span class="pk-ball goal"></span><span class="pk-taker">Morocco converts</span><span class="pk-mark goal">scored</span></div>
+          <div class="pk-row"><span class="pk-ball goal"></span><span class="pk-taker">Ismael Saibari</span><span class="pk-mark goal">winner</span></div>
+        </div>
+        <div class="pk-col ned">
+          <h4>Netherlands (2)</h4>
+          <div class="pk-row"><span class="pk-ball goal"></span><span class="pk-taker">Netherlands converts</span><span class="pk-mark goal">scored</span></div>
+          <div class="pk-row"><span class="pk-ball miss"></span><span class="pk-taker">Justin Kluivert</span><span class="pk-mark miss">off the post</span></div>
+          <div class="pk-row"><span class="pk-ball goal"></span><span class="pk-taker">Netherlands converts</span><span class="pk-mark goal">scored</span></div>
+          <div class="pk-row"><span class="pk-ball miss"></span><span class="pk-taker">Quinten Timber</span><span class="pk-mark miss">wide</span></div>
+          <div class="pk-row"><span class="pk-ball save"></span><span class="pk-taker">Crysencio Summerville</span><span class="pk-mark save">saved</span></div>
+        </div>
+      </div>
+      <div class="pk-final">Bounou saves Summerville · <b>Morocco win 3-2</b> · into the last 16 vs Canada</div>
+    </div>
+  </section>
+
+  <!-- ————— SOURCES ————— -->
+  <div class="src">
+    <h3>Sources & data</h3>
+    <ol>
+      <li><strong>football-data</strong> — FIFA World Cup 2026, event 760488, full-time team statistics (possession 70.1/29.9, shots on target 5/2, corners 8/5, passes 879/371, fouls 15/18, GK saves 1/5) and confirmed starting XIs / formations. Queried 2026-07-03.</li>
+      <li>Al Jazeera — <a href="https://www.aljazeera.com/sports/2026/6/30/morocco-netherlands-world-cup-knockout-penalty-shootout-saibari-diop-gakpo">“Morocco beat Netherlands in dramatic World Cup shootout to reach last 16”</a> (30 Jun 2026): Gakpo 72' (Summerville assist), Diop 90+1' (Talbi cross), Bounou's save on Summerville, Saibari winner, El Aynaoui &amp; Hakimi hit the woodwork.</li>
+      <li>ESPN — <a href="https://www.espn.com/soccer/report/_/gameId/760488">Netherlands 1-1 Morocco, match analysis</a> (29 Jun 2026): Hakimi hit the crossbar; Verbruggen deflection denied Rahimi (97'); Estadio Monterrey.</li>
+      <li>Philly Sports Network / Metro Philadelphia — <a href="https://www.metrophiladelphia.com/philly-sports-network-landing-page/stories/world-cup-2026-32-day-2-3,145731">“Morocco sends the Netherlands home in chaotic penalty shootout”</a> (30 Jun 2026): Koeman's 4-3-3 → 3-4-2-1 switch; Van de Ven &amp; Summerville into the XI.</li>
+      <li>Al Jazeera / FIFA match centre — penalty sequence: El Aynaoui off the bar, Kluivert off the post, Timber wide, Hakimi off the post, Bounou saves Summerville's fourth, Saibari scores the winner for 3-2.</li>
+    </ol>
+    <div class="footnote">
+      <span>Built by <strong>Maradona</strong> · Split expert · a live tactical read, not a betting line</span>
+      <span class="badge">World Cup 2026 · R32 · Monterrey</span>
+      <span class="badge">Data: football-data · 2026-07-03</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ————————————————————————————————————————————————
+   TACTICAL BOARD — dynamic SVG per phase
+   Coordinate system: 100 (length, x) × 64 (width, y).
+   Morocco attacks left→right. Left goal = Morocco's own.
+   ———————————————————————————————————————————————— */
+
+// ——— player node positions per phase ———
+// Morocco 4-3-3 : GK, RB(Hakimi), 2CB(Diop,Riad), LB(Mazraoui), 3 mid(Ounahi,Bouaddi,ElAynaoui), front3(Brahim,ElKhannouss,Saibari)
+// Netherlands 3-4-2-1 : GK, 3CB(VvHecke,VanDijk,Ake), WB(Dumfries R, VdV L), 2CM(Gravenberch,DeJong), 2*10(Summerville,Gakpo), CF(Brobbey)
+
+const MAR_LBL = {gk:'Bounou',rb:'Hakimi',cbr:'Diop',cbl:'Riad',lb:'Mazraoui',dm:'Bouaddi',cmr:'Ounahi',cml:'El Aynaoui',rw:'B. Díaz',cf:'Saibari',lw:'El Khannouss'};
+const MAR_NUM = {gk:1,rb:2,cbr:14,cbl:18,lb:3,dm:6,cmr:8,cml:24,rw:10,cf:11,lw:23};
+const NED_LBL = {gk:'Verbruggen',cbr:'v.Hecke',cbc:'v.Dijk',cbl:'Aké',wbr:'Dumfries',wbl:'v.d.Ven',cmr:'Gravenb.',cml:'de Jong',amr:'Summ.',aml:'Gakpo',cf:'Brobbey'};
+const NED_NUM = {gk:1,cbr:6,cbc:4,cbl:5,wbr:22,wbl:15,cmr:8,cml:21,amr:24,aml:11,cf:19};
+
+// positions: {phase:{team:{role:[x,y]}}}
+const POS = {
+  buildup:{
+    mar:{gk:[8,32],lb:[26,9],cbl:[19,23],cbr:[19,41],rb:[31,55],dm:[35,32],cml:[45,18],cmr:[47,46],lw:[62,11],rw:[65,51],cf:[71,32]},
+    ned:{gk:[95,32],cbl:[87,45],cbc:[90,32],cbr:[87,19],wbl:[75,9],wbr:[75,55],cml:[68,24],cmr:[69,41],aml:[57,20],amr:[57,45],cf:[51,32]}
+  },
+  press:{
+    // Morocco has ball & Netherlands presses/blocks — Dutch mid-block, Morocco pressing triggers on their high line? Here show MAR pressing NED goal-kick scenario reversed:
+    // We depict MOROCCO PRESS on a Dutch build-up: Morocco pushes up, Netherlands deep.
+    mar:{gk:[14,32],lb:[40,10],cbl:[44,24],cbr:[44,40],rb:[46,54],dm:[54,32],cml:[60,20],cmr:[60,44],lw:[76,14],rw:[80,50],cf:[82,32]},
+    ned:{gk:[95,32],cbl:[90,42],cbc:[92,32],cbr:[90,22],wbl:[86,10],wbr:[86,54],cml:[84,27],cmr:[84,39],aml:[80,20],amr:[80,46],cf:[76,32]}
+  },
+  transition:{
+    // Netherlands wins ball, breaks: Gakpo released by Summerville behind line → the 72' goal
+    mar:{gk:[10,32],lb:[40,12],cbl:[30,26],cbr:[30,40],rb:[52,52],dm:[44,32],cml:[54,22],cmr:[58,44],lw:[66,14],rw:[70,50],cf:[74,32]},
+    ned:{gk:[95,32],cbl:[80,44],cbc:[84,32],cbr:[80,20],wbl:[64,12],wbr:[70,54],cml:[58,30],cmr:[62,38],aml:[34,26],amr:[44,44],cf:[40,32]}
+  },
+  setpiece:{
+    // Morocco attacking corner from their right (near NED goal on the right). Cross into box, Diop attacks — mirror of the 90' equaliser scenario (Talbi cross).
+    mar:{gk:[16,32],lb:[52,8],cbl:[60,54],cbr:[80,22],rb:[97,58],dm:[70,50],cml:[78,40],cmr:[82,30],lw:[86,42],rw:[84,26],cf:[80,36]},
+    ned:{gk:[95,33],cbl:[85,38],cbc:[88,30],cbr:[86,24],wbl:[78,44],wbr:[83,44],cml:[80,36],cmr:[76,30],aml:[62,32],amr:[72,40],cf:[70,26]}
+  }
+};
+
+// ——— narrative + drawing instructions per phase ———
+const PHASES = {
+  buildup:{
+    kick:'Phase 1 of 4 · Morocco in possession',
+    title:'Building out — Morocco with the ball',
+    note:'Morocco 4-3-3 build · NED mid-block',
+    body:[
+      'Morocco split the centre-backs (Diop, Riad), dropped <strong>Bouaddi</strong> between them, and turned it into a 3-vs-2 against the Dutch front line. From there the ball goes wide — always wide.',
+      'The full-backs push to the touchline and the two <strong>8s (Ounahi, El Aynaoui)</strong> lift the Dutch midfield up, opening the lane for <strong>Hakimi</strong> to receive high on the right. This is how you turn possession into territory.',
+      '<span style="color:var(--marker-yellow)">Yellow lanes</span> are the release routes into the final third; the Dutch simply couldn\'t press three defenders with two forwards.'
+    ],
+    draw(g){
+      lanes(g,[ [36,32,64,50], [46,44,64,50], [26,10,44,20] ]);        // release lanes wide-right + left
+      arrow(g,'mar',[20,40,30,54]);                                     // CB → RB
+      arrow(g,'mar',[30,54,64,50]);                                     // RB carries → Hakimi high
+      annot(g,42,16,'3-v-2 build','red');
+      annot(g,66,58,'Hakimi high','red');
+    }
+  },
+  press:{
+    kick:'Phase 2 of 4 · Morocco press the Dutch build-up',
+    title:'The press — triggers on the Dutch goal-kick',
+    note:'Morocco press · NED forced long',
+    body:[
+      'When the Netherlands tried to play out, Morocco jumped. The <strong>trigger</strong>: a Dutch centre-back takes a touch toward the touchline — that\'s the cue for <strong>Saibari</strong> to curve his run and cut the pass back inside.',
+      'The <span style="color:var(--marker-mar)">red rings</span> are pressing traps — the wide areas where Morocco wanted the ball to go, then swarmed. <strong>Ounahi</strong> and <strong>Bouaddi</strong> stepped onto the Dutch pivot so Van Dijk had no short out.',
+      'Result: 18 Dutch fouls and long balls to a lone Brobbey. The Netherlands never built cleanly — they survived on second balls and set-piece relief.'
+    ],
+    draw(g){
+      arrow(g,'mar',[82,32,90,32]);          // CF presses keeper's option
+      arrow(g,'mar',[76,14,86,20]);          // LW curves onto CB
+      arrow(g,'mar',[80,50,86,44]);          // RW jumps
+      pressRing(g,86,20,6); pressRing(g,86,44,6);
+      annot(g,70,20,'trigger: touch wide','red');
+      annot(g,60,32,'cut the pass inside','yl');
+    }
+  },
+  transition:{
+    kick:'Phase 3 of 4 · The Dutch counter — the 72nd-minute goal',
+    title:'Transition — one pass through the press',
+    note:'NED break · Gakpo scores 72\'',
+    body:[
+      'Here is the price of dominance. Morocco commit bodies forward, lose it, and the Netherlands go in <strong>three passes</strong>. <strong>Summerville</strong> releases <strong>Gakpo</strong> in behind the high line — the striker finishes. 1-0 Netherlands, 72\'. <span class="cite">2</span>',
+      'The <span style="color:var(--marker-ned)">orange arrows</span> are the break: win-it, spring Summerville, slide Gakpo through the channel Morocco vacated when the full-backs were high.',
+      'This is the exact trade-off of a possession press — control 70% of the game, and the 30% you don\'t can beat you on the counter if the rest-defence is a step slow.'
+    ],
+    draw(g){
+      arrow(g,'ned',[62,38,44,44]);          // win + lay to Summerville
+      arrow(g,'ned',[44,44,34,26]);          // Summerville releases Gakpo
+      arrow(g,'ned',[34,26,18,32]);          // Gakpo finishes at goal (left = MAR goal)
+      lane(g,[44,44,20,30]);                 // the through-channel
+      annot(g,50,48,'win it','org');
+      annot(g,30,22,'Gakpo in behind','org');
+      goalStar(g,17,32);
+    }
+  },
+  setpiece:{
+    kick:'Phase 4 of 4 · Morocco corner — the 90+1 equaliser pattern',
+    title:'Set-piece — the leveller off the flag',
+    note:'MAR corner · Diop heads 90+1\'',
+    body:[
+      'Eight corners for Morocco, and in stoppage time one told. Substitute <strong>Talbi</strong> whipped it in and <strong>Issa Diop</strong> — a centre-half — rose to head Morocco level, 90+1\'. <span class="cite">2</span>',
+      'The <span style="color:var(--marker-mar)">red runs</span> are the delivery and the near/far attackers; <strong>Diop</strong> attacks the space between the Dutch back three, where marking a back-three-plus-wing-backs on a corner gets muddled.',
+      'It shouldn\'t have come to this — but when you win eight corners against a deep block, the law of averages is a striker in a defender\'s shirt.'
+    ],
+    draw(g){
+      lane(g,[97,58,80,34]);                 // corner delivery arc
+      arrow(g,'mar',[80,22,82,30]);          // near-post run
+      arrow(g,'mar',[60,54,78,40]);          // back-post arriving runner
+      annot(g,90,52,'Talbi delivers','red');
+      annot(g,74,36,'Diop attacks','red');
+      goalStar(g,95,30);
+    }
+  }
+};
+
+// ——— legend content per phase ———
+const LEGENDS = {
+  buildup:[['dot','var(--marker-mar)','Morocco player'],['dot','var(--marker-ned)','Netherlands player'],['line','var(--marker-mar)','ball carry / pass'],['dash','var(--marker-yellow)','release lane']],
+  press:[['dot','var(--marker-mar)','Morocco press'],['line','var(--marker-mar)','pressing run'],['ring','var(--marker-mar)','pressing trap'],['dash','var(--marker-yellow)','pass to cut off']],
+  transition:[['dot','var(--marker-ned)','Netherlands break'],['line','var(--marker-ned)','counter-attack pass'],['dash','var(--marker-yellow)','through-channel'],['star','var(--marker-yellow)','goal']],
+  setpiece:[['dot','var(--marker-mar)','Morocco attacker'],['line','var(--marker-mar)','attacking run'],['dash','var(--marker-yellow)','delivery arc'],['star','var(--marker-yellow)','goal']]
+};
+
+const SVGNS='http://www.w3.org/2000/svg';
+const dyn=document.getElementById('dyn');
+
+function el(tag,attrs){const e=document.createElementNS(SVGNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+
+// draw all player nodes for a phase, with Hakimi's heatmap on build-up/press/setpiece
+function drawNodes(phase){
+  const P=POS[phase];
+  // Hakimi heat zone (his lane) — only when Morocco is the aggressor
+  if(phase!=='transition'){
+    const [hx,hy]=P.mar.rb;
+    dyn.appendChild(el('ellipse',{cx:hx,cy:hy,rx:15,ry:11,fill:'url(#heat)',class:'zone-heat anim-fade'}));
+    dyn.appendChild(el('ellipse',{cx:(hx+70)/2,cy:(hy+50)/2,rx:12,ry:9,fill:'url(#heat)',class:'zone-heat anim-fade',opacity:.5}));
+  }
+  ['ned','mar'].forEach(team=>{
+    const map=P[team], LBL=team==='mar'?MAR_LBL:NED_LBL, NUM=team==='mar'?MAR_NUM:NED_NUM;
+    for(const role in map){
+      const [x,y]=map[role];
+      const gnode=el('g',{class:'anim-fade'});
+      gnode.style.animationDelay=(Math.random()*0.25)+'s';
+      gnode.appendChild(el('circle',{cx:x,cy:y,r:3.1,class:'node node-'+team}));
+      const num=el('text',{x:x,y:y,class:'node-num '+(team==='mar'?'num-on-mar':'num-on-ned')});
+      num.textContent=NUM[role]||'';
+      gnode.appendChild(num);
+      const lbl=el('text',{x:x,y:y-4.4,class:'node-lbl'});
+      lbl.textContent=LBL[role]||'';
+      gnode.appendChild(lbl);
+      dyn.appendChild(gnode);
+    }
+  });
+}
+
+// ——— primitive drawers ———
+function arrow(g,team,[x1,y1,x2,y2]){
+  const p=el('path',{d:`M${x1},${y1} L${x2},${y2}`,class:'arrow-'+team,'marker-end':`url(#ah-${team==='mar'?'mar':'ned'})`});
+  const len=Math.hypot(x2-x1,y2-y1);p.style.setProperty('--len',len);p.classList.add('draw-in');
+  g.appendChild(p);
+}
+function lane(g,[x1,y1,x2,y2]){
+  const mx=(x1+x2)/2, my=(y1+y2)/2 - 8;
+  const p=el('path',{d:`M${x1},${y1} Q${mx},${my} ${x2},${y2}`,class:'lane','marker-end':'url(#ah-yl)'});
+  g.appendChild(p);
+}
+function lanes(g,arr){arr.forEach(a=>lane(g,a));}
+function pressRing(g,cx,cy,r){g.appendChild(el('circle',{cx,cy,r,class:'press-ring anim-fade'}));}
+function annot(g,x,y,txt,tone){
+  const t=el('text',{x,y,class:'annot annot-'+(tone==='red'?'red':tone==='org'?'org':'yl')+' anim-fade'});
+  t.textContent=txt;g.appendChild(t);
+}
+function goalStar(g,x,y){
+  const s=el('g',{class:'anim-fade'});
+  s.appendChild(el('circle',{cx:x,cy:y,r:2.6,fill:'none',stroke:'var(--marker-yellow)','stroke-width':1.4}));
+  s.appendChild(el('path',{d:`M${x-3.6},${y} L${x+3.6},${y} M${x},${y-3.6} L${x},${y+3.6}`,stroke:'var(--marker-yellow)','stroke-width':1.2}));
+  g.appendChild(s);
+}
+
+function renderLegend(phase){
+  const box=document.getElementById('legend');box.innerHTML='';
+  LEGENDS[phase].forEach(([kind,color,text])=>{
+    const row=el0('div','leg-row');
+    let ico;
+    if(kind==='dot'){ico=el0('span','leg-dot');ico.style.background=color;}
+    else if(kind==='line'){ico=el0('span','leg-ico');ico.style.borderColor=color;}
+    else if(kind==='dash'){ico=el0('span','leg-dash');ico.style.borderColor=color;}
+    else if(kind==='ring'){ico=el0('span','leg-dot');ico.style.border='2px dashed '+color;ico.style.background='transparent';}
+    else if(kind==='star'){ico=el0('span','leg-dot');ico.style.border='2px solid '+color;ico.style.background='transparent';}
+    row.appendChild(ico);
+    const sp=document.createElement('span');sp.textContent=text;row.appendChild(sp);
+    box.appendChild(row);
+  });
+}
+function el0(tag,cls){const e=document.createElement(tag);if(cls)e.className=cls;return e;}
+
+function setPhase(phase){
+  dyn.innerHTML='';
+  drawNodes(phase);
+  PHASES[phase].draw(dyn);
+  const ph=PHASES[phase];
+  document.getElementById('rKick').textContent=ph.kick;
+  document.getElementById('rTitle').textContent=ph.title;
+  document.getElementById('phaseNote').textContent=ph.note;
+  document.getElementById('rBody').innerHTML=ph.body.map(p=>'<p>'+p+'</p>').join('');
+  renderLegend(phase);
+  document.querySelectorAll('.phase-btn').forEach(b=>b.setAttribute('aria-selected', b.dataset.phase===phase));
+}
+
+document.querySelectorAll('.phase-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>setPhase(btn.dataset.phase));
+});
+// keyboard 1-4
+document.addEventListener('keydown',e=>{
+  const map={'1':'buildup','2':'press','3':'transition','4':'setpiece'};
+  if(map[e.key])setPhase(map[e.key]);
+});
+
+// init
+setPhase('buildup');
+</script>
+</body>
+</html>

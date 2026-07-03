@@ -1,0 +1,10 @@
+{
+  "expert": "coach",
+  "key": "meal-plan",
+  "type": "plan",
+  "title": "Weekly meal plan",
+  "desc": "Macro-balanced, tracked",
+  "brief": "A one-week, macro-balanced meal-plan tracker for lean recomposition — ~2,000 kcal/day, 160 g protein, Mediterranean pattern, every cook under 30 minutes. Goals restate the objective, constraints, budget and daily macro split; the Program is a 7-day breakfast/lunch/dinner/snack grid where every meal is costed in kcal + macros (each meal's kcal equals 4·protein + 4·carbs + 9·fat, so the tallies add up), recipes collapse below each card, and a categorized weekly shopping list is generated. The Dashboard is a clinical intake panel: today's meal logger with a running kcal/macro tally vs target (progress + ASCII bars, in-zone / under / over marks), a 10-cup water counter, a weight input with a 14-day sparkline against a dashed target line, an in-zone streak, and a weekly check-in. Everything ticks off and persists in localStorage.",
+  "da": "Lab report — warm near-white paper with a faint teal graph-paper grid, near-black ink, one deep-teal accent (red reserved strictly for out-of-zone), full-bleed hairline-ruled panels with no cards or shadows; Source Serif 4 small-caps headers, JetBrains Mono tabular numerals, Inter Tight body — reads like a blood-panel printout, not a fitness app.",
+  "generated": "2026-07-03"
+}

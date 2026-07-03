@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontier Board — 07/2026 · Split Consultant</title>
+<!--
+  FRONTIER BOARD 07/2026 — benchmark deck of the frontier AI models as of July 2026.
+  Built by Split's Consultant expert. Every number is web-verified against July-2026
+  sources; the full source list is on slide 13. Art direction: mission-control
+  terminal — near-black stage, phosphor-green + amber data accents, JetBrains Mono
+  numerals, dense ruled tables, thin HUD frames. No scanline kitsch.
+  Single self-contained file. Nav: ← → keys, Space, on-screen controls, swipe.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   (viewport-base.css, included in full)
+   =========================================== */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+.deck-viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+.deck-stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
+}
+.slide {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+.slide.active,
+.slide.visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
+}
+img,
+video,
+canvas,
+svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+.deck-controls {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+@media print {
+    html,
+    body {
+        width: 1920px;
+        height: auto;
+        overflow: visible;
+        background: #fff;
+    }
+    .deck-viewport {
+        position: static;
+        overflow: visible;
+        background: #fff;
+    }
+    .deck-stage {
+        position: static;
+        width: auto;
+        height: auto;
+        transform: none !important;
+        background: none;
+    }
+    .slide {
+        position: relative;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: 1920px;
+        height: 1080px;
+        break-after: page;
+        page-break-after: always;
+    }
+    .slide:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+    .deck-controls {
+        display: none !important;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+/* ===========================================
+   MISSION-CONTROL DESIGN TOKENS
+   =========================================== */
+:root {
+    --stage-bg: #06080C;
+    --slide-bg: #0B0E14;
+    --panel:    #0E141C;
+    --panel-2:  #101823;
+    --line:     #1C2634;
+    --line-2:   #2B3B50;
+    --grn:      #3CF08A;
+    --grn-dim:  rgba(60, 240, 138, 0.13);
+    --amb:      #FFB454;
+    --amb-dim:  rgba(255, 180, 84, 0.12);
+    --red:      #FF5C57;
+    --txt:      #DAE4EE;
+    --mut:      #7E8CA0;
+    --faint:    #55627A;
+    --mono:     'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+/* ===========================================
+   GLOBAL TYPE + SLIDE SCAFFOLD
+   =========================================== */
+.slide {
+    font-family: var(--mono);
+    color: var(--txt);
+    background:
+        radial-gradient(1200px 700px at 78% -10%, rgba(60,240,138,0.045), transparent 60%),
+        radial-gradient(900px 600px at -5% 110%, rgba(255,180,84,0.035), transparent 55%),
+        var(--slide-bg);
+    -webkit-font-smoothing: antialiased;
+}
+.slide * { box-sizing: border-box; }
+
+/* Slide header strip */
+.hd {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 74px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 72px;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+    letter-spacing: 0.18em;
+    color: var(--mut);
+    text-transform: uppercase;
+}
+.hd .hd-l b { color: var(--grn); font-weight: 700; }
+.hd .hd-c { color: var(--faint); }
+.hd .hd-r { color: var(--amb); font-weight: 600; }
+
+/* Slide footer strip */
+.ft {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 72px;
+    border-top: 1px solid var(--line);
+    font-size: 13.5px;
+    letter-spacing: 0.06em;
+    color: var(--faint);
+}
+.ft .src { max-width: 1500px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ft .pg  { color: var(--mut); letter-spacing: 0.2em; }
+
+/* Content zone */
+.bd { position: absolute; top: 74px; bottom: 58px; left: 0; right: 0; padding: 44px 72px 30px; }
+
+/* Slide titles */
+.kick {
+    font-size: 16px; font-weight: 600; letter-spacing: 0.3em;
+    color: var(--amb); text-transform: uppercase; margin: 0 0 12px;
+}
+.kick::before { content: '// '; color: var(--faint); }
+h2.ttl {
+    font-size: 54px; font-weight: 800; letter-spacing: -0.01em;
+    color: var(--txt); margin: 0 0 8px; line-height: 1.05; text-transform: uppercase;
+}
+.sub { font-size: 19px; color: var(--mut); margin: 0 0 26px; line-height: 1.5; max-width: 1500px; }
+.sub b { color: var(--grn); font-weight: 600; }
+
+/* HUD panel + corner ticks */
+.hud {
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--line);
+}
+.hud .tick { position: absolute; width: 10px; height: 10px; pointer-events: none; }
+.hud .tick.tl { top: -1px; left: -1px; border-top: 2px solid var(--grn); border-left: 2px solid var(--grn); }
+.hud .tick.tr { top: -1px; right: -1px; border-top: 2px solid var(--grn); border-right: 2px solid var(--grn); }
+.hud .tick.bl { bottom: -1px; left: -1px; border-bottom: 2px solid var(--grn); border-left: 2px solid var(--grn); }
+.hud .tick.br { bottom: -1px; right: -1px; border-bottom: 2px solid var(--grn); border-right: 2px solid var(--grn); }
+.hud.amber .tick.tl, .hud.amber .tick.tr, .hud.amber .tick.bl, .hud.amber .tick.br {
+    border-color: var(--amb);
+}
+
+/* Panel label */
+.plab {
+    font-size: 14px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--grn); padding: 14px 22px 0;
+}
+.plab.a { color: var(--amb); }
+
+/* Data tables */
+table.dt { width: 100%; border-collapse: collapse; font-size: 19px; }
+table.dt th {
+    font-size: 14px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--mut); text-align: left; padding: 12px 14px;
+    border-bottom: 1px solid var(--line-2);
+}
+table.dt th.num, table.dt td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.dt td {
+    padding: 12px 14px; border-bottom: 1px solid var(--line);
+    color: var(--txt); font-weight: 400;
+}
+table.dt tr:last-child td { border-bottom: none; }
+table.dt tbody tr { transition: background 0.15s; }
+table.dt tbody tr:hover { background: rgba(60, 240, 138, 0.05); }
+table.dt td.lead { color: var(--grn); font-weight: 700; }
+table.dt td.run  { color: var(--amb); font-weight: 600; }
+table.dt td.np   { color: var(--faint); }
+table.dt td.mdl  { color: var(--txt); font-weight: 600; }
+table.dt td.dim  { color: var(--mut); }
+.tag {
+    display: inline-block; font-size: 12.5px; font-weight: 600; letter-spacing: 0.1em;
+    padding: 2px 8px; border: 1px solid var(--line-2); color: var(--mut);
+    text-transform: uppercase; border-radius: 2px; vertical-align: 1px;
+}
+.tag.g { color: var(--grn); border-color: rgba(60,240,138,0.4); background: var(--grn-dim); }
+.tag.a { color: var(--amb); border-color: rgba(255,180,84,0.4); background: var(--amb-dim); }
+.tag.r { color: var(--red); border-color: rgba(255,92,87,0.4); background: rgba(255,92,87,0.1); }
+
+/* Footnote line */
+.fn { font-size: 14px; color: var(--faint); line-height: 1.55; letter-spacing: 0.02em; }
+.fn b { color: var(--mut); }
+
+/* Reveal animation */
+@keyframes rvIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.slide .rv { opacity: 0; }
+.slide.active .rv { animation: rvIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: var(--d, 0s); }
+
+/* ===========================================
+   S01 — COVER
+   =========================================== */
+.cover-status {
+    position: absolute; top: 0; left: 0; right: 0; height: 74px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 72px; border-bottom: 1px solid var(--line);
+    font-size: 15px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mut);
+}
+.cover-status .ok { color: var(--grn); }
+.cover-wrap { position: absolute; top: 200px; left: 110px; right: 110px; }
+.cover-file { font-size: 17px; letter-spacing: 0.34em; color: var(--amb); text-transform: uppercase; margin-bottom: 30px; }
+.cover-file::before { content: '// '; color: var(--faint); }
+h1.cover-h {
+    font-size: 168px; font-weight: 800; line-height: 0.95; letter-spacing: -0.015em;
+    margin: 0; color: var(--txt); text-transform: uppercase;
+}
+h1.cover-h .g { color: var(--grn); text-shadow: 0 0 34px rgba(60, 240, 138, 0.35); }
+h1.cover-h .slash { color: var(--amb); }
+.cover-sub { margin-top: 34px; font-size: 22px; color: var(--mut); line-height: 1.6; max-width: 1250px; }
+.cover-sub b { color: var(--txt); font-weight: 600; }
+.cover-tel {
+    position: absolute; bottom: 96px; left: 0; right: 0; height: 108px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    display: grid; grid-template-columns: repeat(4, 1fr);
+}
+.cover-tel .cell { padding: 18px 40px 0 72px; border-right: 1px solid var(--line); }
+.cover-tel .cell:last-child { border-right: none; }
+.cover-tel .k { font-size: 13px; letter-spacing: 0.2em; color: var(--faint); text-transform: uppercase; }
+.cover-tel .v { font-size: 30px; font-weight: 700; color: var(--grn); margin-top: 6px; font-variant-numeric: tabular-nums; }
+.cover-tel .v small { font-size: 16px; color: var(--mut); font-weight: 400; }
+.cover-tel .v.a { color: var(--amb); }
+/* reticle */
+.reticle { position: absolute; right: 120px; top: 190px; width: 400px; height: 400px; opacity: 0.85; }
+
+/* ===========================================
+   S02 — BRIEF QUADRANTS
+   =========================================== */
+.quad { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 22px; height: 810px; }
+.quad .hud { padding: 20px 26px 22px; }
+.quad h3 { font-size: 21px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--grn); margin: 0 0 14px; }
+.quad h3 .idx { color: var(--faint); margin-right: 12px; }
+.quad p { font-size: 18.5px; line-height: 1.62; color: var(--txt); margin: 0 0 10px; }
+.quad p b { color: var(--amb); font-weight: 600; }
+.quad ul { margin: 0; padding-left: 22px; font-size: 18px; line-height: 1.66; color: var(--txt); }
+.quad ul li::marker { color: var(--grn); }
+.quad ul b { color: var(--amb); font-weight: 600; }
+
+/* ===========================================
+   S03 — TL;DR
+   =========================================== */
+.thesis {
+    font-size: 44px; font-weight: 700; line-height: 1.28; color: var(--txt);
+    max-width: 1620px; margin: 6px 0 34px; letter-spacing: -0.005em;
+}
+.thesis .g { color: var(--grn); }
+.thesis .a { color: var(--amb); }
+.tldr-lines { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 40px; }
+.tldr-lines .ln { display: flex; gap: 22px; align-items: baseline; font-size: 21.5px; line-height: 1.55; color: var(--txt); }
+.tldr-lines .ln .n { color: var(--amb); font-weight: 700; min-width: 44px; }
+.tldr-lines .ln b { color: var(--grn); font-weight: 700; }
+.kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; }
+.kpi { padding: 20px 22px 18px; }
+.kpi .k { font-size: 13.5px; letter-spacing: 0.16em; color: var(--mut); text-transform: uppercase; line-height: 1.45; min-height: 40px; }
+.kpi .v { font-size: 52px; font-weight: 800; color: var(--grn); margin: 10px 0 2px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.kpi .v small { font-size: 22px; color: var(--mut); font-weight: 500; }
+.kpi .v.a { color: var(--amb); }
+.kpi .w { font-size: 14px; color: var(--faint); line-height: 1.4; }
+
+/* ===========================================
+   S04 — LAUNCH LOG
+   =========================================== */
+.log-grid { display: grid; grid-template-columns: 1150px 1fr; gap: 24px; height: 812px; }
+.log-grid table.dt { font-size: 17.5px; }
+.log-grid table.dt td, .log-grid table.dt th { padding: 9.5px 12px; }
+.pipe { padding: 18px 24px; }
+.pipe h4 { font-size: 15px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: var(--amb); margin: 0 0 16px; }
+.pipe .it { border-bottom: 1px solid var(--line); padding: 12px 0; }
+.pipe .it:last-child { border-bottom: none; }
+.pipe .it .t { font-size: 18px; font-weight: 700; color: var(--txt); margin-bottom: 4px; }
+.pipe .it .d { font-size: 15.5px; color: var(--mut); line-height: 1.5; }
+.pipe .it .d b { color: var(--grn); }
+
+/* ===========================================
+   S05/S06 — MODEL CARDS
+   =========================================== */
+.cards { display: grid; gap: 22px; height: 818px; }
+.cards.c3 { grid-template-columns: repeat(3, 1fr); }
+.cards.c4 { grid-template-columns: repeat(4, 1fr); }
+.mcard { padding: 22px 24px 18px; display: flex; flex-direction: column; }
+.mcard .lab { font-size: 13.5px; font-weight: 700; letter-spacing: 0.26em; text-transform: uppercase; color: var(--amb); }
+.mcard .name { font-size: 31px; font-weight: 800; color: var(--txt); margin: 8px 0 2px; letter-spacing: -0.01em; line-height: 1.1; }
+.cards.c4 .mcard .name { font-size: 26px; }
+.mcard .rel { font-size: 14.5px; color: var(--faint); margin-bottom: 14px; }
+.mcard .specs { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 10px 0; margin-bottom: 13px; }
+.mcard .specs .row { display: flex; justify-content: space-between; font-size: 15.5px; padding: 3.5px 0; }
+.cards.c4 .mcard .specs .row { font-size: 14.5px; }
+.mcard .specs .row .k { color: var(--mut); }
+.mcard .specs .row .v { color: var(--txt); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.mcard .specs .row .v.g { color: var(--grn); }
+.mcard .sw { font-size: 13px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; margin: 4px 0 7px; }
+.mcard .sw.plus { color: var(--grn); }
+.mcard .sw.minus { color: var(--red); }
+.mcard ul { margin: 0 0 10px; padding-left: 18px; font-size: 15px; line-height: 1.52; color: var(--txt); }
+.cards.c4 .mcard ul { font-size: 14px; }
+.mcard ul li { margin-bottom: 4px; }
+.mcard ul li::marker { color: var(--faint); }
+.mcard ul b { color: var(--grn); font-weight: 700; }
+.mcard ul .neg b { color: var(--red); }
+.mcard .also { margin-top: auto; font-size: 13.5px; color: var(--faint); line-height: 1.5; border-top: 1px dashed var(--line); padding-top: 9px; }
+.mcard .also b { color: var(--mut); }
+
+/* ===========================================
+   S07/S08 — H2H TABLES
+   =========================================== */
+.h2h table.dt { font-size: 19.5px; }
+.h2h table.dt td, .h2h table.dt th { padding: 13px 14px; }
+.verdict {
+    margin-top: 22px; padding: 16px 24px; display: flex; align-items: center; gap: 20px;
+}
+.verdict .vk { font-size: 13.5px; font-weight: 700; letter-spacing: 0.24em; color: var(--amb); text-transform: uppercase; white-space: nowrap; }
+.verdict .vt { font-size: 19px; color: var(--txt); line-height: 1.5; }
+.verdict .vt b { color: var(--grn); font-weight: 700; }
+
+/* ===========================================
+   S09 — AGENTIC QUAD PANELS
+   =========================================== */
+.agq { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 22px; height: 700px; }
+.agq .hud { padding: 16px 24px 12px; }
+.agq h4 { font-size: 16px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--grn); margin: 0 0 3px; }
+.agq .bm-sub { font-size: 13.5px; color: var(--faint); margin-bottom: 12px; }
+.rank { display: flex; flex-direction: column; gap: 0; }
+.rank .r { display: flex; align-items: baseline; gap: 14px; padding: 6.5px 0; border-bottom: 1px solid var(--line); font-size: 17.5px; }
+.rank .r:last-child { border-bottom: none; }
+.rank .r .pos { color: var(--faint); font-size: 14px; min-width: 26px; }
+.rank .r .m { color: var(--txt); font-weight: 600; flex: 1; }
+.rank .r .s { color: var(--grn); font-weight: 700; font-variant-numeric: tabular-nums; }
+.rank .r.top .m { color: var(--grn); }
+.rank .r .s.a { color: var(--amb); }
+
+/* ===========================================
+   S10 — LONG CONTEXT BARS
+   =========================================== */
+.lc-grid { display: grid; grid-template-columns: 980px 1fr; gap: 26px; height: 800px; }
+.bars { padding: 20px 28px; }
+.bars .brow { display: grid; grid-template-columns: 240px 1fr 110px; gap: 14px; align-items: center; padding: 8.5px 0; border-bottom: 1px solid var(--line); }
+.bars .brow:last-of-type { border-bottom: none; }
+.bars .bm { font-size: 16.5px; font-weight: 600; color: var(--txt); }
+.bars .bm small { display: block; font-size: 12.5px; color: var(--faint); font-weight: 400; }
+.bars .btrack { height: 26px; background: var(--panel-2); border: 1px solid var(--line); position: relative; }
+.bars .bfill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, rgba(60,240,138,0.25), rgba(60,240,138,0.75)); border-right: 2px solid var(--grn); min-width: 3px; }
+.bars .bfill.a { background: linear-gradient(90deg, rgba(255,180,84,0.25), rgba(255,180,84,0.75)); border-right-color: var(--amb); }
+.bars .bval { font-size: 19px; font-weight: 700; color: var(--grn); text-align: right; font-variant-numeric: tabular-nums; }
+.bars .bval.a { color: var(--amb); }
+.lc-right .hud { padding: 16px 24px 14px; margin-bottom: 22px; }
+.lc-right h4 { font-size: 15px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--grn); margin: 0 0 10px; }
+.lc-right ul { margin: 0; padding-left: 20px; font-size: 16.5px; line-height: 1.62; color: var(--txt); }
+.lc-right ul li { margin-bottom: 8px; }
+.lc-right ul li::marker { color: var(--faint); }
+.lc-right ul b { color: var(--amb); font-weight: 600; }
+.lc-right ul .g { color: var(--grn); font-weight: 600; }
+
+/* ===========================================
+   S11 — SCATTER
+   =========================================== */
+.scatter-wrap { position: relative; }
+svg.scatter text { font-family: var(--mono); }
+svg.scatter .grid { stroke: var(--line); stroke-width: 1; }
+svg.scatter .axis { fill: var(--faint); font-size: 14px; letter-spacing: 0.04em; }
+svg.scatter .axlab { fill: var(--mut); font-size: 14px; letter-spacing: 0.22em; text-transform: uppercase; }
+svg.scatter .pt { fill: var(--grn); }
+svg.scatter .pt.open { fill: var(--amb); }
+svg.scatter .halo { fill: none; stroke-width: 1.5; opacity: 0.45; }
+svg.scatter .plabel { fill: var(--txt); font-size: 16px; font-weight: 600; }
+svg.scatter .pprice { fill: var(--mut); font-size: 13px; }
+svg.scatter .front { stroke: var(--grn); stroke-width: 1.5; stroke-dasharray: 7 6; fill: none; opacity: 0.55; }
+svg.scatter .fable-line { stroke: var(--red); stroke-width: 1.5; stroke-dasharray: 4 5; opacity: 0.7; }
+svg.scatter g.dot { cursor: crosshair; }
+svg.scatter g.dot circle.pt { transition: r 0.15s; }
+svg.scatter g.dot:hover circle.pt { r: 12; }
+.legend { display: flex; gap: 36px; font-size: 15px; color: var(--mut); margin-top: 6px; align-items: center; }
+.legend .sw2 { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 9px; vertical-align: -1px; }
+
+/* ===========================================
+   S12 — MATRIX
+   =========================================== */
+.mx table.dt { font-size: 17.5px; }
+.mx table.dt td, .mx table.dt th { padding: 10.5px 14px; }
+.mx td.job { color: var(--amb); font-weight: 700; white-space: nowrap; }
+.risk-strip { margin-top: 18px; padding: 14px 24px; display: flex; gap: 18px; align-items: baseline; }
+.risk-strip .rk { font-size: 13px; font-weight: 700; letter-spacing: 0.22em; color: var(--red); text-transform: uppercase; white-space: nowrap; }
+.risk-strip .rt { font-size: 15.5px; color: var(--mut); line-height: 1.55; }
+.risk-strip .rt b { color: var(--txt); font-weight: 600; }
+
+/* ===========================================
+   S13 — SOURCES
+   =========================================== */
+.src-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; }
+.src-it { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15px; line-height: 1.5; }
+.src-it .n { color: var(--amb); font-weight: 700; min-width: 32px; }
+.src-it .w { color: var(--txt); }
+.src-it .w b { color: var(--grn); font-weight: 600; }
+.src-it .w a { color: var(--mut); text-decoration: none; border-bottom: 1px dotted var(--line-2); word-break: break-all; }
+.src-it .w a:hover { color: var(--grn); border-bottom-color: var(--grn); }
+.src-it .w .pub { color: var(--faint); }
+
+/* ===========================================
+   DECK CHROME (outside stage)
+   =========================================== */
+.progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--grn); z-index: 1100; width: 0%; transition: width 0.3s ease; box-shadow: 0 0 12px rgba(60,240,138,0.6); }
+.deck-controls { display: flex; align-items: center; gap: 18px; font-family: var(--mono); }
+.deck-controls button {
+    background: rgba(14, 20, 28, 0.85); color: var(--grn); border: 1px solid var(--line-2);
+    font-family: var(--mono); font-size: 15px; padding: 7px 16px; cursor: pointer;
+    letter-spacing: 0.1em; transition: all 0.15s;
+}
+.deck-controls button:hover { border-color: var(--grn); background: var(--grn-dim); }
+.deck-controls .ctr { color: var(--mut); font-size: 14px; letter-spacing: 0.22em; min-width: 84px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="deck-viewport">
+<div class="deck-stage" id="stage">
+
+<!-- ================= S01 · COVER ================= -->
+<section class="slide" id="s1">
+    <div class="cover-status">
+        <span>SPLIT // CONSULTANT &nbsp;·&nbsp; MISSION FILE FRB-0726</span>
+        <span class="ok">LINK ACTIVE · ALL NUMBERS SOURCED</span>
+        <span>2026-07-03</span>
+    </div>
+    <svg class="reticle rv" style="--d:.5s" viewBox="0 0 400 400" aria-hidden="true">
+        <circle cx="200" cy="200" r="150" fill="none" stroke="#1C2634" stroke-width="1"/>
+        <circle cx="200" cy="200" r="110" fill="none" stroke="#2B3B50" stroke-width="1"/>
+        <path d="M 200 50 A 150 150 0 0 1 329.9 125" fill="none" stroke="#3CF08A" stroke-width="2"/>
+        <path d="M 200 350 A 150 150 0 0 1 70.1 275" fill="none" stroke="#FFB454" stroke-width="2"/>
+        <line x1="200" y1="20" x2="200" y2="80" stroke="#3CF08A" stroke-width="1"/>
+        <line x1="200" y1="320" x2="200" y2="380" stroke="#3CF08A" stroke-width="1"/>
+        <line x1="20" y1="200" x2="80" y2="200" stroke="#3CF08A" stroke-width="1"/>
+        <line x1="320" y1="200" x2="380" y2="200" stroke="#3CF08A" stroke-width="1"/>
+        <circle cx="200" cy="200" r="4" fill="#3CF08A"/>
+        <circle cx="260" cy="118" r="5" fill="#FFB454"/>
+        <text x="272" y="112" fill="#7E8CA0" font-size="12" font-family="JetBrains Mono">II 61</text>
+        <circle cx="118" cy="260" r="5" fill="#FFB454"/>
+        <text x="60" y="288" fill="#7E8CA0" font-size="12" font-family="JetBrains Mono">$0.14/M</text>
+    </svg>
+    <div class="cover-wrap">
+        <div class="cover-file rv" style="--d:.05s">Frontier model benchmark &nbsp;·&nbsp; status board</div>
+        <h1 class="cover-h">
+            <span class="rv" style="--d:.12s; display:block">FRONTIER</span>
+            <span class="rv" style="--d:.22s; display:block"><span class="g">BOARD</span> <span class="slash">07/26</span></span>
+        </h1>
+        <p class="cover-sub rv" style="--d:.34s">
+            The most powerful AI models in production, benchmarked and priced — <b>Anthropic · OpenAI ·
+            Google DeepMind · xAI · DeepSeek · Meta · Mistral</b>. Head-to-head on reasoning, coding,
+            agentic work and long context. Every figure verified against July-2026 sources.
+        </p>
+    </div>
+    <div class="cover-tel">
+        <div class="cell rv" style="--d:.45s"><div class="k">Intelligence Index leader</div><div class="v">61 <small>Claude Opus 4.8</small></div></div>
+        <div class="cell rv" style="--d:.52s"><div class="k">Top SWE-bench Verified</div><div class="v">95.0<small>% Fable 5</small></div></div>
+        <div class="cell rv" style="--d:.59s"><div class="k">Cheapest 1M-ctx model</div><div class="v a">$0.14<small>/M in · DS V4-Flash</small></div></div>
+        <div class="cell rv" style="--d:.66s"><div class="k">Output-price spread</div><div class="v a">179×<small> $0.28 → $50 /M</small></div></div>
+    </div>
+</section>
+
+<!-- ================= S02 · BRIEF ================= -->
+<section class="slide" id="s2">
+    <div class="hd"><span class="hd-l"><b>SPLIT</b> // CONSULTANT — FRONTIER BOARD 07/26</span><span class="hd-c">EXEC SUMMARY</span><span class="hd-r">S.02 / 13</span></div>
+    <div class="bd">
+        <p class="kick rv">Brief</p>
+        <h2 class="ttl rv" style="--d:.06s">Why this file exists</h2>
+        <div class="quad" style="height:770px; margin-top:20px">
+            <div class="hud rv" style="--d:.12s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <div style="padding:20px 26px">
+                <h3><span class="idx">01</span>Why</h3>
+                <p>A <b>model-selection decision aid</b>. Seven labs shipped or refreshed frontier models in the
+                last five months; prices span 179× on output tokens. Picking by brand instead of by job now
+                costs real money and real capability. This board says which model to buy for which task,
+                with the evidence attached.</p>
+                </div>
+            </div>
+            <div class="hud rv" style="--d:.2s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <div style="padding:20px 26px">
+                <h3><span class="idx">02</span>Context</h3>
+                <p>Snapshot taken <b>July 3, 2026</b>, days after a release wave: Claude Fable 5 restored July 1
+                after a June export-control freeze, Claude Sonnet 5 GA June 30, GPT-5.6 in gated preview since
+                June 26, Grok 4.5 in private beta, Gemini 3.5 Pro cleared for a July launch. The frontier has
+                split into <b>specialists — no single model wins everything</b>.</p>
+                </div>
+            </div>
+            <div class="hud rv" style="--d:.28s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <div style="padding:20px 26px">
+                <h3><span class="idx">03</span>How to use it</h3>
+                <ul>
+                    <li>Deciding fast → read <b>S.03 (TL;DR)</b> and <b>S.12 (job matrix)</b>.</li>
+                    <li>Procurement / vendor review → <b>S.05–06 model cards</b> (price, context, modalities).</li>
+                    <li>Challenging a claim → <b>S.07–11 head-to-head tables</b>; every cell carries a source, full list on S.13.</li>
+                    <li><b>Re-verify after GPT-5.6 and Gemini 3.5 Pro go GA</b> — this board has a shelf life of weeks, not quarters.</li>
+                </ul>
+                </div>
+            </div>
+            <div class="hud amber rv" style="--d:.36s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <div style="padding:20px 26px">
+                <h3 style="color:var(--amb)"><span class="idx">04</span>What I assumed</h3>
+                <ul>
+                    <li>Audience: a <b>technical decision-maker</b> choosing models for production, not a researcher.</li>
+                    <li>Scope: models <b>generally available or in broad preview</b> as of 2026-07-03; US + China labs where frontier-grade.</li>
+                    <li>Independent measurements (LM Council, LLM-Stats, Artificial Analysis) <b>outrank vendor claims</b>; conflicts are flagged, not averaged.</li>
+                    <li>Prices = list API rates, USD per 1M tokens. <b>"n.p." = not published</b> — dropped rather than guessed.</li>
+                </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ft"><span class="src">SRC: scope + method as stated; all data sources enumerated on S.13</span><span class="pg">02 / 13</span></div>
+</section>
+
+<!-- ================= S03 · TL;DR ================= -->
+<section class="slide" id="s3">
+    <div class="hd"><span class="hd-l"><b>SPLIT</b> // CONSULTANT — FRONTIER BOARD 07/26</span><span class="hd-c">VERDICT</span><span class="hd-r">S.03 / 13</span></div>
+    <div class="bd">
+        <p class="kick rv">TL;DR</p>
+        <div class="thesis rv" style="--d:.08s">The frontier split into specialists.<br><span class="g">Buy by job</span>, not by brand — and <span class="a">price the job</span>, because capability per dollar varies 30×.</div>
+        <div class="tldr-lines">
+            <div class="ln rv" style="--d:.18s"><span class="n">01</span><span><b>Anthropic owns agentic coding and knowledge work.</b> Claude Fable 5: 95.0% SWE-bench Verified, 1932 GDPval-AA Elo, 85.0% OSWorld-Verified — at $50/M output, the priciest tokens on the board.</span></div>
+            <div class="ln rv" style="--d:.26s"><span class="n">02</span><span><b>Google owns science and multimodal; OpenAI owns abstract reasoning.</b> Gemini 3.1 Pro leads HLE (46.4%) with video+audio input at $2/M; GPT-5.5 leads ARC-AGI-2 (85.0%) and FrontierMath Tier 4 (39.6%, Pro).</span></div>
+            <div class="ln rv" style="--d:.34s"><span class="n">03</span><span><b>Open weights reached the value frontier.</b> DeepSeek V4-Pro ties Gemini 3.1 Pro and GPT-5.5 on SWE-bench Verified (80.6%) at $0.87/M output — 28.7× cheaper than Opus 4.8, MIT-licensed.</span></div>
+        </div>
+        <div class="kpi-row">
+            <div class="kpi hud rv" style="--d:.42s"><span class="tick tl"></span><span class="tick br"></span><div class="k">#1 Intelligence Index (AA)</div><div class="v">61</div><div class="w">Claude Opus 4.8 — ahead of GPT-5.5 (60), Gemini 3.1 Pro (57)</div></div>
+            <div class="kpi hud rv" style="--d:.48s"><span class="tick tl"></span><span class="tick br"></span><div class="k">Coding moat, SWE-bench Pro</div><div class="v">+21.4<small> pts</small></div><div class="w">Fable 5 (80.0%) over GPT-5.5 (58.6%)</div></div>
+            <div class="kpi hud rv" style="--d:.54s"><span class="tick tl"></span><span class="tick br"></span><div class="k">Hardest-exam lead (HLE)</div><div class="v">46.4<small>%</small></div><div class="w">Gemini 3.1 Pro, high thinking — LM Council</div></div>
+            <div class="kpi hud rv" style="--d:.6s"><span class="tick tl"></span><span class="tick br"></span><div class="k">Frontier for $&lt;1/M out</div><div class="v a">80.6<small>%</small></div><div class="w">DeepSeek V4 SWE-V @ $0.87/M — ties two closed flagships</div></div>
+            <div class="kpi hud rv" style="--d:.66s"><span class="tick tl"></span><span class="tick br"></span><div class="k">1M-token context windows</div><div class="v a">13<small> models</small></div><div class="w">1M+ ctx now table stakes across the frontier</div></div>
+        </div>
+    </div>
+    <div class="ft"><span class="src">SRC: Artificial Analysis via FelloAI (Jul 2026) · LLM-Stats Fable 5 review · LM Council (Jul 2026) · Morph DeepSeek V4 — full list S.13</span><span class="pg">03 / 13</span></div>
+</section>
+
+<!-- ================= S04 · LAUNCH LOG ================= -->
+<section class="slide" id="s4">
+    <div class="hd"><span class="hd-l"><b>SPLIT</b> // CONSULTANT — FRONTIER BOARD 07/26</span><span class="hd-c">RELEASE TELEMETRY</span><span class="hd-r">S.04 / 13</span></div>
+    <div class="bd">
+        <p class="kick rv">Launch log · Feb–Jul 2026</p>
+        <h2 class="ttl rv" style="--d:.06s">Five months, thirteen frontier launches</h2>
+        <div class="log-grid" style="margin-top:18px">
+            <div class="hud rv" style="--d:.14s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <table class="dt">
+                    <thead><tr><th style="width:110px">Date</th><th style="width:210px">Lab</th><th>Model</th><th style="width:170px">Class</th><th>Status</th></tr></thead>
+                    <tbody>
+                        <tr><td class="dim">FEB 19</td><td>Google DeepMind</td><td class="mdl">Gemini 3.1 Pro</td><td class="dim">flagship</td><td>GA — #1 on 12/18 tracked benchmarks at launch</td></tr>
+                        <tr><td class="dim">APR 08</td><td>Meta MSL</td><td class="mdl">Muse Spark</td><td class="dim">reasoning</td><td>Private preview — Meta's first closed-weight frontier model</td></tr>
+                        <tr><td class="dim">APR 23</td><td>OpenAI</td><td class="mdl">GPT-5.5</td><td class="dim">flagship</td><td>GA — $5/$30, 1.05M ctx</td></tr>
+                        <tr><td class="dim">APR 24</td><td>DeepSeek</td><td class="mdl">V4-Pro · V4-Flash</td><td class="dim">open weights</td><td>GA + Hugging Face — MIT license, 1M ctx</td></tr>
+                        <tr><td class="dim">APR 2026</td><td>Mistral</td><td class="mdl">Medium 3.5 (v26.04)</td><td class="dim">flagship</td><td>GA — "frontier-class multimodal" per Mistral docs</td></tr>
+                        <tr><td class="dim">MAY 06</td><td>xAI</td><td class="mdl">Grok 4.3</td><td class="dim">flagship</td><td>GA — $1.25/$2.50, API open Apr 30</td></tr>
+                        <tr><td class="dim">MAY 19</td><td>Google DeepMind</td><td class="mdl">Gemini 3.5 Flash</td><td class="dim">workhorse</td><td>GA — beats 3.1 Pro on coding/agentic, ~4× faster</td></tr>
+                        <tr><td class="dim">MAY 20</td><td>Alibaba</td><td class="mdl">Qwen 3.7 Max</td><td class="dim">flagship</td><td>GA — II 57 at $1.25/$3.75 promo</td></tr>
+                        <tr><td class="dim">MAY 28</td><td>Anthropic</td><td class="mdl">Claude Opus 4.8</td><td class="dim">flagship</td><td>GA — Intelligence Index 61, board leader</td></tr>
+                        <tr><td class="dim">JUN 09</td><td>Anthropic</td><td class="mdl">Claude Fable 5</td><td class="dim">Mythos-class</td><td><span class="tag r">offline Jun 12–30</span> US export-control order; restored Jul 1</td></tr>
+                        <tr><td class="dim">JUN 26</td><td>OpenAI</td><td class="mdl">GPT-5.6 Sol · Terra · Luna</td><td class="dim">next-gen</td><td>Gated preview — ~20 orgs, GA "coming weeks"</td></tr>
+                        <tr><td class="dim">JUN 28</td><td>xAI</td><td class="mdl">Grok 4.5</td><td class="dim">next-gen</td><td>Private beta — SpaceX/Tesla only, ~1.5T params</td></tr>
+                        <tr><td class="dim">JUN 30</td><td>Anthropic</td><td class="mdl">Claude Sonnet 5</td><td class="dim">workhorse</td><td>GA — $2/$10 intro through Aug 31, then $3/$15</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pipe hud amber rv" style="--d:.24s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <h4>In the pipe — watchlist</h4>
+                <div class="it"><div class="t">Gemini 3.5 Pro</div><div class="d">Cleared for <b>July launch</b> (delayed from June). Specs unpublished; expected at the top reasoning tier.</div></div>
+                <div class="it"><div class="t">GPT-5.6 general release</div><div class="d">Terra claims <b>GPT-5.5-level performance at half the price</b> ($2.50/$15). If it holds, it resets the mid-tier.</div></div>
+                <div class="it"><div class="t">Grok 4.5</div><div class="d">V9 foundation, ~1.5T parameters. No public date.</div></div>
+                <div class="it"><div class="t">Llama 4 Behemoth</div><div class="d"><b>Shelved.</b> Never shipped; MoE-routing + chunked-attention issues at 2T scale. Muse Spark replaced it as Meta's flagship bet.</div></div>
+                <div class="it"><div class="t">Regulatory risk is now real</div><div class="d">Fable 5 spent <b>18 days offline</b> on a US Commerce directive. Availability is a procurement criterion, not a footnote.</div></div>
+            </div>
+        </div>
+    </div>
+    <div class="ft"><span class="src">SRC: vendor announcements + Anthropic platform docs · OpenAI "Previewing GPT-5.6 Sol" (Jun 26) · VentureBeat (May–Jun 2026) · FelloAI Jul 2026 roundup — full list S.13</span><span class="pg">04 / 13</span></div>
+</section>
+
+<!-- ================= S05 · MODEL CARDS I ================= -->
+<section class="slide" id="s5">
+    <div class="hd"><span class="hd-l"><b>SPLIT</b> // CONSULTANT — FRONTIER BOARD 07/26</span><span class="hd-c">MODEL CARDS 1/2</span><span class="hd-r">S.05 / 13</span></div>
+    <div class="bd">
+        <p class="kick rv">Model cards — the big three</p>
+        <div class="cards c3" style="margin-top:14px">
+            <div class="mcard hud rv" style="--d:.1s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <div class="lab">Anthropic</div>
+                <div class="name">Claude Fable 5</div>
+                <div class="rel">GA Jun 9, 2026 · first "Mythos-class" model · knowledge cutoff Jan 2026</div>
+                <div class="specs">
+                    <div class="row"><span class="k">Price in / out</span><span class="v">$10 / $50 per M</span></div>
+                    <div class="row"><span class="k">Context / max out</span><span class="v g">1M / 128K</span></div>
+                    <div class="row"><span class="k">Modalities</span><span class="v">text + image → text</span></div>
+                    <div class="row"><span class="k">Thinking</span><span class="v">adaptive, always on</span></div>
+                    <div class="row"><span class="k">Intelligence Index</span><span class="v">not yet indexed</span></div>
+                </div>
+                <div class="sw plus">Strengths</div>
+                <ul>
+                    <li><b>95.0%</b> SWE-bench Verified, <b>80.0%</b> SWE-bench Pro — clear #1 agentic coder</li>
+                    <li><b>1932</b> GDPval-AA Elo — best knowledge-work deliverables measured</li>
+                    <li><b>85.0%</b> OSWorld-Verified — computer use far past the April SOTA (high-30s)</li>
+                </ul>
+                <div class="sw minus">Weaknesses</div>
+                <ul>
+                    <li class="neg"><b>$50/M output</b> — 2× Opus 4.8, 57× DeepSeek V4-Pro</li>
+                    <li class="neg">Sensitive domains (cyber/bio/chem) <b>fall back to Opus 4.8</b>; 18-day export-control outage in June</li>
+                </ul>
+                <div class="also">Also in lineup: <b>Opus 4.8</b> $5/$25 · II 61 (#1) · <b>Sonnet 5</b> $2/$10 intro · <b>Haiku 4.5</b> $1/$5</div>
+            </div>
+            <div class="mcard hud rv" style="--d:.2s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <div class="lab">OpenAI</div>
+                <div class="name">GPT-5.5</div>
+                <div class="rel">GA Apr 23, 2026 · snapshot gpt-5.5-2026-04-23 · cutoff Dec 2025</div>
+                <div class="specs">
+                    <div class="row"><span class="k">Price in / out</span><span class="v">$5 / $30 per M</span></div>
+                    <div class="row"><span class="k">&gt;272K tier</span><span class="v">$10 / $45 per M · full session</span></div>
+                    <div class="row"><span class="k">Context / max out</span><span class="v g">1.05M / 128K</span></div>
+                    <div class="row"><span class="k">Modalities</span><span class="v">text + image → text</span></div>
+                    <div class="row"><span class="k">Thinking</span><span class="v">effort none → xhigh</span></div>
+                    <div class="row"><span class="k">Intelligence Index</span><span class="v g">60 · #2</span></div>
+                </div>
+                <div class="sw plus">Strengths</div>
+                <ul>
+                    <li><b>85.0%</b> ARC-AGI-2 — leads the novel-reasoning board by 7.9 pts</li>
+                    <li><b>39.6%</b> FrontierMath Tier 4 (Pro) — ~2× Opus 4.8 Thinking (22.9%)</li>
+                    <li><b>100%</b> OTIS Mock AIME · <b>88.7%</b> tau2-bench tool agents</li>
+                </ul>
+                <div class="sw minus">Weaknesses</div>
+                <ul>
+                    <li class="neg"><b>58.6%</b> SWE-bench Pro — 21.4 pts behind Fable 5 on hard repos</li>
+                    <li class="neg">Priciest output after Fable ($30/M); GPT-5.6 fix is <b>gated to ~20 orgs</b></li>
+                </ul>
+                <div class="also">Next: <b>GPT-5.6</b> Sol $5/$30 · Terra $2.50/$15 · Luna $1/$6 — preview since Jun 26</div>
+            </div>
+            <div class="mcard hud rv" style="--d:.3s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <div class="lab">Google DeepMind</div>
+                <div class="name">Gemini 3.1 Pro</div>
+                <div class="rel">GA Feb 19, 2026 · MoE atop Gemini 3 Pro · #1 on 12/18 benchmarks at launch</div>
+                <div class="specs">
+                    <div class="row"><span class="k">Price in / out</span><span class="v">$2 / $12 per M ≤200K</span></div>
+                    <div class="row"><span class="k">&gt;200K tier</span><span class="v">$4 / $18 per M</span></div>
+                    <div class="row"><span class="k">Context / max out</span><span class="v g">1M / 65K</span></div>
+                    <div class="row"><span class="k">Modalities</span><span class="v g">text+img+video+audio</span></div>
+                    <div class="row"><span class="k">Intelligence Index</span><span class="v g">57 · #3</span></div>
+                </div>
+                <div class="sw plus">Strengths</div>
+                <ul>
+                    <li><b>46.4%</b> HLE (high thinking) and <b>94.1%</b> GPQA Diamond — science leader</li>
+                    <li>Only pro-tier flagship with <b>native video + audio input</b></li>
+                    <li>Cheapest big-lab flagship: <b>$2/M in</b> — 2.5× under GPT-5.5 and Opus 4.8</li>
+                </ul>
+                <div class="sw minus">Weaknesses</div>
+                <ul>
+                    <li class="neg"><b>54.2%</b> SWE-bench Pro and 1314 GDPval-AA — trails Claude badly on agentic work</li>
+                    <li class="neg"><b>65K output cap</b>; price doubles past 200K input</li>
+                </ul>
+                <div class="also">Also: <b>3.5 Flash</b> $1.50/$9 — beats 3.1 Pro on agentic coding · <b>3.5 Pro</b> cleared for July</div>
+            </div>
+        </div>
+    </div>
+    <div class="ft"><span class="src">SRC: Anthropic platform docs (models overview) · OpenAI developers docs gpt-5.5 · Google AI Gemini API pricing · LLM-Stats · LM Council — full list S.13</span><span class="pg">05 / 13</span></div>
+</section>
+
+<!-- ================= S06 · MODEL CARDS II ================= -->
+<section class="slide" id="s6">
+    <div class="hd"><span class="hd-l"><b>SPLIT</b> // CONSULTANT — FRONTIER BOARD 07/26</span><span class="hd-c">MODEL CARDS 2/2</span><span class="hd-r">S.06 / 13</span></div>
+    <div class="bd">
+        <p class="kick rv">Model cards — the challengers</p>
+        <div class="cards c4" style="margin-top:14px">
+            <div class="mcard hud rv" style="--d:.1s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <div class="lab">xAI</div>
+                <div class="name">Grok 4.3</div>
+                <div class="rel">GA May 6, 2026 (API Apr 30)</div>
+                <div class="specs">
+                    <div class="row"><span class="k">Price in / out</span><span class="v g">$1.25 / $2.50</span></div>
+                    <div class="row"><span class="k">Context</span><span class="v">1M (2× billing &gt;200K)</span></div>
+                    <div class="row"><span class="k">Modalities</span><span class="v">text + image → text</span></div>
+                    <div class="row"><span class="k">Intelligence Index</span><span class="v">53</span></div>
+                </div>
+                <div class="sw plus">Strengths</div>
+                <ul>
+                    <li>Best raw price among closed flagships — <b>1/12th</b> of GPT-5.5 output</li>
+                    <li>Always-on reasoning; <b>+300 Elo</b> on GDPval-AA vs Grok 4.20</li>
+                    <li>Video input demoed at launch (consumer surfaces first)</li>
+                </ul>
+                <div class="sw minus">Weaknesses</div>
+                <ul>
+                    <li class="neg"><b>No per-benchmark disclosures</b> for 4.3 — xAI publishes index claims only</li>
+                    <li class="neg">II 53 = a tier below Opus/GPT; 8.2s p95 latency</li>
+                </ul>
+                <div class="also">Next: <b>Grok 4.5</b> — private beta Jun 28, ~1.5T params</div>
+            </div>
+            <div class="mcard hud rv" style="--d:.18s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <div class="lab">DeepSeek</div>
+                <div class="name">V4-Pro</div>
+                <div class="rel">GA Apr 24, 2026 · MIT open weights</div>
+                <div class="specs">
+                    <div class="row"><span class="k">Price in / out</span><span class="v g">$0.435 / $0.87</span></div>
+                    <div class="row"><span class="k">Context / max out</span><span class="v">1M / 384K</span></div>
+                    <div class="row"><span class="k">Params</span><span class="v">1.6T MoE · 49B act</span></div>
+                    <div class="row"><span class="k">Intelligence Index</span><span class="v">52</span></div>
+                </div>
+                <div class="sw plus">Strengths</div>
+                <ul>
+                    <li><b>80.6%</b> SWE-bench Verified — ties Gemini 3.1 Pro & GPT-5.5, open-weights SOTA</li>
+                    <li><b>28.7×</b> cheaper output than Opus 4.8; Anthropic-API compatible</li>
+                    <li>Hybrid CSA+HCA attention → efficient 1M context</li>
+                </ul>
+                <div class="sw minus">Weaknesses</div>
+                <ul>
+                    <li class="neg">Text-only; world knowledge <b>trails Gemini 3.1 Pro</b></li>
+                    <li class="neg">Throughput/latency depend on host</li>
+                </ul>
+                <div class="also">Also: <b>V4-Flash</b> $0.14/$0.28 · II 47 — cheapest 1M-ctx model on the board</div>
+            </div>
+            <div class="mcard hud rv" style="--d:.26s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <div class="lab">Meta MSL</div>
+                <div class="name">Muse Spark</div>
+                <div class="rel">Apr 8, 2026 · private preview, API-only</div>
+                <div class="specs">
+                    <div class="row"><span class="k">Price</span><span class="v">not published</span></div>
+                    <div class="row"><span class="k">Context</span><span class="v">262K (AA) / 1M claim</span></div>
+                    <div class="row"><span class="k">Weights</span><span class="v">closed — a Meta first</span></div>
+                    <div class="row"><span class="k">Intelligence Index</span><span class="v">43</span></div>
+                </div>
+                <div class="sw plus">Strengths</div>
+                <ul>
+                    <li><b>42.8</b> HealthBench Hard — best of any frontier model at launch</li>
+                    <li><b>40.6%</b> HLE measured (Meta claimed 50.2 at launch — flagged, not reconciled)</li>
+                </ul>
+                <div class="sw minus">Weaknesses</div>
+                <ul>
+                    <li class="neg"><b>No public access, no pricing, no model card</b> — unbuyable today</li>
+                    <li class="neg">Open-weights heritage abandoned; Behemoth shelved</li>
+                </ul>
+                <div class="also">Verdict: <b>watch, don't plan on it</b> — capability real, product absent</div>
+            </div>
+            <div class="mcard hud rv" style="--d:.34s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <div class="lab">Mistral</div>
+                <div class="name">Medium 3.5 · Large 3</div>
+                <div class="rel">Medium 3.5 v26.04 · Large 3 Dec 1, 2025</div>
+                <div class="specs">
+                    <div class="row"><span class="k">Large 3 in / out</span><span class="v g">$0.50 / $1.50</span></div>
+                    <div class="row"><span class="k">Context</span><span class="v">262K</span></div>
+                    <div class="row"><span class="k">Params (Large 3)</span><span class="v">675B MoE · 41B act</span></div>
+                    <div class="row"><span class="k">License (Large 3)</span><span class="v g">Apache 2.0</span></div>
+                </div>
+                <div class="sw plus">Strengths</div>
+                <ul>
+                    <li>Best <b>EU-sovereign</b> option; open weights, permissive license</li>
+                    <li><b>93.6%</b> MATH-500; #2 OSS non-reasoning on LMArena at launch</li>
+                    <li>Medium 3.5: frontier-class <b>multimodal</b>, agentic/coding-tuned</li>
+                </ul>
+                <div class="sw minus">Weaknesses</div>
+                <ul>
+                    <li class="neg"><b>Frontier-adjacent, not frontier</b> — clear gap to Opus/GPT/Gemini on hard reasoning</li>
+                    <li class="neg">262K ctx vs the field's 1M</li>
+                </ul>
+                <div class="also">Wider field: <b>Qwen 3.7 Max</b> II 57 · <b>Kimi K2.7</b> · <b>MiniMax M3</b> II 55 · <b>LongCat-2.0</b> (Meituan, Chinese chips)</div>
+            </div>
+        </div>
+    </div>
+    <div class="ft"><span class="src">SRC: OpenRouter grok-4.3 · Artificial Analysis muse-spark · DeepSeek API news 26/04/24 · Morph DeepSeek V4 · Mistral docs + mistral.ai/news/mistral-3 — full list S.13</span><span class="pg">06 / 13</span></div>
+</section>
+
+<!-- ================= S07 · H2H REASONING ================= -->
+<section class="slide" id="s7">
+    <div class="hd"><span class="hd-l"><b>SPLIT</b> // CONSULTANT — FRONTIER BOARD 07/26</span><span class="hd-c">HEAD-TO-HEAD 1/3</span><span class="hd-r">S.07 / 13</span></div>
+    <div class="bd h2h">
+        <p class="kick rv">Head-to-head · Reasoning & math</p>
+        <h2 class="ttl rv" style="--d:.06s">Three different crowns, three different heads</h2>
+        <div class="hud rv" style="--d:.14s; margin-top:18px"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+            <table class="dt">
+                <thead><tr>
+                    <th style="width:400px">Benchmark</th>
+                    <th class="num">Claude Fable 5</th>
+                    <th class="num">Claude Opus 4.8</th>
+                    <th class="num">GPT-5.5</th>
+                    <th class="num">Gemini 3.1 Pro</th>
+                    <th class="num">Muse Spark</th>
+                </tr></thead>
+                <tbody>
+                    <tr><td class="mdl">GPQA Diamond <span class="tag">PhD science</span></td><td class="num run">≈95.0 †</td><td class="num np">n.p.</td><td class="num run">94.0</td><td class="num lead">94.1</td><td class="num np">n.p.</td></tr>
+                    <tr><td class="mdl">Humanity's Last Exam <span class="tag">expert QA</span></td><td class="num np">n.p.</td><td class="num np">n.p.</td><td class="num dim">44.3 <span class="tag">5.4 Pro</span></td><td class="num lead">46.4</td><td class="num run">40.6 ‡</td></tr>
+                    <tr><td class="mdl">ARC-AGI-2 <span class="tag">novel reasoning</span></td><td class="num np">n.p.</td><td class="num np">n.p.</td><td class="num lead">85.0</td><td class="num run">77.1</td><td class="num np">n.p.</td></tr>
+                    <tr><td class="mdl">OTIS Mock AIME 24–25 <span class="tag">competition math</span></td><td class="num run">99.7</td><td class="num dim">98.3</td><td class="num lead">100.0</td><td class="num np">n.p.</td><td class="num np">n.p.</td></tr>
+                    <tr><td class="mdl">FrontierMath Tier 4 <span class="tag">research math</span></td><td class="num np">n.p.</td><td class="num run">22.9 <span class="tag">thinking</span></td><td class="num lead">39.6 <span class="tag">5.5 Pro</span></td><td class="num np">n.p.</td><td class="num np">n.p.</td></tr>
+                    <tr><td class="mdl">SimpleBench <span class="tag">trick-resistant common sense</span></td><td class="num lead">81.9</td><td class="num np">n.p.</td><td class="num dim">76.9 <span class="tag">5.5 Pro</span></td><td class="num run">79.6</td><td class="num np">n.p.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="verdict hud amber rv" style="--d:.28s"><span class="tick tl"></span><span class="tick br"></span>
+            <span class="vk">Read</span>
+            <span class="vt">No single reasoning champion. <b>GPT-5.5 owns abstract novelty and research math</b> (ARC-AGI-2 +7.9 pts, FrontierMath ~2× Claude); <b>Gemini owns expert knowledge</b> (HLE, GPQA); <b>Fable 5 owns judgment-flavored common sense</b> (SimpleBench). Grok 4.3 absent by design: xAI publishes no per-benchmark scores.</span>
+        </div>
+        <p class="fn rv" style="--d:.36s; margin-top:14px">† Contested — independent replications place it near 95 while measuring GPT-5.5 at 93.6 in the same runs (BenchLM, Jun 2026). &nbsp; ‡ LM Council independent measurement; Meta claimed 50.2 at launch. &nbsp; n.p. = no verified July-2026 figure published; cells are left empty rather than estimated. All scores %, higher is better.</p>
+    </div>
+    <div class="ft"><span class="src">SRC: LM Council benchmarks (Jul 2026) · ARC Prize leaderboard (Jun 18, 2026) · BenchLM.ai · FelloAI Jul 2026 — full list S.13</span><span class="pg">07 / 13</span></div>
+</section>
+
+<!-- ================= S08 · H2H CODING ================= -->
+<section class="slide" id="s8">
+    <div class="hd"><span class="hd-l"><b>SPLIT</b> // CONSULTANT — FRONTIER BOARD 07/26</span><span class="hd-c">HEAD-TO-HEAD 2/3</span><span class="hd-r">S.08 / 13</span></div>
+    <div class="bd h2h">
+        <p class="kick rv">Head-to-head · Coding</p>
+        <h2 class="ttl rv" style="--d:.06s">Claude's moat is measured, not marketed</h2>
+        <div class="hud rv" style="--d:.14s; margin-top:18px"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+            <table class="dt">
+                <thead><tr>
+                    <th style="width:360px">Model</th>
+                    <th class="num">SWE-bench Verified</th>
+                    <th class="num">SWE-bench Pro</th>
+                    <th class="num">Terminal-Bench</th>
+                    <th style="width:500px">Note</th>
+                </tr></thead>
+                <tbody>
+                    <tr><td class="mdl">Claude Fable 5</td><td class="num lead">95.0</td><td class="num lead">80.0</td><td class="num run">84.3 <span class="tag">2.1</span></td><td class="dim">FrontierCode Diamond 29.3% — hard ceiling still far</td></tr>
+                    <tr><td class="mdl">Claude Opus 4.8</td><td class="num run">88.6</td><td class="num run">69.2</td><td class="num dim">— <span class="tag">4.7: 90.2 / 2.0</span></td><td class="dim">Best $/coding-point among closed flagships at $5/$25</td></tr>
+                    <tr><td class="mdl">GPT-5.5</td><td class="num dim">80.6</td><td class="num dim">58.6</td><td class="num lead">84.7 <span class="tag">2.0</span></td><td class="dim">Strong terminal agent; hard-repo gap vs Claude</td></tr>
+                    <tr><td class="mdl">Gemini 3.1 Pro</td><td class="num dim">80.6</td><td class="num dim">54.2</td><td class="num dim">80.2 <span class="tag">2.0</span></td><td class="dim">Ties SWE-V, drops hardest on Pro split</td></tr>
+                    <tr><td class="mdl">Gemini 3.5 Flash</td><td class="num dim">79.3</td><td class="num np">n.p.</td><td class="num dim">76.2 <span class="tag">2.1</span></td><td class="dim">4× faster, $1.50/$9 — the volume coder</td></tr>
+                    <tr><td class="mdl">DeepSeek V4-Pro-Max <span class="tag a">open · MIT</span></td><td class="num run">80.6</td><td class="num np">n.p.</td><td class="num np">n.p.</td><td class="dim">Open-weights SOTA — ties two closed flagships at $0.87/M out</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="verdict hud amber rv" style="--d:.28s"><span class="tick tl"></span><span class="tick br"></span>
+            <span class="vk">Read</span>
+            <span class="vt"><b>+14.4 pts</b> on SWE-bench Verified and <b>+21.4 pts</b> on SWE-bench Pro separate Fable 5 from the best non-Claude. That is the largest capability gap anywhere on this board — and the reason Anthropic can price output at $50/M. Below the top: three models tied at 80.6 SWE-V, one of them open-source and 30× cheaper.</span>
+        </div>
+        <p class="fn rv" style="--d:.36s; margin-top:14px">Terminal-Bench version noted per cell (2.0 vs 2.1 runs are not directly comparable). Fable 5's Terminal-Bench 2.1 is the effective score incl. its 20.9% guarded fallback to Opus 4.8. All scores %, higher is better.</p>
+    </div>
+    <div class="ft"><span class="src">SRC: LLM-Stats Fable 5 review · LM Council (Jul 2026) · Morph SWE-bench Pro leaderboard · Morph DeepSeek V4 — full list S.13</span><span class="pg">08 / 13</span></div>
+</section>
+
+<!-- ================= S09 · H2H AGENTIC ================= -->
+<section class="slide" id="s9">
+    <div class="hd"><span class="hd-l"><b>SPLIT</b> // CONSULTANT — FRONTIER BOARD 07/26</span><span class="hd-c">HEAD-TO-HEAD 3/3</span><span class="hd-r">S.09 / 13</span></div>
+    <div class="bd">
+        <p class="kick rv">Head-to-head · Agentic work</p>
+        <h2 class="ttl rv" style="--d:.06s">Agents: Claude for depth, Gemini for volume</h2>
+        <div class="agq" style="margin-top:20px">
+            <div class="hud rv" style="--d:.12s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <h4>tau2-bench — tool agents w/ policy</h4>
+                <div class="bm-sub">Customer-service agents under real constraints (retail · airline · telecom) — May 2026 standings</div>
+                <div class="rank">
+                    <div class="r top"><span class="pos">01</span><span class="m">Claude Mythos Preview</span><span class="s">93.9</span></div>
+                    <div class="r"><span class="pos">02</span><span class="m">GPT-5.5</span><span class="s">88.7</span></div>
+                    <div class="r"><span class="pos">03</span><span class="m">Claude Opus 4.7 (adaptive)</span><span class="s">87.6</span></div>
+                    <div class="r"><span class="pos">04</span><span class="m">DeepSeek V4 Pro-Max / Gemini 3.1 Pro</span><span class="s a">80.6</span></div>
+                </div>
+            </div>
+            <div class="hud rv" style="--d:.2s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <h4>GDPval-AA — knowledge-work Elo</h4>
+                <div class="bm-sub">Occupational deliverables graded blind (Artificial Analysis Elo)</div>
+                <div class="rank">
+                    <div class="r top"><span class="pos">01</span><span class="m">Claude Fable 5</span><span class="s">1932</span></div>
+                    <div class="r"><span class="pos">02</span><span class="m">Claude Opus 4.8</span><span class="s">1890</span></div>
+                    <div class="r"><span class="pos">03</span><span class="m">Claude Sonnet 5 — leads writing subset</span><span class="s">1866</span></div>
+                    <div class="r"><span class="pos">04</span><span class="m">GPT-5.5</span><span class="s a">1769</span></div>
+                    <div class="r"><span class="pos">05</span><span class="m">Gemini 3.1 Pro</span><span class="s a">1314</span></div>
+                </div>
+            </div>
+            <div class="hud rv" style="--d:.28s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <h4>OSWorld-Verified — computer use</h4>
+                <div class="bm-sub">Real desktop-app task completion</div>
+                <div class="rank">
+                    <div class="r top"><span class="pos">01</span><span class="m">Claude Fable 5</span><span class="s">85.0</span></div>
+                    <div class="r"><span class="pos">—</span><span class="m dim" style="color:var(--mut)">Field context: reported SOTA was still high-30s in April 2026 — a near-vertical jump in one quarter</span><span class="s"></span></div>
+                </div>
+            </div>
+            <div class="hud rv" style="--d:.36s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <h4>MCP Atlas — tool-coordination</h4>
+                <div class="bm-sub">Multi-server MCP orchestration accuracy</div>
+                <div class="rank">
+                    <div class="r top"><span class="pos">01</span><span class="m">Gemini 3.5 Flash</span><span class="s">83.6</span></div>
+                    <div class="r"><span class="pos">02</span><span class="m">Gemini 3.1 Pro</span><span class="s a">69.2</span></div>
+                    <div class="r"><span class="pos">—</span><span class="m dim" style="color:var(--mut)">The $1.50 workhorse out-coordinates its own flagship by 14.4 pts</span><span class="s"></span></div>
+                </div>
+            </div>
+        </div>
+        <p class="fn rv" style="--d:.44s; margin-top:16px">Benchmarks report different populations — tau2 standings predate Fable 5's GA; treat cross-panel comparisons as directional. Grok 4.3 claims +300 GDPval-AA Elo vs Grok 4.20 but xAI publishes no absolute figure.</p>
+    </div>
+    <div class="ft"><span class="src">SRC: Awesome Agents agentic leaderboard (tau2, May 2026) · LLM-Stats Fable 5 review (GDPval-AA, OSWorld) · Google/metacto (MCP Atlas) · benchmarkingagents.com — full list S.13</span><span class="pg">09 / 13</span></div>
+</section>
+
+<!-- ================= S10 · LONG CONTEXT ================= -->
+<section class="slide" id="s10">
+    <div class="hd"><span class="hd-l"><b>SPLIT</b> // CONSULTANT — FRONTIER BOARD 07/26</span><span class="hd-c">LONG CONTEXT</span><span class="hd-r">S.10 / 13</span></div>
+    <div class="bd">
+        <p class="kick rv">Long context</p>
+        <h2 class="ttl rv" style="--d:.06s">1M tokens is table stakes. Filling it is the new bill.</h2>
+        <p class="sub rv" style="--d:.1s">Thirteen models now ship 1M+ windows. The differentiator moved from window size to <b>what one full read costs</b> — computed below from published list prices.</p>
+        <div class="lc-grid" style="height:640px">
+            <div class="bars hud rv" style="--d:.16s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                <div class="plab" style="padding:4px 0 14px">Cost to read one full 1M-token window — USD, input tokens</div>
+                <div class="brow"><div class="bm">Claude Fable 5</div><div class="btrack"><div class="bfill" style="width:100%"></div></div><div class="bval">$10.00</div></div>
+                <div class="brow"><div class="bm">GPT-5.5 <small>&gt;272K billed at 2× for the session</small></div><div class="btrack"><div class="bfill" style="width:100%"></div></div><div class="bval">$10.00</div></div>
+                <div class="brow"><div class="bm">Claude Opus 4.8</div><div class="btrack"><div class="bfill" style="width:50%"></div></div><div class="bval">$5.00</div></div>
+                <div class="brow"><div class="bm">Gemini 3.1 Pro <small>tiered: 200K @ $2 + 800K @ $4</small></div><div class="btrack"><div class="bfill" style="width:36%"></div></div><div class="bval">$3.60</div></div>
+                <div class="brow"><div class="bm">Claude Sonnet 5 <small>$2.00 at intro pricing to Aug 31</small></div><div class="btrack"><div class="bfill" style="width:30%"></div></div><div class="bval">$3.00</div></div>
+                <div class="brow"><div class="bm">Grok 4.3 <small>&gt;200K billed at 2× standard</small></div><div class="btrack"><div class="bfill" style="width:22.5%"></div></div><div class="bval">$2.25</div></div>
+                <div class="brow"><div class="bm">Gemini 3.5 Flash</div><div class="btrack"><div class="bfill" style="width:15%"></div></div><div class="bval">$1.50</div></div>
+                <div class="brow"><div class="bm">DeepSeek V4-Pro <small>open weights · MIT</small></div><div class="btrack"><div class="bfill a" style="width:4.4%"></div></div><div class="bval a">$0.44</div></div>
+                <div class="brow"><div class="bm">DeepSeek V4-Flash <small>open weights · MIT</small></div><div class="btrack"><div class="bfill a" style="width:1.4%"></div></div><div class="bval a">$0.14</div></div>
+                <div class="fn" style="margin-top:14px">Computed from list prices on this board, long-context surcharges included; caching discounts (up to −90%) can cut repeat reads substantially. 71× spread between the dearest full-window read ($10.00 — a Fable 5 / GPT-5.5 tie once GPT-5.5's &gt;272K surcharge applies) and the cheapest ($0.14).</div>
+            </div>
+            <div class="lc-right">
+                <div class="hud rv" style="--d:.26s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                    <h4>Windows & output caps</h4>
+                    <ul>
+                        <li>Fable 5 / Opus 4.8 / Sonnet 5: <b>1M in · 128K out</b> (300K out via Batch beta)</li>
+                        <li>GPT-5.5: <b>1.05M in · 128K out</b></li>
+                        <li>Gemini 3.1 Pro: 1M in · <span class="g">65K out</span> — the tightest output cap</li>
+                        <li>DeepSeek V4: 1M in · <span class="g">384K out</span> — the loosest</li>
+                        <li>Mistral Large 3 & Muse Spark (per AA): <b>262K</b> — below the line</li>
+                    </ul>
+                </div>
+                <div class="hud rv" style="--d:.34s"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+                    <h4>Retrieval quality at 1M (MRCR)</h4>
+                    <ul>
+                        <li>Multi-needle MRCR v2 (8-needle, 1M): <span class="g">Claude Opus 4.6 led at ~78%</span> (Awesome Agents leaderboard)</li>
+                        <li><b>Claude Opus 4.7: 92.9%</b> on MRCR 1M document retrieval</li>
+                        <li>A Mar-2026 roundup puts <b>Gemini 3.1 Pro ahead on MRCR v2 overall</b> — sources disagree; treat the top three as a pack, not a ranking</li>
+                        <li>Neither Fable 5 nor GPT-5.5 has a published July-2026 MRCR figure</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ft"><span class="src">SRC: vendor pricing pages (Anthropic, OpenAI, Google, xAI/OpenRouter, DeepSeek via Morph) · Awesome Agents long-context leaderboard · yage.ai Mar 2026 — full list S.13</span><span class="pg">10 / 13</span></div>
+</section>
+
+<!-- ================= S11 · COST × PERFORMANCE ================= -->
+<section class="slide" id="s11">
+    <div class="hd"><span class="hd-l"><b>SPLIT</b> // CONSULTANT — FRONTIER BOARD 07/26</span><span class="hd-c">COST × PERFORMANCE</span><span class="hd-r">S.11 / 13</span></div>
+    <div class="bd">
+        <p class="kick rv">Cost vs performance</p>
+        <h2 class="ttl rv" style="--d:.06s">The value frontier runs through Shenzhen</h2>
+        <div class="scatter-wrap hud rv" style="--d:.14s; margin-top:16px; padding:20px 10px 6px"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <svg class="scatter" viewBox="0 0 1600 660" width="1740" height="718" role="img" aria-label="Scatter chart: Artificial Analysis Intelligence Index versus output price per million tokens, log scale">
+            <!-- gridlines Y : II 40..65 -->
+            <line class="grid" x1="80" y1="560" x2="1500" y2="560"/><text class="axis" x="62" y="565" text-anchor="end">40</text>
+            <line class="grid" x1="80" y1="456" x2="1500" y2="456"/><text class="axis" x="62" y="461" text-anchor="end">45</text>
+            <line class="grid" x1="80" y1="352" x2="1500" y2="352"/><text class="axis" x="62" y="357" text-anchor="end">50</text>
+            <line class="grid" x1="80" y1="248" x2="1500" y2="248"/><text class="axis" x="62" y="253" text-anchor="end">55</text>
+            <line class="grid" x1="80" y1="144" x2="1500" y2="144"/><text class="axis" x="62" y="149" text-anchor="end">60</text>
+            <line class="grid" x1="80" y1="40"  x2="1500" y2="40"/><text class="axis" x="62" y="45" text-anchor="end">65</text>
+            <!-- gridlines X : $ log -->
+            <line class="grid" x1="136" y1="40" x2="136" y2="560"/><text class="axis" x="136" y="585" text-anchor="middle">$0.25</text>
+            <line class="grid" x1="308" y1="40" x2="308" y2="560"/><text class="axis" x="308" y="585" text-anchor="middle">$0.50</text>
+            <line class="grid" x1="481" y1="40" x2="481" y2="560"/><text class="axis" x="481" y="585" text-anchor="middle">$1</text>
+            <line class="grid" x1="709" y1="40" x2="709" y2="560"/><text class="axis" x="709" y="585" text-anchor="middle">$2.50</text>
+            <line class="grid" x1="881" y1="40" x2="881" y2="560"/><text class="axis" x="881" y="585" text-anchor="middle">$5</text>
+            <line class="grid" x1="1054" y1="40" x2="1054" y2="560"/><text class="axis" x="1054" y="585" text-anchor="middle">$10</text>
+            <line class="grid" x1="1282" y1="40" x2="1282" y2="560"/><text class="axis" x="1282" y="585" text-anchor="middle">$25</text>
+            <line class="grid" x1="1455" y1="40" x2="1455" y2="560"/><text class="axis" x="1455" y="585" text-anchor="middle">$50</text>
+            <!-- axis labels -->
+            <text class="axlab" x="790" y="630" text-anchor="middle">OUTPUT PRICE — USD PER 1M TOKENS (LOG)</text>
+            <text class="axlab" x="24" y="300" text-anchor="middle" transform="rotate(-90 24 300)">AA INTELLIGENCE INDEX</text>
+            <!-- value frontier -->
+            <polyline class="front" points="164,414 446,310 810,206 1282,123"/>
+            <text x="560" y="290" fill="#3CF08A" font-size="14" opacity="0.7" letter-spacing="2">VALUE FRONTIER</text>
+            <!-- Fable marker -->
+            <line class="fable-line" x1="1455" y1="40" x2="1455" y2="560"/>
+            <text x="1448" y="472" fill="#FF5C57" font-size="14" text-anchor="end">CLAUDE FABLE 5 — $50 OUT</text>
+            <text x="1448" y="494" fill="#7E8CA0" font-size="13" text-anchor="end">not yet indexed by AA · top of every</text>
+            <text x="1448" y="512" fill="#7E8CA0" font-size="13" text-anchor="end">coding / knowledge-work table</text>
+            <!-- points -->
+            <g class="dot"><title>DeepSeek V4-Flash — II 47 · $0.28/M out · open weights (MIT)</title>
+                <circle class="halo" cx="164" cy="414" r="16" stroke="#FFB454"/><circle class="pt open" cx="164" cy="414" r="9"/>
+                <text class="plabel" x="182" y="410">DS V4-Flash</text><text class="pprice" x="182" y="428">$0.28 · II 47</text></g>
+            <g class="dot"><title>DeepSeek V4-Pro — II 52 · $0.87/M out · open weights (MIT)</title>
+                <circle class="halo" cx="446" cy="310" r="16" stroke="#FFB454"/><circle class="pt open" cx="446" cy="310" r="9"/>
+                <text class="plabel" x="464" y="306">DS V4-Pro</text><text class="pprice" x="464" y="324">$0.87 · II 52</text></g>
+            <g class="dot"><title>Grok 4.3 — II 53 · $2.50/M out</title>
+                <circle class="halo" cx="709" cy="290" r="16" stroke="#3CF08A"/><circle class="pt" cx="709" cy="290" r="9"/>
+                <text class="plabel" x="727" y="286">Grok 4.3</text><text class="pprice" x="727" y="304">$2.50 · II 53</text></g>
+            <g class="dot"><title>Qwen 3.7 Max — II 57 · $3.75/M out (promo)</title>
+                <circle class="halo" cx="810" cy="206" r="16" stroke="#3CF08A"/><circle class="pt" cx="810" cy="206" r="9"/>
+                <text class="plabel" x="700" y="176">Qwen 3.7 Max</text><text class="pprice" x="700" y="194">$3.75 · II 57</text></g>
+            <g class="dot"><title>Gemini 3.5 Flash — II 55 · $9/M out</title>
+                <circle class="halo" cx="1028" cy="248" r="16" stroke="#3CF08A"/><circle class="pt" cx="1028" cy="248" r="9"/>
+                <text class="plabel" x="1046" y="244">Gemini 3.5 Flash</text><text class="pprice" x="1046" y="262">$9.00 · II 55</text></g>
+            <g class="dot"><title>Gemini 3.1 Pro — II 57 · $12/M out</title>
+                <circle class="halo" cx="1099" cy="206" r="16" stroke="#3CF08A"/><circle class="pt" cx="1099" cy="206" r="9"/>
+                <text class="plabel" x="1117" y="196">Gemini 3.1 Pro</text><text class="pprice" x="1117" y="214">$12 · II 57</text></g>
+            <g class="dot"><title>Claude Opus 4.8 — II 61 (board leader) · $25/M out</title>
+                <circle class="halo" cx="1282" cy="123" r="16" stroke="#3CF08A"/><circle class="pt" cx="1282" cy="123" r="9"/>
+                <text class="plabel" x="1140" y="96">Claude Opus 4.8</text><text class="pprice" x="1140" y="114">$25 · II 61 — #1</text></g>
+            <g class="dot"><title>GPT-5.5 — II 60 · $30/M out</title>
+                <circle class="halo" cx="1327" cy="144" r="16" stroke="#3CF08A"/><circle class="pt" cx="1327" cy="144" r="9"/>
+                <text class="plabel" x="1345" y="152">GPT-5.5</text><text class="pprice" x="1345" y="170">$30 · II 60</text></g>
+        </svg>
+        </div>
+        <div class="legend rv" style="--d:.3s">
+            <span><span class="sw2" style="background:var(--grn)"></span>Proprietary API</span>
+            <span><span class="sw2" style="background:var(--amb)"></span>Open weights (MIT)</span>
+            <span style="color:var(--faint)">Muse Spark (II 43) unplotted — no public price. Hover points for detail. Read: every step up the frontier costs ~3× per index point past II 55.</span>
+        </div>
+    </div>
+    <div class="ft"><span class="src">SRC: Artificial Analysis Intelligence Index via FelloAI + LLM-Stats (Jul 2026) · vendor list prices as of 2026-07-03 — full list S.13</span><span class="pg">11 / 13</span></div>
+</section>
+
+<!-- ================= S12 · JOB MATRIX ================= -->
+<section class="slide" id="s12">
+    <div class="hd"><span class="hd-l"><b>SPLIT</b> // CONSULTANT — FRONTIER BOARD 07/26</span><span class="hd-c">RECOMMENDATION</span><span class="hd-r">S.12 / 13</span></div>
+    <div class="bd mx">
+        <p class="kick rv">Which model for which job</p>
+        <h2 class="ttl rv" style="--d:.06s">The buy list — first pick, then the value pick</h2>
+        <div class="hud rv" style="--d:.14s; margin-top:16px"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+            <table class="dt">
+                <thead><tr>
+                    <th style="width:400px">Job</th>
+                    <th style="width:620px">First pick — why</th>
+                    <th>Value pick — why</th>
+                </tr></thead>
+                <tbody>
+                    <tr><td class="job">Agentic / repo-scale coding</td><td><span class="lead" style="font-weight:700">Claude Fable 5</span> — 95.0 SWE-V, 80.0 SWE-Pro; nothing close</td><td class="dim"><b style="color:var(--amb)">DeepSeek V4-Pro</b> — 80.6 SWE-V at 1/57th the output price</td></tr>
+                    <tr><td class="job">Everyday coding & terminal agents</td><td><span class="lead" style="font-weight:700">Claude Opus 4.8</span> — 88.6 SWE-V at half Fable's price, II 61</td><td class="dim"><b style="color:var(--amb)">Gemini 3.5 Flash</b> — 79.3 SWE-V, ~4× faster, $1.50/$9</td></tr>
+                    <tr><td class="job">Deep research & science Q&A</td><td><span class="lead" style="font-weight:700">Gemini 3.1 Pro</span> — HLE 46.4, GPQA 94.1, $2/M in</td><td class="dim"><b style="color:var(--amb)">Qwen 3.7 Max</b> — GPQA 92.4 at $1.25/$3.75 promo</td></tr>
+                    <tr><td class="job">Frontier / competition math</td><td><span class="lead" style="font-weight:700">GPT-5.5 (Pro)</span> — FrontierMath T4 39.6, OTIS AIME 100</td><td class="dim"><b style="color:var(--amb)">Qwen 3.7 Max</b> — 97.1 HMMT Feb 2026</td></tr>
+                    <tr><td class="job">Professional writing & documents</td><td><span class="lead" style="font-weight:700">Claude Sonnet 5</span> — leads GDPval-AA writing (1866); $2/$10 intro</td><td class="dim">Sonnet 5 <b style="color:var(--amb)">is</b> the value pick — intro pricing to Aug 31</td></tr>
+                    <tr><td class="job">Customer-facing tool agents</td><td><span class="lead" style="font-weight:700">GPT-5.5</span> — tau2 88.7, best broadly-available policy adherence</td><td class="dim"><b style="color:var(--amb)">DeepSeek V4</b> — tau2 80.6, self-hostable for data control</td></tr>
+                    <tr><td class="job">High-volume pipelines & extraction</td><td><span class="lead" style="font-weight:700">Gemini 3.5 Flash</span> — MCP Atlas 83.6, $1.50/$9, speed</td><td class="dim"><b style="color:var(--amb)">DS V4-Flash</b> — $0.14/$0.28, cheapest 1M-ctx anywhere</td></tr>
+                    <tr><td class="job">Video / audio multimodal input</td><td><span class="lead" style="font-weight:700">Gemini 3.1 Pro</span> — only flagship with native A/V input</td><td class="dim"><b style="color:var(--amb)">Gemini 3.1 Flash-Lite</b> — full modality set at $0.25/$1.50</td></tr>
+                    <tr><td class="job">Computer use / desktop automation</td><td><span class="lead" style="font-weight:700">Claude Fable 5</span> — OSWorld-Verified 85.0, in a class of one</td><td class="dim">No credible budget option yet — field SOTA was ~high-30s in April</td></tr>
+                    <tr><td class="job">Self-hosted / sovereignty</td><td><span class="lead" style="font-weight:700">DeepSeek V4-Pro</span> — MIT, 1M ctx, frontier-tied coding</td><td class="dim"><b style="color:var(--amb)">Mistral Large 3</b> — Apache 2.0, EU jurisdiction, 262K ctx</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="risk-strip hud rv" style="--d:.3s"><span class="tick tl"></span><span class="tick br"></span>
+            <span class="rk">What breaks this board</span>
+            <span class="rt"><b>Within 90 days:</b> GPT-5.6 Terra GA at $2.50/$15 with 5.5-level scores would take four rows above · Gemini 3.5 Pro lands in July with unpublished specs · Grok 4.5 exits private beta · export-control whiplash can pull any US flagship offline, as Fable 5's 18-day June outage proved. Re-run this board before committing annual spend.</span>
+        </div>
+    </div>
+    <div class="ft"><span class="src">SRC: consolidated from S.05–S.11 — every cited figure sourced on the corresponding slide; full list S.13</span><span class="pg">12 / 13</span></div>
+</section>
+
+<!-- ================= S13 · SOURCES ================= -->
+<section class="slide" id="s13">
+    <div class="hd"><span class="hd-l"><b>SPLIT</b> // CONSULTANT — FRONTIER BOARD 07/26</span><span class="hd-c">SOURCE MANIFEST</span><span class="hd-r">S.13 / 13</span></div>
+    <div class="bd">
+        <p class="kick rv">Sources</p>
+        <h2 class="ttl rv" style="--d:.06s">Every URL read for this board</h2>
+        <p class="sub rv" style="--d:.1s">All accessed 2026-07-03. Primary (vendor) sources for prices and specs; independent aggregators for benchmark scores. Conflicts flagged in place, never averaged.</p>
+        <div class="src-cols rv" style="--d:.18s">
+            <div>
+                <div class="src-it"><span class="n">01</span><span class="w"><b>Anthropic</b> — Models overview (Fable 5 / Opus 4.8 / Sonnet 5 specs & prices) <span class="pub">· Claude Platform docs</span><br><a href="https://platform.claude.com/docs/en/about-claude/models/overview">platform.claude.com/docs/en/about-claude/models/overview</a></span></div>
+                <div class="src-it"><span class="n">02</span><span class="w"><b>OpenAI</b> — GPT-5.5 model page (price, 1.05M ctx, Apr 23 snapshot) <span class="pub">· developers.openai.com</span><br><a href="https://developers.openai.com/api/docs/models/gpt-5.5">developers.openai.com/api/docs/models/gpt-5.5</a></span></div>
+                <div class="src-it"><span class="n">03</span><span class="w"><b>OpenAI</b> — "Previewing GPT-5.6 Sol" (Jun 26, 2026; Sol/Terra/Luna pricing) <span class="pub">· openai.com</span><br><a href="https://openai.com/index/previewing-gpt-5-6-sol/">openai.com/index/previewing-gpt-5-6-sol</a></span></div>
+                <div class="src-it"><span class="n">04</span><span class="w"><b>Google</b> — Gemini API pricing (3.1 Pro tiers, 3.5 Flash, Flash-Lite) <span class="pub">· ai.google.dev</span><br><a href="https://ai.google.dev/gemini-api/docs/pricing">ai.google.dev/gemini-api/docs/pricing</a></span></div>
+                <div class="src-it"><span class="n">05</span><span class="w"><b>DeepSeek</b> — V4 preview release notes (Apr 24, 2026) <span class="pub">· api-docs.deepseek.com</span><br><a href="https://api-docs.deepseek.com/news/news260424">api-docs.deepseek.com/news/news260424</a></span></div>
+                <div class="src-it"><span class="n">06</span><span class="w"><b>Mistral</b> — Models overview (Medium 3.5 v26.04 flagship) + Mistral 3 announcement <span class="pub">· docs.mistral.ai · mistral.ai</span><br><a href="https://docs.mistral.ai/models/overview">docs.mistral.ai/models/overview</a> · <a href="https://mistral.ai/news/mistral-3/">mistral.ai/news/mistral-3</a></span></div>
+                <div class="src-it"><span class="n">07</span><span class="w"><b>OpenRouter</b> — Grok 4.3 listing ($1.25/$2.50, 1M ctx, modalities) <span class="pub">· openrouter.ai</span><br><a href="https://openrouter.ai/x-ai/grok-4.3">openrouter.ai/x-ai/grok-4.3</a></span></div>
+                <div class="src-it"><span class="n">08</span><span class="w"><b>LM Council</b> — independent benchmark runs (GPQA, HLE, AIME, SWE-V, Terminal-Bench, SimpleBench) <span class="pub">· lmcouncil.ai, Jul 2026</span><br><a href="https://lmcouncil.ai/benchmarks">lmcouncil.ai/benchmarks</a></span></div>
+            </div>
+            <div>
+                <div class="src-it"><span class="n">09</span><span class="w"><b>LLM-Stats</b> — Claude Fable 5 review (SWE tables, GDPval-AA, OSWorld) + Grok 4.3 page <span class="pub">· llm-stats.com</span><br><a href="https://llm-stats.com/blog/research/claude-fable-5-review">llm-stats.com/blog/research/claude-fable-5-review</a></span></div>
+                <div class="src-it"><span class="n">10</span><span class="w"><b>FelloAI</b> — "Best AI Models in July 2026" (AA Intelligence Index roundup, release wave, export-control timeline) <span class="pub">· felloai.com</span><br><a href="https://felloai.com/best-ai-models/">felloai.com/best-ai-models</a></span></div>
+                <div class="src-it"><span class="n">11</span><span class="w"><b>Morph</b> — DeepSeek V4 architecture/pricing + SWE-bench Pro leaderboard <span class="pub">· morphllm.com</span><br><a href="https://www.morphllm.com/deepseek-v4">morphllm.com/deepseek-v4</a> · <a href="https://www.morphllm.com/swe-bench-pro">morphllm.com/swe-bench-pro</a></span></div>
+                <div class="src-it"><span class="n">12</span><span class="w"><b>ARC Prize</b> — ARC-AGI-2 leaderboard (GPT-5.5 85.0, Jun 18, 2026) <span class="pub">· arcprize.org</span><br><a href="https://arcprize.org/leaderboard">arcprize.org/leaderboard</a></span></div>
+                <div class="src-it"><span class="n">13</span><span class="w"><b>Artificial Analysis</b> — Muse Spark model page (II 43, 262K ctx, no providers) <span class="pub">· artificialanalysis.ai</span><br><a href="https://artificialanalysis.ai/models/muse-spark">artificialanalysis.ai/models/muse-spark</a></span></div>
+                <div class="src-it"><span class="n">14</span><span class="w"><b>Awesome Agents</b> — tau2-bench standings (May 2026) + MRCR long-context leaderboard <span class="pub">· awesomeagents.ai</span><br><a href="https://awesomeagents.ai/leaderboards/agentic-ai-benchmarks-leaderboard/">awesomeagents.ai/leaderboards/agentic-ai-benchmarks-leaderboard</a></span></div>
+                <div class="src-it"><span class="n">15</span><span class="w"><b>VentureBeat</b> — Grok 4.3 launch coverage · GPT-5.6 gated-preview report <span class="pub">· venturebeat.com, May–Jun 2026</span><br><a href="https://venturebeat.com/technology/xai-launches-grok-4-3-at-an-aggressively-low-price-and-a-new-fast-powerful-voice-cloning-suite">venturebeat.com — xai-launches-grok-4-3…</a></span></div>
+                <div class="src-it"><span class="n">16</span><span class="w"><b>Codersera / BenchLM / Serenities</b> — Fable 5 launch guide (export-control dates), GPQA replication notes, Llama 4 Behemoth status <span class="pub">· codersera.com · benchlm.ai · serenitiesai.com</span><br><a href="https://codersera.com/blog/claude-fable-5-launch-guide-2026/">codersera.com/blog/claude-fable-5-launch-guide-2026</a></span></div>
+            </div>
+        </div>
+        <p class="fn rv" style="--d:.3s; margin-top:20px">Method: searched wide (14 distinct query angles), fetched and read 12+ pages, kept claim → publisher → date → URL throughout. Figures that could not be verified in a July-2026 source were dropped. Built by Split // Consultant — FRB-0726.</p>
+    </div>
+    <div class="ft"><span class="src">MISSION FILE FRB-0726 · CLOSED — re-verify after GPT-5.6 & Gemini 3.5 Pro GA</span><span class="pg">13 / 13 · END</span></div>
+</section>
+
+</div><!-- /deck-stage -->
+</div><!-- /deck-viewport -->
+
+<div class="deck-controls">
+    <button id="prev" aria-label="Previous slide">◀ PREV</button>
+    <span class="ctr" id="ctr">01 / 13</span>
+    <button id="next" aria-label="Next slide">NEXT ▶</button>
+</div>
+
+<script>
+/* === STAGE SCALER === */
+(function () {
+    var stage = document.getElementById('stage');
+    function fit() {
+        var vw = window.innerWidth, vh = window.innerHeight;
+        var s = Math.min(vw / 1920, vh / 1080);
+        stage.style.transform = 'translate(' + ((vw - 1920 * s) / 2) + 'px,' + ((vh - 1080 * s) / 2) + 'px) scale(' + s + ')';
+    }
+    window.addEventListener('resize', fit);
+    fit();
+})();
+
+/* === NAVIGATION === */
+(function () {
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    var ctr = document.getElementById('ctr');
+    var progress = document.getElementById('progress');
+    var n = slides.length;
+    var cur = 0;
+
+    function pad(i) { return (i < 9 ? '0' : '') + (i + 1); }
+
+    function show(i) {
+        i = Math.max(0, Math.min(n - 1, i));
+        slides[cur].classList.remove('active');
+        cur = i;
+        var s = slides[cur];
+        s.classList.add('active');
+        /* restart reveal animations */
+        Array.prototype.forEach.call(s.querySelectorAll('.rv'), function (el) {
+            el.style.animation = 'none';
+            void el.offsetWidth; /* reflow */
+            el.style.animation = '';
+        });
+        ctr.textContent = pad(cur) + ' / ' + (n < 10 ? '0' + n : n);
+        progress.style.width = (((cur + 1) / n) * 100) + '%';
+        if (history.replaceState) history.replaceState(null, '', '#' + (cur + 1));
+    }
+
+    document.getElementById('prev').addEventListener('click', function () { show(cur - 1); });
+    document.getElementById('next').addEventListener('click', function () { show(cur + 1); });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); show(cur + 1); }
+        else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(cur - 1); }
+        else if (e.key === 'Home') { e.preventDefault(); show(0); }
+        else if (e.key === 'End') { e.preventDefault(); show(n - 1); }
+    });
+
+    /* touch swipe */
+    var tx = null;
+    document.addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; }, { passive: true });
+    document.addEventListener('touchend', function (e) {
+        if (tx === null) return;
+        var dx = e.changedTouches[0].clientX - tx;
+        if (Math.abs(dx) > 48) { if (dx < 0) show(cur + 1); else show(cur - 1); }
+        tx = null;
+    }, { passive: true });
+
+    /* deep link */
+    var h = parseInt((location.hash || '').replace('#', ''), 10);
+    show(isNaN(h) ? 0 : h - 1);
+})();
+</script>
+</body>
+</html>

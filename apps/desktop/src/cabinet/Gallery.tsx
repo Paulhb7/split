@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { Crest } from "../shared/Crest";
 import { Preview, TYPE_LABEL } from "../conversation/DeliverableExamples";
 import { isActiveExpert, type ExpertMap, type ExpertKind, type DeliverableExample } from "../shared/experts";
@@ -21,6 +22,20 @@ interface WorkItem {
   ex: DeliverableExample;
 }
 
+/** One real showcase piece on disk (`config/library/<expert>/<dir>/`), as
+ * returned by the Rust `library_index` command: the piece's meta.json plus
+ * resolved absolute paths. Joined onto a WorkItem via `ex.lib` === `dir`. */
+interface LibraryPiece {
+  expert: string;
+  dir: string;
+  entry: string;   // absolute path to index.html
+  thumb?: string;  // absolute path to thumb.png, when rendered
+  mtime?: number;  // entry mtime (cache-busts the asset URLs)
+  title?: string;
+  desc?: string;
+  da?: string;
+}
+
 // Stagger the tile heights for a real masonry texture (CSS columns + varied
 // preview heights). Deterministic per piece so the wall doesn't reshuffle on
 // every keystroke.
@@ -35,18 +50,49 @@ export default function Gallery({ experts, initialSlug = null, onClose, onLaunch
   experts: ExpertMap;
   initialSlug?: string | null;
   onClose: () => void;
-  onLaunch: (slug: string, prompt: string) => void;
+  onLaunch: (slug: string, prompt: string, template?: { title: string; html: string }) => void;
   onIceberg?: () => void;
 }) {
   const [filter, setFilter] = useState<string>("all");
   const [maker, setMaker] = useState<string | null>(initialSlug);
   const [query, setQuery] = useState("");
   const [sheet, setSheet] = useState<WorkItem | null>(null);
+  const [lib, setLib] = useState<Record<string, LibraryPiece>>({});
+  const [view, setView] = useState<{ item: WorkItem; piece: LibraryPiece } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   // Focus the overlay on mount so "/" (focus search) and Esc work without a
   // click first; App's global Esc handler also closes it as a backstop.
   useEffect(() => { overlayRef.current?.focus(); }, []);
+
+  // The real showcase pieces, keyed `<expert>/<dir>` for the ex.lib join.
+  useEffect(() => {
+    invoke<string>("library_index")
+      .then((raw) => {
+        const m: Record<string, LibraryPiece> = {};
+        for (const p of JSON.parse(raw) as LibraryPiece[]) m[p.expert + "/" + p.dir] = p;
+        setLib(m);
+      })
+      .catch(() => {}); // no library on disk → SVG fallbacks everywhere
+  }, []);
+  const pieceOf = (it: WorkItem): LibraryPiece | undefined =>
+    it.ex.lib ? lib[it.slug + "/" + it.ex.lib] : undefined;
+
+  // "Make one like this" — when a real piece backs the card, read its HTML off
+  // disk and hand it along as a starting TEMPLATE so the agent clones the craft,
+  // not just the brief. Falls back to a plain launch (SVG cards, or a read miss).
+  const launch = async (it: WorkItem, prompt: string) => {
+    const p = pieceOf(it);
+    if (!p?.entry) return onLaunch(it.slug, prompt);
+    try {
+      const raw = await invoke<string>("read_artifact", { path: p.entry });
+      const parsed = JSON.parse(raw) as { kind?: string; content?: string };
+      const html = parsed.kind === "text" ? parsed.content : undefined;
+      onLaunch(it.slug, prompt, html ? { title: it.ex.title, html } : undefined);
+    } catch {
+      onLaunch(it.slug, prompt); // read failed → launch without the template
+    }
+  };
 
   // Round-robin interleave across experts so the wall mixes makers + types
   // rather than grouping all of one expert's work together.
@@ -86,7 +132,7 @@ export default function Gallery({ experts, initialSlug = null, onClose, onLaunch
     if (e.key === "/" && document.activeElement !== searchRef.current) {
       e.preventDefault(); searchRef.current?.focus();
     } else if (e.key === "Escape") {
-      if (sheet) setSheet(null); else onClose();
+      if (view) setView(null); else if (sheet) setSheet(null); else onClose();
     }
   };
 
@@ -148,7 +194,13 @@ export default function Gallery({ experts, initialSlug = null, onClose, onLaunch
                 title={it.ex.title}
               >
                 <div className="gal-tile-prev" style={{ height: heightOf(it.slug + it.ex.title) }}>
-                  <Preview type={it.ex.type} fit="slice" />
+                  {(() => {
+                    const p = pieceOf(it);
+                    return p?.thumb
+                      ? <img className="gal-tile-img" src={convertFileSrc(p.thumb) + "?v=" + (p.mtime ?? 0)} alt="" loading="lazy" />
+                      : <Preview type={it.ex.type} fit="slice" />;
+                  })()}
+                  {pieceOf(it) && <span className="gal-tile-real">real piece</span>}
                   <span className="gal-tile-cta">Make one like this →</span>
                 </div>
                 <div className="gal-tile-meta">
@@ -171,7 +223,11 @@ export default function Gallery({ experts, initialSlug = null, onClose, onLaunch
         <div className="gal-sheet-scrim" onClick={() => setSheet(null)}>
           <div className="gal-sheet" onClick={(e) => e.stopPropagation()}>
             <button className="gal-sheet-x" onClick={() => setSheet(null)} title="Close (Esc)">✕</button>
-            <div className="gal-sheet-prev"><Preview type={sheet.ex.type} fit="meet" /></div>
+            <div className="gal-sheet-prev">
+              {pieceOf(sheet)?.thumb
+                ? <img className="gal-sheet-img" src={convertFileSrc(pieceOf(sheet)!.thumb!) + "?v=" + (pieceOf(sheet)!.mtime ?? 0)} alt="" />
+                : <Preview type={sheet.ex.type} fit="meet" />}
+            </div>
             <div className="gal-sheet-body">
               <span className="gal-sheet-type">{TYPE_LABEL[sheet.ex.type] ?? "Deliverable"}</span>
               <h2>{sheet.ex.title}</h2>
@@ -184,13 +240,49 @@ export default function Gallery({ experts, initialSlug = null, onClose, onLaunch
                 <span className="gal-sheet-prompt-k">the brief</span>
                 "{sheet.ex.prompt}"
               </div>
-              <button className="gal-sheet-cta" onClick={() => onLaunch(sheet.slug, sheet.ex.prompt)}>
+              {pieceOf(sheet) && (
+                <button className="gal-sheet-open" onClick={() => setView({ item: sheet, piece: pieceOf(sheet)! })}>
+                  Open the real piece <span aria-hidden>▸</span>
+                </button>
+              )}
+              <button className="gal-sheet-cta" onClick={() => launch(sheet, sheet.ex.prompt)}>
                 Make one like this — in the Atelier <span aria-hidden>⤢</span>
               </button>
               <button className="gal-sheet-alt" onClick={() => { setMaker(sheet.slug); setFilter("all"); setSheet(null); }}>
                 See all of @{sheet.label}'s work →
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {view && (
+        <div className="gal-view-scrim" onClick={() => setView(null)}>
+          <div className="gal-view" onClick={(e) => e.stopPropagation()}>
+            <header className="gal-view-head">
+              <span className="gal-view-type">{TYPE_LABEL[view.item.ex.type] ?? "Deliverable"}</span>
+              <span className="gal-view-title">{view.item.ex.title}</span>
+              <span className="gal-view-by">
+                <Crest kind={view.item.kind} seed={view.item.slug} size={18} /> by @{view.item.label}
+              </span>
+              <button
+                className="gal-view-cta"
+                onClick={() => { const it = view.item, pr = view.item.ex.prompt; setView(null); launch(it, pr); }}
+              >
+                Make one like this ⤢
+              </button>
+              <button className="gal-view-x" onClick={() => setView(null)} title="Close (Esc)">✕</button>
+            </header>
+            {/* Same serving path as ArtifactViewer: asset-protocol URL in a
+                sandboxed iframe. allow-same-origin is confined to the asset://
+                origin (≠ the app's origin), and lets pieces that persist to
+                localStorage (e.g. the CRM prototype) actually run. */}
+            <iframe
+              className="gal-view-frame"
+              src={convertFileSrc(view.piece.entry) + "?v=" + (view.piece.mtime ?? 0)}
+              sandbox="allow-scripts allow-same-origin allow-pointer-lock"
+              title={view.item.ex.title}
+            />
           </div>
         </div>
       )}

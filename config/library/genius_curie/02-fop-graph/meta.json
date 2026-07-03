@@ -1,0 +1,10 @@
+{
+  "expert": "genius_curie",
+  "key": "fop-graph",
+  "type": "graph",
+  "title": "FOP — disease to drug",
+  "desc": "The map, connected",
+  "brief": "An interactive biomedical knowledge graph — a hand-curated, PrimeKG-style subgraph — tracing fibrodysplasia ossificans progressiva (FOP, OMIM 135100) across its full arc: the disease, the causal gene ACVR1, the recurrent R206H mutation (c.617G>A, p.Arg206His), the ALK2 receptor protein and its FKBP12 brake, the BMP / activin-A / SMAD1/5/8 / mTOR signalling it dysregulates, the downstream biology (endochondral heterotopic ossification, aberrant chondrogenesis, flare-ups) and phenotypes (great-toe malformation, joint ankylosis, thoracic insufficiency), and every real therapeutic hitting the mechanism — palovarotene (Sohonos, the approved RARgamma agonist), garetosmab (anti-activin-A, positive phase-3 OPTIMA), saracatinib (repurposed ALK2 inhibitor, STOPFOP), fidrisertib (IPN60130, the discontinued FALKON lead), sirolimus (repurposed mTOR inhibitor) and the LDN-193189 tool compound. A d3 force layout with each entity class in its own clinical colour and shape and every edge labelled by its real relation (causes / activates / inhibits / treats / reduces). Clicking a node opens a side panel with a short cited explanation, structured facts, its neighbours and one real reference; filters isolate a single class or the causal disease-to-drug path. 32 nodes, every gene, structure ID, drug and clinical-trial NCT verified against OMIM, UniProt (Q04771), RCSB PDB (4C02), ClinicalTrials.gov, PubMed and the IFOPA to July 2026. Research and education, not medical advice.",
+  "da": "Clinical network on a light ground — soft clinical white-to-gray, no dark canvas; IBM Plex Sans with IBM Plex Mono for identifiers; entities coloured and shaped by class (disease = crimson diamond, gene/protein = indigo circle, pathway = amber triangle, phenotype = slate square, drug = teal-green hexagon with a dashed ring on approved therapies), hairline grid, clean labelled edges with the causal chain in red — a clinician's reading room, restrained and precise.",
+  "generated": "2026-07-03"
+}

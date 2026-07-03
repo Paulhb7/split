@@ -1,0 +1,10 @@
+{
+  "expert": "coach",
+  "key": "syllabus",
+  "type": "plan",
+  "title": "Subject syllabus",
+  "desc": "Week by week, with recalls",
+  "brief": "A 12-week self-study handout for Italian from zero to CEFR A2 at ~5 hours a week. Goals restate the target level and weekly budget; the Program lays out twelve weekly modules (a grammar spine, a vocabulary field and one small output project each, with readings collapsed under every week). The Dashboard, rendered against the coursepack signature, is the daily instrument: a genuinely working spaced-repetition reviewer over a seeded 30-card Italian deck (SM-2-lite due-date scheduling, click-to-flip, again/good/easy grading that reschedules the queue), a weekly-recall checklist, a Friday self-assessment logger, a 12-week study-streak calendar strip, a learned-cards progress ring, and a concept-mastery matrix that fills as the deck is learned. All state persists in localStorage.",
+  "da": "Coursepack signature — Princeton/OCW handout: warm paper with faint grain, Newsreader serif on deep ink, oxblood accent, oversized 01/02/03 numerals, §-section numbering with double/hairline rules, and ✓/◯ margin marks instead of checkboxes.",
+  "generated": "2026-07-03"
+}

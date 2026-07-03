@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRIP — a working CRM in one file</title>
+<meta name="description" content="A single-file CRM prototype: contacts table, drag-and-drop pipeline, activity timelines, localStorage persistence. Built by Q, Split's engineer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bone:#F4F1E6;
+    --panel:#FFFDF6;
+    --ink:#181611;
+    --acid:#C6F32A;
+    --line:#E1DCCB;
+    --mute:#6E695C;
+    --g1:#E9E5D6; --g2:#CBC5AF; --g3:#9A9480; --g4:#181611;
+    --shadow:4px 4px 0 var(--ink);
+    --shadow-sm:3px 3px 0 var(--ink);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Space Grotesk',system-ui,sans-serif;
+    color:var(--ink);
+    background-color:var(--bone);
+    background-image:
+      linear-gradient(rgba(24,22,17,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(24,22,17,.045) 1px, transparent 1px);
+    background-size:32px 32px;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:80px;
+  }
+  ::selection{background:var(--acid);color:var(--ink)}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 24px}
+  .mono{font-family:'Space Mono',monospace}
+
+  /* ---------- top bar ---------- */
+  .topbar{border-bottom:2px solid var(--ink);background:var(--panel)}
+  .topbar-in{display:flex;align-items:center;gap:16px;padding:14px 24px;max-width:1240px;margin:0 auto}
+  .logo{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+  .logo-mark{
+    width:40px;height:40px;background:var(--acid);border:2px solid var(--ink);
+    box-shadow:var(--shadow-sm);display:grid;place-items:center;
+    font-weight:700;font-size:20px;letter-spacing:-1px;flex:none;
+  }
+  .logo h1{font-size:22px;font-weight:700;letter-spacing:-.5px;text-transform:uppercase;line-height:1}
+  .logo small{display:block;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--mute);text-transform:uppercase;margin-top:3px}
+  .sticker{
+    font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;
+    border:2px solid var(--ink);background:var(--panel);padding:4px 8px;transform:rotate(-2deg);
+    text-transform:uppercase;flex:none;
+  }
+  .btn{
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;letter-spacing:.5px;
+    text-transform:uppercase;border:2px solid var(--ink);background:var(--panel);color:var(--ink);
+    padding:10px 16px;cursor:pointer;box-shadow:var(--shadow-sm);
+    transition:transform .08s linear, box-shadow .08s linear;
+  }
+  .btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+  .btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+  .btn:focus-visible,.chip:focus-visible,.tab:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  .btn-acid{background:var(--acid)}
+  .btn-ghost{box-shadow:none;font-weight:500}
+  .btn-ghost:hover{background:var(--acid);transform:none;box-shadow:none}
+  .btn-ghost:active{transform:translate(2px,2px)}
+  .btn-sm{padding:6px 10px;font-size:11px}
+
+  /* ---------- about banner ---------- */
+  .about{margin:20px auto 0;max-width:1240px;padding:0 24px}
+  .about details{border:2px solid var(--ink);background:var(--panel);box-shadow:var(--shadow)}
+  .about summary{
+    list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;
+    padding:10px 14px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;
+    letter-spacing:1.5px;text-transform:uppercase;user-select:none;
+  }
+  .about summary::-webkit-details-marker{display:none}
+  .about summary .tick{width:16px;height:16px;border:2px solid var(--ink);display:grid;place-items:center;font-size:11px;line-height:1;background:var(--acid);flex:none}
+  .about details[open] summary{border-bottom:2px solid var(--ink)}
+  .about summary .hint{margin-left:auto;color:var(--mute);font-weight:400;letter-spacing:.5px;text-transform:none}
+  .about-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+  .about-grid>div{padding:14px 16px;border-right:2px solid var(--line)}
+  .about-grid>div:last-child{border-right:none}
+  .about-grid h3{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;background:var(--ink);color:var(--bone);display:inline-block;padding:2px 6px}
+  .about-grid p{font-size:13px;line-height:1.5;color:var(--ink)}
+  .about-grid p em{color:var(--mute);font-style:normal}
+  @media (max-width:900px){.about-grid{grid-template-columns:1fr 1fr}.about-grid>div{border-bottom:2px solid var(--line)}}
+  @media (max-width:560px){.about-grid{grid-template-columns:1fr}.about-grid>div{border-right:none}}
+
+  /* ---------- stats ---------- */
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:24px}
+  .stat{border:2px solid var(--ink);background:var(--panel);box-shadow:var(--shadow);padding:14px 16px;position:relative}
+  .stat .k{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mute)}
+  .stat .v{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;letter-spacing:-1px;margin-top:6px;line-height:1}
+  .stat .s{font-size:11px;color:var(--mute);margin-top:6px}
+  .stat.hot{background:var(--acid)}
+  .stat.hot .k,.stat.hot .s{color:var(--ink)}
+  @media (max-width:980px){.stats{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:560px){.stats{grid-template-columns:1fr}}
+
+  .mix{border:2px solid var(--ink);background:var(--panel);box-shadow:var(--shadow);margin-top:16px;padding:12px 16px 14px}
+  .mix .k{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mute);display:flex;justify-content:space-between}
+  .mixbar{display:flex;height:22px;border:2px solid var(--ink);margin-top:8px;background:var(--panel)}
+  .mixbar>i{display:block;height:100%;border-right:2px solid var(--ink)}
+  .mixbar>i:last-child{border-right:none}
+  .mixlegend{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.5px;text-transform:uppercase}
+  .mixlegend b{font-weight:700}
+  .mixlegend .sw{display:inline-block;width:10px;height:10px;border:2px solid var(--ink);vertical-align:-1px;margin-right:5px}
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex;gap:0;margin-top:28px;border:2px solid var(--ink);width:fit-content;background:var(--panel);box-shadow:var(--shadow)}
+  .tab{
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;
+    letter-spacing:1px;padding:12px 22px;background:var(--panel);border:none;cursor:pointer;color:var(--ink);
+    border-right:2px solid var(--ink);
+  }
+  .tab:last-child{border-right:none}
+  .tab[aria-selected="true"]{background:var(--ink);color:var(--acid)}
+  .tab .n{font-family:'Space Mono',monospace;font-size:11px;margin-left:8px;opacity:.75}
+
+  /* ---------- toolbar ---------- */
+  .toolbar{display:flex;gap:14px;align-items:center;margin-top:20px;flex-wrap:wrap}
+  .search{position:relative;flex:1;min-width:240px;max-width:420px}
+  .search input#q{
+    width:100%;font-family:'Space Grotesk',sans-serif;font-size:14px;padding:11px 36px 11px 40px;
+    border:2px solid var(--ink);background:var(--panel);box-shadow:var(--shadow-sm);
+  }
+  .search input#q::placeholder{color:var(--mute)}
+  .search .lens{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none}
+  .search .clear{
+    position:absolute;right:6px;top:50%;transform:translateY(-50%);border:2px solid var(--ink);
+    background:var(--panel);width:24px;height:24px;font-size:12px;font-weight:700;cursor:pointer;display:none;
+    line-height:1;font-family:'Space Mono',monospace;
+  }
+  .search .clear:hover{background:var(--acid)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .chips .lbl{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mute)}
+  .chip{
+    font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+    border:2px solid var(--ink);background:var(--panel);padding:5px 10px;cursor:pointer;
+  }
+  .chip:hover{background:var(--g1)}
+  .chip[aria-pressed="true"]{background:var(--acid)}
+
+  /* ---------- table ---------- */
+  .tablewrap{border:2px solid var(--ink);background:var(--panel);box-shadow:var(--shadow);margin-top:16px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:880px}
+  thead th{
+    font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+    text-align:left;padding:12px 14px;border-bottom:2px solid var(--ink);background:var(--bone);
+    white-space:nowrap;user-select:none;
+  }
+  thead th.sortable{cursor:pointer}
+  thead th.sortable:hover{background:var(--acid)}
+  thead th .arr{display:inline-block;width:12px;color:var(--mute)}
+  thead th[data-dir="asc"] .arr::after{content:"▲";color:var(--ink)}
+  thead th[data-dir="desc"] .arr::after{content:"▼";color:var(--ink)}
+  tbody td{padding:12px 14px;border-bottom:2px solid var(--line);font-size:14px;vertical-align:middle}
+  tbody tr{cursor:pointer}
+  tbody tr:hover td{background:#FAF7EA}
+  tbody tr:hover td:first-child{box-shadow:inset 4px 0 0 var(--acid)}
+  tbody tr:last-child td{border-bottom:none}
+  .cellname{display:flex;align-items:center;gap:12px;min-width:200px}
+  .avatar{
+    width:34px;height:34px;flex:none;border:2px solid var(--ink);display:grid;place-items:center;
+    font-family:'Space Mono',monospace;font-weight:700;font-size:12px;background:var(--bone);
+  }
+  .cellname .nm{font-weight:700;font-size:14px;line-height:1.2}
+  .cellname .rl{font-size:11px;color:var(--mute);margin-top:2px}
+  .tagmini{
+    display:inline-block;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.5px;
+    text-transform:uppercase;border:2px solid var(--ink);padding:2px 6px;margin:2px 4px 2px 0;background:var(--panel);
+  }
+  .tagmini.risk{background:var(--ink);color:var(--acid)}
+  .val{font-family:'Space Mono',monospace;font-weight:700;white-space:nowrap}
+  .stagechip{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;white-space:nowrap;border:2px solid var(--ink);padding:3px 7px;background:var(--bone)}
+  .stagechip .ix{background:var(--ink);color:var(--bone);padding:0 3px;margin-right:5px}
+  .stagechip.won{background:var(--acid)}
+  .stagechip.lost{background:var(--panel);color:var(--mute);border-color:var(--mute);text-decoration:line-through}
+  .agocell{font-family:'Space Mono',monospace;font-size:11px;color:var(--mute);white-space:nowrap}
+  .emptyrow td{padding:44px 20px;text-align:center;cursor:default}
+  .emptyrow .big{font-weight:700;font-size:18px;letter-spacing:-.3px}
+  .emptyrow p{color:var(--mute);font-size:13px;margin:8px 0 16px}
+
+  /* ---------- board ---------- */
+  .board{display:grid;grid-template-columns:repeat(6,minmax(184px,1fr));gap:16px;margin-top:20px;overflow-x:auto;padding-bottom:8px;align-items:start}
+  .col{border:2px solid var(--ink);background:var(--panel);box-shadow:var(--shadow);min-height:220px;display:flex;flex-direction:column}
+  .col.closed{background:var(--bone)}
+  .colhead{border-bottom:2px solid var(--ink);padding:10px 12px;background:var(--bone);position:relative}
+  .col.closed .colhead{background:var(--panel)}
+  .colhead .ix{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;background:var(--ink);color:var(--bone);padding:1px 5px}
+  .colhead .nm{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin-left:7px}
+  .colhead .roll{display:flex;justify-content:space-between;margin-top:7px;font-family:'Space Mono',monospace;font-size:11px}
+  .colhead .roll b{font-weight:700}
+  .colhead .roll span{color:var(--mute)}
+  .colbody{padding:10px;display:flex;flex-direction:column;gap:10px;flex:1;transition:background .1s linear}
+  .col.hot .colbody{background:#EFF7CE;outline:2px dashed var(--ink);outline-offset:-6px}
+  .card{
+    border:2px solid var(--ink);background:var(--panel);box-shadow:var(--shadow-sm);padding:10px 12px;cursor:grab;
+    transition:transform .08s linear, box-shadow .08s linear;
+  }
+  .card:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+  .card.dragging{opacity:.45;transform:rotate(-2deg)}
+  .card.done{background:var(--bone)}
+  .card-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  .card-title{font-weight:700;font-size:13px;line-height:1.25}
+  .card-val{font-family:'Space Mono',monospace;font-weight:700;font-size:13px;white-space:nowrap}
+  .card-sub{font-size:11px;color:var(--mute);margin-top:5px}
+  .card-meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-family:'Space Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--mute)}
+  .ghost{border:2px dashed var(--g2);color:var(--g3);text-align:center;padding:18px 8px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase}
+  .dnd-hint{margin-top:12px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mute)}
+
+  /* ---------- drawer ---------- */
+  .backdrop{position:fixed;inset:0;background:rgba(24,22,17,.35);z-index:40}
+  .drawer{
+    position:fixed;top:0;right:0;bottom:0;width:min(460px,94vw);background:var(--panel);
+    border-left:2px solid var(--ink);box-shadow:-6px 0 0 rgba(24,22,17,.2);z-index:50;
+    display:flex;flex-direction:column;animation:slidein .18s ease-out;
+  }
+  @keyframes slidein{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+  .drawer-head{border-bottom:2px solid var(--ink);padding:18px 20px;background:var(--bone)}
+  .drawer-head .row{display:flex;gap:14px;align-items:flex-start}
+  .drawer-head .avatar{width:46px;height:46px;font-size:15px;background:var(--acid)}
+  .drawer-head h2{font-size:20px;font-weight:700;letter-spacing:-.3px;line-height:1.1}
+  .drawer-head .sub{font-size:13px;color:var(--mute);margin-top:3px}
+  .drawer-head .contacts-line{font-family:'Space Mono',monospace;font-size:11px;margin-top:10px;word-break:break-all}
+  .drawer-head .contacts-line span{color:var(--mute)}
+  .drawer-head .tags{margin-top:10px}
+  .drawer-x{margin-left:auto;flex:none}
+  .drawer-body{overflow-y:auto;flex:1;padding:18px 20px 26px}
+  .sect{margin-bottom:24px}
+  .sect>h3{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;background:var(--ink);color:var(--bone);display:inline-block;padding:3px 8px;margin-bottom:12px}
+  .deal-row{border:2px solid var(--ink);background:var(--panel);box-shadow:var(--shadow-sm);padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .deal-row .info{flex:1;min-width:0}
+  .deal-row .t{font-weight:700;font-size:13px;line-height:1.25}
+  .deal-row .d{font-family:'Space Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--mute);margin-top:3px}
+  .deal-row .v{font-family:'Space Mono',monospace;font-weight:700;font-size:13px;white-space:nowrap}
+  select{
+    font-family:'Space Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;
+    border:2px solid var(--ink);background:var(--bone);padding:5px 4px;cursor:pointer;max-width:120px;
+  }
+  .addform{border:2px dashed var(--g2);padding:12px;margin-top:8px;display:grid;gap:8px}
+  .addform input,.addform select{width:100%;max-width:none}
+  input[type="text"],input[type="email"],input[type="number"],textarea{
+    font-family:'Space Grotesk',sans-serif;font-size:13px;border:2px solid var(--ink);background:var(--panel);padding:9px 10px;width:100%;
+  }
+  textarea{resize:vertical;min-height:64px}
+  .addform .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .timeline{list-style:none}
+  .timeline li{display:flex;gap:12px;padding:10px 0;border-bottom:2px solid var(--line)}
+  .timeline li:last-child{border-bottom:none}
+  .act-type{
+    font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.5px;flex:none;
+    border:2px solid var(--ink);padding:2px 5px;height:fit-content;background:var(--panel);min-width:46px;text-align:center;
+  }
+  .act-type.t-stage{background:var(--acid)}
+  .act-type.t-note{background:var(--bone)}
+  .timeline p{font-size:13px;line-height:1.45}
+  .timeline time{display:block;font-family:'Space Mono',monospace;font-size:10px;color:var(--mute);margin-top:4px}
+  .composer{border:2px solid var(--ink);background:var(--bone);padding:12px;box-shadow:var(--shadow-sm)}
+  .composer .types{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+  .composer textarea{background:var(--panel)}
+  .composer .actions{display:flex;justify-content:flex-end;margin-top:8px}
+  .danger{border-top:2px solid var(--line);padding-top:16px;display:flex;justify-content:space-between;align-items:center}
+  .danger p{font-size:11px;color:var(--mute)}
+  .btn-danger{box-shadow:none;font-weight:500;font-size:11px;padding:6px 10px}
+  .btn-danger:hover{background:var(--ink);color:var(--bone);transform:none;box-shadow:none}
+
+  /* ---------- modal ---------- */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(24,22,17,.35);z-index:60;display:grid;place-items:center;padding:20px}
+  .modal{
+    width:min(520px,100%);background:var(--panel);border:2px solid var(--ink);box-shadow:8px 8px 0 var(--ink);
+    max-height:90vh;overflow-y:auto;
+  }
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:2px solid var(--ink);background:var(--acid)}
+  .modal-head h2{font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+  .modal-body{padding:18px;display:grid;gap:12px}
+  .field label{display:block;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;color:var(--mute)}
+  .field label b{color:var(--ink)}
+  .fieldrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .ferr{font-family:'Space Mono',monospace;font-size:10px;margin-top:4px;display:none}
+  .field.bad input{border-color:#B3261E}
+  .field.bad .ferr{display:block;color:#B3261E}
+  .modal .divider{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mute);border-top:2px solid var(--line);padding-top:12px}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;padding:0 18px 18px}
+  @media (max-width:560px){.fieldrow{grid-template-columns:1fr}}
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed;left:24px;bottom:24px;z-index:70;background:var(--ink);color:var(--bone);
+    border:2px solid var(--ink);box-shadow:4px 4px 0 rgba(24,22,17,.3);padding:12px 16px;
+    font-family:'Space Mono',monospace;font-size:12px;font-weight:700;transform:rotate(-1deg);
+    animation:pop .15s ease-out;max-width:340px;
+  }
+  .toast b{color:var(--acid)}
+  @keyframes pop{from{transform:rotate(-1deg) translateY(8px);opacity:0}to{transform:rotate(-1deg);opacity:1}}
+
+  /* ---------- footer ---------- */
+  .footer{margin-top:40px;border-top:2px solid var(--ink);background:var(--panel)}
+  .footer-in{max-width:1240px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .footer .saved{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mute);flex:1;min-width:200px}
+  .footer .saved b{color:var(--ink)}
+  .credit{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mute)}
+  .credit b{background:var(--acid);color:var(--ink);padding:2px 5px;border:2px solid var(--ink);font-weight:700}
+
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+
+<!-- ================= TOP BAR ================= -->
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="logo">
+      <div class="logo-mark" aria-hidden="true">G.</div>
+      <div>
+        <h1>Grip</h1>
+        <small>The no-nonsense CRM · one file</small>
+      </div>
+    </div>
+    <span class="sticker">Working prototype</span>
+    <button class="btn btn-acid" id="btnNew">+ New contact</button>
+  </div>
+</header>
+
+<!-- ================= ABOUT THIS (exec summary) ================= -->
+<div class="about">
+  <details>
+    <summary><span class="tick">i</span> About this prototype <span class="hint">why · context · how to use · assumptions</span></summary>
+    <div class="about-grid">
+      <div>
+        <h3>Why</h3>
+        <p>Proof that a full CRM — contacts, pipeline, notes — fits in <em>one HTML file</em> you can double-click. No server, no signup, no build step.</p>
+      </div>
+      <div>
+        <h3>Context</h3>
+        <p>A library showcase by Q, Split's engineer. The 25 contacts and 28 deals are seeded demo data for a fictional B2B sales team; timestamps are relative to when the data was seeded.</p>
+      </div>
+      <div>
+        <h3>How to use</h3>
+        <p>Search and sort the table, drag deals across the pipeline, open any contact to log calls and notes. Every change saves to this browser (localStorage). Reset or export from the footer.</p>
+      </div>
+      <div>
+        <h3>What I assumed</h3>
+        <p>Small team, dollar deals, six fixed stages. Design: neo-brutalist workware — bone white, 2px ink, one acid-lime accent, Space Grotesk. <em>Refs: UI Pro Max (style: Neo Brutalism; type: Space Grotesk).</em></p>
+      </div>
+    </div>
+  </details>
+</div>
+
+<div class="wrap">
+
+  <!-- ================= STATS ================= -->
+  <section class="stats" id="stats" aria-label="Dashboard stats"></section>
+  <section class="mix" aria-label="Pipeline mix">
+    <div class="k"><span>Open pipeline by stage</span><span id="mixTotal"></span></div>
+    <div class="mixbar" id="mixBar"></div>
+    <div class="mixlegend" id="mixLegend"></div>
+  </section>
+
+  <!-- ================= TABS ================= -->
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button class="tab" role="tab" id="tabContacts" aria-selected="true">Contacts <span class="n" id="nContacts"></span></button>
+    <button class="tab" role="tab" id="tabBoard" aria-selected="false">Pipeline <span class="n" id="nDeals"></span></button>
+  </nav>
+
+  <!-- ================= CONTACTS VIEW ================= -->
+  <section id="viewContacts">
+    <div class="toolbar">
+      <div class="search">
+        <span class="lens" aria-hidden="true">⌕</span>
+        <input type="text" id="q" placeholder="Search name, company, email…  ( press / )" aria-label="Search contacts">
+        <button class="clear" id="qClear" aria-label="Clear search">✕</button>
+      </div>
+      <div class="chips" id="tagChips" aria-label="Filter by tag"></div>
+    </div>
+    <div class="tablewrap">
+      <table aria-label="Contacts">
+        <thead>
+          <tr>
+            <th class="sortable" data-key="name">Contact <span class="arr"></span></th>
+            <th class="sortable" data-key="company">Company <span class="arr"></span></th>
+            <th>Tags</th>
+            <th class="sortable" data-key="value">Open value <span class="arr"></span></th>
+            <th class="sortable" data-key="stage">Stage <span class="arr"></span></th>
+            <th class="sortable" data-key="last">Last touch <span class="arr"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= PIPELINE VIEW ================= -->
+  <section id="viewBoard" hidden>
+    <div class="board" id="board"></div>
+    <p class="dnd-hint">Drag a card to move a deal between stages — sums re-roll live. Click a card to open the contact.</p>
+  </section>
+
+</div>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+  <div class="footer-in">
+    <span class="saved" id="savedAt"><b>Saved locally</b> · data lives in this browser</span>
+    <button class="btn btn-ghost btn-sm" id="btnExport">Export JSON</button>
+    <button class="btn btn-ghost btn-sm" id="btnReset">Reset demo data</button>
+    <span class="credit">Engineered by <b>Q</b> · Split</span>
+  </div>
+</footer>
+
+<!-- ================= DRAWER ================= -->
+<div class="backdrop" id="drawerBackdrop" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Contact detail" hidden></aside>
+
+<!-- ================= NEW CONTACT MODAL ================= -->
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h2 id="modalTitle">New contact</h2>
+      <button class="btn btn-sm" id="modalX" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field" id="fName">
+        <label><b>Full name *</b></label>
+        <input type="text" id="inName" placeholder="Ada Lovelace" autocomplete="off">
+        <span class="ferr">Name is required.</span>
+      </div>
+      <div class="fieldrow">
+        <div class="field">
+          <label>Company</label>
+          <input type="text" id="inCompany" placeholder="Analytical Engines Ltd" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Role</label>
+          <input type="text" id="inRole" placeholder="Head of Computing" autocomplete="off">
+        </div>
+      </div>
+      <div class="fieldrow">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="inEmail" placeholder="ada@analytical.co" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Tags <span style="text-transform:none;letter-spacing:0">(comma-separated)</span></label>
+          <input type="text" id="inTags" placeholder="inbound, warm" autocomplete="off">
+        </div>
+      </div>
+      <div class="divider">Optional — open a first deal</div>
+      <div class="field">
+        <label>Deal title</label>
+        <input type="text" id="inDealTitle" placeholder="Analytical — Annual license" autocomplete="off">
+      </div>
+      <div class="fieldrow">
+        <div class="field">
+          <label>Value ($)</label>
+          <input type="number" id="inDealValue" placeholder="12000" min="0" step="100">
+        </div>
+        <div class="field">
+          <label>Stage</label>
+          <select id="inDealStage" style="width:100%;max-width:none;padding:9px 6px">
+            <option value="lead">01 Lead</option>
+            <option value="qualified">02 Qualified</option>
+            <option value="proposal">03 Proposal</option>
+            <option value="negotiation">04 Negotiation</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="modalCancel">Cancel</button>
+      <button class="btn btn-acid" id="modalCreate">Create contact</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   GRIP — a working CRM in one file.
+   Data model: contacts / deals / activities, persisted to
+   localStorage under LS_KEY. Everything below is vanilla JS.
+   ============================================================ */
+
+const LS_KEY = 'grip-crm-v1';
+const STAGES = ['lead','qualified','proposal','negotiation','won','lost'];
+const OPEN_STAGES = ['lead','qualified','proposal','negotiation'];
+const STAGE_LABEL = {lead:'Lead', qualified:'Qualified', proposal:'Proposal', negotiation:'Negotiation', won:'Won', lost:'Lost'};
+const STAGE_IX = {lead:'01', qualified:'02', proposal:'03', negotiation:'04', won:'05', lost:'06'};
+const PROB = {lead:.1, qualified:.25, proposal:.5, negotiation:.75, won:1, lost:0};
+const ACT_LABEL = {note:'NOTE', call:'CALL', email:'EMAIL', meeting:'MEET', stage:'STAGE'};
+const MIX_COLORS = {lead:'var(--g1)', qualified:'var(--g2)', proposal:'var(--g3)', negotiation:'var(--g4)'};
+
+/* ---------- tiny helpers ---------- */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let _uid = 0;
+const uid = p => p + (++_uid) + '-' + Math.random().toString(36).slice(2, 7);
+const fmt  = n => '$' + Math.round(n).toLocaleString('en-US');
+const fmtK = n => n >= 1e6 ? '$' + (n/1e6).toFixed(2) + 'M'
+              : n >= 1000 ? '$' + (+(n/1000).toFixed(1)).toString().replace(/\.0$/,'') + 'K'
+              : '$' + Math.round(n);
+function ago(iso){
+  const s = (Date.now() - new Date(iso).getTime()) / 1e3;
+  if (s < 60) return 'just now';
+  const m = s/60;  if (m < 60)  return Math.floor(m) + 'm ago';
+  const h = m/60;  if (h < 24)  return Math.floor(h) + 'h ago';
+  const d = h/24;  if (d < 7)   return Math.floor(d) + 'd ago';
+  if (d < 30) return Math.floor(d/7) + 'w ago';
+  return Math.floor(d/30) + 'mo ago';
+}
+const fullDate = iso => new Date(iso).toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'});
+const daysIn = iso => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 864e5));
+const initials = n => n.trim().split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
+
+/* ============================================================
+   SEED — 25 realistic contacts, 28 deals, 63 activities.
+   Timestamps are computed relative to seed time, so the demo
+   reads "2d ago", not a stale calendar date.
+   ============================================================ */
+function seed(){
+  const now = Date.now();
+  const iso = d => new Date(now - d*864e5 - ((d*7)%9 + 1)*36e5).toISOString();
+
+  // [name, role, company, email, phone, tags, deals[[title,value,stage,daysInStage]], acts[[type,daysAgo,text]]]
+  const RAW = [
+    ['Maya Okonkwo','Head of Ops','Fieldnote Labs','maya@fieldnotelabs.com','(415) 555-0132',['inbound','warm'],
+      [['Fieldnote — Team plan',18400,'qualified',6]],
+      [['email',2,'Sent a recap of the ops workflow demo — she is circulating it internally.'],
+       ['call',6,'Discovery call. 12-person ops team drowning in spreadsheets; wants a pilot before quarter-end.'],
+       ['note',9,'Inbound from the pricing page. Fast replies, good energy.']]],
+    ['Daniel Brandt','CTO','Kupfer & Sohn','daniel.brandt@kupfersohn.de','',['enterprise','outbound'],
+      [['Kupfer — Platform migration',86000,'proposal',4]],
+      [['meeting',1,'Technical review with his platform team. Two integration questions to answer in writing.'],
+       ['email',4,'Sent the migration proposal — phased over two quarters.'],
+       ['call',12,'Intro call. Legacy system is nine years old; the board approved a replacement budget.']]],
+    ['Priya Raghavan','VP Engineering','Loomworks','priya@loomworks.io','(628) 555-0177',['enterprise','vip'],
+      [['Loomworks — Annual license ×140',112000,'negotiation',5],['Loomworks — Services onboarding',14000,'won',13]],
+      [['note',1,'Legal is redlining the MSA. Target signature within two weeks.'],
+       ['meeting',5,'Pricing session — asked 10% volume discount on 140 seats. Countered with extended terms.'],
+       ['email',13,'Services onboarding wrapped, invoice paid. Strong reference candidate.'],
+       ['call',21,'Champion since the conference demo. Wants an engineering-wide rollout.']]],
+    ['Tomás Ferreira','Founder','Alvor Studio','tomas@alvorstudio.pt','',['startup','inbound'],
+      [['Alvor — Starter annual',3600,'lead',7]],
+      [['email',3,'Replied to the intro — interested, but heads-down on a client launch until next month.'],
+       ['note',7,'Founder of a six-person studio. Came in via the newsletter.']]],
+    ['Hannah Lindqvist','Procurement Lead','Norrsken Retail','hannah.l@norrskenretail.se','(212) 555-0143',['enterprise'],
+      [['Norrsken — Rollout pilot',24500,'qualified',8]],
+      [['call',2,'Procurement checklist review. Needs a security one-pager and two references.'],
+       ['meeting',8,'Pilot scoping — 3 stores, 25 users, 8-week window.'],
+       ['note',15,'Met at the retail expo booth. Follow-up owed.']]],
+    ['Marcus Webb','Sales Director','Brightline Freight','mwebb@brightlinefreight.com','(773) 555-0119',['outbound','warm'],
+      [['Brightline — Ops seats ×45',31500,'proposal',1],['Brightline — Initial pilot',8000,'lost',18]],
+      [['email',1,'Proposal v2 sent with the per-seat tier he asked for.'],
+       ['call',5,'45 dispatcher seats confirmed in scope. Decision committee meets monthly.'],
+       ['note',18,'First pilot stalled at contract — champion left. He is back with more budget authority.']]],
+    ['Aiko Tanaka','Product Lead','Kaze Mobility','aiko@kazemobility.jp','',['partner'],
+      [['Kaze — Integration partnership',47000,'negotiation',3]],
+      [['meeting',3,'Partnership terms session — revenue-share model agreed in principle.'],
+       ['email',9,'Shared the integration spec. Their team estimates three sprints.'],
+       ['call',16,'Warm intro through the mobility alliance.']]],
+    ['Sofia Marchetti','COO','Cedro Foods','s.marchetti@cedrofoods.it','(646) 555-0188',['enterprise','churn-risk'],
+      [['Cedro — Renewal + upsell',58000,'proposal',6]],
+      [['call',2,'Frank call: usage dropped 40% since their reorg. Renewal at risk without an exec sponsor.'],
+       ['note',6,'Flagged churn-risk. Prepared an upsell path that consolidates their three tools into one.'],
+       ['meeting',14,'QBR — mixed feedback, support tickets slow to resolve.']]],
+    ['James O\'Callaghan','IT Manager','Bellrock Insurance','j.ocallaghan@bellrock.ie','',['enterprise','outbound'],
+      [['Bellrock — Compliance tier',66500,'qualified',10]],
+      [['email',4,'Compliance questionnaire returned — 62 questions, all answered.'],
+       ['call',10,'IT-led evaluation. Their audit deadline drives the timeline.']]],
+    ['Leila Haddad','Growth Lead','Numera Fintech','leila@numera.co','(347) 555-0104',['startup','inbound','warm'],
+      [['Numera — Growth plan',9800,'won',20],['Numera — Seats expansion',6500,'qualified',2]],
+      [['note',2,'Expansion: 8 more seats for the new analysts. Quote sent.'],
+       ['email',20,'Contract signed — growth plan. Onboarding booked.'],
+       ['call',26,'Self-served on the trial, hit the limits within a week.']]],
+    ['Viktor Petrov','Head of Data','Meridian Analytics','viktor@meridiananalytics.com','',['vip'],
+      [['Meridian — Data add-on',22000,'won',8]],
+      [['email',8,'Data add-on live. He wrote it up on their engineering blog.'],
+       ['meeting',17,'Scoped the add-on around their warehouse setup.']]],
+    ['Rachel Stein','Operations Manager','Hartwell Clinics','rstein@hartwellclinics.com','(617) 555-0166',['enterprise'],
+      [['Hartwell — 3 clinic sites',41200,'lead',3]],
+      [['call',3,'Cold-ish call landed well — three clinic sites, paper scheduling, real pain.'],
+       ['note',5,'Healthcare: check the compliance annex before proposing.']]],
+    ['Oluwaseun Adeyemi','CEO','Lagoon Digital','seun@lagoondigital.ng','',['startup','partner'],
+      [['Lagoon — Reseller agreement',15000,'qualified',4]],
+      [['meeting',4,'Reseller terms — wants regional exclusivity; offered a 12-month performance gate instead.'],
+       ['email',11,'Sent the partner deck and the margin sheet.']]],
+    ['Camille Roux','Marketing Director','Maison Verne','camille@maisonverne.fr','(917) 555-0151',['inbound'],
+      [['Maison Verne — Brand team',12600,'lead',2]],
+      [['email',2,'Asked for a brand-team walkthrough after the newsletter feature.'],
+       ['note',4,'Boutique brand, small team, taste-driven buyer — lead with the design angle.']]],
+    ['Erik Johansson','CFO','Fjord Logistics','erik.johansson@fjordlogistics.no','',['enterprise','outbound'],
+      [['Fjord — Finance suite',73000,'negotiation',1]],
+      [['call',1,'CFO wants annual prepay for a discount. Running the numbers.'],
+       ['meeting',7,'Finance suite demo to his controllers — the spreadsheet export won them over.'],
+       ['email',19,'Outbound sequence finally landed — replied to email #4.']]],
+    ['Nina Kowalczyk','HR Director','Solaris Energy','nina.k@solarisenergy.pl','(202) 555-0139',['warm'],
+      [['Solaris — HR onboarding pack',19900,'proposal',3]],
+      [['email',3,'Proposal sent: onboarding pack for 120 hires over two quarters.'],
+       ['call',9,'HR is scaling fast — 30 hires a month; onboarding is the bottleneck.']]],
+    ['Diego Álvarez','Head of Support','Cometa Travel','diego@cometatravel.mx','',['churn-risk'],
+      [['Cometa — Renewal (at risk)',27300,'negotiation',1]],
+      [['call',1,'Renewal call — comparing us with a cheaper rival. Needs the migration-cost story.'],
+       ['note',8,'Support backlog cleared for their account. Goodwill restored, partially.'],
+       ['email',22,'Renewal notice sent 90 days ahead, per contract.']]],
+    ['Grace Mwangi','Program Director','Baraka Foundation','grace@barakafoundation.org','(510) 555-0122',['inbound'],
+      [['Baraka — Nonprofit tier',6200,'won',12]],
+      [['email',12,'Nonprofit tier signed. She offered a testimonial for the program page.'],
+       ['call',24,'Grant funds the tooling budget — the decision cycle is fast.']]],
+    ['Anders Holm','Plant Manager','Nordvik Steel','anders.holm@nordviksteel.dk','',['enterprise','outbound'],
+      [['Nordvik — Floor ops pilot',34000,'lost',10]],
+      [['note',10,'Closed-lost: capex frozen after the plant incident. Revisit in two quarters.'],
+       ['meeting',25,'Floor-ops pilot walkthrough — hard-hat tour included.']]],
+    ['Yuki Nakamura','Design Lead','Paper Crane Studio','yuki@papercrane.studio','(503) 555-0170',['startup','warm'],
+      [['Paper Crane — Studio seats',7400,'lead',5]],
+      [['email',5,'Sent studio-plan pricing. She wants to try it on one client project first.'],
+       ['note',13,'Referral from Ben at Carter & Fox.']]],
+    ['Fatima Al-Rashid','Strategy Director','Qamar Holdings','f.alrashid@qamarholdings.ae','',['enterprise','vip'],
+      [['Qamar — Group license',98000,'proposal',2]],
+      [['meeting',2,'Presented the group-license structure to the strategy office. Strong reception; board next.'],
+       ['email',10,'NDA signed; shared the enterprise pack.'],
+       ['call',23,'Holding company — five subsidiaries could standardize on one tool.']]],
+    ['Ben Carter','Owner','Carter & Fox Roasters','ben@carterandfox.com','(303) 555-0146',['startup','inbound'],
+      [['Carter & Fox — Starter',2900,'won',28]],
+      [['note',15,'Referred Yuki (Paper Crane). Send him something nice.'],
+       ['email',28,'Starter signed after the free-tier trial.']]],
+    ['Ingrid Weber','Legal Ops','Falke & Partner','i.weber@falkepartner.de','',['enterprise'],
+      [['Falke — Legal-ops tier',29500,'lost',9]],
+      [['note',9,'Closed-lost: the partner committee chose the incumbent. Door left open.'],
+       ['meeting',19,'Legal-ops workflow demo — impressed, but a risk-averse committee.']]],
+    ['Sam Whitfield','Revenue Ops','Tidewater SaaS','sam@tidewatersaas.com','(415) 555-0195',['outbound','warm'],
+      [['Tidewater — RevOps bundle',44800,'qualified',6]],
+      [['call',2,'RevOps bundle scoping — the CRM sync is the must-have.'],
+       ['email',6,'He benchmarked us against two rivals; sent the comparison, honestly annotated.'],
+       ['note',12,'Met in a webinar Q&A. Sharp questions.']]],
+    ['Chloé Bernard','Community Lead','Atelier Nord','chloe@ateliernord.fr','',['startup'],
+      [['Atelier Nord — Community plan',5100,'lead',1]],
+      [['email',1,'Asked whether the community plan covers events — sent the feature list.'],
+       ['note',3,'Small design collective, budget-sensitive, high word-of-mouth value.']]],
+  ];
+
+  const contacts = [], deals = [], activities = [];
+  RAW.forEach((r, i) => {
+    const [name, role, company, email, phone, tags, ds, as] = r;
+    const cid = 'c' + (i + 1);
+    contacts.push({id: cid, name, role, company, email, phone, tags, createdAt: iso(30 + (i % 20))});
+    ds.forEach(d => deals.push({
+      id: uid('d'), contactId: cid, title: d[0], value: d[1], stage: d[2],
+      stageChangedAt: iso(d[3]), createdAt: iso(d[3] + 6)
+    }));
+    as.forEach(a => activities.push({
+      id: uid('a'), contactId: cid, type: a[0], text: a[2], at: iso(a[1])
+    }));
+  });
+
+  return {v: 1, contacts, deals, activities, ui: {view: 'contacts', sortKey: 'last', sortDir: 'desc'}};
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let state;
+try {
+  const raw = JSON.parse(localStorage.getItem(LS_KEY));
+  state = (raw && raw.v === 1 && Array.isArray(raw.contacts)) ? raw : seed();
+} catch (e) { state = seed(); }
+
+let q = '';                    // search text (session only)
+const tagFilter = new Set();   // active tag filters (session only)
+let drawerId = null;           // open contact id
+let composerType = 'note';     // drawer composer type
+let dragGuard = false;         // suppress click right after a drag
+let draggingId = null;         // deal id in flight (dataTransfer fallback)
+
+function save(){
+  localStorage.setItem(LS_KEY, JSON.stringify(state));
+  $('#savedAt').innerHTML = '<b>Saved locally</b> · ' + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+}
+
+/* ---------- derived ---------- */
+const dealsOf   = cid => state.deals.filter(d => d.contactId === cid);
+const actsOf    = cid => state.activities.filter(a => a.contactId === cid).sort((a,b) => new Date(b.at) - new Date(a.at));
+const openDeals = () => state.deals.filter(d => OPEN_STAGES.includes(d.stage));
+const contactById = cid => state.contacts.find(c => c.id === cid);
+
+function openValueOf(cid){ return dealsOf(cid).filter(d => OPEN_STAGES.includes(d.stage)).reduce((s,d) => s + d.value, 0); }
+function bestStageOf(cid){
+  const ds = dealsOf(cid);
+  const open = ds.filter(d => OPEN_STAGES.includes(d.stage));
+  if (open.length) return open.reduce((b,d) => STAGES.indexOf(d.stage) > STAGES.indexOf(b) ? d.stage : b, open[0].stage);
+  if (ds.some(d => d.stage === 'won'))  return 'won';
+  if (ds.some(d => d.stage === 'lost')) return 'lost';
+  return null;
+}
+function lastTouchOf(cid){
+  const as = actsOf(cid);
+  return as.length ? as[0].at : (contactById(cid) || {}).createdAt;
+}
+function logActivity(cid, type, text){
+  state.activities.push({id: uid('a'), contactId: cid, type, text, at: new Date().toISOString()});
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let toastTimer = null;
+function toast(html){
+  let t = $('#toastBox');
+  if (!t){ t = document.createElement('div'); t.id = 'toastBox'; t.className = 'toast'; document.body.appendChild(t); }
+  t.innerHTML = html;
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, 2400);
+}
+
+/* ============================================================
+   STATS + MIX
+   ============================================================ */
+function renderStats(){
+  const open = openDeals();
+  const openVal = open.reduce((s,d) => s + d.value, 0);
+  const weighted = open.reduce((s,d) => s + d.value * PROB[d.stage], 0);
+  const won  = state.deals.filter(d => d.stage === 'won');
+  const lost = state.deals.filter(d => d.stage === 'lost');
+  const wonVal = won.reduce((s,d) => s + d.value, 0);
+  const closed = won.length + lost.length;
+  const winRate = closed ? Math.round(won.length / closed * 100) : 0;
+
+  $('#stats').innerHTML = `
+    <div class="stat hot"><div class="k">Open pipeline</div><div class="v">${fmtK(openVal)}</div><div class="s">${open.length} open deals</div></div>
+    <div class="stat"><div class="k">Weighted</div><div class="v">${fmtK(weighted)}</div><div class="s">by stage probability</div></div>
+    <div class="stat"><div class="k">Won</div><div class="v">${fmtK(wonVal)}</div><div class="s">${won.length} deals closed-won</div></div>
+    <div class="stat"><div class="k">Win rate</div><div class="v">${winRate}%</div><div class="s">${won.length}W · ${lost.length}L of ${closed} closed</div></div>
+    <div class="stat"><div class="k">Contacts</div><div class="v">${state.contacts.length}</div><div class="s">${state.activities.length} activities logged</div></div>`;
+
+  // mix strip
+  const per = OPEN_STAGES.map(st => ({st, v: open.filter(d => d.stage === st).reduce((s,d) => s + d.value, 0)}));
+  const tot = per.reduce((s,p) => s + p.v, 0);
+  $('#mixTotal').textContent = fmtK(tot) + ' total';
+  $('#mixBar').innerHTML = tot === 0
+    ? '<i style="flex:1;background:var(--g1)" title="No open deals"></i>'
+    : per.filter(p => p.v > 0).map(p =>
+        `<i style="flex:${Math.max(p.v / tot, .04)};background:${MIX_COLORS[p.st]}" title="${STAGE_LABEL[p.st]} — ${fmt(p.v)}"></i>`).join('');
+  $('#mixLegend').innerHTML = per.map(p =>
+    `<span><span class="sw" style="background:${MIX_COLORS[p.st]}"></span>${STAGE_LABEL[p.st]} <b>${fmtK(p.v)}</b></span>`).join('');
+
+  $('#nContacts').textContent = '[' + state.contacts.length + ']';
+  $('#nDeals').textContent = '[' + open.length + ' open]';
+}
+
+/* ============================================================
+   TAG CHIPS
+   ============================================================ */
+function renderChips(){
+  const all = [...new Set(state.contacts.flatMap(c => c.tags))].sort();
+  $('#tagChips').innerHTML = '<span class="lbl">Tags</span>' + all.map(t =>
+    `<button class="chip" data-tag="${esc(t)}" aria-pressed="${tagFilter.has(t)}">${esc(t)}</button>`).join('');
+}
+
+/* ============================================================
+   CONTACTS TABLE
+   ============================================================ */
+function filteredRows(){
+  const needle = q.trim().toLowerCase();
+  let rows = state.contacts.map(c => ({
+    c,
+    value: openValueOf(c.id),
+    best: bestStageOf(c.id),
+    last: lastTouchOf(c.id)
+  }));
+  if (tagFilter.size) rows = rows.filter(r => r.c.tags.some(t => tagFilter.has(t)));
+  if (needle) rows = rows.filter(r => {
+    const hay = [r.c.name, r.c.company, r.c.role, r.c.email, r.c.tags.join(' '),
+                 dealsOf(r.c.id).map(d => d.title).join(' ')].join(' ').toLowerCase();
+    return hay.includes(needle);
+  });
+  const {sortKey, sortDir} = state.ui;
+  const dir = sortDir === 'asc' ? 1 : -1;
+  rows.sort((a,b) => {
+    let va, vb;
+    switch (sortKey){
+      case 'name':    va = a.c.name.toLowerCase();    vb = b.c.name.toLowerCase();    break;
+      case 'company': va = a.c.company.toLowerCase(); vb = b.c.company.toLowerCase(); break;
+      case 'value':   va = a.value;                   vb = b.value;                   break;
+      case 'stage':   va = a.best ? STAGES.indexOf(a.best) : -1; vb = b.best ? STAGES.indexOf(b.best) : -1; break;
+      default:        va = new Date(a.last).getTime(); vb = new Date(b.last).getTime();
+    }
+    return va < vb ? -dir : va > vb ? dir : 0;
+  });
+  return rows;
+}
+
+function stageChip(st){
+  if (!st) return '<span class="agocell">—</span>';
+  const cls = st === 'won' ? ' won' : st === 'lost' ? ' lost' : '';
+  return `<span class="stagechip${cls}"><span class="ix">${STAGE_IX[st]}</span>${STAGE_LABEL[st].toUpperCase()}</span>`;
+}
+
+function renderTable(){
+  const rows = filteredRows();
+  $$('#viewContacts thead th.sortable').forEach(th => {
+    th.dataset.dir = th.dataset.key === state.ui.sortKey ? state.ui.sortDir : '';
+    th.setAttribute('aria-sort', th.dataset.key === state.ui.sortKey ? (state.ui.sortDir === 'asc' ? 'ascending' : 'descending') : 'none');
+  });
+  if (!rows.length){
+    $('#tbody').innerHTML = `
+      <tr class="emptyrow"><td colspan="6">
+        <div class="big">No matches${q.trim() ? ' for “' + esc(q.trim()) + '”' : ''}.</div>
+        <p>Try “enterprise”, “warm”, or a company name — or clear the filters.</p>
+        <button class="btn btn-sm" id="btnClearFilters">Clear search &amp; filters</button>
+      </td></tr>`;
+    return;
+  }
+  $('#tbody').innerHTML = rows.map(r => `
+    <tr data-cid="${r.c.id}" tabindex="0" aria-label="Open ${esc(r.c.name)}">
+      <td><div class="cellname">
+        <span class="avatar">${esc(initials(r.c.name))}</span>
+        <span><span class="nm">${esc(r.c.name)}</span><span class="rl" style="display:block">${esc(r.c.role)}</span></span>
+      </div></td>
+      <td>${esc(r.c.company)}</td>
+      <td>${r.c.tags.map(t => `<span class="tagmini${t === 'churn-risk' ? ' risk' : ''}">${esc(t)}</span>`).join('')}</td>
+      <td class="val">${r.value ? fmt(r.value) : '<span class="agocell">—</span>'}</td>
+      <td>${stageChip(r.best)}</td>
+      <td class="agocell" title="${esc(fullDate(r.last))}">${ago(r.last)}</td>
+    </tr>`).join('');
+}
+
+/* ============================================================
+   PIPELINE BOARD
+   ============================================================ */
+function renderBoard(){
+  $('#board').innerHTML = STAGES.map(st => {
+    const ds = state.deals.filter(d => d.stage === st).sort((a,b) => b.value - a.value);
+    const sum = ds.reduce((s,d) => s + d.value, 0);
+    const closed = st === 'won' || st === 'lost';
+    const cards = ds.length ? ds.map(d => {
+      const c = contactById(d.contactId);
+      const tag = c && c.tags.length ? c.tags[0] : '';
+      return `
+      <article class="card${closed ? ' done' : ''}" draggable="true" data-deal="${d.id}" data-cid="${d.contactId}"
+               tabindex="0" aria-label="${esc(d.title)} — ${fmt(d.value)}">
+        <div class="card-top"><span class="card-title">${esc(d.title)}</span><span class="card-val">${fmtK(d.value)}</span></div>
+        <div class="card-sub">${c ? esc(c.name) + ' · ' + esc(c.company) : 'Unassigned'}</div>
+        <div class="card-meta"><span>${daysIn(d.stageChangedAt)}d in stage</span>${tag ? `<span class="tagmini">${esc(tag)}</span>` : ''}</div>
+      </article>`;
+    }).join('') : '<div class="ghost">Drop a deal here</div>';
+    return `
+    <section class="col${closed ? ' closed' : ''}" data-stage="${st}" aria-label="${STAGE_LABEL[st]} column">
+      <header class="colhead">
+        <span class="ix">${STAGE_IX[st]}</span><span class="nm">${STAGE_LABEL[st]}</span>
+        <div class="roll"><b>${fmtK(sum)}</b><span>${ds.length} deal${ds.length === 1 ? '' : 's'}</span></div>
+      </header>
+      <div class="colbody">${cards}</div>
+    </section>`;
+  }).join('');
+}
+
+function moveDeal(dealId, stage){
+  const d = state.deals.find(x => x.id === dealId);
+  if (!d || d.stage === stage) return;
+  const from = d.stage;
+  d.stage = stage;
+  d.stageChangedAt = new Date().toISOString();
+  logActivity(d.contactId, 'stage', `Deal “${d.title}” moved ${STAGE_LABEL[from]} → ${STAGE_LABEL[stage]}.`);
+  save(); renderAll();
+  toast(`Moved to <b>${STAGE_LABEL[stage].toUpperCase()}</b> — ${esc(d.title)}`);
+}
+
+/* ============================================================
+   DRAWER
+   ============================================================ */
+let addDealOpen = false;
+
+function openDrawer(cid){
+  drawerId = cid; composerType = 'note'; addDealOpen = false;
+  renderDrawer();
+  $('#drawer').hidden = false;
+  $('#drawerBackdrop').hidden = false;
+}
+function closeDrawer(){
+  drawerId = null;
+  $('#drawer').hidden = true;
+  $('#drawerBackdrop').hidden = true;
+}
+
+function renderDrawer(){
+  const c = contactById(drawerId);
+  if (!c){ closeDrawer(); return; }
+  const ds = dealsOf(c.id).sort((a,b) => STAGES.indexOf(a.stage) - STAGES.indexOf(b.stage));
+  const as = actsOf(c.id);
+
+  $('#drawer').innerHTML = `
+    <div class="drawer-head">
+      <div class="row">
+        <span class="avatar">${esc(initials(c.name))}</span>
+        <div style="flex:1;min-width:0">
+          <h2>${esc(c.name)}</h2>
+          <div class="sub">${esc(c.role)}${c.role && c.company ? ' · ' : ''}${esc(c.company)}</div>
+        </div>
+        <button class="btn btn-sm drawer-x" id="drawerX" aria-label="Close">✕</button>
+      </div>
+      <div class="contacts-line">${esc(c.email)}${c.phone ? ` <span>·</span> ${esc(c.phone)}` : ''}</div>
+      <div class="tags">${c.tags.map(t => `<span class="tagmini${t === 'churn-risk' ? ' risk' : ''}">${esc(t)}</span>`).join('') || '<span class="agocell">no tags</span>'}</div>
+    </div>
+    <div class="drawer-body">
+      <div class="sect">
+        <h3>Deals · ${ds.length}</h3>
+        ${ds.map(d => `
+          <div class="deal-row">
+            <div class="info">
+              <div class="t">${esc(d.title)}</div>
+              <div class="d">${daysIn(d.stageChangedAt)}d in stage</div>
+            </div>
+            <span class="v">${fmt(d.value)}</span>
+            <select data-deal="${d.id}" aria-label="Stage of ${esc(d.title)}">
+              ${STAGES.map(st => `<option value="${st}"${st === d.stage ? ' selected' : ''}>${STAGE_IX[st]} ${STAGE_LABEL[st]}</option>`).join('')}
+            </select>
+          </div>`).join('') || '<div class="ghost">No deals yet</div>'}
+        <button class="btn btn-ghost btn-sm" id="btnToggleDeal" style="margin-top:4px">${addDealOpen ? '− Cancel' : '+ Add deal'}</button>
+        <div class="addform" id="addDealForm" ${addDealOpen ? '' : 'hidden'}>
+          <input type="text" id="ndTitle" placeholder="Deal title — e.g. ${esc(c.company)} — Annual plan">
+          <div class="row2">
+            <input type="number" id="ndValue" placeholder="Value ($)" min="0" step="100">
+            <select id="ndStage">${OPEN_STAGES.map(st => `<option value="${st}">${STAGE_IX[st]} ${STAGE_LABEL[st]}</option>`).join('')}</select>
+          </div>
+          <button class="btn btn-acid btn-sm" id="btnAddDeal">Open deal</button>
+        </div>
+      </div>
+
+      <div class="sect">
+        <h3>Log activity</h3>
+        <div class="composer">
+          <div class="types">
+            ${['note','call','email','meeting'].map(t =>
+              `<button class="chip" data-ctype="${t}" aria-pressed="${composerType === t}">${ACT_LABEL[t]}</button>`).join('')}
+          </div>
+          <textarea id="composerText" placeholder="What happened? — e.g. “Called about the renewal, wants new pricing by Friday.”"></textarea>
+          <div class="actions"><button class="btn btn-acid btn-sm" id="btnLog">Log it</button></div>
+        </div>
+      </div>
+
+      <div class="sect">
+        <h3>Timeline · ${as.length}</h3>
+        <ul class="timeline">
+          ${as.map(a => `
+            <li>
+              <span class="act-type t-${a.type}">${ACT_LABEL[a.type] || a.type.toUpperCase()}</span>
+              <div><p>${esc(a.text)}</p><time title="${esc(fullDate(a.at))}">${ago(a.at)}</time></div>
+            </li>`).join('') || '<li><div><p class="agocell">Nothing logged yet.</p></div></li>'}
+        </ul>
+      </div>
+
+      <div class="danger">
+        <p>Removes the contact, their deals and timeline.</p>
+        <button class="btn btn-danger" id="btnDelete">Delete contact</button>
+      </div>
+    </div>`;
+
+  // --- drawer events (bound after each render) ---
+  $('#drawerX').onclick = closeDrawer;
+  $$('#drawer select[data-deal]').forEach(sel => {
+    sel.onchange = () => moveDeal(sel.dataset.deal, sel.value);
+  });
+  $('#btnToggleDeal').onclick = () => { addDealOpen = !addDealOpen; renderDrawer(); if (addDealOpen) $('#ndTitle').focus(); };
+  $('#btnAddDeal').onclick = () => {
+    const title = $('#ndTitle').value.trim();
+    const value = Math.max(0, Number($('#ndValue').value) || 0);
+    const stage = $('#ndStage').value;
+    if (!title){ $('#ndTitle').focus(); toast('Give the deal a <b>title</b> first.'); return; }
+    state.deals.push({id: uid('d'), contactId: c.id, title, value, stage,
+      stageChangedAt: new Date().toISOString(), createdAt: new Date().toISOString()});
+    logActivity(c.id, 'stage', `Deal “${title}” opened at ${STAGE_LABEL[stage]} — ${fmt(value)}.`);
+    addDealOpen = false;
+    save(); renderAll();
+    toast(`Deal opened — <b>${fmt(value)}</b>`);
+  };
+  $$('#drawer [data-ctype]').forEach(ch => {
+    ch.onclick = () => { composerType = ch.dataset.ctype;
+      $$('#drawer [data-ctype]').forEach(x => x.setAttribute('aria-pressed', x.dataset.ctype === composerType)); };
+  });
+  $('#btnLog').onclick = () => {
+    const txt = $('#composerText').value.trim();
+    if (!txt){ $('#composerText').focus(); toast('Write a line first — then <b>Log it</b>.'); return; }
+    logActivity(c.id, composerType, txt);
+    save(); renderAll();
+    toast(`<b>${ACT_LABEL[composerType]}</b> logged.`);
+  };
+  $('#btnDelete').onclick = () => {
+    if (!confirm(`Delete ${c.name} and everything attached? This only touches the demo data in this browser.`)) return;
+    state.contacts = state.contacts.filter(x => x.id !== c.id);
+    state.deals = state.deals.filter(x => x.contactId !== c.id);
+    state.activities = state.activities.filter(x => x.contactId !== c.id);
+    closeDrawer(); save(); renderAll();
+    toast(`Deleted <b>${esc(c.name)}</b>.`);
+  };
+}
+
+/* ============================================================
+   MODAL — new contact
+   ============================================================ */
+function openModal(){
+  ['inName','inCompany','inRole','inEmail','inTags','inDealTitle','inDealValue'].forEach(id => $('#' + id).value = '');
+  $('#inDealStage').value = 'lead';
+  $('#fName').classList.remove('bad');
+  $('#modalBackdrop').hidden = false;
+  $('#inName').focus();
+}
+function closeModal(){ $('#modalBackdrop').hidden = true; }
+
+function createContact(){
+  const name = $('#inName').value.trim();
+  if (!name){ $('#fName').classList.add('bad'); $('#inName').focus(); return; }
+  $('#fName').classList.remove('bad');
+  const cid = uid('c');
+  const tags = $('#inTags').value.split(',').map(t => t.trim().toLowerCase().replace(/\s+/g, '-')).filter(Boolean).slice(0, 4);
+  state.contacts.push({
+    id: cid, name,
+    role: $('#inRole').value.trim(),
+    company: $('#inCompany').value.trim(),
+    email: $('#inEmail').value.trim(),
+    phone: '', tags,
+    createdAt: new Date().toISOString()
+  });
+  logActivity(cid, 'note', 'Contact added by hand from the New Contact form.');
+  const dt = $('#inDealTitle').value.trim();
+  if (dt){
+    const dv = Math.max(0, Number($('#inDealValue').value) || 0);
+    const dstage = $('#inDealStage').value;
+    state.deals.push({id: uid('d'), contactId: cid, title: dt, value: dv, stage: dstage,
+      stageChangedAt: new Date().toISOString(), createdAt: new Date().toISOString()});
+    logActivity(cid, 'stage', `Deal “${dt}” opened at ${STAGE_LABEL[dstage]} — ${fmt(dv)}.`);
+  }
+  closeModal(); save(); renderAll();
+  toast(`<b>${esc(name)}</b> added to the book.`);
+  openDrawer(cid);
+}
+
+/* ============================================================
+   VIEW SWITCH + GLOBAL EVENTS
+   ============================================================ */
+function setView(v){
+  state.ui.view = v; save();
+  $('#viewContacts').hidden = v !== 'contacts';
+  $('#viewBoard').hidden = v !== 'board';
+  $('#tabContacts').setAttribute('aria-selected', v === 'contacts');
+  $('#tabBoard').setAttribute('aria-selected', v === 'board');
+}
+
+function renderAll(){
+  renderStats();
+  renderChips();
+  renderTable();
+  renderBoard();
+  if (drawerId) renderDrawer();
+}
+
+/* ---- tabs ---- */
+$('#tabContacts').onclick = () => setView('contacts');
+$('#tabBoard').onclick = () => setView('board');
+
+/* ---- search ---- */
+$('#q').addEventListener('input', e => {
+  q = e.target.value;
+  $('#qClear').style.display = q ? 'block' : 'none';
+  renderTable();
+});
+$('#qClear').onclick = () => { q = ''; $('#q').value = ''; $('#qClear').style.display = 'none'; renderTable(); $('#q').focus(); };
+
+/* ---- tag chips (delegated) ---- */
+$('#tagChips').addEventListener('click', e => {
+  const chip = e.target.closest('[data-tag]');
+  if (!chip) return;
+  const t = chip.dataset.tag;
+  tagFilter.has(t) ? tagFilter.delete(t) : tagFilter.add(t);
+  renderChips(); renderTable();
+});
+
+/* ---- sorting ---- */
+$$('#viewContacts thead th.sortable').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if (state.ui.sortKey === key){
+      state.ui.sortDir = state.ui.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      state.ui.sortKey = key;
+      state.ui.sortDir = (key === 'name' || key === 'company') ? 'asc' : 'desc';
+    }
+    save(); renderTable();
+  });
+});
+
+/* ---- table rows → drawer (delegated) ---- */
+$('#tbody').addEventListener('click', e => {
+  if (e.target.closest('#btnClearFilters')){
+    q = ''; $('#q').value = ''; $('#qClear').style.display = 'none';
+    tagFilter.clear(); renderChips(); renderTable();
+    return;
+  }
+  const tr = e.target.closest('tr[data-cid]');
+  if (tr) openDrawer(tr.dataset.cid);
+});
+$('#tbody').addEventListener('keydown', e => {
+  if (e.key === 'Enter'){
+    const tr = e.target.closest('tr[data-cid]');
+    if (tr) openDrawer(tr.dataset.cid);
+  }
+});
+
+/* ---- board: drag & drop + click (delegated) ---- */
+const board = $('#board');
+board.addEventListener('dragstart', e => {
+  const card = e.target.closest('.card');
+  if (!card) return;
+  dragGuard = true;
+  draggingId = card.dataset.deal;
+  try {
+    e.dataTransfer.setData('text/plain', card.dataset.deal);
+    e.dataTransfer.effectAllowed = 'move';
+  } catch (err) { /* some engines restrict dataTransfer on file:// — draggingId covers it */ }
+  requestAnimationFrame(() => card.classList.add('dragging'));
+});
+board.addEventListener('dragend', e => {
+  const card = e.target.closest('.card');
+  if (card) card.classList.remove('dragging');
+  $$('.col.hot').forEach(c => c.classList.remove('hot'));
+  setTimeout(() => { dragGuard = false; }, 50);
+});
+board.addEventListener('dragover', e => {
+  const col = e.target.closest('.col');
+  if (!col) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  $$('.col.hot').forEach(c => { if (c !== col) c.classList.remove('hot'); });
+  col.classList.add('hot');
+});
+board.addEventListener('dragleave', e => {
+  const col = e.target.closest('.col');
+  if (col && !col.contains(e.relatedTarget)) col.classList.remove('hot');
+});
+board.addEventListener('drop', e => {
+  const col = e.target.closest('.col');
+  if (!col) return;
+  e.preventDefault();
+  col.classList.remove('hot');
+  let dealId = '';
+  try { dealId = e.dataTransfer.getData('text/plain'); } catch (err) { /* fall through */ }
+  dealId = dealId || draggingId;
+  draggingId = null;
+  if (dealId) moveDeal(dealId, col.dataset.stage);
+  // moveDeal() → renderAll() replaces #board's children, detaching the dragged
+  // card — its dragend no longer bubbles through #board, so the delegated
+  // dragend handler below can't clear the guard. Clear it here too.
+  setTimeout(() => { dragGuard = false; }, 50);
+});
+board.addEventListener('click', e => {
+  if (dragGuard) return;
+  const card = e.target.closest('.card');
+  if (card) openDrawer(card.dataset.cid);
+});
+board.addEventListener('keydown', e => {
+  if (e.key === 'Enter'){
+    const card = e.target.closest('.card');
+    if (card) openDrawer(card.dataset.cid);
+  }
+});
+
+/* ---- drawer backdrop ---- */
+$('#drawerBackdrop').onclick = closeDrawer;
+
+/* ---- modal ---- */
+$('#btnNew').onclick = openModal;
+$('#modalX').onclick = closeModal;
+$('#modalCancel').onclick = closeModal;
+$('#modalCreate').onclick = createContact;
+$('#modalBackdrop').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+$('#inName').addEventListener('keydown', e => { if (e.key === 'Enter') createContact(); });
+
+/* ---- footer ---- */
+$('#btnExport').onclick = () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'grip-crm-data.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+  toast('Exported <b>grip-crm-data.json</b>');
+};
+$('#btnReset').onclick = () => {
+  if (!confirm('Reset to the 25 seeded demo contacts? Your local changes in this browser will be replaced.')) return;
+  closeDrawer();
+  q = ''; $('#q').value = ''; $('#qClear').style.display = 'none';
+  tagFilter.clear();
+  state = seed();
+  save(); renderAll(); setView(state.ui.view);
+  toast('Demo data <b>reseeded</b>.');
+};
+
+/* ---- keyboard ---- */
+document.addEventListener('keydown', e => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if (e.key === '/' && !typing){
+    e.preventDefault();
+    setView('contacts');
+    $('#q').focus();
+  }
+  if (e.key === 'Escape'){
+    if (!$('#modalBackdrop').hidden) closeModal();
+    else if (drawerId) closeDrawer();
+  }
+});
+
+/* ---- boot ---- */
+setView(state.ui.view === 'board' ? 'board' : 'contacts');
+renderAll();
+save();
+</script>
+</body>
+</html>

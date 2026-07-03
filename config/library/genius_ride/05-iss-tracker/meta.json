@@ -1,0 +1,10 @@
+{
+  "expert": "genius_ride",
+  "key": "iss-tracker",
+  "type": "scene",
+  "title": "ISS — live in 3D",
+  "desc": "Where it is, right now",
+  "brief": "A mission-ops 3D tracker of the International Space Station, alive in the browser. A stylised cyan-teal Earth — dotted continents drawn from Natural Earth 110m land, a graticule wireframe, a Fresnel atmosphere rim and a computed day/night terminator, no texture image, fully offline — is the hero. A real recent ISS TLE (NORAD 25544, epoch 2026-07-01 12:11:46 UTC, Celestrak and wheretheiss.at in agreement, fetched 2026-07-03) is baked in and propagated LIVE with satellite.js (SGP4): the orbit ribbon over one full 92.9-minute period, the sub-point ground track, and a moving electric-cyan station marker with a nadir drop-line. A mono telemetry rail reads live altitude, velocity, latitude/longitude, ground speed and orbital period, plus whether the station is sunlit or in Earth's shadow. The next visible passes over Paris (time, max elevation, ground direction, visible-vs-daylight) are computed client-side from the same TLE, with an honest TLE-snapshot caveat. Drag to orbit, scroll to zoom, a Follow-ISS button snaps the camera to the station; honors prefers-reduced-motion.",
+  "da": "Mission ops: deep charcoal-black space, a cool cyan-teal dotted Earth as the hero, ONE electric-cyan accent reserved for the ISS and its orbit, crisp white Spline Sans Mono telemetry, squared Chakra Petch headings, thin HUD hairlines — a flight-control console, no neon bloom. Kept distinct from Ride's other pieces by accent, type and the Earth's cyan palette.",
+  "generated": "2026-07-03"
+}

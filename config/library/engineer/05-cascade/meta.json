@@ -1,0 +1,10 @@
+{
+  "expert": "engineer",
+  "key": "cascade",
+  "type": "app",
+  "title": "Cascade",
+  "desc": "Falling-block puzzle",
+  "brief": "A polished, genuinely playable falling-block puzzle in one self-contained HTML file: seven rotating shapes fall into a ten-wide well and complete rows to clear them. Full modern mechanics — a 7-bag randomizer, a ghost landing preview, a hold slot, a three-deep next-queue, soft and hard drop, SRS-style rotation wall-kicks, line-clear scoring with combos and back-to-back bonuses, a level-up speed curve and top-out game over. Keyboard (arrows/WASD, up/X to rotate, space to hard-drop, C to hold) plus an on-screen touch pad. Eased line-clear sweep, jewel-lit particles, subtle screen feedback, optional WebAudio blips muted by default, and prefers-reduced-motion respected. Vanilla JS on a 2D canvas at 60fps, no build step, no assets.",
+  "da": "Refined dark-minimal gallery puzzle: deep charcoal-ink ground (#14161C), the seven pieces each in their own jewel hue (teal, amber, orchid, sage, terracotta, periwinkle, brass), hairline grid, Space Grotesk with tabular numerals, generous spacing and a calm mint glow on clears — premium, not neon-arcade.",
+  "generated": "2026-07-03"
+}

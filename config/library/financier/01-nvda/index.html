@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NVIDIA — An Investor's Examination · July 2026</title>
+
+<!-- ============================================================
+     FONTS — DM Sans only (clean neutral grotesk, close to NVIDIA
+     Sans): one family for display, body and numerals. No serif,
+     no monospace. Google Fonts CDN only.
+     ============================================================ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,200..1000;1,9..40,200..1000&display=swap" rel="stylesheet">
+
+<!-- Chart.js from CDN — the only library dependency -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<style>
+/* ============================================================
+   THEME — GTC keynote. Pure-black stage, NVIDIA green #76B900
+   as the single accent, white grotesk display. Huge stat
+   moments, quiet slides, thin dark hairlines: nothing glows
+   that isn't data.
+   ============================================================ */
+:root{
+    --void:       #000000;   /* stage letterbox */
+    --black:      #0A0A0A;   /* slide field */
+    --carbon:     #161616;   /* raised panel */
+    --hairline:   #2A2A2A;   /* structural rules */
+    --nv:         #76B900;   /* NVIDIA green — THE accent */
+    --nv-hi:      #8FD400;   /* green, lit (gradient top) */
+    --nv-dim:     rgba(118,185,0,.38);   /* green hairlines */
+    --nv-faint:   rgba(118,185,0,.14);
+    --white:      #FFFFFF;   /* primary text */
+    --gray:       #9C9C9C;   /* secondary text */
+    --up:         #76B900;   /* semantic positive = brand green */
+    --down:       #C4796B;   /* semantic negative — desaturated warm gray-red */
+    --coral:      #E0566B;   /* Split signature only */
+
+    --sans:  'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+
+    --stage-bg: var(--void);
+    --slide-bg: var(--black);
+
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   (viewport-base.css — included in full)
+   Slides are authored at 1920×1080 and scaled as a whole.
+   =========================================== */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+.deck-viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+.deck-stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
+}
+.slide {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+.slide.active,
+.slide.visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
+}
+img, video, canvas, svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+.deck-controls {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+@media print {
+    html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+    .deck-viewport { position: static; overflow: visible; background: #fff; }
+    .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+    .slide {
+        position: relative;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: 1920px; height: 1080px;
+        break-after: page; page-break-after: always;
+    }
+    .slide:last-child { break-after: auto; page-break-after: auto; }
+    .deck-controls { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+/* ============ end viewport-base.css ============ */
+
+/* ============================================================
+   SLIDE FIELD — every slide is near-black; one faint top wash
+   so the field breathes, no color cast
+   ============================================================ */
+.slide{
+    background:
+        radial-gradient(1700px 820px at 50% -14%, #151515 0%, transparent 62%),
+        var(--black);
+    color: var(--white);
+    font-family: var(--sans);
+    transition: opacity .55s var(--ease);
+}
+
+/* ============================================================
+   TYPE SYSTEM
+   ============================================================ */
+.kicker{
+    font-family: var(--sans);
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: .42em;
+    text-transform: uppercase;
+    color: var(--nv);
+}
+.headline{
+    font-family: var(--sans);
+    font-weight: 700;
+    letter-spacing: -.015em;
+    color: var(--white);
+    line-height: 1.06;
+}
+.foil{
+    background: linear-gradient(180deg, var(--nv-hi) 0%, var(--nv) 62%, #619900 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+.num{ font-family: var(--sans); font-weight:500; font-variant-numeric: tabular-nums; }
+.rule{ height:1px; background: var(--hairline); border:0; }
+.rule-strong{ height:2px; background: var(--nv); border:0; }
+
+/* thin double hairline used under headers */
+.double-rule{ position:relative; height:7px; }
+.double-rule::before, .double-rule::after{
+    content:''; position:absolute; left:0; right:0; height:1px; background: var(--hairline);
+}
+.double-rule::after{ top:6px; }
+
+/* ============================================================
+   SHARED SLIDE SCAFFOLD
+   ============================================================ */
+.pad{ position:absolute; inset:0; padding: 88px 110px 120px; }
+
+.slide-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px; }
+.slide-head .kicker{ font-size:17px; }
+.ghost-num{
+    font-family: var(--sans); font-weight: 800;
+    font-size: 110px; line-height:.8; color: var(--nv-faint);
+    letter-spacing:.02em;
+    user-select:none;
+}
+.slide-title{ font-size: 64px; margin: 12px 0 8px; }
+.slide-sub{ font-size: 24px; font-weight: 400; color: var(--gray); max-width: 1200px; line-height:1.5; }
+
+/* footer band inside each slide */
+.folio{
+    position:absolute; left:110px; right:110px; bottom:52px;
+    display:flex; align-items:center; justify-content:space-between;
+    border-top: 1px solid var(--hairline);
+    padding-top: 18px;
+    font-family: var(--sans); font-size:15px; letter-spacing:.24em;
+    text-transform:uppercase; color: var(--gray);
+}
+.folio .made{ color: var(--coral); font-size:12.5px; letter-spacing:.3em; opacity:.85; }
+.folio .roman{ font-weight:600; color: var(--nv); letter-spacing:.2em; }
+
+/* ============================================================
+   REVEAL ANIMATION — staggered on slide entry
+   ============================================================ */
+.reveal{
+    opacity:0; transform: translateY(26px);
+    transition: opacity .7s var(--ease), transform .7s var(--ease);
+}
+.slide.visible .reveal{ opacity:1; transform:translateY(0); }
+.d1{ transition-delay:.08s } .d2{ transition-delay:.18s } .d3{ transition-delay:.28s }
+.d4{ transition-delay:.38s } .d5{ transition-delay:.48s } .d6{ transition-delay:.58s }
+.d7{ transition-delay:.68s } .d8{ transition-delay:.78s }
+
+/* ============================================================
+   I. COVER — keynote stage: no frame, a faint green floor
+   glow under the name, one green dash as the only ornament
+   ============================================================ */
+.cover-frame{
+    position:absolute; inset:0; border:0; pointer-events:none;
+    background: radial-gradient(1100px 460px at 50% 112%, rgba(118,185,0,.16) 0%, transparent 70%);
+}
+.cover-frame::after{ content:''; position:absolute; left:0; right:0; top:0; height:2px; background:linear-gradient(90deg, transparent, var(--nv-dim), transparent); }
+.cover-inner{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; gap:0;
+}
+.cover-kicker{ font-size:18px; letter-spacing:.5em; color:var(--nv); text-transform:uppercase; font-weight:600; }
+.cover-name{
+    font-family:var(--sans); font-weight:800; font-size:232px; line-height:1;
+    letter-spacing:.015em; margin: 34px 0 8px;
+}
+.cover-sub{
+    font-family:var(--sans); font-weight:300;
+    font-size:31px; color:var(--gray); max-width:1150px; line-height:1.5;
+}
+.cover-orn{ display:flex; align-items:center; gap:22px; margin: 36px 0 30px; width:640px; }
+.cover-orn .line{ flex:1; height:1px; background:var(--hairline); }
+.cover-orn .diamond{ width:34px; height:5px; background:var(--nv); }
+.cover-stats{
+    display:flex; gap:56px; font-family:var(--sans); font-weight:400; font-size:21px;
+    color:var(--white); letter-spacing:.05em; margin-bottom:44px;
+}
+.cover-stats b{ color:var(--nv); font-weight:700; }
+.verdict-pill{
+    display:inline-flex; align-items:center; gap:18px;
+    border:1px solid var(--nv); padding: 18px 44px;
+    font-family:var(--sans); font-size:21px; font-weight:500; letter-spacing:.34em; text-transform:uppercase;
+    color:var(--white); background:rgba(118,185,0,.07);
+}
+.verdict-pill .dot{ width:8px; height:8px; border-radius:50%; background:var(--nv); }
+.cover-foot{
+    position:absolute; bottom:74px; left:0; right:0; text-align:center;
+    font-size:15.5px; letter-spacing:.26em; text-transform:uppercase; color:var(--gray);
+}
+.cover-foot .made{ color:var(--coral); }
+
+/* ============================================================
+   II. BRIEF — the exec-summary slide (Why / Context / Use / Assumed)
+   ============================================================ */
+.brief-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:54px; margin-top:64px; }
+.brief-col{ border-top:2px solid var(--nv); padding-top:26px; }
+.brief-col h3{
+    font-family:var(--sans); font-size:17px; font-weight:600; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--nv); margin-bottom:22px;
+}
+.brief-col p{ font-size:21.5px; font-weight:300; line-height:1.62; color:var(--white); }
+.brief-col p + p{ margin-top:14px; }
+.brief-note{
+    margin-top:58px; font-family:var(--sans); font-weight:300;
+    font-size:21px; color:var(--gray);
+}
+
+/* ============================================================
+   III. THE HOUSE — mix bars + three-year arc
+   ============================================================ */
+.house-grid{ display:grid; grid-template-columns: 1.05fr 1fr; gap:90px; margin-top:46px; }
+.mix-row{ margin-bottom:34px; }
+.mix-label{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; }
+.mix-label .name{ font-size:22px; font-weight:500; letter-spacing:.04em; }
+.mix-label .val{ font-family:var(--sans); font-weight:600; font-size:20px; color:var(--nv); }
+.mix-track{ height:16px; background:rgba(255,255,255,.06); position:relative; }
+.mix-fill{ position:absolute; inset:0 auto 0 0; background:linear-gradient(90deg,#5E9400,var(--nv),var(--nv-hi)); width:0; transition:width 1.1s var(--ease) .35s; }
+.mix-fill.dim{ background:rgba(255,255,255,.24); }
+.slide.visible .mix-fill{ width:var(--w); }
+.mix-note{ font-size:18.5px; color:var(--gray); line-height:1.6; margin-top:8px; font-weight:300; }
+
+.arc-table{ width:100%; border-collapse:collapse; }
+.arc-table th{
+    font-family:var(--sans); font-size:15.5px; font-weight:600; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--nv); text-align:right;
+    border-bottom:1px solid var(--hairline); padding:0 8px 14px;
+}
+.arc-table th:first-child{ text-align:left; padding-left:0; }
+.arc-table td{
+    font-family:var(--sans); font-weight:500; font-variant-numeric:tabular-nums;
+    font-size:21px; text-align:right; padding:17px 8px;
+    border-bottom:1px solid rgba(255,255,255,.08); color:var(--white);
+}
+.arc-table td:first-child{ font-weight:400; text-align:left; padding-left:0; color:var(--gray); font-size:20px; }
+.arc-table .hl td{ color:var(--nv); }
+.arc-src{ font-size:16px; color:var(--gray); margin-top:16px; font-weight:300; }
+
+.moat-strip{ display:flex; gap:0; margin-top:56px; border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline); }
+.moat-cell{ flex:1; padding:26px 34px; border-right:1px solid var(--hairline); background:rgba(255,255,255,.015); }
+.moat-cell:last-child{ border-right:0; }
+.moat-cell b{ display:block; font-family:var(--sans); font-size:23px; font-weight:700; color:var(--nv); margin-bottom:8px; }
+.moat-cell span{ font-size:17.5px; color:var(--gray); font-weight:300; line-height:1.5; }
+
+/* ============================================================
+   IV. CAPITAL CYCLE — chart + patron ledger
+   ============================================================ */
+.capex-grid{ display:grid; grid-template-columns: 1.15fr .85fr; gap:80px; margin-top:36px; align-items:start; }
+.chart-card{ position:relative; }
+.chart-src{ font-size:16px; color:var(--gray); margin-top:14px; font-weight:300; }
+.patron{ display:flex; justify-content:space-between; align-items:baseline; padding:21px 0; border-bottom:1px solid rgba(255,255,255,.08); }
+.patron:first-child{ border-top:1px solid var(--hairline); }
+.patron .who{ font-size:22px; font-weight:400; letter-spacing:.03em; }
+.patron .amt{ font-family:var(--sans); font-weight:600; font-variant-numeric:tabular-nums; font-size:22px; color:var(--nv); }
+.pull-quote{
+    margin-top:44px; padding-left:30px; border-left:3px solid var(--nv);
+    font-family:var(--sans); font-weight:300; font-size:25px; line-height:1.5; color:var(--white);
+}
+.pull-quote small{ display:block; font-family:var(--sans); font-weight:500; font-size:16px; letter-spacing:.2em; text-transform:uppercase; color:var(--gray); margin-top:14px; }
+
+/* ============================================================
+   V. THE QUARTER — KPI tiles + returns band
+   ============================================================ */
+.kpi-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:2px; margin-top:52px; border:1px solid var(--hairline); }
+.kpi{ padding:40px 40px 34px; background:var(--carbon); border-right:1px solid var(--hairline); }
+.kpi:last-child{ border-right:0; }
+.kpi .lbl{ font-size:15.5px; letter-spacing:.26em; text-transform:uppercase; color:var(--gray); margin-bottom:20px; }
+.kpi .big{ font-family:var(--sans); font-weight:700; font-variant-numeric:tabular-nums; font-size:66px; line-height:1; letter-spacing:-.01em; }
+.kpi .big small{ font-size:30px; font-weight:500; -webkit-text-fill-color:var(--gray); color:var(--gray); }
+.kpi .delta{ font-family:var(--sans); font-weight:500; font-size:19px; margin-top:16px; color:var(--up); }
+.kpi .delta.flat{ color:var(--gray); }
+.returns-band{ display:grid; grid-template-columns:repeat(3,1fr); gap:54px; margin-top:54px; }
+.ret-cell{ border-top:2px solid var(--nv); padding-top:20px; }
+.ret-cell .lbl{ font-size:15.5px; letter-spacing:.26em; text-transform:uppercase; color:var(--nv); margin-bottom:12px; }
+.ret-cell .val{ font-family:var(--sans); font-size:33px; font-weight:700; color:var(--white); letter-spacing:-.005em; }
+.ret-cell .sub{ font-size:17.5px; color:var(--gray); margin-top:8px; font-weight:300; line-height: 1.45; }
+.quarter-note{ margin-top:46px; font-size:18.5px; color:var(--gray); font-weight:300; line-height:1.6; max-width:1500px; }
+.quarter-note em{ color:var(--white); font-style:normal; font-weight:500; }
+
+/* ============================================================
+   VI. THE TAPE — full-bleed chart
+   ============================================================ */
+.tape-wrap{ margin-top:26px; }
+.tape-chips{ display:flex; gap:44px; margin-top:20px; font-family:var(--sans); font-variant-numeric:tabular-nums; font-size:18.5px; }
+.tape-chips .chip b{ color:var(--nv); font-weight:700; }
+.tape-chips .chip{ color:var(--gray); letter-spacing:.04em; }
+
+/* ============================================================
+   VII. COMPARABLES — the court
+   ============================================================ */
+.comps-table{ width:100%; border-collapse:collapse; margin-top:44px; }
+.comps-table th{
+    font-family:var(--sans); font-size:15px; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--nv); text-align:right; padding:0 14px 16px; border-bottom:1px solid var(--nv-dim);
+}
+.comps-table th:first-child{ text-align:left; padding-left:6px; }
+.comps-table td{
+    font-family:var(--sans); font-weight:500; font-variant-numeric:tabular-nums;
+    font-size:22px; text-align:right; padding:21px 14px;
+    border-bottom:1px solid rgba(255,255,255,.08); color:var(--white);
+}
+.comps-table td:first-child{ font-weight:400; text-align:left; padding-left:6px; font-size:22px; }
+.comps-table td:first-child small{ display:block; font-size:15px; font-weight:400; color:var(--gray); letter-spacing:.06em; margin-top:3px; }
+.comps-table tr.hero td{ background:rgba(118,185,0,.09); color:var(--nv); }
+.comps-table tr.hero td:first-child{ color:var(--white); }
+.comps-obs{
+    margin-top:38px; display:grid; grid-template-columns:1fr 1fr; gap:70px;
+}
+.comps-obs p{ font-size:20.5px; font-weight:300; line-height:1.6; color:var(--white); }
+.comps-obs p b{ color:var(--nv); font-weight:600; }
+.comps-src{ font-size:16px; color:var(--gray); margin-top:26px; font-weight:300; }
+
+/* ============================================================
+   VIII / IX. BULL & BEAR — numbered cases
+   ============================================================ */
+.case-list{ margin-top:28px; }
+.case-item{ display:grid; grid-template-columns:80px 1fr; gap:26px; padding:20px 0; border-bottom:1px solid rgba(255,255,255,.08); align-items:start; }
+.case-item:first-child{ border-top:1px solid var(--hairline); }
+.case-item .n{ font-family:var(--sans); font-weight:700; font-size:34px; color:var(--nv); line-height:1; }
+.case-item.bear .n{ color:var(--down); }
+.case-item h4{ font-family:var(--sans); font-size:24px; font-weight:600; color:var(--white); margin-bottom:6px; }
+.case-item p{ font-size:18px; font-weight:300; line-height:1.5; color:var(--gray); max-width:1500px; }
+.case-item p b{ color:var(--white); font-weight:500; }
+
+/* ============================================================
+   X. CHINA — timeline + framing
+   ============================================================ */
+.china-grid{ display:grid; grid-template-columns:1.1fr .9fr; gap:90px; margin-top:44px; }
+.tl-item{ display:grid; grid-template-columns:170px 1fr; gap:28px; padding:21px 0; border-bottom:1px solid rgba(255,255,255,.08); }
+.tl-item:first-child{ border-top:1px solid var(--hairline); }
+.tl-item .when{ font-family:var(--sans); font-weight:600; letter-spacing:.06em; font-size:18px; color:var(--nv); padding-top:3px; }
+.tl-item .what{ font-size:19.5px; font-weight:300; line-height:1.5; color:var(--white); }
+.tl-item .what b{ color:var(--nv); font-weight:600; }
+.china-frame{ background:var(--carbon); border:1px solid var(--hairline); padding:48px 52px; position:relative; }
+.china-frame::after{ content:''; position:absolute; left:0; top:0; width:72px; height:4px; background:var(--nv); pointer-events:none; }
+.china-frame .big{ font-family:var(--sans); font-size:104px; font-weight:800; line-height:1; letter-spacing:-.01em; }
+.china-frame .cap{ font-size:16px; letter-spacing:.26em; text-transform:uppercase; color:var(--gray); margin-top:8px; }
+.china-frame p{ font-size:20px; font-weight:300; line-height:1.62; color:var(--white); margin-top:30px; }
+.china-frame p b{ color:var(--nv); font-weight:600; }
+
+/* ============================================================
+   XI. RISK LEDGER
+   ============================================================ */
+.risk-table{ width:100%; border-collapse:collapse; margin-top:48px; }
+.risk-table th{
+    font-family:var(--sans); font-size:15px; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--nv); text-align:left; padding:0 18px 16px; border-bottom:1px solid var(--nv-dim);
+}
+.risk-table td{
+    font-size:19px; font-weight:300; padding:23px 18px; vertical-align:top;
+    border-bottom:1px solid rgba(255,255,255,.08); color:var(--gray); line-height:1.5;
+}
+.risk-table td.rname{ font-family:var(--sans); font-size:22px; font-weight:600; color:var(--white); }
+.risk-table td.tag{ font-family:var(--sans); font-weight:500; letter-spacing:.03em; font-size:17px; }
+.tag .hi{ color:var(--down); } .tag .med{ color:#E3E3E3; } .tag .lo{ color:var(--up); }
+
+/* ============================================================
+   XII. VERDICT
+   ============================================================ */
+.verdict-wrap{ display:grid; grid-template-columns: .95fr 1.05fr; gap:100px; margin-top:30px; align-items:start; }
+.verdict-word{ font-family:var(--sans); font-weight:800; font-size:190px; line-height:.95; letter-spacing:-.01em; }
+.conviction{ display:flex; align-items:center; gap:14px; margin-top:34px; }
+.conviction .diamond{ width:26px; height:7px; border:1px solid var(--nv); }
+.conviction .diamond.fill{ background:var(--nv); }
+.conviction .lbl{ font-size:16px; letter-spacing:.26em; text-transform:uppercase; color:var(--gray); margin-left:12px; }
+.verdict-terms{ margin-top:36px; font-size:19.5px; font-weight:300; color:var(--gray); line-height:1.7; }
+.verdict-terms b{ color:var(--white); font-weight:500; }
+
+.scale-wrap{ margin-top:16px; }
+.scale-title{ font-size:15.5px; letter-spacing:.26em; text-transform:uppercase; color:var(--nv); margin-bottom:56px; }
+.scale{ position:relative; height:2px; background:var(--hairline); margin:0 10px 112px; }
+.scale .mark{ position:absolute; top:50%; transform:translate(-50%,-50%); }
+.scale .mark .tick{ width:2px; height:26px; background:var(--nv); margin:0 auto; }
+.scale .mark .pv{ font-family:var(--sans); font-weight:700; font-variant-numeric:tabular-nums; font-size:23px; color:var(--nv); text-align:center; margin-top:14px; white-space:nowrap; }
+.scale .mark .pl{ font-size:14.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--gray); text-align:center; margin-top:5px; white-space:nowrap; }
+.scale .mark.spot .tick{ height:40px; background:var(--white); width:2px; }
+.scale .mark.spot .pv{ position:absolute; bottom:34px; left:50%; transform:translateX(-50%); color:var(--white); margin:0; }
+.scale .mark.spot .pl{ position:absolute; bottom:12px; left:50%; transform:translateX(-50%); color:var(--white); margin:0; }
+.changers h4{ font-size:15.5px; letter-spacing:.26em; text-transform:uppercase; color:var(--nv); margin-bottom:20px; }
+.changers li{
+    list-style:none; font-size:19px; font-weight:300; color:var(--white); line-height:1.5;
+    padding:13px 0 13px 34px; position:relative; border-bottom:1px solid rgba(255,255,255,.07);
+}
+.changers li::before{ content:'—'; position:absolute; left:0; color:var(--nv); }
+.disclaim{ margin-top:34px; font-family:var(--sans); font-weight:300; font-size:18.5px; color:var(--gray); }
+
+/* ============================================================
+   XIII. SOURCES
+   ============================================================ */
+.src-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0 80px; margin-top:26px; }
+.src-item{ display:grid; grid-template-columns:48px 1fr; gap:12px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.07); align-items:baseline; }
+.src-item .sn{ font-family:var(--sans); font-weight:600; font-size:14px; color:var(--nv); }
+.src-item .st{ font-size:15.5px; font-weight:400; color:var(--white); line-height:1.35; }
+.src-item .st a{ display:block; font-family:var(--sans); font-weight:400; font-size:12.5px; letter-spacing:.02em; color:var(--gray); text-decoration:none; margin-top:2px; word-break:break-all; }
+.src-item .st a:hover{ color:var(--nv); }
+.method-note{
+    margin-top:22px; padding-top:16px; border-top:1px solid var(--hairline);
+    font-size:14.5px; color:var(--gray); font-weight:300; line-height:1.6; max-width:1560px;
+}
+
+/* ============================================================
+   DECK CHROME — controls, progress (outside the stage)
+   ============================================================ */
+.progress{
+    position:fixed; top:0; left:0; height:2px; width:0%;
+    background:linear-gradient(90deg,var(--nv),var(--nv-hi));
+    z-index:1001; transition:width .45s var(--ease);
+}
+.deck-controls{
+    display:flex; align-items:center; gap:26px;
+    opacity:0; pointer-events:none;
+    transition:opacity .45s var(--ease);
+}
+.deck-controls.show{ opacity:1; pointer-events:auto; }
+.nav-btn{
+    width:46px; height:46px; border:1px solid var(--hairline); background:rgba(0,0,0,.72);
+    color:var(--nv); font-size:20px; cursor:pointer; font-family:var(--sans);
+    transition:all .25s ease; backdrop-filter:blur(6px);
+}
+.nav-btn:hover{ border-color:var(--nv); color:var(--nv-hi); }
+.deck-counter{ font-family:var(--sans); font-weight:600; font-size:15px; letter-spacing:.22em; color:var(--nv); user-select:none; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE I — COVER
+     ════════════════════════════════════════════════════════════ -->
+<section class="slide active" aria-label="Cover">
+    <div class="cover-frame"></div>
+    <div class="cover-inner">
+        <div class="cover-kicker reveal d1">Private Market Commentary &nbsp;·&nbsp; The Financier Desk &nbsp;·&nbsp; July MMXXVI</div>
+        <h1 class="cover-name foil reveal d2">NVIDIA</h1>
+        <p class="cover-sub reveal d3">An investor&rsquo;s examination of the house that finances the age of intelligence &mdash; taken at the crossroads of the AI capital cycle, seventeen percent below its highest price ever recorded.</p>
+        <div class="cover-orn reveal d4"><span class="line"></span><span class="diamond"></span><span class="line"></span></div>
+        <div class="cover-stats num reveal d5">
+            <span><b>NVDA</b> · NASDAQ</span>
+            <span>USD <b>194.83</b></span>
+            <span>MKT CAP <b>4.72T</b></span>
+            <span>AS OF <b>02 JUL 2026</b></span>
+        </div>
+        <div class="reveal d6"><span class="verdict-pill"><span class="dot"></span>Verdict · Buy &nbsp;—&nbsp; Conviction 4 / 5</span></div>
+    </div>
+    <div class="cover-foot">Thirteen exhibits · every figure verified against July 2026 sources · <span class="made">Made with Split</span></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE II — THE BRIEF (exec summary: why / context / use / assumed)
+     ════════════════════════════════════════════════════════════ -->
+<section class="slide" aria-label="The Brief">
+    <div class="pad">
+        <div class="slide-head reveal d1"><span class="kicker">The Brief</span><span class="ghost-num">II</span></div>
+        <h2 class="headline slide-title reveal d2">Before the numbers, the mandate.</h2>
+        <div class="brief-grid">
+            <div class="brief-col reveal d3">
+                <h3>Why this exists</h3>
+                <p>To answer one question with current evidence: at USD 4.7 trillion, is NVIDIA still an investable expression of the AI capital cycle &mdash; or did June 2026 mark the top?</p>
+            </div>
+            <div class="brief-col reveal d4">
+                <h3>The context</h3>
+                <p>Written six weeks after a record quarter &mdash; USD 81.6B of revenue, up 85% &mdash; and four weeks into a repricing that erased roughly USD 1.3 trillion of chip-sector value in a single session.</p>
+            </div>
+            <div class="brief-col reveal d5">
+                <h3>How to use it</h3>
+                <p>Exhibits III&ndash;XI are the evidence; exhibit XII is the call. Read the bear case (IX) with the same seriousness as the bull (VIII). Every figure is footnoted to exhibit XIII.</p>
+            </div>
+            <div class="brief-col reveal d6">
+                <h3>What we assumed</h3>
+                <p>USD throughout; NVIDIA fiscal years (FY2027 ends January 2027); prices at the 02 July 2026 close; a 12-month horizon; a long-only mandate; no existing position.</p>
+            </div>
+        </div>
+        <p class="brief-note reveal d7">Nothing herein is answered from memory &mdash; prices, filings and claims were pulled and verified on 02&ndash;03 July 2026. This document is research commentary, not investment advice.</p>
+    </div>
+    <div class="folio"><span>NVIDIA · An Investor's Examination</span><span class="made">Made with Split</span><span class="roman">II · XIII</span></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE III — THE HOUSE (segments + three-year arc)
+     ════════════════════════════════════════════════════════════ -->
+<section class="slide" aria-label="The House">
+    <div class="pad">
+        <div class="slide-head reveal d1"><span class="kicker">Exhibit I · The House</span><span class="ghost-num">III</span></div>
+        <h2 class="headline slide-title reveal d2">One customer class now pays for nearly everything.</h2>
+        <p class="slide-sub reveal d3">Revenue mix, fiscal Q1 2027 (quarter ended April 2026, reported 20 May 2026).</p>
+        <div class="house-grid">
+            <div>
+                <div class="mix-row reveal d4">
+                    <div class="mix-label"><span class="name">Data Center — compute &amp; networking</span><span class="val">USD 75.2B · 92.2%</span></div>
+                    <div class="mix-track"><div class="mix-fill" style="--w:92.2%"></div></div>
+                    <p class="mix-note">Up 92% year-on-year, 21% sequentially — Blackwell 300 systems, InfiniBand, Spectrum-X Ethernet and NVLink. NVIDIA sells the whole AI factory, not the chip.</p>
+                </div>
+                <div class="mix-row reveal d5">
+                    <div class="mix-label"><span class="name">Everything else — gaming, pro-viz, automotive, OEM</span><span class="val">≈ USD 6.4B · 7.8%</span></div>
+                    <div class="mix-track"><div class="mix-fill dim" style="--w:7.8%"></div></div>
+                    <p class="mix-note">The residual of an USD 81.6B quarter. The businesses that built the company are now a rounding adjustment on the one that defines it.</p>
+                </div>
+            </div>
+            <div class="reveal d5">
+                <table class="arc-table">
+                    <thead><tr><th>Fiscal year</th><th>Revenue</th><th>Net income</th><th>Gross margin</th></tr></thead>
+                    <tbody>
+                        <tr><td>FY2024 (Jan 24)</td><td>60.9B</td><td>29.8B</td><td>72.7%</td></tr>
+                        <tr><td>FY2025 (Jan 25)</td><td>130.5B</td><td>72.9B</td><td>75.0%</td></tr>
+                        <tr><td>FY2026 (Jan 26)</td><td>215.9B</td><td>120.1B</td><td>71.1%</td></tr>
+                        <tr class="hl"><td>Trailing 12M (Apr 26)</td><td>253.5B</td><td>—</td><td>≈ 75%</td></tr>
+                    </tbody>
+                </table>
+                <p class="arc-src num">Sources: NVIDIA 8-K filings, FY2024–FY2026 + Q1 FY27; stockanalysis.com TTM (02 Jul 2026). [1][2][5]</p>
+            </div>
+        </div>
+        <div class="moat-strip reveal d6">
+            <div class="moat-cell"><b>CUDA</b><span>Two decades of software lock-in; the industry's default development target.</span></div>
+            <div class="moat-cell"><b>Rack-scale systems</b><span>NVL72 racks — 72 GPUs sold as one machine, at system margins.</span></div>
+            <div class="moat-cell"><b>Networking attach</b><span>InfiniBand, Spectrum-X, NVLink — the fabric ships with the compute.</span></div>
+            <div class="moat-cell"><b>USD 1T order book</b><span>Blackwell + Rubin visibility through 2027, per GTC, March 2026. [6]</span></div>
+        </div>
+    </div>
+    <div class="folio"><span>NVIDIA · An Investor's Examination</span><span class="made">Made with Split</span><span class="roman">III · XIII</span></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE IV — THE CAPITAL CYCLE (capex chart)
+     ════════════════════════════════════════════════════════════ -->
+<section class="slide" aria-label="The Capital Cycle">
+    <div class="pad">
+        <div class="slide-head reveal d1"><span class="kicker">Exhibit II · The Capital Cycle</span><span class="ghost-num">IV</span></div>
+        <h2 class="headline slide-title reveal d2">The four patrons raised again.</h2>
+        <div class="capex-grid">
+            <div class="chart-card reveal d3">
+                <canvas id="capexChart" data-chart="capex" width="880" height="600" role="img" aria-label="Combined hyperscaler capital expenditure, 2024 to 2026 estimated"></canvas>
+                <p class="chart-src num">Combined capital expenditure — Microsoft, Amazon, Alphabet, Meta. USD billions, calendar years. 2026 = guidance. Sources: Tom's Hardware, CNBC, company guidance. [7][8]</p>
+            </div>
+            <div>
+                <div class="patron reveal d4"><span class="who">Amazon</span><span class="amt">≈ USD 200B</span></div>
+                <div class="patron reveal d4"><span class="who">Microsoft</span><span class="amt">USD 190B</span></div>
+                <div class="patron reveal d5"><span class="who">Alphabet</span><span class="amt">USD 175–185B</span></div>
+                <div class="patron reveal d5"><span class="who">Meta</span><span class="amt">USD 125–145B</span></div>
+                <div class="pull-quote reveal d6">
+                    Capex guided up 77% for 2026 — while the market, for the first time in this cycle, stopped rewarding the spend and started demanding the return.
+                    <small>The capex-to-revenue gap — Forbes, 02 June 2026 [15]</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="folio"><span>NVIDIA · An Investor's Examination</span><span class="made">Made with Split</span><span class="roman">IV · XIII</span></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE V — THE QUARTER (Q1 FY27 KPIs)
+     ════════════════════════════════════════════════════════════ -->
+<section class="slide" aria-label="The Quarter">
+    <div class="pad">
+        <div class="slide-head reveal d1"><span class="kicker">Exhibit III · The Quarter — Q1 FY2027</span><span class="ghost-num">V</span></div>
+        <h2 class="headline slide-title reveal d2">The print of 20 May 2026.</h2>
+        <div class="kpi-row reveal d3">
+            <div class="kpi"><div class="lbl">Revenue</div><div class="big num foil"><span data-count="81.6" data-dec="1">0.0</span><small>B</small></div><div class="delta num">+85% y/y · +20% q/q</div></div>
+            <div class="kpi"><div class="lbl">Data Center</div><div class="big num foil"><span data-count="75.2" data-dec="1">0.0</span><small>B</small></div><div class="delta num">+92% y/y</div></div>
+            <div class="kpi"><div class="lbl">Gross margin · non-GAAP</div><div class="big num foil"><span data-count="75.0" data-dec="1">0.0</span><small>%</small></div><div class="delta num flat">guided ≈ flat q/q</div></div>
+            <div class="kpi"><div class="lbl">EPS · non-GAAP</div><div class="big num foil"><span data-count="1.87" data-dec="2">0.00</span></div><div class="delta num">+140% y/y</div></div>
+        </div>
+        <div class="returns-band">
+            <div class="ret-cell reveal d4"><div class="lbl">Next-quarter guidance</div><div class="val num">USD 91.0B ± 2%</div><div class="sub">Q2 FY27 revenue — roughly +95% year-on-year at the midpoint, assuming zero China data-center revenue.</div></div>
+            <div class="ret-cell reveal d5"><div class="lbl">The dividend, finally real</div><div class="val num">$0.01 → $0.25 /qtr</div><div class="sub">A twenty-five-fold raise — 0.51% yield at the current price. Symbolic no longer.</div></div>
+            <div class="ret-cell reveal d6"><div class="lbl">Buyback</div><div class="val num">+ USD 80.0B</div><div class="sub">Fresh repurchase authorization, no expiration; ≈ USD 20B already returned in the quarter.</div></div>
+        </div>
+        <p class="quarter-note reveal d7">A reading note: GAAP EPS printed <em class="num">$2.39</em> against non-GAAP <em class="num">$1.87</em> — the excess is non-operating, dominated by marks on NVIDIA's strategic-investment portfolio, much of it stakes in its own customers. We treat <em class="num">$1.87</em> as the operating number throughout. Source: NVIDIA Q1 FY27 8-K. [1][3]</p>
+    </div>
+    <div class="folio"><span>NVIDIA · An Investor's Examination</span><span class="made">Made with Split</span><span class="roman">V · XIII</span></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE VI — THE TAPE (price chart)
+     ════════════════════════════════════════════════════════════ -->
+<section class="slide" aria-label="The Tape">
+    <div class="pad">
+        <div class="slide-head reveal d1"><span class="kicker">Exhibit IV · The Tape</span><span class="ghost-num">VI</span></div>
+        <h2 class="headline slide-title reveal d2" style="font-size:54px">Twenty-four months of tape, four verdicts from the crowd.</h2>
+        <div class="tape-wrap reveal d3">
+            <canvas id="tapeChart" data-chart="tape" width="1640" height="620" role="img" aria-label="NVDA monthly closing price, August 2024 to July 2026"></canvas>
+        </div>
+        <div class="tape-chips reveal d4">
+            <span class="chip">CLOSE 02 JUL 26 &nbsp;<b>194.83</b></span>
+            <span class="chip">ALL-TIME HIGH 14 MAY 26 &nbsp;<b>235.47</b></span>
+            <span class="chip">OFF THE HIGH &nbsp;<b style="color:var(--down)">−17.3%</b></span>
+            <span class="chip">12 MONTHS &nbsp;<b style="color:var(--up)">+9.5%</b></span>
+            <span class="chip">2026 TO DATE &nbsp;<b style="color:var(--up)">+4.5%</b></span>
+        </div>
+        <p class="chart-src num" style="margin-top:18px">NVDA monthly closes, adjusted, Aug 2024 – Jul 2026 — Yahoo Finance chart data, pulled 02 Jul 2026; all-time high per Macrotrends. [4][17]</p>
+    </div>
+    <div class="folio"><span>NVIDIA · An Investor's Examination</span><span class="made">Made with Split</span><span class="roman">VI · XIII</span></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE VII — THE COURT OF COMPARABLES
+     ════════════════════════════════════════════════════════════ -->
+<section class="slide" aria-label="Comparables">
+    <div class="pad">
+        <div class="slide-head reveal d1"><span class="kicker">Exhibit V · The Court of Comparables</span><span class="ghost-num">VII</span></div>
+        <h2 class="headline slide-title reveal d2">The cheapest name in its own court.</h2>
+        <table class="comps-table reveal d3">
+            <thead><tr>
+                <th>House</th><th>Price · USD</th><th>Mkt cap</th><th>P/E · trailing</th><th>P/E · forward</th><th>Revenue · TTM</th><th>Div. yield</th>
+            </tr></thead>
+            <tbody>
+                <tr class="hero"><td>NVIDIA<small>NVDA — the accelerator standard</small></td><td>194.83</td><td>4.72T</td><td>29.8×</td><td>19.6×</td><td>253.5B</td><td>0.51%</td></tr>
+                <tr><td>AMD<small>AMD — the sanctioned challenger</small></td><td>517.82</td><td>844B</td><td>172.7×</td><td>59.4×</td><td>37.5B</td><td>—</td></tr>
+                <tr><td>Broadcom<small>AVGO — the custom-silicon armory</small></td><td>360.45</td><td>1.71T</td><td>60.0×</td><td>22.9×</td><td>75.5B</td><td>0.70%</td></tr>
+                <tr><td>TSMC<small>TSM — the only foundry that matters</small></td><td>434.16</td><td>1.99T</td><td>33.3×</td><td>22.9×</td><td>128.3B</td><td>0.64%</td></tr>
+                <tr><td>Microsoft<small>MSFT — the largest patron</small></td><td>390.49</td><td>2.90T</td><td>23.3×</td><td>21.1×</td><td>318.3B</td><td>0.93%</td></tr>
+            </tbody>
+        </table>
+        <div class="comps-obs">
+            <p class="reveal d4">On forward earnings, NVIDIA is now <b>the least expensive name in the AI complex</b> — 19.6× against AMD at 59×, Broadcom and TSMC at 23×, Microsoft at 21× — while compounding revenue at +71% trailing, multiples of any peer's rate.</p>
+            <p class="reveal d5">Either consensus FY27–28 estimates are materially wrong, or the discount <b>is</b> the opportunity. AMD's 173× trailing shows what the market pays when it buys the story before the earnings. NVIDIA is priced as if the earnings stop growing.</p>
+        </div>
+        <p class="comps-src num reveal d6">All figures: stockanalysis.com, close of 02 Jul 2026, single consistent source across the five names. [5]</p>
+    </div>
+    <div class="folio"><span>NVIDIA · An Investor's Examination</span><span class="made">Made with Split</span><span class="roman">VII · XIII</span></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE VIII — THE BULL CASE
+     ════════════════════════════════════════════════════════════ -->
+<section class="slide" aria-label="The Bull Case">
+    <div class="pad">
+        <div class="slide-head reveal d1"><span class="kicker">Exhibit VI · The Case for the Crown</span><span class="ghost-num">VIII</span></div>
+        <h2 class="headline slide-title reveal d2">Five arguments for buying the fear.</h2>
+        <div class="case-list">
+            <div class="case-item reveal d3"><span class="n">i.</span><div><h4>The cheapest growth on the board</h4><p>19.6× forward earnings for +71% trailing revenue growth. The multiple prices a deceleration that the order book — <b>USD 1 trillion of Blackwell and Rubin demand through 2027, doubled in twelve months</b> — flatly contradicts. [5][6]</p></div></div>
+            <div class="case-item reveal d4"><span class="n">ii.</span><div><h4>The patrons keep raising</h4><p>Combined hyperscaler capex guided to <b>≈ USD 725B for 2026, up 77%</b>. NVIDIA captures the largest single share of every incremental dollar, and Rubin lands into that budget in H2 2026. [7][6]</p></div></div>
+            <div class="case-item reveal d5"><span class="n">iii.</span><div><h4>A platform, not a part</h4><p>NVL72 rack systems, networking attach, CUDA. Gross margin held at <b>≈ 75% through a full architecture transition</b> — pricing power that survives its own product turnover is the definition of a moat. [1]</p></div></div>
+            <div class="case-item reveal d6"><span class="n">iv.</span><div><h4>Capital returns turned real</h4><p>Dividend raised twenty-five-fold, USD 80B of fresh buyback, ≈ USD 20B returned in a single quarter. The balance sheet has begun paying shareholders <b>while still growing 85%</b>. [1][3]</p></div></div>
+            <div class="case-item reveal d7"><span class="n">v.</span><div><h4>China is a free option</h4><p>Guidance embeds <b>zero</b> China data-center revenue. H200 is cleared for export at a 25% remit; any actual delivery is upside the model does not require. [1][12]</p></div></div>
+        </div>
+    </div>
+    <div class="folio"><span>NVIDIA · An Investor's Examination</span><span class="made">Made with Split</span><span class="roman">VIII · XIII</span></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE IX — THE BEAR CASE
+     ════════════════════════════════════════════════════════════ -->
+<section class="slide" aria-label="The Bear Case">
+    <div class="pad">
+        <div class="slide-head reveal d1"><span class="kicker">Exhibit VII · The Case Against</span><span class="ghost-num">IX</span></div>
+        <h2 class="headline slide-title reveal d2">Five arguments the June sellers made.</h2>
+        <div class="case-list">
+            <div class="case-item bear reveal d3"><span class="n">i.</span><div><h4>The capex-to-revenue gap</h4><p>AI infrastructure spend is growing far faster than AI revenue. Wall Street has begun demanding the return — <b>Microsoft trades 30% below its own high</b> on exactly this anxiety. When the patrons' shareholders revolt, orders reprice. [15][8]</p></div></div>
+            <div class="case-item bear reveal d4"><span class="n">ii.</span><div><h4>Custom silicon compounds quietly</h4><p>ASIC shipments growing <b>+45% in 2026 against +16% for merchant GPUs</b>. Anthropic has locked multi-gigawatt TPU supply through 2031; OpenAI committed 6 GW to AMD and co-designs 10 GW with Broadcom. Every gigawatt on an ASIC is one NVIDIA never bids on. [9][10][11]</p></div></div>
+            <div class="case-item bear reveal d5"><span class="n">iii.</span><div><h4>Price deflation reached the metal</h4><p>B200 rental rates fell <b>≈ 31% in three weeks of June</b> — from $6.11 to $4.22 per hour. Falling utilization economics at the customer precede falling ASPs at the vendor. [14]</p></div></div>
+            <div class="case-item bear reveal d6"><span class="n">iv.</span><div><h4>Circular money</h4><p>GAAP earnings flattered by marks on stakes in NVIDIA's own customers; vendor-financed demand books as revenue today and as risk tomorrow. The quarter's <b>$2.39 GAAP vs $1.87 operating EPS</b> gap is that circularity, printed. [1][3]</p></div></div>
+            <div class="case-item bear reveal d7"><span class="n">v.</span><div><h4>The input squeeze</h4><p>Memory and component inflation is eating the patrons' budgets — <b>USD 25B of Microsoft's 2026 capex is component cost</b>, Meta raised guidance citing the same. Dollars spent on HBM are dollars not spent on accelerators. [7][8]</p></div></div>
+        </div>
+    </div>
+    <div class="folio"><span>NVIDIA · An Investor's Examination</span><span class="made">Made with Split</span><span class="roman">IX · XIII</span></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE X — THE CHINA QUESTION
+     ════════════════════════════════════════════════════════════ -->
+<section class="slide" aria-label="The China Question">
+    <div class="pad">
+        <div class="slide-head reveal d1"><span class="kicker">Exhibit VIII · The China Question</span><span class="ghost-num">X</span></div>
+        <h2 class="headline slide-title reveal d2">A market carried at zero.</h2>
+        <div class="china-grid">
+            <div>
+                <div class="tl-item reveal d3"><span class="when">APR 2025</span><span class="what"><b>H20 requires a license.</b> USD 4.5B inventory charge; USD 8B struck from one quarter's guidance.</span></div>
+                <div class="tl-item reveal d4"><span class="when">DEC 2025</span><span class="what"><b>Washington clears the H200</b> for China — with 25% of every sale remitted to the U.S. Treasury.</span></div>
+                <div class="tl-item reveal d5"><span class="when">JAN 2026</span><span class="what"><b>Terms formalized:</b> ~10 firms cleared (Alibaba, Tencent, ByteDance…), 75,000 units per customer, per-unit inspection on U.S. territory.</span></div>
+                <div class="tl-item reveal d6"><span class="when">JUL 2026</span><span class="what"><b>Zero units delivered.</b> Beijing steers buyers to Huawei; B30A — the Blackwell China variant — remains denied, as do Blackwell and Rubin proper.</span></div>
+            </div>
+            <div class="china-frame reveal d5">
+                <div class="big foil num">$0</div>
+                <div class="cap">China data-center revenue in guidance</div>
+                <p>Fifteen months ago this was a <b class="num">USD 4.6B-per-quarter</b> business. Today it is carried at nothing — in the guide, in consensus, and in this examination.</p>
+                <p>That is the correct way to hold it: <b>a free option, not a dependency.</b> Any H200 delivery is pure upside; further escalation costs the model nothing it hasn't already surrendered.</p>
+            </div>
+        </div>
+        <p class="chart-src num reveal d7" style="margin-top:36px">Sources: NVIDIA 8-K filings; Euronews; BIS; Tom's Hardware; CFR. [1][12][13][18]</p>
+    </div>
+    <div class="folio"><span>NVIDIA · An Investor's Examination</span><span class="made">Made with Split</span><span class="roman">X · XIII</span></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE XI — THE LEDGER OF RISKS
+     ════════════════════════════════════════════════════════════ -->
+<section class="slide" aria-label="Risk Ledger">
+    <div class="pad">
+        <div class="slide-head reveal d1"><span class="kicker">Exhibit IX · The Ledger of Risks</span><span class="ghost-num">XI</span></div>
+        <h2 class="headline slide-title reveal d2">What we are paid to worry about.</h2>
+        <table class="risk-table reveal d3">
+            <thead><tr><th style="width:26%">Risk</th><th style="width:13%">Character</th><th style="width:15%">Probability</th><th style="width:13%">Severity</th><th>What we watch</th></tr></thead>
+            <tbody>
+                <tr><td class="rname">Custom-silicon substitution</td><td>Structural</td><td class="tag"><span class="hi">High</span></td><td class="tag"><span class="med">Medium-high</span></td><td>ASIC share of 2027 accelerator spend; each new multi-gigawatt TPU / Trainium / MTIA commitment.</td></tr>
+                <tr><td class="rname">Capex cycle rollover</td><td>Cyclical</td><td class="tag"><span class="med">Medium</span></td><td class="tag"><span class="hi">High</span></td><td>CY2027 capex guidance on the Oct 2026 – Feb 2027 hyperscaler calls; the capex-to-revenue gap narrative.</td></tr>
+                <tr><td class="rname">Export controls, both directions</td><td>Political</td><td class="tag"><span class="med">Medium</span></td><td class="tag"><span class="med">Medium</span></td><td>First actual H200 delivery to China; the B30A decision; Beijing's procurement bans.</td></tr>
+                <tr><td class="rname">Concentration &amp; circular financing</td><td>Financial</td><td class="tag"><span class="med">Medium</span></td><td class="tag"><span class="med">Medium</span></td><td>Share of revenue from the top four buyers; the GAAP / non-GAAP gap; investee mark reversals.</td></tr>
+                <tr><td class="rname">Rubin execution &amp; HBM4 supply</td><td>Operational</td><td class="tag"><span class="lo">Low-medium</span></td><td class="tag"><span class="hi">High</span></td><td>Volume ramp confirmed for Q1 2027; HBM4 yields; rack-scale delivery cadence at Azure and peers.</td></tr>
+            </tbody>
+        </table>
+        <p class="chart-src num reveal d5" style="margin-top:30px">Qualifiers are this desk's judgment on July-2026 evidence — sources [6]–[15]. GPU rental deflation (−31% on B200, June) is the live tell on demand temperature. [14]</p>
+    </div>
+    <div class="folio"><span>NVIDIA · An Investor's Examination</span><span class="made">Made with Split</span><span class="roman">XI · XIII</span></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE XII — THE VERDICT
+     ════════════════════════════════════════════════════════════ -->
+<section class="slide" aria-label="The Verdict">
+    <div class="pad">
+        <div class="slide-head reveal d1"><span class="kicker">Exhibit X · The Verdict</span><span class="ghost-num">XII</span></div>
+        <div class="verdict-wrap">
+            <div>
+                <div class="verdict-word foil reveal d2">BUY</div>
+                <div class="conviction reveal d3">
+                    <span class="diamond fill"></span><span class="diamond fill"></span><span class="diamond fill"></span><span class="diamond fill"></span><span class="diamond"></span>
+                    <span class="lbl">Conviction 4 / 5 · 12-month horizon</span>
+                </div>
+                <p class="verdict-terms reveal d4">The June repricing corrected the sector's mood, not NVIDIA's arithmetic. At <b class="num">19.6×</b> forward earnings with a trillion-dollar order book, the market is paying us to hold the deceleration risk. <b>Accumulate below USD 200; size for the volatility this tape has already shown twice in twelve months.</b></p>
+            </div>
+            <div>
+                <div class="scale-wrap reveal d3">
+                    <div class="scale-title">Twelve-month scenarios · USD per share</div>
+                    <div class="scale">
+                        <div class="mark" style="left:10%"><div class="tick" style="background:var(--down)"></div><div class="pv" style="color:var(--down)">150</div><div class="pl">Bear · 18× cut estimates</div></div>
+                        <div class="mark spot" style="left:32.4%"><div class="pv">194.83</div><div class="pl">Spot</div><div class="tick"></div></div>
+                        <div class="mark" style="left:60%"><div class="tick"></div><div class="pv">250</div><div class="pl">Base · 25× ≈ $10 NTM</div></div>
+                        <div class="mark" style="left:90%"><div class="tick" style="background:var(--up)"></div><div class="pv" style="color:var(--up)">310</div><div class="pl">Bull · Rubin + China</div></div>
+                    </div>
+                </div>
+                <div class="changers reveal d5">
+                    <h4>What would change the call</h4>
+                    <ul>
+                        <li>CY2027 hyperscaler capex guides cut materially on the coming earnings cycle.</li>
+                        <li>Custom silicon takes a step-change share of accelerator spend — watch each multi-gigawatt ASIC deal.</li>
+                        <li>Rubin volume slips beyond Q1 2027, or GPU rental prices keep deflating through its launch.</li>
+                        <li>Upside trigger: first H200 units actually land in China — the free option starts paying.</li>
+                    </ul>
+                </div>
+                <p class="disclaim reveal d6">Street consensus sits near USD 309 with 36 of 37 analysts at Buy [16] — this desk's base case is deliberately below it. This is research commentary, not investment advice; markets carry risk of loss.</p>
+            </div>
+        </div>
+    </div>
+    <div class="folio"><span>NVIDIA · An Investor's Examination</span><span class="made">Made with Split</span><span class="roman">XII · XIII</span></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE XIII — SOURCES & METHOD
+     ════════════════════════════════════════════════════════════ -->
+<section class="slide" aria-label="Sources and Method">
+    <div class="pad">
+        <div class="slide-head reveal d1"><span class="kicker">Appendix · Sources &amp; Method</span><span class="ghost-num">XIII</span></div>
+        <h2 class="headline slide-title reveal d2" style="font-size:50px">Every figure, accounted for.</h2>
+        <div class="src-grid reveal d3">
+            <div>
+                <div class="src-item"><span class="sn">[1]</span><span class="st">NVIDIA Q1 FY2027 results, 8-K press release — SEC, 20 May 2026<a href="https://www.sec.gov/Archives/edgar/data/0001045810/000104581026000051/q1fy27pr.htm">sec.gov/Archives/edgar/data/1045810/000104581026000051/q1fy27pr.htm</a></span></div>
+                <div class="src-item"><span class="sn">[2]</span><span class="st">NVIDIA Q4 &amp; FY2026 results, 8-K — SEC, 25 Feb 2026<a href="https://www.sec.gov/Archives/edgar/data/0001045810/000104581026000019/q4fy26pr.htm">sec.gov/Archives/edgar/data/1045810/000104581026000019/q4fy26pr.htm</a></span></div>
+                <div class="src-item"><span class="sn">[3]</span><span class="st">Q1 FY27 8-K digest (dividend, buyback, China note) — StockTitan<a href="https://www.stocktitan.net/sec-filings/NVDA/8-k-nvidia-corp-reports-material-event-56086a88bbb4.html">stocktitan.net/sec-filings/NVDA/8-k-…-56086a88bbb4.html</a></span></div>
+                <div class="src-item"><span class="sn">[4]</span><span class="st">NVDA adjusted monthly closes, Aug 2024 – 02 Jul 2026 — Yahoo Finance chart data<a href="https://finance.yahoo.com/quote/NVDA/history/">finance.yahoo.com/quote/NVDA/history</a></span></div>
+                <div class="src-item"><span class="sn">[5]</span><span class="st">Comparable multiples, NVDA / AMD / AVGO / TSM / MSFT — stockanalysis.com, close 02 Jul 2026<a href="https://stockanalysis.com/stocks/nvda/">stockanalysis.com/stocks/nvda · /amd · /avgo · /tsm · /msft</a></span></div>
+                <div class="src-item"><span class="sn">[6]</span><span class="st">GTC 2026: USD 1T Blackwell + Rubin orders through 2027; Vera Rubin H2-26 — CNBC, 16 Mar 2026<a href="https://www.cnbc.com/2026/03/16/nvidia-gtc-2026-ceo-jensen-huang-keynote-blackwell-vera-rubin.html">cnbc.com/2026/03/16/nvidia-gtc-2026-…-blackwell-vera-rubin.html</a></span></div>
+                <div class="src-item"><span class="sn">[7]</span><span class="st">Big-tech 2026 capex plans reach ≈ USD 725B — Tom's Hardware<a href="https://www.tomshardware.com/tech-industry/big-tech/big-techs-ai-spending-plans-reach-725-billion">tomshardware.com/tech-industry/big-tech/…-725-billion</a></span></div>
+                <div class="src-item"><span class="sn">[8]</span><span class="st">AI spending nears USD 700B, the cash impact — CNBC, 06 Feb 2026<a href="https://www.cnbc.com/2026/02/06/google-microsoft-meta-amazon-ai-cash.html">cnbc.com/2026/02/06/google-microsoft-meta-amazon-ai-cash.html</a></span></div>
+                <div class="src-item"><span class="sn">[9]</span><span class="st">Anthropic's gigawatt-scale TPU deal with Broadcom / Google — Futurum Group<a href="https://futurumgroup.com/insights/anthropics-gigawatt-scale-tpu-deal-with-broadcom-creates-a-structural-advantage/">futurumgroup.com/insights/anthropics-gigawatt-scale-tpu-deal…</a></span></div>
+            </div>
+            <div>
+                <div class="src-item"><span class="sn">[10]</span><span class="st">The custom AI ASIC state of play, May 2026 — Tom's Hardware<a href="https://www.tomshardware.com/tech-industry/semiconductors/custom-ai-asics-examined-from-broadcom-to-mtia">tomshardware.com/tech-industry/semiconductors/custom-ai-asics…</a></span></div>
+                <div class="src-item"><span class="sn">[11]</span><span class="st">AMD–OpenAI partnership: 6 GW of Instinct GPUs, MI450 H2-2026 — AMD IR<a href="https://ir.amd.com/news-events/press-releases/detail/1260/amd-and-openai-announce-strategic-partnership-to-deploy-6-gigawatts-of-amd-gpus">ir.amd.com/news-events/press-releases/detail/1260/…</a></span></div>
+                <div class="src-item"><span class="sn">[12]</span><span class="st">Washington eases H200 exports to China (25% remit) — Euronews, 14 Jan 2026<a href="https://www.euronews.com/business/2026/01/14/president-trump-again-eases-restrictions-on-h200-chip-exports-to-china">euronews.com/business/2026/01/14/…-h200-chip-exports-to-china</a></span></div>
+                <div class="src-item"><span class="sn">[13]</span><span class="st">China blocking H200 purchases despite U.S. approval — Tom's Hardware<a href="https://www.tomshardware.com/tech-industry/trump-says-china-is-blocking-h200-purchases">tomshardware.com/tech-industry/trump-says-china-is-blocking-h200…</a></span></div>
+                <div class="src-item"><span class="sn">[14]</span><span class="st">June 2026 semiconductor selloff: USD 1.3T wiped; B200 rental −31% — Intellectia<a href="https://intellectia.ai/blog/semiconductor-stocks-selloff-june-2026">intellectia.ai/blog/semiconductor-stocks-selloff-june-2026</a></span></div>
+                <div class="src-item"><span class="sn">[15]</span><span class="st">The AI capex-to-revenue gap is widening — Forbes, 02 Jun 2026<a href="https://www.forbes.com/sites/jasonkirsch/2026/06/02/the-ai-capex-to-revenue-gap-is-widening---and-markets-are-starting-to-notice/">forbes.com/sites/jasonkirsch/2026/06/02/the-ai-capex-to-revenue-gap…</a></span></div>
+                <div class="src-item"><span class="sn">[16]</span><span class="st">NVDA analyst consensus: ≈ USD 309 average target, 36 Buy / 1 Hold — TipRanks, Jul 2026<a href="https://www.tipranks.com/stocks/nvda/forecast">tipranks.com/stocks/nvda/forecast</a></span></div>
+                <div class="src-item"><span class="sn">[17]</span><span class="st">NVDA price history; all-time-high close 235.47 (14 May 2026) — Macrotrends<a href="https://www.macrotrends.net/stocks/charts/NVDA/nvidia/stock-price-history">macrotrends.net/stocks/charts/NVDA/nvidia/stock-price-history</a></span></div>
+                <div class="src-item"><span class="sn">[18]</span><span class="st">Consequences of exporting H200 chips to China — Council on Foreign Relations<a href="https://www.cfr.org/expert-brief/consequences-exporting-nvidias-h200-chips-china">cfr.org/expert-brief/consequences-exporting-nvidias-h200-chips-china</a></span></div>
+            </div>
+        </div>
+        <p class="method-note reveal d5"><b style="color:var(--nv)">Method.</b> Prices and multiples taken at the 02 July 2026 U.S. close from a single consistent source per table; filings read from SEC 8-Ks; every dated claim verified against a July-2026 source on 03 July 2026. Monthly chart series is split- and dividend-adjusted. Where a circulating figure failed arithmetic against the filed totals (one segment digest did), it was replaced by the filed residual. Fiscal years are NVIDIA's, ending late January. This exhibit is commentary for a portfolio library — not investment advice, and not a solicitation.</p>
+    </div>
+    <div class="folio"><span>NVIDIA · An Investor's Examination</span><span class="made">Made with Split</span><span class="roman">XIII · XIII</span></div>
+</section>
+
+</main>
+</div>
+
+<!-- deck chrome: prev / counter / next -->
+<nav class="deck-controls" aria-label="Slide navigation">
+    <button class="nav-btn" id="prevBtn" aria-label="Previous slide">&#8249;</button>
+    <span class="deck-counter" id="deckCounter">I / XIII</span>
+    <button class="nav-btn" id="nextBtn" aria-label="Next slide">&#8250;</button>
+</nav>
+
+<script>
+/* ============================================================
+   DATA — embedded, fetched & verified 02–03 July 2026.
+   NVDA monthly adjusted closes (Yahoo Finance chart API).
+   ============================================================ */
+const TAPE_LABELS = ['Aug 24','Sep 24','Oct 24','Nov 24','Dec 24','Jan 25','Feb 25','Mar 25','Apr 25','May 25','Jun 25','Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26','Jun 26','Jul 26'];
+const TAPE_DATA   = [119.37,121.44,132.76,138.25,134.29,120.07,124.92,108.38,108.92,135.13,157.99,177.87,174.18,186.58,202.49,177.00,186.50,191.13,177.19,174.40,199.57,211.14,200.09,194.83];
+/* event flags drawn on the tape: {i: index into TAPE_DATA, text, dy: label offset} */
+const TAPE_EVENTS = [
+    { i: 8,  text: 'H20 export ban — $4.5B charge', dy: -168 },
+    { i: 19, text: 'GTC: $1T order book',           dy: -150 },
+    { i: 21, text: 'Q1 FY27 print · ATH 235.47',    dy: -120 },
+    { i: 22, text: 'Sector repricing — $1.3T wiped', dy: 96 }
+];
+const CAPEX_LABELS = ['2024','2025','2026E'];
+const CAPEX_DATA   = [226, 410, 725];
+
+const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NV = '#76B900', NV_HI = '#8FD400', WHITE = '#FFFFFF', GRAY = '#9C9C9C';
+
+/* Chart.js global type discipline: one grotesk, hairline grids */
+if (window.Chart) {
+    Chart.defaults.font.family = "'DM Sans', 'Helvetica Neue', sans-serif";
+    Chart.defaults.font.size = 16;
+    Chart.defaults.color = GRAY;
+}
+
+/* ============================================================
+   CHART BUILDERS — one accent, axes labeled, source below.
+   Charts are built lazily the first time their slide shows,
+   so entry animation plays in view.
+   ============================================================ */
+const chartBuilders = {
+
+    /* Exhibit II — combined hyperscaler capex, USD billions */
+    capex(canvas){
+        return new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: CAPEX_LABELS,
+                datasets: [{
+                    data: CAPEX_DATA,
+                    backgroundColor: ['rgba(118,185,0,.22)','rgba(118,185,0,.5)', NV],
+                    borderColor: [NV, NV, NV_HI],
+                    borderWidth: 1,
+                    maxBarThickness: 170
+                }]
+            },
+            options: {
+                responsive: false,
+                devicePixelRatio: 2,
+                animation: RM ? false : { duration: 1100, easing: 'easeOutQuart' },
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: {
+                    x: { grid: { display: false }, border: { color: 'rgba(255,255,255,.22)' },
+                         ticks: { color: WHITE, font: { size: 19 } } },
+                    y: { beginAtZero: true, max: 800,
+                         title: { display: true, text: 'USD billions', color: GRAY, font: { size: 15 } },
+                         grid: { color: 'rgba(255,255,255,.07)' }, border: { display: false },
+                         ticks: { stepSize: 200 } }
+                }
+            },
+            plugins: [{
+                /* value labels above each bar */
+                id: 'capexValues',
+                afterDatasetsDraw(chart){
+                    const { ctx } = chart;
+                    const meta = chart.getDatasetMeta(0);
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    meta.data.forEach((bar, i) => {
+                        ctx.font = "700 22px 'DM Sans'";
+                        ctx.fillStyle = i === 2 ? WHITE : 'rgba(255,255,255,.72)';
+                        ctx.fillText('$' + CAPEX_DATA[i] + 'B', bar.x, bar.y - 14);
+                        if (i === 2) {
+                            ctx.font = "400 15px 'DM Sans'";
+                            ctx.fillStyle = GRAY;
+                            ctx.fillText('+77% y/y · guided', bar.x, bar.y - 44);
+                        }
+                    });
+                    ctx.restore();
+                }
+            }]
+        });
+    },
+
+    /* Exhibit IV — the tape: 24 months of NVDA, with event flags */
+    tape(canvas){
+        const ctx2 = canvas.getContext('2d');
+        const grad = ctx2.createLinearGradient(0, 0, 0, 620);
+        grad.addColorStop(0, 'rgba(118,185,0,.26)');
+        grad.addColorStop(1, 'rgba(118,185,0,0)');
+        return new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: TAPE_LABELS,
+                datasets: [{
+                    data: TAPE_DATA,
+                    borderColor: NV,
+                    borderWidth: 3,
+                    tension: .35,
+                    fill: true,
+                    backgroundColor: grad,
+                    pointRadius: TAPE_DATA.map((_, i) => TAPE_EVENTS.some(e => e.i === i) ? 5 : 0),
+                    pointBackgroundColor: '#0A0A0A',
+                    pointBorderColor: NV_HI,
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: false,
+                devicePixelRatio: 2,
+                animation: RM ? false : { duration: 1300, easing: 'easeOutQuart' },
+                layout: { padding: { top: 190, right: 30 } },
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: {
+                    x: { grid: { display: false }, border: { color: 'rgba(255,255,255,.22)' },
+                         ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12, font: { size: 15 } } },
+                    y: { min: 80, max: 260,
+                         title: { display: true, text: 'USD · adjusted close', color: GRAY, font: { size: 15 } },
+                         grid: { color: 'rgba(255,255,255,.07)' }, border: { display: false },
+                         ticks: { stepSize: 40 } }
+                }
+            },
+            plugins: [{
+                /* event flags: hairline + small-caps label; ATH dashed reference line */
+                id: 'tapeAnnotations',
+                afterDatasetsDraw(chart){
+                    const { ctx, scales: { x, y } } = chart;
+                    ctx.save();
+                    /* all-time-high reference */
+                    const yATH = y.getPixelForValue(235.47);
+                    ctx.strokeStyle = 'rgba(255,255,255,.30)';
+                    ctx.setLineDash([2, 7]);
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x.left, yATH); ctx.lineTo(x.right, yATH);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.font = "500 14px 'DM Sans'";
+                    ctx.fillStyle = GRAY;
+                    ctx.textAlign = 'left';
+                    ctx.fillText('ATH CLOSE 235.47 — 14 MAY 26', x.left + 8, yATH - 9);
+                    /* event flags */
+                    TAPE_EVENTS.forEach(ev => {
+                        const px = x.getPixelForValue(ev.i);
+                        const py = y.getPixelForValue(TAPE_DATA[ev.i]);
+                        const ly = py + ev.dy;
+                        ctx.strokeStyle = 'rgba(255,255,255,.38)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(px, py + (ev.dy < 0 ? -10 : 10));
+                        ctx.lineTo(px, ly + (ev.dy < 0 ? 14 : -18));
+                        ctx.stroke();
+                        ctx.font = "500 15px 'DM Sans'";
+                        ctx.fillStyle = WHITE;
+                        const w = ctx.measureText(ev.text).width;
+                        let tx = px - w / 2;
+                        tx = Math.max(x.left + 4, Math.min(tx, x.right - w - 4));
+                        ctx.fillText(ev.text, tx, ly);
+                    });
+                    ctx.restore();
+                }
+            }]
+        });
+    }
+};
+
+/* ============================================================
+   COUNT-UP — KPI numerals on the Quarter slide
+   ============================================================ */
+function runCountUps(slide){
+    slide.querySelectorAll('[data-count]').forEach(el => {
+        if (el.dataset.done) return;
+        el.dataset.done = '1';
+        const target = parseFloat(el.dataset.count);
+        const dec = parseInt(el.dataset.dec || '0', 10);
+        if (RM) { el.textContent = target.toFixed(dec); return; }
+        const t0 = performance.now(), dur = 1250;
+        (function tick(t){
+            const p = Math.min((t - t0) / dur, 1);
+            const eased = 1 - Math.pow(1 - p, 4);
+            el.textContent = (target * eased).toFixed(dec);
+            if (p < 1) requestAnimationFrame(tick);
+        })(t0);
+    });
+}
+
+/* ============================================================
+   SLIDE PRESENTATION CONTROLLER
+   Fixed 1920×1080 stage scaled as a whole; keyboard, wheel,
+   touch and button navigation; lazy chart init per slide.
+   ============================================================ */
+const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII'];
+
+class SlidePresentation {
+    constructor(){
+        this.slides = Array.from(document.querySelectorAll('.slide'));
+        this.stage = document.getElementById('deckStage');
+        this.current = 0;
+        this.charts = {};
+        this.setupStageScale();
+        this.setupKeyboard();
+        this.setupWheel();
+        this.setupTouch();
+        document.getElementById('prevBtn').addEventListener('click', () => this.go(this.current - 1));
+        document.getElementById('nextBtn').addEventListener('click', () => this.go(this.current + 1));
+        this.setupChromeFade();
+        this.show(0);
+    }
+    setupStageScale(){
+        const scale = () => {
+            const f = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+            const xo = (window.innerWidth - 1920 * f) / 2;
+            const yo = (window.innerHeight - 1080 * f) / 2;
+            this.stage.style.transform = `translate(${xo}px, ${yo}px) scale(${f})`;
+        };
+        scale();
+        window.addEventListener('resize', scale);
+    }
+    setupChromeFade(){
+        /* controls hidden at rest so they never sit over the folio;
+           they surface on mouse activity and retire after 2.4s idle */
+        const chrome = document.querySelector('.deck-controls');
+        let t = null;
+        const wake = () => {
+            chrome.classList.add('show');
+            clearTimeout(t);
+            t = setTimeout(() => chrome.classList.remove('show'), 2400);
+        };
+        window.addEventListener('mousemove', wake, { passive: true });
+        window.addEventListener('touchstart', wake, { passive: true });
+        chrome.addEventListener('mouseenter', () => { clearTimeout(t); chrome.classList.add('show'); });
+        chrome.addEventListener('mouseleave', wake);
+    }
+    setupKeyboard(){
+        document.addEventListener('keydown', e => {
+            if (['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)) { e.preventDefault(); this.go(this.current + 1); }
+            else if (['ArrowLeft','ArrowUp','PageUp'].includes(e.key)) { e.preventDefault(); this.go(this.current - 1); }
+            else if (e.key === 'Home') this.go(0);
+            else if (e.key === 'End') this.go(this.slides.length - 1);
+        });
+    }
+    setupWheel(){
+        let last = 0;
+        window.addEventListener('wheel', e => {
+            const now = Date.now();
+            if (now - last < 900 || Math.abs(e.deltaY) < 24) return;
+            last = now;
+            this.go(this.current + (e.deltaY > 0 ? 1 : -1));
+        }, { passive: true });
+    }
+    setupTouch(){
+        let sx = 0;
+        window.addEventListener('touchstart', e => { sx = e.changedTouches[0].clientX; }, { passive: true });
+        window.addEventListener('touchend', e => {
+            const dx = e.changedTouches[0].clientX - sx;
+            if (Math.abs(dx) > 55) this.go(this.current + (dx < 0 ? 1 : -1));
+        }, { passive: true });
+    }
+    go(i){ this.show(Math.max(0, Math.min(i, this.slides.length - 1))); }
+    show(i){
+        this.current = i;
+        this.slides.forEach((s, k) => {
+            s.classList.toggle('active', k === i);
+            s.classList.toggle('visible', k === i);
+        });
+        const slide = this.slides[i];
+        /* lazy chart init so the draw animation plays on entry */
+        slide.querySelectorAll('canvas[data-chart]').forEach(c => {
+            if (!this.charts[c.id] && window.Chart) {
+                this.charts[c.id] = chartBuilders[c.dataset.chart](c);
+            }
+        });
+        runCountUps(slide);
+        document.getElementById('deckCounter').textContent = `${ROMAN[i]} / ${ROMAN[this.slides.length - 1]}`;
+        document.getElementById('progress').style.width = `${((i + 1) / this.slides.length) * 100}%`;
+    }
+}
+
+new SlidePresentation();
+</script>
+</body>
+</html>

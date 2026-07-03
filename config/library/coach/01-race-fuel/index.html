@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Race Build + Fuel — Semi Sub-1:45</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;700;800;900&family=Archivo:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#0d0d0f;
+  --panel:#131317;
+  --ink:#f5f6f7;
+  --muted:#7d8595;
+  --muted-dim:#565d6b;
+  --accent:#ff5a3c;
+  --accent-dim:#c23e28;
+  --hair:rgba(255,255,255,0.075);
+  --hair-2:rgba(255,255,255,0.13);
+  --carb:#ffb03c;      /* fuel domain tint — amber, distinct from the coral race accent */
+  --carb-dim:#8a5f1e;
+  --disp:"Archivo Expanded",sans-serif;
+  --body:"Archivo",sans-serif;
+  --mono:"Geist Mono","Archivo",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+::selection{background:var(--accent);color:#0d0d0f}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+a{color:inherit}
+
+/* ---- Sticky bib ticker ---- */
+.ticker{
+  position:sticky;top:0;z-index:50;
+  background:rgba(13,13,15,0.86);
+  backdrop-filter:blur(14px) saturate(1.2);
+  -webkit-backdrop-filter:blur(14px) saturate(1.2);
+  border-bottom:1px solid var(--hair);
+}
+.ticker-in{
+  max-width:1080px;margin:0 auto;padding:11px 28px;
+  display:flex;align-items:center;gap:20px;
+}
+.ticker .mark{
+  font-family:var(--disp);font-weight:900;font-size:14px;
+  letter-spacing:0.14em;color:var(--accent);white-space:nowrap;
+}
+.ticker .mark b{color:var(--ink)}
+.ticker .sep{width:1px;height:15px;background:var(--hair-2)}
+.ticker .stat{display:flex;align-items:baseline;gap:7px;white-space:nowrap}
+.ticker .stat .k{font-family:var(--mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted)}
+.ticker .stat .v{font-family:var(--disp);font-weight:800;font-size:15px;letter-spacing:0.02em}
+.ticker .stat .v.accent{color:var(--accent)}
+.ticker .nav{margin-left:auto;display:flex;gap:4px}
+.ticker .nav a{
+  font-family:var(--mono);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;padding:6px 11px;border-radius:2px;transition:color .15s,background .15s;
+}
+.ticker .nav a:hover{color:var(--ink);background:rgba(255,255,255,0.05)}
+.ticker .nav a.on{color:#0d0d0f;background:var(--accent)}
+@media(max-width:720px){.ticker .stat.hide-sm,.ticker .sep.hide-sm{display:none}.ticker .nav a{padding:6px 8px}}
+
+/* ---- Section chrome ---- */
+section{padding:64px 0 20px;position:relative}
+.sec-head{display:flex;align-items:flex-start;gap:22px;margin-bottom:34px}
+.numeral{
+  font-family:var(--disp);font-weight:900;
+  font-size:clamp(56px,9vw,104px);line-height:.82;
+  color:transparent;-webkit-text-stroke:1.6px var(--hair-2);
+  letter-spacing:-0.02em;user-select:none;flex:none;
+}
+.sec-head .lbl{padding-top:6px}
+.sec-head .lbl .kicker{font-family:var(--mono);font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.sec-head .lbl h2{font-family:var(--disp);font-weight:800;font-size:clamp(23px,3.4vw,34px);letter-spacing:-0.01em;line-height:1.02}
+.sec-head .lbl p{color:var(--muted);font-size:14px;margin-top:9px;max-width:46ch}
+.sec-head .toggle{
+  margin-left:auto;flex:none;align-self:center;
+  font-family:var(--mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--muted);background:transparent;border:1px solid var(--hair-2);
+  padding:8px 14px;border-radius:2px;cursor:pointer;transition:all .15s;
+}
+.sec-head .toggle:hover{color:var(--ink);border-color:var(--muted)}
+
+.collapsed .body{display:none}
+
+/* ============ 01 GOALS ============ */
+#goals{padding-top:52px}
+.hero{
+  background:linear-gradient(180deg,#141418 0%,#0f0f12 100%);
+  border:1px solid var(--hair);border-radius:6px;overflow:hidden;
+}
+.hero-top{
+  display:grid;grid-template-columns:1.55fr 1fr;gap:0;
+}
+.hero-l{padding:44px 44px 40px;border-right:1px solid var(--hair)}
+.hero .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.hero .eyebrow::before{content:"";width:26px;height:2px;background:var(--accent)}
+.hero h1{
+  font-family:var(--disp);font-weight:900;
+  font-size:clamp(34px,5.4vw,60px);line-height:.94;letter-spacing:-0.02em;
+}
+.hero h1 .fade{color:var(--muted-dim)}
+.hero .sub{color:var(--muted);font-size:15px;margin-top:20px;line-height:1.55;max-width:40ch}
+.hero .sub b{color:var(--ink);font-weight:600}
+.hero-r{padding:44px 40px;display:flex;flex-direction:column;justify-content:center;gap:22px;background:rgba(255,255,255,0.014)}
+.datum{}
+.datum .k{font-family:var(--mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.datum .v{font-family:var(--disp);font-weight:800;font-size:24px;letter-spacing:0.01em;line-height:1}
+.datum .v small{font-family:var(--body);font-size:13px;font-weight:500;color:var(--muted);letter-spacing:0}
+.datum .v.accent{color:var(--accent)}
+
+.hero-cross{
+  padding:22px 44px;border-top:1px solid var(--hair);
+  display:flex;align-items:center;gap:16px;
+  background:linear-gradient(90deg,rgba(255,176,60,0.07),transparent 70%);
+}
+.hero-cross .badge{
+  font-family:var(--mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;
+  color:#0d0d0f;background:var(--carb);padding:5px 10px;border-radius:2px;font-weight:600;white-space:nowrap;flex:none;
+}
+.hero-cross p{font-size:13.5px;color:var(--muted);line-height:1.5}
+.hero-cross p b{color:var(--ink);font-weight:600}
+
+.assumed{padding:26px 44px 30px;border-top:1px solid var(--hair)}
+.assumed .lead{font-family:var(--mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted-dim);margin-bottom:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  font-family:var(--mono);font-size:11px;letter-spacing:0.03em;
+  color:var(--muted);border:1px solid var(--hair-2);border-radius:2px;padding:6px 11px;
+}
+.chip b{color:var(--ink);font-weight:500}
+
+/* About-this collapsible (the exec summary) */
+.about{margin-top:16px;border:1px solid var(--hair);border-radius:6px;background:var(--panel);overflow:hidden}
+.about summary{
+  list-style:none;cursor:pointer;padding:15px 22px;
+  display:flex;align-items:center;gap:12px;user-select:none;
+  font-family:var(--mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);
+}
+.about summary::-webkit-details-marker{display:none}
+.about summary::before{content:"＋";color:var(--accent);font-size:15px;line-height:1;transition:transform .2s;font-family:var(--body)}
+.about[open] summary::before{content:"－"}
+.about summary:hover{color:var(--ink)}
+.about summary .tag{margin-left:auto;color:var(--muted-dim);letter-spacing:0.1em}
+.about-body{padding:6px 22px 24px;border-top:1px solid var(--hair)}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px 40px;margin-top:18px}
+.about-grid .cell h4{font-family:var(--mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent);margin-bottom:7px}
+.about-grid .cell p{font-size:13.5px;color:var(--muted);line-height:1.58}
+.about-grid .cell p b{color:var(--ink);font-weight:600}
+@media(max-width:640px){.about-grid{grid-template-columns:1fr}}
+
+/* ============ 02 PROGRAM ============ */
+.phase-legend{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:26px;padding-bottom:22px;border-bottom:1px solid var(--hair)}
+.leg{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.leg .sw{width:22px;height:3px;border-radius:2px}
+.week{margin-bottom:8px;border-top:1px solid var(--hair)}
+.week:first-of-type{border-top:none}
+.week-head{
+  display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:18px;
+  padding:16px 4px;cursor:pointer;user-select:none;transition:background .12s;
+}
+.week-head:hover{background:rgba(255,255,255,0.018)}
+.week-no{font-family:var(--disp);font-weight:900;font-size:30px;line-height:1;letter-spacing:-0.01em;color:var(--ink);min-width:56px}
+.week-no small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:0.14em;color:var(--muted-dim);font-weight:400;margin-top:3px}
+.week-title{}
+.week-title .ph{font-family:var(--mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:4px}
+.week-title .focus{font-size:14px;color:var(--muted);font-weight:500}
+.week-vol{text-align:right;font-family:var(--disp);font-weight:800;font-size:19px;letter-spacing:0.01em}
+.week-vol small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:0.12em;color:var(--muted-dim);font-weight:400}
+.deload-tag{
+  font-family:var(--mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--carb);border:1px solid var(--carb-dim);border-radius:2px;padding:3px 7px;
+}
+.week-caret{font-family:var(--body);color:var(--muted);font-size:13px;transition:transform .2s;width:14px;text-align:center}
+.week.open .week-caret{transform:rotate(90deg)}
+.week-body{display:none;padding:4px 0 20px}
+.week.open .week-body{display:block}
+
+.sess{border-left:2px solid var(--hair-2);margin-left:20px;padding-left:22px;position:relative;margin-bottom:2px}
+.sess::before{content:"";position:absolute;left:-5px;top:19px;width:8px;height:8px;border-radius:50%;background:var(--muted-dim)}
+.sess.key::before{background:var(--accent)}
+.sess-head{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:16px;padding:13px 0;cursor:pointer;user-select:none}
+.sess-day{font-family:var(--mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)}
+.sess-name{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:0.01em}
+.sess-name .type{font-family:var(--mono);font-weight:400;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-left:10px;vertical-align:middle}
+.sess-meta{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}
+.sess-meta b{color:var(--ink);font-weight:500}
+.sess-detail{display:none;padding:4px 0 16px;grid-template-columns:1fr;gap:2px}
+.sess.open .sess-detail{display:grid}
+.phase-row{display:grid;grid-template-columns:96px 1fr;gap:16px;padding:8px 0;border-top:1px solid var(--hair)}
+.phase-row .pk{font-family:var(--mono);font-size:10px;letter-spacing:0.13em;text-transform:uppercase;color:var(--muted-dim);padding-top:2px}
+.phase-row .pv{font-size:13.5px;color:var(--ink);line-height:1.55}
+.phase-row .pv .pace{font-family:var(--mono);color:var(--accent);font-size:12.5px}
+.fuel-attach{
+  margin-top:10px;padding:14px 16px;border-radius:4px;
+  background:linear-gradient(100deg,rgba(255,176,60,0.09),rgba(255,176,60,0.02));
+  border:1px solid var(--carb-dim);
+  display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;
+}
+.fuel-attach .ficon{
+  font-family:var(--disp);font-weight:900;font-size:11px;letter-spacing:0.06em;
+  color:#0d0d0f;background:var(--carb);border-radius:3px;padding:6px 8px;line-height:1;white-space:nowrap;
+}
+.fuel-attach .ftext{font-size:13px;color:var(--ink);line-height:1.55}
+.fuel-attach .ftext .hl{color:var(--carb);font-weight:600;font-family:var(--mono);font-size:12px}
+.fuel-attach .ftext em{color:var(--muted);font-style:normal}
+
+/* ============ 03 DASHBOARD — SCOREBOARD ============ */
+#dash{padding-bottom:80px}
+.board{display:flex;flex-direction:column;gap:0}
+
+/* --- countdown bib --- */
+.bib{
+  background:linear-gradient(155deg,#16161b 0%,#0e0e11 100%);
+  border:1px solid var(--hair);border-radius:6px;padding:40px 44px 34px;
+  position:relative;overflow:hidden;
+}
+.bib::after{
+  content:"";position:absolute;right:-40px;top:-40px;width:260px;height:260px;
+  background:radial-gradient(circle,rgba(255,90,60,0.10),transparent 68%);pointer-events:none;
+}
+.bib-grid{display:grid;grid-template-columns:auto 1fr;gap:44px;align-items:center;position:relative}
+.bib-num{line-height:.8}
+.bib-num .big{
+  font-family:var(--disp);font-weight:900;
+  font-size:clamp(96px,17vw,190px);letter-spacing:-0.03em;color:var(--accent);
+  display:block;font-variant-numeric:tabular-nums;
+  text-shadow:0 0 44px rgba(255,90,60,0.28);
+}
+.bib-num .of{font-family:var(--disp);font-weight:700;font-size:clamp(15px,2.4vw,22px);letter-spacing:0.06em;color:var(--muted);margin-top:6px}
+.bib-num .of .rule{display:inline-block;width:64px;height:2px;background:var(--hair-2);vertical-align:middle;margin-right:12px}
+.bib-side{display:flex;flex-direction:column;gap:20px}
+.bib-side .race{font-family:var(--mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted)}
+.bib-side .race b{color:var(--ink)}
+.bib-side .date{font-family:var(--disp);font-weight:800;font-size:clamp(20px,3vw,28px);letter-spacing:0.01em;line-height:1.05}
+.bib-progress{margin-top:4px}
+.bib-progress .bar{height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden}
+.bib-progress .fill{height:100%;background:var(--accent);border-radius:3px;box-shadow:0 0 10px rgba(255,90,60,0.5);transition:width .6s cubic-bezier(.2,.7,.3,1)}
+.bib-progress .cap{display:flex;justify-content:space-between;margin-top:8px;font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted-dim)}
+.bib-progress .cap b{color:var(--accent)}
+
+/* --- panel base (no cards; hairline-separated blocks) --- */
+.panel{padding:34px 44px;border:1px solid var(--hair);border-top:none;background:var(--panel)}
+.panel:last-child{border-radius:0 0 6px 6px}
+.bib{border-radius:6px 6px 0 0}
+.panel-lbl{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:22px}
+.panel-lbl h3{font-family:var(--disp);font-weight:800;font-size:15px;letter-spacing:0.14em;text-transform:uppercase}
+.panel-lbl .unit{font-family:var(--mono);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted)}
+.panel-lbl .unit b{color:var(--accent)}
+
+/* --- today's sessions checklist --- */
+.wk-sessions{display:flex;flex-direction:column}
+.wk-row{
+  display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:18px;
+  padding:15px 0;border-top:1px solid var(--hair);cursor:pointer;transition:opacity .2s;
+}
+.wk-row:first-child{border-top:none}
+.wk-check{
+  width:26px;height:26px;border:1.6px solid var(--muted-dim);border-radius:3px;flex:none;
+  display:flex;align-items:center;justify-content:center;transition:all .16s;position:relative;
+}
+.wk-check svg{width:15px;height:15px;stroke:#0d0d0f;stroke-width:3.4;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:22;stroke-dashoffset:22;transition:stroke-dashoffset .22s ease .04s}
+.wk-row.done .wk-check{background:var(--accent);border-color:var(--accent)}
+.wk-row.done .wk-check svg{stroke-dashoffset:0}
+.wk-day{font-family:var(--mono);font-size:11px;letter-spacing:0.13em;text-transform:uppercase;color:var(--muted);width:38px}
+.wk-info .nm{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:0.01em;transition:color .2s}
+.wk-info .mt{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px}
+.wk-info .mt .pace{color:var(--accent)}
+.wk-row.done .wk-info .nm{color:var(--muted)}
+.wk-row.done .wk-info .nm{text-decoration:line-through;text-decoration-color:var(--accent-dim)}
+.wk-load{
+  font-family:var(--mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;
+  padding:4px 8px;border-radius:2px;white-space:nowrap;
+}
+.wk-load.hard{color:var(--carb);border:1px solid var(--carb-dim)}
+.wk-load.easy{color:var(--muted);border:1px solid var(--hair-2)}
+.wk-load.rest{color:var(--muted-dim);border:1px solid var(--hair)}
+.wk-tick-fx{animation:tickpop .12s ease}
+@keyframes tickpop{0%{transform:scale(1)}45%{transform:scale(.9)}100%{transform:scale(1)}}
+
+/* --- fuel logger (the cross-domain reactor) --- */
+.fuel-panel{border-top:none}
+.fuel-hero{
+  display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;
+  padding:22px 24px;border-radius:5px;margin-bottom:22px;
+  border:1px solid var(--carb-dim);
+  background:linear-gradient(115deg,rgba(255,176,60,0.11),rgba(255,176,60,0.02) 75%);
+  transition:all .3s;
+}
+.fuel-hero.rest{border-color:var(--hair-2);background:rgba(255,255,255,0.02)}
+.fuel-hero .flag{}
+.fuel-hero .flag .lead{font-family:var(--mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.fuel-hero .flag .call{font-family:var(--disp);font-weight:900;font-size:clamp(20px,3.2vw,30px);letter-spacing:0.01em;line-height:1;color:var(--carb)}
+.fuel-hero.rest .flag .call{color:var(--muted)}
+.fuel-hero .flag .because{font-size:12.5px;color:var(--muted);margin-top:9px;max-width:42ch;line-height:1.5}
+.fuel-hero .flag .because b{color:var(--ink);font-weight:600}
+.fuel-target{text-align:right;flex:none}
+.fuel-target .k{font-family:var(--mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.fuel-target .v{font-family:var(--disp);font-weight:900;font-size:34px;letter-spacing:0.01em;line-height:1;color:var(--carb);font-variant-numeric:tabular-nums}
+.fuel-hero.rest .fuel-target .v{color:var(--ink)}
+.fuel-target .v small{font-family:var(--body);font-size:13px;font-weight:500;color:var(--muted)}
+
+.log-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:560px){.log-grid{grid-template-columns:1fr}}
+.logger .lg-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.logger .lg-head .t{font-family:var(--mono);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted)}
+.logger .lg-head .now{font-family:var(--disp);font-weight:800;font-size:15px}
+.logger .lg-head .now .tgt{color:var(--muted);font-weight:500;font-size:12px;font-family:var(--mono)}
+.pips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.pip{
+  flex:1;min-width:14px;height:30px;border-radius:2px;border:1px solid var(--hair-2);
+  background:rgba(255,255,255,0.03);cursor:pointer;transition:all .13s;
+}
+.pip:hover{border-color:var(--muted)}
+.pip.on{background:var(--carb);border-color:var(--carb);box-shadow:0 0 8px rgba(255,176,60,0.35)}
+.pip.on.over{background:var(--accent);border-color:var(--accent);box-shadow:0 0 8px rgba(255,90,60,0.35)}
+.logger .ctrl{display:flex;gap:8px}
+.logger .ctrl button{
+  flex:1;font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--muted);background:transparent;border:1px solid var(--hair-2);border-radius:2px;
+  padding:9px;cursor:pointer;transition:all .14s;
+}
+.logger .ctrl button:hover{color:var(--ink);border-color:var(--muted);background:rgba(255,255,255,0.03)}
+.logger .ctrl button.reset:hover{color:var(--accent);border-color:var(--accent-dim)}
+
+/* --- weekly volume chart --- */
+.chart{position:relative}
+.bars{display:flex;align-items:flex-end;gap:3px;height:150px;margin-bottom:12px}
+.bar-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:0;height:100%;position:relative;cursor:default}
+.bar{width:100%;max-width:26px;background:var(--muted-dim);border-radius:2px 2px 0 0;transition:height .5s cubic-bezier(.2,.7,.3,1),background .2s;position:relative}
+.bar-col.deload .bar{background:var(--carb-dim)}
+.bar-col.now .bar{background:var(--accent);box-shadow:0 0 12px rgba(255,90,60,0.45)}
+.bar-col:hover .bar{filter:brightness(1.25)}
+.bar-col .tip{
+  position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:10px;letter-spacing:0.04em;color:var(--ink);
+  background:#1c1c22;border:1px solid var(--hair-2);border-radius:3px;padding:4px 7px;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .15s;z-index:5;
+}
+.bar-col:hover .tip{opacity:1}
+.bars-axis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted-dim)}
+.bars-axis b{color:var(--accent)}
+
+/* --- PR / target board --- */
+.pr-board{display:flex;flex-direction:column}
+.pr-row{
+  display:grid;grid-template-columns:1fr auto 28px auto;align-items:center;gap:16px;
+  padding:13px 0;border-top:1px solid var(--hair);font-variant-numeric:tabular-nums;
+}
+.pr-row:first-child{border-top:none}
+.pr-row.hdr{padding:6px 0 12px}
+.pr-row.hdr span{font-family:var(--mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted-dim)}
+.pr-row .dist{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:0.03em}
+.pr-row .now{font-family:var(--mono);font-size:15px;color:var(--ink);text-align:right}
+.pr-row .arrow{color:var(--accent);text-align:center;font-family:var(--mono);font-size:14px}
+.pr-row .goal{font-family:var(--mono);font-size:15px;color:var(--accent);text-align:right;font-weight:500}
+
+/* --- streak --- */
+.streak-row{display:grid;grid-template-columns:auto 1fr;gap:32px;align-items:center}
+.streak-num{display:flex;align-items:baseline;gap:12px}
+.streak-num .big{font-family:var(--disp);font-weight:900;font-size:clamp(44px,7vw,66px);line-height:.85;letter-spacing:0.01em;font-variant-numeric:tabular-nums}
+.streak-num .big.pulse{animation:pulse .16s ease}
+@keyframes pulse{0%{color:var(--ink)}40%{color:var(--accent);transform:scale(1.06)}100%{color:var(--ink);transform:scale(1)}}
+.streak-num .lbl{font-family:var(--mono);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);line-height:1.4}
+.streak-num .lbl b{color:var(--ink)}
+.momentum{display:flex;gap:7px;flex-wrap:wrap}
+.dot{width:13px;height:13px;border-radius:50%;background:transparent;border:1.6px solid var(--muted-dim);transition:all .2s}
+.dot.on{background:var(--accent);border-color:var(--accent);box-shadow:0 0 7px rgba(255,90,60,0.4)}
+
+/* footer */
+.foot{padding:38px 0 60px;text-align:center;border-top:1px solid var(--hair);margin-top:8px}
+.foot .made{font-family:var(--mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted-dim)}
+.foot .made b{color:var(--muted)}
+.foot .local{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;color:var(--muted-dim);margin-top:10px}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(18px)}
+.reveal.in{opacity:1;transform:none;transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.3,1)}
+
+@media(prefers-reduced-motion:reduce){
+  *{transition:none !important;animation:none !important;scroll-behavior:auto !important}
+  .reveal{opacity:1;transform:none}
+}
+@media(max-width:760px){
+  .hero-top{grid-template-columns:1fr}
+  .hero-l{border-right:none;border-bottom:1px solid var(--hair)}
+  .bib-grid{grid-template-columns:1fr;gap:26px}
+  .panel,.hero-l,.hero-r,.bib,.hero-cross,.assumed{padding-left:26px;padding-right:26px}
+  .streak-row{grid-template-columns:1fr;gap:20px}
+  .sec-head{gap:14px}
+  .week-head{grid-template-columns:auto 1fr auto;gap:12px}
+  .week-vol{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ STICKY TICKER ============ -->
+<div class="ticker">
+  <div class="ticker-in">
+    <span class="mark">RACE<b>BUILD</b>+FUEL</span>
+    <span class="sep hide-sm"></span>
+    <span class="stat"><span class="k">T-minus</span><span class="v accent" id="tk-days">—</span></span>
+    <span class="sep hide-sm"></span>
+    <span class="stat hide-sm"><span class="k">Streak</span><span class="v" id="tk-streak">—</span></span>
+    <span class="sep hide-sm"></span>
+    <span class="stat hide-sm"><span class="k">Wk</span><span class="v" id="tk-week">—</span></span>
+    <nav class="nav">
+      <a href="#goals">01</a>
+      <a href="#program">02</a>
+      <a href="#dash" class="on">03</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ============ 01 · GOALS ============ -->
+<section id="goals">
+  <div class="hero reveal">
+    <div class="hero-top">
+      <div class="hero-l">
+        <div class="eyebrow">Build 001 · Road half-marathon</div>
+        <h1>SUB<span class="fade">-</span>1:45<br>OVER 21.1<span class="fade">KM</span></h1>
+        <p class="sub">A <b>12-week periodised build</b> to the start line — with the plate engineered into it. One coach holds both, so the carbs land where the kilometres are.</p>
+      </div>
+      <div class="hero-r">
+        <div class="datum"><div class="k">The race</div><div class="v">Autumn Half <small>· road, flat</small></div></div>
+        <div class="datum"><div class="k">Start line</div><div class="v accent" id="race-date-txt">—</div></div>
+        <div class="datum"><div class="k">Current level</div><div class="v">10K in 48:30 <small>· ~25 km/wk</small></div></div>
+        <div class="datum"><div class="k">Time budget</div><div class="v">4 runs <small>· ~4h/week</small></div></div>
+      </div>
+    </div>
+
+    <div class="hero-cross">
+      <span class="badge">Fuel × Training</span>
+      <p><b>Why one tracker, not two.</b> The plan and the plate are the same document: long-run weeks pull carbohydrate up, deload weeks pull it back, and every hard session carries its own fuelling note. Four separate coaches would contradict each other on the same Sunday.</p>
+    </div>
+
+    <div class="assumed">
+      <div class="lead">What I assumed — redirect any of these and I rebuild in place</div>
+      <div class="chips">
+        <span class="chip"><b>Goal</b> · finish sub-1:45</span>
+        <span class="chip"><b>Base</b> · 10K done, ~25 km/wk</span>
+        <span class="chip"><b>Days</b> · Tue / Thu / Sat / Sun</span>
+        <span class="chip"><b>Long run</b> · Sunday</span>
+        <span class="chip"><b>Deloads</b> · wk 4 &amp; 8</span>
+        <span class="chip"><b>Peak</b> · ~48 km/wk</span>
+        <span class="chip"><b>Taper</b> · 2 weeks</span>
+        <span class="chip"><b>Diet</b> · omnivore, no allergies</span>
+        <span class="chip"><b>Fuel base</b> · ~2,300 kcal maintenance</span>
+      </div>
+    </div>
+  </div>
+
+  <details class="about">
+    <summary>About this tracker <span class="tag">Why · Context · How · Assumed</span></summary>
+    <div class="about-body">
+      <div class="about-grid">
+        <div class="cell">
+          <h4>Why</h4>
+          <p>You committed to a <b>half-marathon</b> and asked me to coach the running <em>and</em> the eating together. This is the flagship of the merged Coach: one plan where fuel is woven into the training, proving a single coach who holds both domains beats four who each see half the picture.</p>
+        </div>
+        <div class="cell">
+          <h4>Context</h4>
+          <p>A <b>12-week periodised build</b> from a ~25 km/week base to a sub-1:45 finish. Four runs a week (~4h), Sunday long run, deload weeks at 4 and 8, a two-week taper into race day. Fuelling scales to the week's load — carbs up around long runs, dialled back on rest.</p>
+        </div>
+        <div class="cell">
+          <h4>How to use it</h4>
+          <p>Open it daily. <b>Tick this week's sessions</b> as you run them (streak grows, volume chart fills). Each morning, read the <b>fuel flag</b> — it reacts to the day's training load — then log carbs and water with the pips. Everything saves on this device.</p>
+        </div>
+        <div class="cell">
+          <h4>What I assumed</h4>
+          <p>Base of a 48:30 10K, no allergies, ~2,300 kcal maintenance, Tue/Thu/Sat/Sun schedule. Paces are targets, not gospel. <b>I coach plans, not medicine</b> — real pain (not soreness) or any symptom means stop and see a physio or GP, not push through.</p>
+        </div>
+      </div>
+    </div>
+  </details>
+</section>
+
+<!-- ============ 02 · PROGRAM ============ -->
+<section id="program">
+  <div class="sec-head reveal">
+    <div class="numeral">02</div>
+    <div class="lbl">
+      <div class="kicker">The build · 12 weeks</div>
+      <h2>Periodised to the line</h2>
+      <p>Base → build → peak → taper. Expand a week for its sessions; expand a session for warm-up, main set, cool-down and its fuel note. Deload weeks pull the volume — and the carbs — back down.</p>
+    </div>
+    <button class="toggle" data-collapse="program-body">Collapse</button>
+  </div>
+
+  <div class="body" id="program-body">
+    <div class="phase-legend reveal">
+      <span class="leg"><span class="sw" style="background:var(--muted)"></span>Base</span>
+      <span class="leg"><span class="sw" style="background:var(--accent)"></span>Build</span>
+      <span class="leg"><span class="sw" style="background:#ff8a3c"></span>Peak</span>
+      <span class="leg"><span class="sw" style="background:var(--carb)"></span>Deload / Taper</span>
+      <span class="leg"><span class="sw" style="background:var(--carb);border-radius:50%;width:9px;height:9px"></span>= session carries a fuel note</span>
+    </div>
+    <div id="weeks" class="reveal"></div>
+  </div>
+</section>
+
+<!-- ============ 03 · DASHBOARD (SCOREBOARD) ============ -->
+<section id="dash">
+  <div class="sec-head reveal">
+    <div class="numeral">03</div>
+    <div class="lbl">
+      <div class="kicker">Race day · live</div>
+      <h2>The scoreboard</h2>
+      <p>Countdown, this week's sessions, volume, streak — and the fuel logger that reads today's training load and tells you when to carb up.</p>
+    </div>
+  </div>
+
+  <div class="board reveal">
+
+    <!-- countdown bib -->
+    <div class="bib">
+      <div class="bib-grid">
+        <div class="bib-num">
+          <span class="big" id="cd-days">—</span>
+          <span class="of"><span class="rule"></span>DAYS TO GO<span id="cd-of"></span></span>
+        </div>
+        <div class="bib-side">
+          <div class="race">RACE · <b>Autumn Half</b> · 21.1 KM</div>
+          <div class="date" id="cd-date">—</div>
+          <div class="bib-progress">
+            <div class="bar"><div class="fill" id="cd-fill" style="width:0%"></div></div>
+            <div class="cap"><span>WK 01 · BASE</span><span id="cd-pct">—</span><span>RACE DAY</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- this week's sessions -->
+    <div class="panel">
+      <div class="panel-lbl">
+        <h3>This Week</h3>
+        <span class="unit">Week <b id="wk-now">—</b> · tap to log</span>
+      </div>
+      <div class="wk-sessions" id="wk-list"></div>
+    </div>
+
+    <!-- FUEL LOGGER — the cross-domain reactor -->
+    <div class="panel fuel-panel">
+      <div class="panel-lbl">
+        <h3>Fuel <span style="color:var(--carb)">×</span> Load</h3>
+        <span class="unit" id="fuel-load-tag">TODAY · —</span>
+      </div>
+
+      <div class="fuel-hero" id="fuel-hero">
+        <div class="flag">
+          <div class="lead">Today's call — reads your training load</div>
+          <div class="call" id="fuel-call">—</div>
+          <div class="because" id="fuel-because">—</div>
+        </div>
+        <div class="fuel-target">
+          <div class="k">Carb target</div>
+          <div class="v"><span id="fuel-carb-g">—</span><small>g</small></div>
+        </div>
+      </div>
+
+      <div class="log-grid">
+        <div class="logger">
+          <div class="lg-head">
+            <span class="t">Carbs logged</span>
+            <span class="now"><span id="carb-have">0</span><span class="tgt"> / <span id="carb-goal">—</span> g</span></span>
+          </div>
+          <div class="pips" id="carb-pips"></div>
+          <div class="ctrl">
+            <button data-log="carb" data-amt="30">+30 g</button>
+            <button data-log="carb" data-amt="60">+60 g</button>
+            <button class="reset" data-reset="carb">Reset</button>
+          </div>
+        </div>
+
+        <div class="logger">
+          <div class="lg-head">
+            <span class="t">Hydration</span>
+            <span class="now"><span id="water-have">0.0</span><span class="tgt"> / <span id="water-goal">—</span> L</span></span>
+          </div>
+          <div class="pips" id="water-pips"></div>
+          <div class="ctrl">
+            <button data-log="water" data-amt="0.25">+250 ml</button>
+            <button data-log="water" data-amt="0.5">+500 ml</button>
+            <button class="reset" data-reset="water">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- weekly volume chart -->
+    <div class="panel">
+      <div class="panel-lbl">
+        <h3>Weekly Volume</h3>
+        <span class="unit">Kilometres · <b>planned build</b></span>
+      </div>
+      <div class="chart">
+        <div class="bars" id="vol-bars"></div>
+        <div class="bars-axis">
+          <span>WK 01 · <b id="vol-now-lbl">—</b></span>
+          <span>WK 12 · RACE</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PR / target board -->
+    <div class="panel">
+      <div class="panel-lbl">
+        <h3>Targets</h3>
+        <span class="unit">Now <b>→</b> race goal</span>
+      </div>
+      <div class="pr-board">
+        <div class="pr-row hdr"><span>Distance</span><span style="text-align:right">Now</span><span></span><span style="text-align:right">Goal</span></div>
+        <div class="pr-row"><span class="dist">5K</span><span class="now">23:20</span><span class="arrow">→</span><span class="goal">22:15</span></div>
+        <div class="pr-row"><span class="dist">10K</span><span class="now">48:30</span><span class="arrow">→</span><span class="goal">46:40</span></div>
+        <div class="pr-row"><span class="dist">SEMI</span><span class="now">—</span><span class="arrow">→</span><span class="goal">1:45:00</span></div>
+        <div class="pr-row"><span class="dist">PACE</span><span class="now">4:52/km</span><span class="arrow">→</span><span class="goal">4:58/km</span></div>
+      </div>
+    </div>
+
+    <!-- streak -->
+    <div class="panel">
+      <div class="panel-lbl">
+        <h3>Consistency</h3>
+        <span class="unit">Sessions hit, back-to-back</span>
+      </div>
+      <div class="streak-row">
+        <div class="streak-num">
+          <span class="big" id="streak-big">00</span>
+          <span class="lbl">SESSION<br>STREAK<br><b id="streak-done">0</b> done total</span>
+        </div>
+        <div class="momentum" id="momentum"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="foot reveal">
+    <div class="made">Made with <b>Split</b> · Coach — Race Build + Fuel</div>
+    <div class="local">Stays on this device · localStorage · no account, no cloud</div>
+  </div>
+</section>
+
+</div>
+
+<script>
+"use strict";
+(function(){
+  const SLUG = "race-fuel";
+  const K = {
+    first: `split.${SLUG}.firstOpen`,
+    done:  `split.${SLUG}.done`,        // {weekIdx: [sessionKeys]}
+    streak:`split.${SLUG}.streak`,
+    fuel:  `split.${SLUG}.fuel`,        // { "YYYY-MM-DD": {carb, water} }
+    race:  `split.${SLUG}.raceDate`,
+    last:  `split.${SLUG}.lastSection`
+  };
+  const load = (k,d)=>{ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v);}catch(e){return d;} };
+  const save = (k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} };
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---- Race date: default = 84 days from first open, then frozen ----
+  let raceISO = load(K.race, null);
+  if(!raceISO){
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+84);
+    raceISO = d.toISOString().slice(0,10); save(K.race, raceISO);
+  }
+  const raceDate = new Date(raceISO+"T00:00:00");
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dayMs = 86400000;
+  const totalPlan = 84; // 12 weeks
+  const daysToGo = Math.max(0, Math.round((raceDate - today)/dayMs));
+  const elapsed = Math.min(totalPlan, Math.max(0, totalPlan - daysToGo));
+  const weekNow = Math.min(12, Math.max(1, Math.ceil((elapsed+0.001)/7)));
+  const pct = Math.min(100, Math.round((elapsed/totalPlan)*100));
+  const todayKey = today.toISOString().slice(0,10);
+
+  const fmtDate = d => d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",year:"numeric"}).toUpperCase();
+
+  // ================= THE 12-WEEK PLAN =================
+  // load: rest | easy | mod | hard  (drives fuel reactor)
+  // fuel: string note attached to key sessions (null = none)
+  const DAYS = ["Tue","Thu","Sat","Sun"];
+  const P = [
+    {ph:"Base", cls:"var(--muted)", vol:26, focus:"Ease in · settle the aerobic base",
+      s:[
+        {d:"Tue",n:"Easy footing",t:"Recovery",km:6,rpe:3,pace:"5:45/km",zone:"Z2 · 130-145 bpm",load:"easy",
+          wu:"5' brisk walk + drills",mn:"6 km conversational, nose-breathing pace",cd:"5' walk + calf stretch",fuel:null},
+        {d:"Thu",n:"Tempo intro",t:"Threshold",km:7,rpe:6,pace:"5:00/km",zone:"Z3-4",load:"mod",
+          wu:"10' easy + 4×20s strides",mn:"2 × 8' at threshold, 3' float between",cd:"10' easy",
+          fuel:{icon:"PRE",g:40,txt:"Light carb 60-90' before — a banana + toast. Threshold runs on glycogen, don't start empty."}},
+        {d:"Sat",n:"Easy + strides",t:"Aerobic",km:6,rpe:4,pace:"5:40/km",zone:"Z2",load:"easy",
+          wu:"5' walk",mn:"6 km easy, last 2 km with 4×15s strides",cd:"mobility 5'",fuel:null},
+        {d:"Sun",n:"Long run",t:"Endurance",km:11,rpe:5,pace:"5:35/km",zone:"Z2",load:"hard",
+          wu:"start easy, no drills",mn:"11 km steady, hold pace on the second half",cd:"walk 5' + protein within 30'",
+          fuel:{icon:"DUR+POST",g:90,txt:"Carb-load the night before (pasta/rice). Sip water hourly; no gel needed under 75'. Recovery: 3:1 carb:protein within 30' — the refuel window is real."}}
+      ]},
+    {ph:"Base", cls:"var(--muted)", vol:30, focus:"Add volume · extend the long run",
+      s:[
+        {d:"Tue",n:"Easy footing",t:"Recovery",km:7,rpe:3,pace:"5:45/km",zone:"Z2",load:"easy",
+          wu:"walk + drills",mn:"7 km conversational",cd:"stretch",fuel:null},
+        {d:"Thu",n:"Threshold",t:"Threshold",km:8,rpe:6,pace:"4:58/km",zone:"Z4",load:"mod",
+          wu:"10' + strides",mn:"3 × 7' threshold, 2' float",cd:"10' easy",
+          fuel:{icon:"PRE",g:45,txt:"Carb snack 90' prior. Quality sessions want topped-up glycogen or the last rep falls apart."}},
+        {d:"Sat",n:"Easy + strides",t:"Aerobic",km:6,rpe:4,pace:"5:40/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"6 km + 5×15s strides",cd:"mobility",fuel:null},
+        {d:"Sun",n:"Long run",t:"Endurance",km:13,rpe:5,pace:"5:30/km",zone:"Z2",load:"hard",
+          wu:"easy start",mn:"13 km steady",cd:"walk + refuel",
+          fuel:{icon:"DUR+POST",g:100,txt:"Practise race-day breakfast 2-3h before. One gel at 60'. Recovery meal within 30': rice bowl + eggs."}}
+      ]},
+    {ph:"Base", cls:"var(--muted)", vol:33, focus:"Introduce race-pace touches",
+      s:[
+        {d:"Tue",n:"Easy footing",t:"Recovery",km:7,rpe:3,pace:"5:45/km",zone:"Z2",load:"easy",
+          wu:"walk + drills",mn:"7 km easy",cd:"stretch",fuel:null},
+        {d:"Thu",n:"Race-pace intro",t:"Specific",km:8,rpe:7,pace:"4:58/km",zone:"Z4",load:"mod",
+          wu:"12' + strides",mn:"5 km at half-marathon goal pace (4:58), then 1 km easy",cd:"10'",
+          fuel:{icon:"PRE",g:45,txt:"Fuel this like a rehearsal: race breakfast, race shoes. Goal-pace work teaches the gut to run fed."}},
+        {d:"Sat",n:"Easy",t:"Aerobic",km:7,rpe:4,pace:"5:40/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"7 km easy + strides",cd:"mobility",fuel:null},
+        {d:"Sun",n:"Long run",t:"Endurance",km:15,rpe:6,pace:"5:28/km",zone:"Z2-3",load:"hard",
+          wu:"easy start",mn:"15 km, final 3 km at goal pace",cd:"walk + refuel",
+          fuel:{icon:"DUR+POST",g:110,txt:"Long-run fuelling now matters: 30-45 g carb/hour from ~60'. Two gels. Big carb + protein recovery meal."}}
+      ]},
+    {ph:"Deload", cls:"var(--carb)", vol:24, focus:"Deload · absorb the base block", deload:true,
+      s:[
+        {d:"Tue",n:"Easy footing",t:"Recovery",km:5,rpe:3,pace:"5:50/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"5 km very easy",cd:"stretch",fuel:null},
+        {d:"Thu",n:"Short tempo",t:"Threshold",km:6,rpe:5,pace:"5:05/km",zone:"Z3",load:"mod",
+          wu:"10'",mn:"2 × 6' threshold, 3' float",cd:"8'",fuel:null},
+        {d:"Sat",n:"Rest / cross",t:"Recovery",km:0,rpe:2,pace:"—",zone:"Optional easy spin",load:"rest",
+          wu:"—",mn:"Full rest or 30' easy bike/swim",cd:"mobility",
+          fuel:{icon:"HOLD",g:0,txt:"Deload week — pull carbs back toward maintenance. Lower load means lower glycogen demand; don't over-fuel a rest day."}},
+        {d:"Sun",n:"Long run (cut)",t:"Endurance",km:12,rpe:4,pace:"5:35/km",zone:"Z2",load:"hard",
+          wu:"easy",mn:"12 km relaxed — no goal-pace work",cd:"walk + refuel",
+          fuel:{icon:"DUR",g:70,txt:"Shorter long run, lighter fuelling: one gel, water. Recovery meal still standard."}}
+      ]},
+    {ph:"Build", cls:"var(--accent)", vol:36, focus:"Build · sharpen at threshold",
+      s:[
+        {d:"Tue",n:"Easy footing",t:"Recovery",km:8,rpe:3,pace:"5:40/km",zone:"Z2",load:"easy",
+          wu:"walk + drills",mn:"8 km easy",cd:"stretch",fuel:null},
+        {d:"Thu",n:"Threshold blocks",t:"Threshold",km:9,rpe:7,pace:"4:55/km",zone:"Z4",load:"hard",
+          wu:"12' + strides",mn:"4 × 8' threshold, 2' float",cd:"10'",
+          fuel:{icon:"PRE",g:50,txt:"Hard threshold day — carb up beforehand (oats + honey) and refuel within 30'. This is a big glycogen hit."}},
+        {d:"Sat",n:"Easy + hills",t:"Strength",km:7,rpe:5,pace:"5:35/km",zone:"Z2-3",load:"mod",
+          wu:"walk",mn:"7 km with 6×20s uphill strides",cd:"mobility",fuel:null},
+        {d:"Sun",n:"Long run",t:"Endurance",km:16,rpe:6,pace:"5:25/km",zone:"Z2-3",load:"hard",
+          wu:"easy start",mn:"16 km, middle 6 km at goal pace",cd:"walk + refuel",
+          fuel:{icon:"DUR+POST",g:120,txt:"Dial the race plan: same breakfast, 40 g carb/hour, gels at 45/90'. Recovery is a full meal, not a snack."}}
+      ]},
+    {ph:"Build", cls:"var(--accent)", vol:39, focus:"Build · race-pace volume climbs",
+      s:[
+        {d:"Tue",n:"Easy footing",t:"Recovery",km:8,rpe:3,pace:"5:40/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"8 km easy",cd:"stretch",fuel:null},
+        {d:"Thu",n:"Goal-pace reps",t:"Specific",km:9,rpe:7,pace:"4:56/km",zone:"Z4",load:"hard",
+          wu:"12' + strides",mn:"6 km at goal pace, broken 3×2 km with 90s jog",cd:"10'",
+          fuel:{icon:"PRE",g:50,txt:"Rehearse race fuelling: eat what you'll eat on the day, 2-3h prior. A gel mid-session if it runs long."}},
+        {d:"Sat",n:"Easy",t:"Aerobic",km:7,rpe:4,pace:"5:35/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"7 km + strides",cd:"mobility",fuel:null},
+        {d:"Sun",n:"Long run",t:"Endurance",km:18,rpe:7,pace:"5:22/km",zone:"Z2-3",load:"hard",
+          wu:"easy start",mn:"18 km, final 5 km at goal pace — the key session",cd:"walk + refuel",
+          fuel:{icon:"DUR+POST",g:130,txt:"The rehearsal long run. Carb-load the day before. 40-50 g carb/hour, gels at 45/90/120'. This is where the gut is trained — nail it here so race day is boring."}}
+      ]},
+    {ph:"Peak", cls:"#ff8a3c", vol:44, focus:"Peak · highest volume, race-specific",
+      s:[
+        {d:"Tue",n:"Easy footing",t:"Recovery",km:9,rpe:3,pace:"5:40/km",zone:"Z2",load:"easy",
+          wu:"walk + drills",mn:"9 km easy",cd:"stretch",fuel:null},
+        {d:"Thu",n:"Threshold + pace",t:"Specific",km:10,rpe:8,pace:"4:54/km",zone:"Z4-5",load:"hard",
+          wu:"15' + strides",mn:"3 × 6' threshold, then 3 km at goal pace",cd:"10'",
+          fuel:{icon:"PRE",g:55,txt:"Peak week, hardest quality session — top glycogen high the day before and the morning of. Refuel aggressively after."}},
+        {d:"Sat",n:"Easy + strides",t:"Aerobic",km:6,rpe:4,pace:"5:35/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"6 km + 6×15s strides",cd:"mobility",fuel:null},
+        {d:"Sun",n:"Peak long run",t:"Endurance",km:19,rpe:7,pace:"5:20/km",zone:"Z2-3",load:"hard",
+          wu:"easy start",mn:"19 km — longest of the block, final 4 km at goal pace",cd:"walk + full refuel",
+          fuel:{icon:"DUR+POST",g:135,txt:"Peak volume Sunday. Full race-day fuel rehearsal, one last time: breakfast, gels, hydration exactly as planned. Recovery: big carb+protein meal, then nap."}}
+      ]},
+    {ph:"Deload", cls:"var(--carb)", vol:30, focus:"Deload · unload before the taper", deload:true,
+      s:[
+        {d:"Tue",n:"Easy footing",t:"Recovery",km:6,rpe:3,pace:"5:50/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"6 km very easy",cd:"stretch",fuel:null},
+        {d:"Thu",n:"Short sharp",t:"Specific",km:7,rpe:6,pace:"4:56/km",zone:"Z4",load:"mod",
+          wu:"12' + strides",mn:"3 × 2 km at goal pace, 2' jog — keep the legs fast",cd:"10'",fuel:null},
+        {d:"Sat",n:"Rest / cross",t:"Recovery",km:0,rpe:2,pace:"—",zone:"Optional easy spin",load:"rest",
+          wu:"—",mn:"Rest or 30' easy bike",cd:"mobility",
+          fuel:{icon:"HOLD",g:0,txt:"Deload — carbs back to maintenance on the rest day. You're absorbing the peak block, not building. Sleep is the priority nutrient this week."}},
+        {d:"Sun",n:"Long run (cut)",t:"Endurance",km:14,rpe:5,pace:"5:30/km",zone:"Z2",load:"hard",
+          wu:"easy",mn:"14 km relaxed",cd:"walk + refuel",
+          fuel:{icon:"DUR",g:80,txt:"Reduced long run: one gel, steady water. Standard recovery meal."}}
+      ]},
+    {ph:"Peak", cls:"#ff8a3c", vol:40, focus:"Sharpen · last hard week",
+      s:[
+        {d:"Tue",n:"Easy footing",t:"Recovery",km:8,rpe:3,pace:"5:40/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"8 km easy",cd:"stretch",fuel:null},
+        {d:"Thu",n:"Goal-pace tune",t:"Specific",km:9,rpe:7,pace:"4:55/km",zone:"Z4",load:"hard",
+          wu:"12' + strides",mn:"5 km at goal pace continuous — feel the rhythm",cd:"10'",
+          fuel:{icon:"PRE",g:50,txt:"Last real quality session. Fuel it fully; this locks in the fed-running pattern for race day."}},
+        {d:"Sat",n:"Easy + strides",t:"Aerobic",km:6,rpe:4,pace:"5:35/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"6 km + strides",cd:"mobility",fuel:null},
+        {d:"Sun",n:"Long run",t:"Endurance",km:17,rpe:6,pace:"5:25/km",zone:"Z2-3",load:"hard",
+          wu:"easy start",mn:"17 km, final 4 km at goal pace",cd:"walk + refuel",
+          fuel:{icon:"DUR+POST",g:120,txt:"Final long run over 15 km. Full fuel rehearsal. After this, volume drops and carbs stay high while training falls — that's the taper trick."}}
+      ]},
+    {ph:"Taper", cls:"var(--carb)", vol:30, focus:"Taper 1 · volume down, legs fresh", deload:true,
+      s:[
+        {d:"Tue",n:"Easy footing",t:"Recovery",km:6,rpe:3,pace:"5:45/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"6 km easy",cd:"stretch",fuel:null},
+        {d:"Thu",n:"Pace touches",t:"Specific",km:7,rpe:6,pace:"4:56/km",zone:"Z4",load:"mod",
+          wu:"12' + strides",mn:"3 × 1.5 km at goal pace, 2' jog",cd:"10'",fuel:null},
+        {d:"Sat",n:"Easy + strides",t:"Aerobic",km:5,rpe:4,pace:"5:40/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"5 km + 4×15s strides",cd:"mobility",fuel:null},
+        {d:"Sun",n:"Medium-long",t:"Endurance",km:14,rpe:5,pace:"5:30/km",zone:"Z2",load:"hard",
+          wu:"easy start",mn:"14 km steady, relaxed",cd:"walk + refuel",
+          fuel:{icon:"CARB-UP",g:100,txt:"Taper paradox: training drops but keep carbs UP. Falling mileage + steady carbs = glycogen supercompensation. You're filling the tank, not building fitness."}}
+      ]},
+    {ph:"Taper", cls:"var(--carb)", vol:22, focus:"Taper 2 · minimal volume, maximum freshness", deload:true,
+      s:[
+        {d:"Tue",n:"Easy footing",t:"Recovery",km:5,rpe:3,pace:"5:45/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"5 km easy",cd:"stretch",fuel:null},
+        {d:"Thu",n:"Sharpener",t:"Specific",km:5,rpe:6,pace:"4:58/km",zone:"Z4",load:"mod",
+          wu:"12' + strides",mn:"3 × 1 km at goal pace, 2' jog — snappy, then done",cd:"8'",fuel:null},
+        {d:"Sat",n:"Shakeout",t:"Recovery",km:4,rpe:3,pace:"5:45/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"4 km very easy + 4 strides",cd:"mobility",fuel:null},
+        {d:"Sun",n:"Easy pre-race",t:"Recovery",km:6,rpe:3,pace:"5:40/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"6 km relaxed, legs just ticking over",cd:"stretch",
+          fuel:{icon:"LOAD",g:110,txt:"Race is next Sunday. Carb-load Fri-Sat: bump carbs to ~8 g/kg, mostly from familiar foods. Hydrate steadily, add a pinch of salt. Nothing new, nothing risky."}}
+      ]},
+    {ph:"Race", cls:"var(--accent)", vol:26, focus:"Race week · rest, load, run", deload:true,
+      s:[
+        {d:"Tue",n:"Easy shakeout",t:"Recovery",km:5,rpe:3,pace:"5:45/km",zone:"Z2",load:"easy",
+          wu:"walk",mn:"5 km easy + 3 strides",cd:"stretch",fuel:null},
+        {d:"Thu",n:"Primer",t:"Specific",km:4,rpe:5,pace:"4:58/km",zone:"Z4",load:"mod",
+          wu:"10' + strides",mn:"3 × 400 m at goal pace — wake the legs, then rest",cd:"8'",fuel:null},
+        {d:"Sat",n:"Rest + prep",t:"Recovery",km:0,rpe:1,pace:"—",zone:"Full rest",load:"rest",
+          wu:"—",mn:"Off legs. Lay out kit, pin the bib, plan breakfast timing",cd:"early night",
+          fuel:{icon:"LOAD",g:120,txt:"Race-eve: high-carb dinner you've eaten before (pasta/rice, low fibre, low fat). Hydrate through the day, ease off by evening. No alcohol, no new foods."}},
+        {d:"Sun",n:"RACE — Half Marathon",t:"21.1 KM",km:21.1,rpe:9,pace:"4:58/km",zone:"Goal: sub-1:45",load:"hard",
+          wu:"race warm-up: 10' easy + 4 strides, arrive fuelled",mn:"Even splits at 4:58/km. Hold back the first 5 km, work the middle, empty the tank from km 16.",cd:"walk, refuel, celebrate",
+          fuel:{icon:"RACE",g:145,txt:"Breakfast 2.5-3h prior: the exact meal you rehearsed (~100 g carb). Gel + water at 5, 10, 15 km. Sip at every station. This is the plan you practised eight times — trust it, change nothing."}}
+      ]}
+  ];
+
+  // ================= RENDER: 02 PROGRAM =================
+  const weeksEl = document.getElementById("weeks");
+  P.forEach((wk,i)=>{
+    const wn = i+1;
+    const div = document.createElement("div");
+    div.className = "week" + (wn===weekNow ? " open" : "");
+    const deload = wk.deload ? `<span class="deload-tag">${wk.ph==="Taper"||wk.ph==="Race"?wk.ph:"Deload"}</span>` : "";
+    const sessHtml = wk.s.map(s=>{
+      const keyDot = (s.load==="hard"||s.fuel) ? " key" : "";
+      const fuelBlock = s.fuel ? `
+        <div class="fuel-attach">
+          <span class="ficon">${s.fuel.icon}${s.fuel.g>0?` · ${s.fuel.g}G`:``}</span>
+          <div class="ftext">${s.fuel.txt}</div>
+        </div>` : "";
+      const kmLbl = s.km>0 ? `<b>${s.km}</b> km` : `<b>rest</b>`;
+      return `
+      <div class="sess${keyDot}">
+        <div class="sess-head">
+          <span class="sess-day">${s.d}</span>
+          <span class="sess-name">${s.n}<span class="type">${s.t}</span></span>
+          <span class="sess-meta">${kmLbl} · RPE ${s.rpe}</span>
+        </div>
+        <div class="sess-detail">
+          <div class="phase-row"><span class="pk">Warm-up</span><span class="pv">${s.wu}</span></div>
+          <div class="phase-row"><span class="pk">Main</span><span class="pv">${s.mn} ${s.pace!=="—"?`<span class="pace">· ${s.pace}</span>`:``} ${s.zone?`<span class="pace">· ${s.zone}</span>`:``}</span></div>
+          <div class="phase-row"><span class="pk">Cool-down</span><span class="pv">${s.cd}</span></div>
+          ${fuelBlock}
+        </div>
+      </div>`;
+    }).join("");
+    div.innerHTML = `
+      <div class="week-head">
+        <span class="week-no">${String(wn).padStart(2,"0")}<small>WEEK</small></span>
+        <span class="week-title"><span class="ph" style="color:${wk.cls}">${wk.ph}</span><span class="focus">${wk.focus}</span></span>
+        <span class="week-vol">${wk.vol}<small>KM / WK</small></span>
+        ${deload || '<span></span>'}
+        <span class="week-caret">▸</span>
+      </div>
+      <div class="week-body">${sessHtml}</div>`;
+    weeksEl.appendChild(div);
+
+    div.querySelector(".week-head").addEventListener("click",()=>div.classList.toggle("open"));
+    div.querySelectorAll(".sess-head").forEach(sh=>{
+      sh.addEventListener("click",()=>sh.parentElement.classList.toggle("open"));
+    });
+  });
+
+  // ================= 03 DASHBOARD =================
+  // ---- countdown / ticker ----
+  document.getElementById("cd-days").textContent = String(daysToGo).padStart(3,"0");
+  document.getElementById("cd-of").textContent = "";
+  document.getElementById("cd-date").textContent = fmtDate(raceDate);
+  document.getElementById("cd-pct").textContent = pct + "%";
+  document.getElementById("cd-fill").style.width = pct + "%";
+  document.getElementById("race-date-txt").textContent = fmtDate(raceDate).replace(/, /g," ");
+  document.getElementById("tk-days").textContent = "T-" + daysToGo;
+  document.getElementById("tk-week").textContent = weekNow + "/12";
+  document.getElementById("wk-now").textContent = String(weekNow).padStart(2,"0");
+  document.querySelector(".cap span:first-child").textContent = "WK 01 · BASE";
+
+  // ---- weekly volume chart (planned) ----
+  const volBars = document.getElementById("vol-bars");
+  const maxVol = Math.max(...P.map(w=>w.vol));
+  document.getElementById("vol-now-lbl").textContent = P[0].vol + " km";
+  P.forEach((wk,i)=>{
+    const wn = i+1;
+    const h = Math.round((wk.vol/maxVol)*100);
+    const col = document.createElement("div");
+    col.className = "bar-col" + (wk.deload?" deload":"") + (wn===weekNow?" now":"");
+    col.innerHTML = `<div class="tip">Wk ${wn} · ${wk.vol} km · ${wk.ph}</div><div class="bar" style="height:0%"></div>`;
+    volBars.appendChild(col);
+    requestAnimationFrame(()=>{ setTimeout(()=>{ col.querySelector(".bar").style.height = h+"%"; }, reduce?0:120+i*40); });
+  });
+
+  // ---- this week's sessions checklist ----
+  const doneStore = load(K.done, {});
+  const wkKey = "w" + weekNow;
+  if(!doneStore[wkKey]) doneStore[wkKey] = [];
+  const thisWeek = P[weekNow-1];
+  const wkList = document.getElementById("wk-list");
+  const loadLabel = {hard:"HARD",mod:"MODERATE",easy:"EASY",rest:"REST"};
+
+  function sessionUID(idx){ return "s"+idx; }
+
+  thisWeek.s.forEach((s,idx)=>{
+    const uid = sessionUID(idx);
+    const isDone = doneStore[wkKey].includes(uid);
+    const loadCls = (s.load==="hard")?"hard":(s.load==="rest")?"rest":"easy";
+    const row = document.createElement("div");
+    row.className = "wk-row" + (isDone?" done":"");
+    row.dataset.uid = uid;
+    const kmTxt = s.km>0 ? `${s.km} km` : "rest / cross";
+    row.innerHTML = `
+      <span class="wk-check"><svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"></polyline></svg></span>
+      <span class="wk-day">${s.d}</span>
+      <span class="wk-info"><span class="nm">${s.n}</span><span class="mt">${kmTxt} ${s.pace!=="—"?`· <span class="pace">${s.pace}</span>`:``} · RPE ${s.rpe}</span></span>
+      <span class="wk-load ${loadCls}">${loadLabel[s.load]}</span>`;
+    wkList.appendChild(row);
+    row.addEventListener("click",()=>toggleSession(row, uid));
+  });
+
+  function toggleSession(row, uid){
+    const arr = doneStore[wkKey];
+    const at = arr.indexOf(uid);
+    const chk = row.querySelector(".wk-check");
+    if(at>=0){ arr.splice(at,1); row.classList.remove("done"); }
+    else{
+      arr.push(uid); row.classList.add("done");
+      if(!reduce){ chk.classList.add("wk-tick-fx"); setTimeout(()=>chk.classList.remove("wk-tick-fx"),160); }
+    }
+    save(K.done, doneStore);
+    recomputeStreak();
+  }
+
+  // ---- streak (total completed sessions across all weeks) ----
+  function totalDone(){ return Object.values(doneStore).reduce((a,arr)=>a+arr.length,0); }
+  function recomputeStreak(){
+    const total = totalDone();
+    const prev = load(K.streak, 0);
+    save(K.streak, total);
+    const big = document.getElementById("streak-big");
+    big.textContent = String(total).padStart(2,"0");
+    document.getElementById("streak-done").textContent = total;
+    document.getElementById("tk-streak").textContent = String(total).padStart(2,"0");
+    // momentum dots: last up-to-9 of this week's slots
+    renderMomentum();
+    if(total>prev && !reduce){ big.classList.remove("pulse"); void big.offsetWidth; big.classList.add("pulse"); }
+  }
+  function renderMomentum(){
+    const mom = document.getElementById("momentum");
+    mom.innerHTML = "";
+    const slots = 9;
+    const doneCount = doneStore[wkKey].length;
+    // show this-week momentum: filled = sessions done this week, then carry from last weeks
+    const filled = Math.min(slots, totalDone());
+    for(let i=0;i<slots;i++){
+      const d = document.createElement("span");
+      d.className = "dot" + (i<filled?" on":"");
+      mom.appendChild(d);
+    }
+  }
+
+  // ================= FUEL LOGGER — CROSS-DOMAIN REACTOR =================
+  // Today's training load is derived from the plan: which session (if any) falls today,
+  // else the "headline" load of the week. Fuel targets react to that load.
+  const fuelStore = load(K.fuel, {});
+  if(!fuelStore[todayKey]) fuelStore[todayKey] = {carb:0, water:0};
+
+  // Determine today's load. Map JS weekday → our DAYS (Tue/Thu/Sat/Sun); else nearest driver.
+  const jsDay = today.getDay(); // 0 Sun .. 6 Sat
+  const dayMap = {2:"Tue",4:"Thu",6:"Sat",0:"Sun"};
+  let todaySess = null;
+  if(dayMap[jsDay]){ todaySess = thisWeek.s.find(s=>s.d===dayMap[jsDay]) || null; }
+  // headline load of the week = the hardest session's load
+  const weekHeadline = thisWeek.s.some(s=>s.load==="hard") ? "hard" : "mod";
+  const todayLoad = todaySess ? todaySess.load : "off";
+
+  // Fuel model — carb & water targets (grams / litres) by load.
+  // Base maintenance ~2300 kcal → ~280 g carb baseline; scales with load.
+  const FUEL = {
+    hard: {carb:360, water:3.0, call:"CARB UP TODAY", tint:false,
+      why:(s)=>`Hard session on the board${s?` — <b>${s.n}${s.km>0?` (${s.km} km)`:``}</b>`:``}. Push carbohydrate up: top glycogen before, refuel 3:1 carb:protein within 30' after. This is the day the running writes the menu.`},
+    mod:  {carb:320, water:2.6, call:"FUEL THE QUALITY", tint:false,
+      why:(s)=>`Quality work today${s?` — <b>${s.n}</b>`:``}. Moderate load: a solid carb snack 90' before keeps the last rep sharp. Normal recovery meal after.`},
+    easy: {carb:290, water:2.3, call:"STEADY FUELLING", tint:false,
+      why:(s)=>`Easy day${s?` — <b>${s.n}</b>`:``}. Hold carbs near maintenance; protein spread across meals for recovery. Nothing special needed.`},
+    rest: {carb:250, water:2.2, call:"EASE THE CARBS BACK", tint:true,
+      why:()=>`Rest / cross day. Pull carbohydrate back toward maintenance — low training load means low glycogen demand. Prioritise protein and sleep; don't over-fuel a day off.`},
+    off:  {carb:270, water:2.3, call:"MAINTENANCE DAY", tint:true,
+      why:()=>`No scheduled session today. Eat at maintenance, keep protein steady, stay hydrated. The plate follows the plan — and the plan is light today.`}
+  };
+  const fuelSpec = FUEL[todayLoad] || FUEL.off;
+  const carbGoal = fuelSpec.carb;
+  const waterGoal = fuelSpec.water;
+
+  // paint the flag
+  const heroEl = document.getElementById("fuel-hero");
+  if(fuelSpec.tint) heroEl.classList.add("rest");
+  document.getElementById("fuel-call").textContent = fuelSpec.call;
+  document.getElementById("fuel-because").innerHTML = fuelSpec.why(todaySess);
+  document.getElementById("fuel-carb-g").textContent = carbGoal;
+  document.getElementById("fuel-load-tag").innerHTML = `TODAY · <b style="color:${todayLoad==='hard'?'var(--carb)':'var(--muted)'}">${(loadLabel[todayLoad]||"OFF")}</b>`;
+  document.getElementById("carb-goal").textContent = carbGoal;
+  document.getElementById("water-goal").textContent = waterGoal.toFixed(1);
+
+  // ---- pips renderers ----
+  const CARB_PIPS = 12;   // each = carbGoal/12 grams
+  const WATER_PIPS = 10;  // each = waterGoal/10 litres
+  function renderPips(kind){
+    const rec = fuelStore[todayKey];
+    if(kind==="carb"){
+      const wrap = document.getElementById("carb-pips"); wrap.innerHTML="";
+      const per = carbGoal/CARB_PIPS;
+      const lit = rec.carb/per;
+      for(let i=0;i<CARB_PIPS;i++){
+        const p=document.createElement("div");
+        p.className="pip"+(i<Math.round(lit)?" on":"")+(i>=CARB_PIPS && i<lit?" over":"");
+        wrap.appendChild(p);
+      }
+      // over-target: mark full row in accent
+      if(rec.carb>=carbGoal){ wrap.querySelectorAll(".pip").forEach(p=>p.classList.add("on","over")); }
+      document.getElementById("carb-have").textContent = Math.round(rec.carb);
+    } else {
+      const wrap = document.getElementById("water-pips"); wrap.innerHTML="";
+      const per = waterGoal/WATER_PIPS;
+      const lit = rec.water/per;
+      for(let i=0;i<WATER_PIPS;i++){
+        const p=document.createElement("div");
+        p.className="pip"+(i<Math.round(lit)?" on":"");
+        wrap.appendChild(p);
+      }
+      if(rec.water>=waterGoal){ wrap.querySelectorAll(".pip").forEach(p=>p.classList.add("on")); }
+      document.getElementById("water-have").textContent = rec.water.toFixed(1);
+    }
+  }
+  renderPips("carb"); renderPips("water");
+
+  // ---- log buttons ----
+  document.querySelectorAll("[data-log]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const kind = btn.dataset.log;
+      const amt = parseFloat(btn.dataset.amt);
+      const rec = fuelStore[todayKey];
+      if(kind==="carb"){ rec.carb = Math.min(carbGoal*1.5, rec.carb+amt); }
+      else { rec.water = Math.round((Math.min(waterGoal*1.5, rec.water+amt))*100)/100; }
+      save(K.fuel, fuelStore);
+      renderPips(kind);
+    });
+  });
+  document.querySelectorAll("[data-reset]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const kind = btn.dataset.reset;
+      fuelStore[todayKey][kind]=0;
+      save(K.fuel, fuelStore);
+      renderPips(kind);
+    });
+  });
+  // clicking a pip sets the level directly
+  function wirePipClicks(kind, count, goal){
+    const wrap = document.getElementById(kind+"-pips");
+    wrap.addEventListener("click",(e)=>{
+      const pips=[...wrap.children]; const idx=pips.indexOf(e.target);
+      if(idx<0) return;
+      const per = goal/count;
+      fuelStore[todayKey][kind] = Math.round((idx+1)*per* (kind==="water"?100:1))/(kind==="water"?100:1);
+      save(K.fuel, fuelStore);
+      renderPips(kind);
+    });
+  }
+  wirePipClicks("carb", CARB_PIPS, carbGoal);
+  wirePipClicks("water", WATER_PIPS, waterGoal);
+
+  // init streak render
+  recomputeStreak();
+
+  // ---- collapsible program toggle ----
+  document.querySelectorAll("[data-collapse]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const sec = btn.closest("section");
+      const collapsed = sec.classList.toggle("collapsed");
+      btn.textContent = collapsed ? "Expand" : "Collapse";
+    });
+  });
+
+  // ---- first-open behaviour: collapse program after first visit, land on dashboard ----
+  const firstOpen = load(K.first, true);
+  if(firstOpen){
+    save(K.first, false);
+    // first time: everything expanded, top of page
+  } else {
+    // returning: collapse the program, gently land on dashboard
+    const prog = document.getElementById("program");
+    prog.classList.add("collapsed");
+    const tgl = prog.querySelector("[data-collapse]");
+    if(tgl) tgl.textContent = "Expand";
+    setTimeout(()=>{ if(!reduce) document.getElementById("dash").scrollIntoView({behavior:"smooth",block:"start"}); }, 350);
+  }
+
+  // ---- scroll-spy for ticker nav ----
+  const spy = ["goals","program","dash"];
+  const navA = {};
+  document.querySelectorAll(".ticker .nav a").forEach(a=>{ navA[a.getAttribute("href").slice(1)] = a; });
+  const io = new IntersectionObserver((ents)=>{
+    ents.forEach(e=>{
+      if(e.isIntersecting){
+        Object.values(navA).forEach(a=>a.classList.remove("on"));
+        if(navA[e.target.id]) navA[e.target.id].classList.add("on");
+      }
+    });
+  },{rootMargin:"-40% 0px -55% 0px"});
+  spy.forEach(id=>{ const el=document.getElementById(id); if(el) io.observe(el); });
+
+  // ---- reveal on scroll ----
+  if(!reduce){
+    const rio = new IntersectionObserver((ents)=>{
+      ents.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); rio.unobserve(e.target);} });
+    },{rootMargin:"0px 0px -8% 0px",threshold:0.05});
+    document.querySelectorAll(".reveal").forEach(el=>rio.observe(el));
+  } else {
+    document.querySelectorAll(".reveal").forEach(el=>el.classList.add("in"));
+  }
+
+})();
+</script>
+</body>
+</html>

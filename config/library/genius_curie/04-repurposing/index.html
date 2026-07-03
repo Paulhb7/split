@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Repurposing dossier — Saracatinib for FOP · Curie / Split</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/smiles-drawer@2.1.7/dist/smiles-drawer.min.js"></script>
+<style>
+  :root{
+    /* med-chem lab notebook — warm off-white paper, graphite ink, ONE deep aubergine */
+    --paper:#f4f0e8;          /* warm off-white page */
+    --paper-2:#efe9df;        /* slightly deeper panel */
+    --card:#faf7f1;           /* raised notebook card */
+    --ink:#25211d;            /* graphite ink */
+    --ink-2:#4a443c;          /* secondary graphite */
+    --ink-3:#7d766a;          /* faint pencil */
+    --rule:#d8d0c1;           /* hairline (pencil rule) */
+    --rule-2:#c8bfad;         /* stronger hairline */
+    --grid:rgba(74,44,84,.045);/* faint graph-paper grid */
+    --plum:#4a2c54;           /* deep aubergine — the single accent */
+    --plum-2:#6b3f78;         /* lighter aubergine for bars/hover */
+    --plum-ink:#3a2242;       /* aubergine text on paper */
+    --plum-wash:#efe6f0;      /* pale aubergine wash */
+    --good:#3f5d4a;           /* muted lab green, used sparingly for PASS */
+    --warn:#8a5a2b;           /* muted amber for the single Ro5 flag */
+    --maxw:1140px;
+    --mono:'Spline Sans Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'Space Grotesk',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:16px;line-height:1.62;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    /* faint graph-paper grain over warm paper */
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:26px 26px, 26px 26px;
+    background-position:-1px -1px, -1px -1px;
+  }
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 30px}
+  a{color:var(--plum-ink);text-decoration:none;border-bottom:1px solid var(--rule-2)}
+  a:hover{border-bottom-color:var(--plum)}
+
+  /* ---------- notebook masthead ---------- */
+  header.mast{padding:52px 0 26px;border-bottom:2px solid var(--ink)}
+  .mast .kicker{
+    font-family:var(--mono);font-size:11px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--plum-ink);display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:18px
+  }
+  .mast .kicker .dot{width:7px;height:7px;background:var(--plum);border-radius:50%}
+  .mast .kicker .seal{border:1px solid var(--plum);color:var(--plum-ink);border-radius:2px;padding:2px 8px;letter-spacing:.22em}
+  h1.title{
+    font-size:clamp(34px,5.4vw,60px);line-height:1.02;font-weight:700;letter-spacing:-.02em;
+    margin:0 0 14px;color:var(--ink)
+  }
+  h1.title em{font-style:normal;color:var(--plum-ink)}
+  .subtitle{font-size:clamp(16px,2vw,20px);color:var(--ink-2);max-width:74ch;font-weight:400}
+  .mast-row{display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap;margin-top:22px}
+  .idline{font-family:var(--mono);font-size:12px;color:var(--ink-3);line-height:1.9}
+  .idline b{color:var(--ink-2);font-weight:600}
+
+  /* ---------- exec summary (About this) ---------- */
+  .about{margin:26px 0 0;border:1px solid var(--rule-2);background:var(--card);border-radius:4px;overflow:hidden}
+  .about summary{
+    cursor:pointer;list-style:none;padding:14px 20px;display:flex;align-items:center;gap:12px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--plum-ink);
+    background:var(--plum-wash);border-bottom:1px solid transparent
+  }
+  .about[open] summary{border-bottom:1px solid var(--rule)}
+  .about summary::-webkit-details-marker{display:none}
+  .about summary .chev{margin-left:auto;transition:transform .2s;font-size:14px}
+  .about[open] summary .chev{transform:rotate(90deg)}
+  .about .body{padding:18px 22px 6px}
+  .about .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2px 34px}
+  @media(max-width:720px){.about .grid{grid-template-columns:1fr}}
+  .about dt{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--plum-ink);margin-top:12px}
+  .about dd{margin:3px 0 12px;color:var(--ink-2);font-size:14.5px;line-height:1.55}
+
+  /* ---------- section scaffolding ---------- */
+  section{padding:46px 0;border-bottom:1px solid var(--rule)}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px}
+  .sec-no{
+    font-family:var(--mono);font-size:12px;color:#fff;background:var(--plum);
+    border-radius:2px;padding:3px 9px;letter-spacing:.1em;flex:none;transform:translateY(-2px)
+  }
+  h2{font-size:clamp(22px,3vw,30px);font-weight:600;letter-spacing:-.01em;margin:0;color:var(--ink)}
+  .sec-sub{color:var(--ink-3);font-family:var(--mono);font-size:12px;letter-spacing:.05em;margin:2px 0 26px 0}
+  p.lead{font-size:17px;color:var(--ink-2);max-width:76ch}
+  p{max-width:78ch}
+  strong{font-weight:600;color:var(--ink)}
+  .plum{color:var(--plum-ink);font-weight:600}
+
+  /* ---------- HERO: molecule + property panel ---------- */
+  .hero{display:grid;grid-template-columns:1.15fr .85fr;gap:0;border:1.5px solid var(--ink);border-radius:6px;overflow:hidden;background:var(--card)}
+  @media(max-width:900px){.hero{grid-template-columns:1fr}}
+  .hero-mol{position:relative;padding:22px 22px 16px;border-right:1px solid var(--rule-2);background:
+     radial-gradient(circle at 50% 42%,#fffdf8 0%,var(--card) 70%)}
+  @media(max-width:900px){.hero-mol{border-right:none;border-bottom:1px solid var(--rule-2)}}
+  .hero-mol .molhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .molname{font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;color:var(--ink-2)}
+  .molname b{color:var(--plum-ink)}
+  .molfig{position:relative;width:100%;min-height:360px;display:flex;align-items:center;justify-content:center}
+  #mol-svg{width:100%;max-width:560px;height:auto}
+  /* structure ink = graphite; SmilesDrawer 'light' theme uses near-black bonds already,
+     we recolor via CSS filter fallback + explicit theme below */
+  .figcap{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align:center;margin-top:4px;line-height:1.6}
+  .highlight-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;justify-content:center}
+  .htag{
+    font-family:var(--mono);font-size:11px;letter-spacing:.04em;border:1px solid var(--rule-2);
+    background:var(--paper);color:var(--ink-2);border-radius:14px;padding:5px 12px;cursor:pointer;
+    user-select:none;transition:.15s;display:inline-flex;align-items:center;gap:7px
+  }
+  .htag .sw{width:9px;height:9px;border-radius:2px;background:var(--ink-3)}
+  .htag[data-on="1"]{border-color:var(--plum);color:var(--plum-ink);background:var(--plum-wash);box-shadow:inset 0 0 0 1px var(--plum-wash)}
+  .htag.q[data-on="1"] .sw{background:var(--plum-2)}
+  .htag.a[data-on="1"] .sw{background:#b07a3e}
+  .htag.h[data-on="1"] .sw{background:#3f5d4a}
+  .htag.c[data-on="1"] .sw{background:#7a3b3b}
+  .pharm-note{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align:center;margin-top:9px;min-height:16px;transition:.2s}
+
+  /* SMILES bar */
+  .smiles-bar{border-top:1px solid var(--rule-2);margin-top:14px;padding-top:12px}
+  .smiles-bar .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--plum-ink);margin-bottom:5px}
+  .smiles-code{font-family:var(--mono);font-size:12px;color:var(--ink);word-break:break-all;line-height:1.55;background:var(--paper);border:1px solid var(--rule);border-radius:3px;padding:9px 11px}
+  .copybtn{float:right;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--plum-ink);background:none;border:1px solid var(--rule-2);border-radius:3px;padding:2px 8px;cursor:pointer;margin-top:-2px}
+  .copybtn:hover{background:var(--plum-wash);border-color:var(--plum)}
+
+  /* property panel */
+  .hero-props{padding:20px 22px 18px;display:flex;flex-direction:column}
+  .props-hdr{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--plum-ink);margin-bottom:2px}
+  .props-note{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-bottom:16px}
+  .prop{border-top:1px solid var(--rule);padding:11px 0 10px;position:relative}
+  .prop:first-of-type{border-top:none}
+  .prop .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .prop .pk{font-size:14px;color:var(--ink-2);font-weight:500;cursor:help;border-bottom:1px dotted var(--rule-2)}
+  .prop .pk:hover{color:var(--plum-ink);border-bottom-color:var(--plum)}
+  .prop .pv{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap}
+  .prop .pv small{color:var(--ink-3);font-weight:400;font-size:11px}
+  .bar{height:5px;background:var(--paper-2);border-radius:3px;margin-top:8px;overflow:hidden;border:1px solid var(--rule)}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--plum),var(--plum-2));border-radius:3px 0 0 3px;transition:width .9s cubic-bezier(.2,.7,.2,1)}
+  .bar.over > i{background:linear-gradient(90deg,var(--plum),var(--warn))}
+  .prop .rng{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);display:flex;justify-content:space-between;margin-top:3px}
+  .ro5{margin-top:16px;border:1px solid var(--rule-2);border-radius:4px;padding:11px 13px;background:var(--paper)}
+  .ro5 .rt{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--plum-ink);display:flex;justify-content:space-between;align-items:center}
+  .pill{font-family:var(--mono);font-size:10px;letter-spacing:.08em;border-radius:11px;padding:2px 9px;font-weight:600}
+  .pill.pass{background:rgba(63,93,74,.12);color:var(--good);border:1px solid rgba(63,93,74,.35)}
+  .ro5 .rd{font-size:12.5px;color:var(--ink-2);margin-top:7px;line-height:1.5}
+
+  /* tooltip */
+  .tt{position:fixed;z-index:60;max-width:290px;background:var(--ink);color:#f4f0e8;font-size:12.5px;
+     line-height:1.5;padding:10px 13px;border-radius:5px;pointer-events:none;opacity:0;transform:translateY(4px);
+     transition:opacity .13s,transform .13s;box-shadow:0 8px 30px rgba(37,33,29,.35);font-family:var(--sans)}
+  .tt.on{opacity:1;transform:translateY(0)}
+  .tt b{color:#e9d9ee}
+  .tt .mono{font-family:var(--mono);font-size:11px;color:#cbb8d2}
+
+  /* ---------- generic panels ---------- */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+  @media(max-width:820px){.cols{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--rule-2);border-radius:5px;padding:20px 22px}
+  .panel h3{font-size:16px;margin:0 0 4px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:9px}
+  .panel h3 .n{font-family:var(--mono);font-size:11px;color:var(--plum-ink);border:1px solid var(--rule-2);border-radius:2px;padding:1px 6px}
+  .panel p{font-size:14.5px;color:var(--ink-2);margin:8px 0 0}
+  .panel p:first-of-type{margin-top:6px}
+
+  /* selectivity table */
+  table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--rule)}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--plum-ink);font-weight:600;border-bottom:1.5px solid var(--rule-2)}
+  td.num{font-family:var(--mono);font-weight:600;color:var(--ink);text-align:right;white-space:nowrap}
+  td .sub{color:var(--ink-3);font-size:12px}
+  tr.hero-row td{background:var(--plum-wash)}
+  tr.hero-row td:first-child{border-left:2px solid var(--plum)}
+  .selbar{height:4px;background:var(--paper-2);border-radius:2px;margin-top:5px;overflow:hidden;border:1px solid var(--rule)}
+  .selbar > i{display:block;height:100%;background:var(--plum-2)}
+
+  /* binding pocket schematic */
+  .pocket{border:1px solid var(--rule-2);border-radius:5px;background:
+     linear-gradient(180deg,#fffdf8,var(--card));padding:20px;margin-top:6px}
+  .pocket svg{width:100%;height:auto;display:block}
+  .reslist{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px}
+  .rescard{border:1px solid var(--rule);border-radius:4px;padding:10px 12px;background:var(--paper)}
+  .rescard .rn{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--plum-ink)}
+  .rescard .rr{font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.45}
+
+  /* origin timeline */
+  .timeline{position:relative;margin-top:12px;padding-left:4px}
+  .tstep{position:relative;padding:0 0 24px 34px;border-left:2px solid var(--rule-2)}
+  .tstep:last-child{border-left-color:transparent;padding-bottom:2px}
+  .tstep .tnode{position:absolute;left:-9px;top:1px;width:16px;height:16px;border-radius:50%;background:var(--paper);border:2px solid var(--plum)}
+  .tstep.now .tnode{background:var(--plum)}
+  .tstep .ty{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--plum-ink);font-weight:600}
+  .tstep .th{font-size:15.5px;font-weight:600;color:var(--ink);margin:2px 0 3px}
+  .tstep .td{font-size:14px;color:var(--ink-2);max-width:70ch}
+  .tstep .td b{color:var(--ink)}
+
+  /* clinical trail */
+  .trial-card{border:1.5px solid var(--plum);border-radius:6px;overflow:hidden;background:var(--card)}
+  .trial-card .tch{background:var(--plum);color:#f4f0e8;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .trial-card .tch .tid{font-family:var(--mono);font-size:12px;letter-spacing:.08em}
+  .trial-card .tch .tnm{font-size:17px;font-weight:600}
+  .trial-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--rule)}
+  .tg{background:var(--card);padding:13px 16px}
+  .tg .tgk{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--plum-ink)}
+  .tg .tgv{font-size:14.5px;color:var(--ink);margin-top:4px;font-weight:500;line-height:1.4}
+  .tg .tgv small{color:var(--ink-3);font-weight:400}
+
+  /* references */
+  .refs{columns:2;column-gap:34px}
+  @media(max-width:760px){.refs{columns:1}}
+  .refs .r{break-inside:avoid;margin-bottom:14px;font-size:13px;color:var(--ink-2);line-height:1.5;padding-left:26px;position:relative}
+  .refs .r .rnum{position:absolute;left:0;top:0;font-family:var(--mono);font-size:11px;color:#fff;background:var(--plum);border-radius:2px;padding:1px 6px}
+  .refs .r b{color:var(--ink)}
+  .refs .r a{word-break:break-word}
+
+  /* limits / honesty box */
+  .honesty{border-left:3px solid var(--plum);background:var(--plum-wash);border-radius:0 5px 5px 0;padding:18px 22px;margin-top:6px}
+  .honesty h3{margin:0 0 8px;font-size:16px;color:var(--plum-ink);font-weight:600}
+  .honesty ul{margin:0;padding-left:18px}
+  .honesty li{font-size:14.5px;color:var(--ink-2);margin-bottom:7px}
+  .honesty li b{color:var(--ink)}
+
+  /* footer */
+  footer{padding:38px 0 60px}
+  .disclaimer{font-family:var(--mono);font-size:12px;color:var(--ink-3);border:1px dashed var(--rule-2);border-radius:4px;padding:14px 18px;line-height:1.6;background:var(--card)}
+  .disclaimer b{color:var(--plum-ink)}
+  .sig{margin-top:22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.05em}
+  .sig .made{color:var(--plum-ink)}
+
+  .inl{font-family:var(--mono);font-size:.92em;background:var(--paper-2);border:1px solid var(--rule);border-radius:3px;padding:1px 5px;color:var(--plum-ink)}
+</style>
+</head>
+<body>
+<div class="tt" id="tt"></div>
+
+<div class="wrap">
+
+  <!-- ===================== MASTHEAD ===================== -->
+  <header class="mast">
+    <div class="kicker">
+      <span class="dot"></span>
+      <span>CURIE · SPLIT</span>
+      <span>LAB NOTEBOOK</span>
+      <span class="seal">REPURPOSING DOSSIER</span>
+      <span>ENTRY 04</span>
+    </div>
+    <h1 class="title">Saracatinib for FOP — <em>a docked candidate, argued</em></h1>
+    <p class="subtitle">The medicinal-chemistry case for repurposing <strong>saracatinib</strong> (AZD0530), an AstraZeneca Src/Abl oncology inhibitor, as an <strong>ALK2 / ACVR1</strong> kinase inhibitor for fibrodysplasia ossificans progressiva — the molecule, its measured properties, why the oncology hinge-binder lands on the FOP receptor, and the real trial that put it in patients.</p>
+    <div class="mast-row">
+      <div class="idline">
+        <b>COMPOUND</b> saracatinib · AZD0530 &nbsp;·&nbsp; <b>ChEMBL</b> CHEMBL217092 &nbsp;·&nbsp; <b>PubChem CID</b> 10302451 &nbsp;·&nbsp; <b>CAS</b> 379231-04-6<br>
+        <b>TARGET</b> ACVR1 / ALK2 · UniProt <b>Q04771</b> &nbsp;·&nbsp; <b>DISEASE</b> FOP · OMIM 135100 &nbsp;·&nbsp; <b>TRIAL</b> STOPFOP · NCT04307953
+      </div>
+      <div class="idline" style="text-align:right"><b>PREPARED</b> 2026-07-03<br>Grounded to UniProt · RCSB · ChEMBL · PubChem · ClinicalTrials.gov · PubMed</div>
+    </div>
+
+    <!-- exec summary -->
+    <details class="about" open>
+      <summary>About this dossier <span class="chev">›</span></summary>
+      <div class="body">
+        <dl class="grid">
+          <div>
+            <dt>Why</dt>
+            <dd>To make the repurposing argument for saracatinib in FOP legible as a med-chem case: a real molecule with real, sourced descriptors, a mechanistic reason it hits ALK2, and the clinical trail that followed — the kind of one-page brief that decides whether a repurposing lead is worth a wet-lab campaign.</dd>
+            <dt>Context</dt>
+            <dd>FOP is driven by the ACVR1 R206H neofunction (hyperactive BMP–SMAD1/5/8 signalling through the ALK2 kinase). Saracatinib was built for oncology (Src/Abl), shelved after weak Phase II cancer signals, and later found to be a potent ATP-competitive ALK2 inhibitor — a molecule that has already cleared human safety in 600+ subjects.</dd>
+          </div>
+          <div>
+            <dt>How to use it</dt>
+            <dd>Read the hero molecule + property panel first (hover any descriptor for its definition; toggle the ring / pharmacophore highlights). Then the selectivity → pocket → origin → clinical-trail sections build the argument in order. Every number is sourced inline and in the reference list.</dd>
+            <dt>What I assumed</dt>
+            <dd>Audience is a scientifically literate reader (a med-chemist or clinician-scientist peer). Descriptors are the public ChEMBL/PubChem computed values (RDKit-class), not re-computed here. The trial is presented as designed and registered; STOPFOP had no results posted at the last public update, and this dossier does not claim an efficacy outcome.</dd>
+          </div>
+        </dl>
+      </div>
+    </details>
+  </header>
+
+  <!-- ===================== HERO: MOLECULE + PROPERTIES ===================== -->
+  <section id="hero">
+    <div class="sec-head">
+      <span class="sec-no">01</span>
+      <h2>The molecule, drawn and measured</h2>
+    </div>
+    <div class="sec-sub">2D structure rendered from the verified canonical SMILES · descriptors from ChEMBL &amp; PubChem</div>
+
+    <div class="hero">
+      <!-- structure -->
+      <div class="hero-mol">
+        <div class="molhdr">
+          <span class="molname"><b>Saracatinib</b> · C<sub>27</sub>H<sub>32</sub>ClN<sub>5</sub>O<sub>5</sub></span>
+          <span class="molname" style="color:var(--ink-3)">4-anilinoquinazoline</span>
+        </div>
+        <div class="molfig">
+          <svg id="mol-svg"></svg>
+        </div>
+        <div class="figcap">
+          N-(5-chloro-1,3-benzodioxol-4-yl)-7-[2-(4-methylpiperazin-1-yl)ethoxy]-5-(oxan-4-yloxy)quinazolin-4-amine<br>
+          rendered client-side with SmilesDrawer 2.1.7 from the ChEMBL canonical SMILES
+        </div>
+        <div class="highlight-tags">
+          <span class="htag q" data-hl="quinazoline" data-on="0"><span class="sw"></span>Quinazoline hinge core</span>
+          <span class="htag a" data-hl="aniline" data-on="0"><span class="sw"></span>Chloro-benzodioxole aniline</span>
+          <span class="htag h" data-hl="solub" data-on="0"><span class="sw"></span>Methylpiperazine solubiliser</span>
+          <span class="htag c" data-hl="thp" data-on="0"><span class="sw"></span>Tetrahydropyranyl-oxy</span>
+        </div>
+        <div class="pharm-note" id="pharmNote">Toggle a fragment to read its pharmacophore role.</div>
+
+        <div class="smiles-bar">
+          <div class="lbl">Canonical SMILES <button class="copybtn" id="copySmiles">COPY</button></div>
+          <div class="smiles-code" id="smilesText">CN1CCN(CCOc2cc(OC3CCOCC3)c3c(Nc4c(Cl)ccc5c4OCO5)ncnc3c2)CC1</div>
+        </div>
+      </div>
+
+      <!-- property panel -->
+      <div class="hero-props">
+        <div class="props-hdr">Med-chem property panel</div>
+        <div class="props-note">values: ChEMBL CHEMBL217092 · PubChem CID 10302451 · hover a name for its definition</div>
+
+        <!-- MW -->
+        <div class="prop">
+          <div class="top">
+            <span class="pk" data-tt="mw">Molecular weight</span>
+            <span class="pv">542.04 <small>g/mol</small></span>
+          </div>
+          <div class="bar over"><i style="width:100%"></i></div>
+          <div class="rng"><span>0</span><span>Ro5 limit 500 · exceeded</span><span>700</span></div>
+        </div>
+        <!-- cLogP -->
+        <div class="prop">
+          <div class="top">
+            <span class="pk" data-tt="logp">cLogP (ALogP)</span>
+            <span class="pv">3.94 <small>· XLogP 4.1</small></span>
+          </div>
+          <div class="bar"><i style="width:78.8%"></i></div>
+          <div class="rng"><span>0</span><span>lipophilic, within Ro5 &lt; 5</span><span>5</span></div>
+        </div>
+        <!-- TPSA -->
+        <div class="prop">
+          <div class="top">
+            <span class="pk" data-tt="tpsa">TPSA</span>
+            <span class="pv">90.4 <small>Å²</small></span>
+          </div>
+          <div class="bar"><i style="width:64.6%"></i></div>
+          <div class="rng"><span>0</span><span>&lt; 140 Å² · oral-permeable window</span><span>140</span></div>
+        </div>
+        <!-- HBD -->
+        <div class="prop">
+          <div class="top">
+            <span class="pk" data-tt="hbd">H-bond donors</span>
+            <span class="pv">1</span>
+          </div>
+          <div class="bar"><i style="width:20%"></i></div>
+          <div class="rng"><span>0</span><span>the anilino N–H · Ro5 ≤ 5</span><span>5</span></div>
+        </div>
+        <!-- HBA -->
+        <div class="prop">
+          <div class="top">
+            <span class="pk" data-tt="hba">H-bond acceptors</span>
+            <span class="pv">10</span>
+          </div>
+          <div class="bar"><i style="width:100%"></i></div>
+          <div class="rng"><span>0</span><span>Ro5 limit 10 · at the edge</span><span>10</span></div>
+        </div>
+        <!-- RotB -->
+        <div class="prop">
+          <div class="top">
+            <span class="pk" data-tt="rotb">Rotatable bonds</span>
+            <span class="pv">8</span>
+          </div>
+          <div class="bar"><i style="width:80%"></i></div>
+          <div class="rng"><span>0</span><span>Veber ≤ 10 · flexible but ok</span><span>10</span></div>
+        </div>
+        <!-- Aromatic rings -->
+        <div class="prop">
+          <div class="top">
+            <span class="pk" data-tt="arom">Aromatic rings</span>
+            <span class="pv">3</span>
+          </div>
+          <div class="bar"><i style="width:60%"></i></div>
+          <div class="rng"><span>0</span><span>quinazoline + benzodioxole arene · ≤ 4 guide</span><span>5</span></div>
+        </div>
+        <!-- QED -->
+        <div class="prop">
+          <div class="top">
+            <span class="pk" data-tt="qed">QED (drug-likeness)</span>
+            <span class="pv">0.45</span>
+          </div>
+          <div class="bar"><i style="width:45%"></i></div>
+          <div class="rng"><span>0</span><span>moderate · large kinase inhibitor</span><span>1.0</span></div>
+        </div>
+
+        <!-- Ro5 verdict -->
+        <div class="ro5">
+          <div class="rt"><span>Lipinski Rule of Five</span><span class="pill pass">PASS · 1 violation</span></div>
+          <div class="rd">Ro5 tolerates a single violation. Only MW (542 &gt; 500) breaks; cLogP&nbsp;3.94&nbsp;&lt;&nbsp;5, HBD&nbsp;1&nbsp;≤&nbsp;5, HBA&nbsp;10&nbsp;≤&nbsp;10 all hold — an orally dosed kinase inhibitor, as its <span class="inl">100&nbsp;mg</span> once-daily oral schedule confirms.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 02 RATIONALE: Src -> ALK2 ===================== -->
+  <section id="rationale">
+    <div class="sec-head">
+      <span class="sec-no">02</span>
+      <h2>Why an oncology Src inhibitor lands on ALK2</h2>
+    </div>
+    <div class="sec-sub">the repurposing rationale — shared ATP pocket, hinge chemistry, and measured selectivity</div>
+
+    <p class="lead">Saracatinib is a 4-anilinoquinazoline — the same privileged scaffold that made gefitinib/erlotinib potent, tuned by AstraZeneca to hit the ATP sites of the tyrosine kinases <strong>Src</strong> (c-Src IC<sub>50</sub> ≈ 2.7&nbsp;nM) and <strong>Abl</strong> (≈ 30&nbsp;nM). The scaffold's whole job is to sit in a kinase ATP cleft and hydrogen-bond to the hinge. ALK2 is a different family (a type-I BMP receptor serine/threonine kinase), but it has the <em>same</em> ATP fold and the same class of hinge — so a molecule optimised to occupy one ATP pocket can, by chemical accident, occupy the other. That accident is what a phenotypic/bioactive-compound screen for ALK2 inhibition surfaced.</p>
+
+    <div class="cols" style="margin-top:26px">
+      <div class="panel">
+        <h3><span class="n">2·1</span> ATP-competitive, hinge-anchored</h3>
+        <p>All reported ALK2 inhibitors bind the ATP pocket and donate a hydrogen bond to the hinge amide of <strong>His286</strong> (Bullock lab, structural series). Saracatinib's quinazoline <span class="inl">N1</span> is the canonical hinge acceptor of the anilinoquinazoline class; the 4-anilino N–H is its single donor. It is a textbook <strong>type-I</strong> binder — it recognises the active-like conformation, competing directly with cellular ATP.</p>
+      </div>
+      <div class="panel">
+        <h3><span class="n">2·2</span> Potency that survived the jump</h3>
+        <p>Against the FOP neofunction, saracatinib inhibits ALK2 with a cellular <strong>IC<sub>50</sub> ≈ 15&nbsp;nM</strong> (in-cell immunofluorescence, Williams et&nbsp;al., <em>JCI Insight</em> 2018). That is not a weak off-target whisper — it is low-nanomolar, in the same regime as its oncology on-targets. Crucially it is <strong>selective over the other type-I receptors</strong>: ALK3/4/5/6 are spared, so it blocks the disease kinase without collapsing every BMP/TGF-β signal.</p>
+      </div>
+    </div>
+
+    <h3 style="margin:30px 0 4px;font-size:15px;font-family:var(--mono);letter-spacing:.06em;color:var(--plum-ink)">MEASURED SELECTIVITY — the window that makes it a lead</h3>
+    <table>
+      <thead>
+        <tr><th>Activity</th><th>Pathway / kinase</th><th style="text-align:right">IC<sub>50</sub></th><th>Relative potency</th></tr>
+      </thead>
+      <tbody>
+        <tr class="hero-row">
+          <td><strong>ALK2 neofunction</strong> <span class="sub">(the FOP target)</span></td>
+          <td>BMP–SMAD1/5/8 via mutant ALK2</td>
+          <td class="num">15 nM</td>
+          <td><div class="selbar"><i style="width:100%"></i></div></td>
+        </tr>
+        <tr>
+          <td>Activin-A signalling</td>
+          <td>canonical activin (SMAD2/3)</td>
+          <td class="num">72 nM</td>
+          <td><div class="selbar"><i style="width:21%"></i></div></td>
+        </tr>
+        <tr>
+          <td>TGF-β signalling</td>
+          <td>canonical TGF-β (ALK5, SMAD2/3)</td>
+          <td class="num">305 nM</td>
+          <td><div class="selbar"><i style="width:5%"></i></div></td>
+        </tr>
+        <tr>
+          <td>c-Src <span class="sub">(original oncology target)</span></td>
+          <td>Src-family tyrosine kinase</td>
+          <td class="num">2.7 nM</td>
+          <td><div class="selbar"><i style="width:100%"></i></div></td>
+        </tr>
+        <tr>
+          <td>Abl <span class="sub">(original oncology target)</span></td>
+          <td>Abl tyrosine kinase</td>
+          <td class="num">30 nM</td>
+          <td><div class="selbar"><i style="width:60%"></i></div></td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:13px;color:var(--ink-3);margin-top:10px;font-family:var(--mono)">ALK2 / activin / TGF-β values: Williams et al., JCI Insight 2018 (ref 3). Src / Abl values: AstraZeneca / repurposing review (ref 6). The 4.8× ALK2-over-activin and 20× ALK2-over-TGF-β windows are what let it silence the disease kinase selectively.</p>
+  </section>
+
+  <!-- ===================== 03 BINDING / DOCKING RATIONALE ===================== -->
+  <section id="pocket">
+    <div class="sec-head">
+      <span class="sec-no">03</span>
+      <h2>Where it sits — the ACVR1 ATP pocket</h2>
+    </div>
+    <div class="sec-sub">binding rationale into the ALK2 kinase domain (UniProt Q04771 · kinase domain 208–502)</div>
+
+    <p class="lead">The argument for the pose is structural, not hand-waved: the crystallography of the ALK2 series (e.g. RCSB <a href="https://www.rcsb.org/structure/5OXG" target="_blank" rel="noopener">PDB 5OXG</a>, ALK2 + LDN-212854) shows type-I inhibitors threading the cleft between the N- and C-lobes, pinned by a single hinge hydrogen bond to <strong>His286</strong> and shaped by the gatekeeper <strong>Thr283</strong>. Saracatinib's quinazoline reproduces exactly that contact set. Below: the pocket, schematically, with the residues that matter.</p>
+
+    <div class="pocket">
+      <!-- schematic of ATP cleft with key residues -->
+      <svg viewBox="0 0 720 300" role="img" aria-label="Schematic of the ALK2 ATP-binding cleft with saracatinib's quinazoline hinge-binder">
+        <defs>
+          <linearGradient id="lobe" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#efe9df"/><stop offset="1" stop-color="#e4dccb"/>
+          </linearGradient>
+        </defs>
+        <!-- N lobe -->
+        <path d="M60,40 Q360,10 660,40 L640,120 Q360,95 80,120 Z" fill="url(#lobe)" stroke="#c8bfad"/>
+        <text x="90" y="70" font-family="Spline Sans Mono" font-size="12" fill="#7d766a">N-LOBE · β-sheet + αC</text>
+        <!-- C lobe -->
+        <path d="M80,190 Q360,215 640,190 L660,270 Q360,300 60,270 Z" fill="url(#lobe)" stroke="#c8bfad"/>
+        <text x="90" y="245" font-family="Spline Sans Mono" font-size="12" fill="#7d766a">C-LOBE · α-helical</text>
+
+        <!-- hinge strand between lobes -->
+        <line x1="120" y1="155" x2="600" y2="155" stroke="#c8bfad" stroke-dasharray="3 4"/>
+        <text x="530" y="148" font-family="Spline Sans Mono" font-size="10" fill="#7d766a">HINGE</text>
+
+        <!-- saracatinib quinazoline core (schematic bicyclic) -->
+        <g transform="translate(300,132)">
+          <!-- two fused hexagons -->
+          <polygon points="0,0 26,-15 52,0 52,30 26,45 0,30" fill="none" stroke="#25211d" stroke-width="2.4"/>
+          <polygon points="52,0 78,-15 104,0 104,30 78,45 52,30" fill="none" stroke="#25211d" stroke-width="2.4"/>
+          <!-- ring N atoms -->
+          <text x="21" y="4" font-family="Spline Sans Mono" font-size="12" fill="#4a2c54" font-weight="700">N</text>
+          <text x="47" y="49" font-family="Spline Sans Mono" font-size="12" fill="#4a2c54" font-weight="700">N</text>
+          <text x="118" y="20" font-family="Spline Sans Mono" font-size="11" fill="#25211d">quinazoline</text>
+          <!-- hinge H-bond up to His286 -->
+          <line x1="21" y1="-2" x2="21" y2="-40" stroke="#4a2c54" stroke-width="1.6" stroke-dasharray="4 3"/>
+        </g>
+
+        <!-- His286 hinge residue -->
+        <g transform="translate(300,70)">
+          <circle r="19" fill="#efe6f0" stroke="#4a2c54" stroke-width="2"/>
+          <text x="0" y="-1" text-anchor="middle" font-family="Spline Sans Mono" font-size="11" font-weight="700" fill="#3a2242">His</text>
+          <text x="0" y="12" text-anchor="middle" font-family="Spline Sans Mono" font-size="11" font-weight="700" fill="#3a2242">286</text>
+          <text x="34" y="4" font-family="Spline Sans Mono" font-size="10" fill="#6b3f78">hinge H-bond</text>
+        </g>
+
+        <!-- Thr283 gatekeeper -->
+        <g transform="translate(210,120)">
+          <circle r="16" fill="#faf7f1" stroke="#7d766a" stroke-width="1.6"/>
+          <text x="0" y="-1" text-anchor="middle" font-family="Spline Sans Mono" font-size="10" font-weight="700" fill="#4a443c">Thr</text>
+          <text x="0" y="11" text-anchor="middle" font-family="Spline Sans Mono" font-size="10" font-weight="700" fill="#4a443c">283</text>
+          <text x="-4" y="40" text-anchor="middle" font-family="Spline Sans Mono" font-size="9" fill="#7d766a">gatekeeper</text>
+        </g>
+
+        <!-- Lys235 catalytic + Glu248 -->
+        <g transform="translate(470,120)">
+          <circle r="16" fill="#faf7f1" stroke="#7d766a" stroke-width="1.6"/>
+          <text x="0" y="-1" text-anchor="middle" font-family="Spline Sans Mono" font-size="10" font-weight="700" fill="#4a443c">Lys</text>
+          <text x="0" y="11" text-anchor="middle" font-family="Spline Sans Mono" font-size="10" font-weight="700" fill="#4a443c">235</text>
+          <text x="0" y="40" text-anchor="middle" font-family="Spline Sans Mono" font-size="9" fill="#7d766a">catalytic β3</text>
+        </g>
+
+        <!-- Asp336 DFG -->
+        <g transform="translate(400,215)">
+          <circle r="16" fill="#faf7f1" stroke="#7d766a" stroke-width="1.6"/>
+          <text x="0" y="-1" text-anchor="middle" font-family="Spline Sans Mono" font-size="10" font-weight="700" fill="#4a443c">Asp</text>
+          <text x="0" y="11" text-anchor="middle" font-family="Spline Sans Mono" font-size="10" font-weight="700" fill="#4a443c">336</text>
+          <text x="0" y="40" text-anchor="middle" font-family="Spline Sans Mono" font-size="9" fill="#7d766a">DFG / Mg²⁺</text>
+        </g>
+
+        <!-- aniline pointing to back pocket -->
+        <g transform="translate(210,175)">
+          <text x="0" y="0" font-family="Spline Sans Mono" font-size="10" fill="#7d766a">chloro-benzodioxole</text>
+          <text x="0" y="14" font-family="Spline Sans Mono" font-size="10" fill="#7d766a">→ hydrophobic back pocket</text>
+        </g>
+        <!-- solubiliser to solvent -->
+        <g transform="translate(470,175)">
+          <text x="0" y="0" font-family="Spline Sans Mono" font-size="10" fill="#7d766a">methylpiperazine</text>
+          <text x="0" y="14" font-family="Spline Sans Mono" font-size="10" fill="#7d766a">→ solvent-exposed front</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="reslist">
+      <div class="rescard"><div class="rn">His286 — hinge</div><div class="rr">Backbone amide donates/accepts the single defining hinge H-bond to the quinazoline N1. Shared anchor of every published ALK2 inhibitor.</div></div>
+      <div class="rescard"><div class="rn">Thr283 — gatekeeper</div><div class="rr">Small residue gating the back pocket; its size permits the chloro-benzodioxole to reach the hydrophobic pocket behind the hinge.</div></div>
+      <div class="rescard"><div class="rn">Lys235 — catalytic</div><div class="rr">β3 lysine of the ATP machinery; water-mediated contacts here help order selective inhibitors in ALK2's inactive-favoured cleft.</div></div>
+      <div class="rescard"><div class="rn">Asp336 — DFG</div><div class="rr">Start of the activation loop / Mg²⁺-coordinating aspartate; a type-I binder occupies the ATP site with DFG-in.</div></div>
+      <div class="rescard"><div class="rn">GS domain 178–207</div><div class="rr">The regulatory glycine-serine domain. R206H sits at its C-terminus — the mutation that unleashes the neofunction the drug must silence.</div></div>
+      <div class="rescard"><div class="rn">Kinase domain 208–502</div><div class="rr">The catalytic module targeted here. Structure basis: ALK2 crystallography incl. PDB 5OXG; the ATP cleft is the druggable surface.</div></div>
+    </div>
+    <p style="font-size:13px;color:var(--ink-3);margin-top:14px;font-family:var(--mono)">Residue numbering and domain boundaries: UniProt Q04771. Hinge/gatekeeper interaction pattern generalised from the ALK2 inhibitor crystallographic series (refs 4–5). This is a binding <em>rationale</em> anchored to homologous structures, not a saracatinib–ALK2 co-crystal — see limits.</p>
+  </section>
+
+  <!-- ===================== 04 ORIGIN -> NEW USE ===================== -->
+  <section id="origin">
+    <div class="sec-head">
+      <span class="sec-no">04</span>
+      <h2>Oncology → FOP — the second life of a shelved drug</h2>
+    </div>
+    <div class="sec-sub">the origin-vs-new-use story · a twice-repurposed molecule</div>
+
+    <p class="lead">The repurposing value proposition is blunt: saracatinib has already been given to <strong>600+ humans</strong> and has a known safety and pharmacokinetic profile. It failed to earn an oncology approval — and that failure is exactly what makes it cheap, fast and low-risk to redeploy against a mechanism it happens to hit hard.</p>
+
+    <div class="timeline">
+      <div class="tstep">
+        <span class="tnode"></span>
+        <div class="ty">2000s · ORIGIN</div>
+        <div class="th">Built by AstraZeneca as a Src/Abl inhibitor for cancer</div>
+        <div class="td">Designed as an orally available dual <b>c-Src (2.7 nM)</b> / <b>Abl (30 nM)</b> inhibitor for solid tumours. Phase I set tolerated doses (≈175 mg; 125 mg in Japanese patients).</div>
+      </div>
+      <div class="tstep">
+        <span class="tnode"></span>
+        <div class="ty">EARLY 2010s · THE MISS</div>
+        <div class="th">Weak Phase II oncology signal — shelved</div>
+        <div class="td">Across several tumour types the efficacy signal was low. The molecule was clinically de-risked but commercially stranded — an ideal repurposing substrate: safe in humans, no home indication.</div>
+      </div>
+      <div class="tstep">
+        <span class="tnode"></span>
+        <div class="ty">MID 2010s · FIRST REPURPOSE</div>
+        <div class="th">Alzheimer's disease — Fyn kinase</div>
+        <div class="td">Repurposed toward <b>Fyn</b> (a Src-family kinase) to counter amyloid-β/tau synaptic toxicity; trialled in AD. Establishes the pattern — a Src-family binder pointed at a new disease.</div>
+      </div>
+      <div class="tstep now">
+        <span class="tnode"></span>
+        <div class="ty">2018 → NOW · SECOND REPURPOSE (this dossier)</div>
+        <div class="th">FOP — potent, selective ALK2 inhibition</div>
+        <div class="td">A bioactive-compound screen flagged saracatinib as a low-nanomolar <b>ALK2</b> inhibitor (IC<sub>50</sub> 15 nM), efficacious in the <span class="inl">ACVR1&nbsp;Q207D</span> heterotopic-ossification mouse model, and selective over ALK3/4/5/6. It moved into the human <b>STOPFOP</b> trial — a genuine "dual drug repurposing" story (oncology → AD → FOP).</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 05 CLINICAL EVIDENCE TRAIL ===================== -->
+  <section id="clinical">
+    <div class="sec-head">
+      <span class="sec-no">05</span>
+      <h2>The clinical evidence trail</h2>
+    </div>
+    <div class="sec-sub">the real trial that put the hypothesis in patients</div>
+
+    <div class="trial-card">
+      <div class="tch">
+        <div><div class="tnm">STOPFOP — Saracatinib Trial tO Prevent FOP</div></div>
+        <div class="tid"><a href="https://clinicaltrials.gov/study/NCT04307953" target="_blank" rel="noopener" style="color:#e9d9ee;border-color:rgba(233,217,238,.4)">NCT04307953</a></div>
+      </div>
+      <div class="trial-grid">
+        <div class="tg"><div class="tgk">Phase</div><div class="tgv">Phase 2 <small>(2a)</small></div></div>
+        <div class="tg"><div class="tgk">Design</div><div class="tgv">Randomised, double-blind, placebo-controlled <small>6-mo RCT + 12-mo open-label extension</small></div></div>
+        <div class="tg"><div class="tgk">Intervention</div><div class="tgv">Saracatinib (AZD0530) <small>100 mg once daily, oral</small></div></div>
+        <div class="tg"><div class="tgk">Enrolment</div><div class="tgv">20 <small>adults 18–65, classic ALK2 R206H</small></div></div>
+        <div class="tg"><div class="tgk">Primary endpoint</div><div class="tgv">Δ heterotopic bone volume <small>low-dose whole-body CT, active vs placebo</small></div></div>
+        <div class="tg"><div class="tgk">Key secondary</div><div class="tgv"><sup>18</sup>F-NaF PET activity · patient-reported outcomes</div></div>
+        <div class="tg"><div class="tgk">Sponsor</div><div class="tgv">Amsterdam UMC (VUmc) <small>EU IHI / H2020 STOPFOP consortium</small></div></div>
+        <div class="tg"><div class="tgk">Sites</div><div class="tgv">Netherlands · Germany · United Kingdom</div></div>
+        <div class="tg"><div class="tgk">Started</div><div class="tgv">Aug 2020</div></div>
+        <div class="tg"><div class="tgk">Primary completion</div><div class="tgv">May 2025 <small>(estimated)</small></div></div>
+      </div>
+    </div>
+
+    <div class="cols" style="margin-top:26px">
+      <div class="panel">
+        <h3><span class="n">5·1</span> Preclinical proof</h3>
+        <p>Williams, Bocobo, Bullock et&nbsp;al. (<em>JCI Insight</em>, 2018) established the case: saracatinib inhibits mutant ALK2 at 15&nbsp;nM in cells, is selective over the other type-I receptors, and prevents heterotopic bone in the <span class="inl">ACVR1&nbsp;Q207D</span> transgenic mouse — the in-vivo bridge from biochemistry to a disease phenotype.</p>
+      </div>
+      <div class="panel">
+        <h3><span class="n">5·2</span> The registered protocol</h3>
+        <p>The STOPFOP protocol (Smilde, Botman, Eekhoff et&nbsp;al., <em>BMC Musculoskeletal Disorders</em>, 2022) fixed the design above — CT-measured heterotopic bone as the objective primary endpoint, the R206H-only population, and the natural-history-controlled extension. Registered as NCT04307953.</p>
+      </div>
+    </div>
+
+    <div class="honesty" style="margin-top:26px">
+      <h3>Honesty — the gap between a lead and a treatment</h3>
+      <ul>
+        <li><b>This is a docked <em>rationale</em>, not a co-crystal.</b> The pose argument rests on the ALK2 inhibitor crystallographic series (PDB 5OXG and relatives) and the shared 4-anilinoquinazoline hinge chemistry — not on a published saracatinib·ALK2 structure. A co-crystal or cryo-EM would be the confirming experiment.</li>
+        <li><b>Descriptors are computed, potencies are assay-specific.</b> The 15 nM ALK2 IC<sub>50</sub> is a cellular immunofluorescence readout; the Src/Abl values are enzymatic. They are not interchangeable, and the ALK2 selectivity window (4.8× over activin) is real but modest — off-target activin/TGF-β inhibition is not zero.</li>
+        <li><b>The clinical result is not in.</b> STOPFOP was designed and run, but at the last public update no results were posted and status was listed as unknown. This dossier makes the <em>chemistry</em> case; it does not claim the trial succeeded. Saracatinib is investigational for FOP — not an approved therapy.</li>
+        <li><b>What would confirm it, in order:</b> (1) a saracatinib–ALK2 co-structure; (2) a clean kinome-wide selectivity panel at therapeutic exposure; (3) the STOPFOP CT endpoint. Only the third tells you it helps patients.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== REFERENCES ===================== -->
+  <section id="refs">
+    <div class="sec-head">
+      <span class="sec-no">06</span>
+      <h2>Sources</h2>
+    </div>
+    <div class="sec-sub">every gene, structure, descriptor and trial fact above traces to one of these · verified 2026-07-03</div>
+    <div class="refs">
+      <div class="r"><span class="rnum">1</span><b>ChEMBL — Saracatinib, CHEMBL217092.</b> Canonical SMILES, MW 542.04, ALogP 3.94, TPSA 90.44, HBA 10, HBD 1, rotatable bonds 8, aromatic rings 3, QED 0.45, Ro5 violations 1. <a href="https://www.ebi.ac.uk/chembl/compound_report_card/CHEMBL217092/" target="_blank" rel="noopener">ebi.ac.uk/chembl/…/CHEMBL217092</a></div>
+      <div class="r"><span class="rnum">2</span><b>PubChem — Saracatinib, CID 10302451.</b> C27H32ClN5O5, MW 542.0, XLogP 4.1, TPSA 90.4, HBD 1, HBA 10, rotatable bonds 8. <a href="https://pubchem.ncbi.nlm.nih.gov/compound/10302451" target="_blank" rel="noopener">pubchem.ncbi.nlm.nih.gov/compound/10302451</a></div>
+      <div class="r"><span class="rnum">3</span><b>Williams E, Bagarova J, … Bullock AN.</b> "Saracatinib is an efficacious clinical candidate for fibrodysplasia ossificans progressiva." <em>JCI Insight</em> (2018). ALK2 IC<sub>50</sub> 15 nM; activin 72 nM; TGF-β 305 nM; selectivity over ALK3/4/5/6; ACVR1 Q207D mouse efficacy. <a href="https://insight.jci.org/articles/view/95042" target="_blank" rel="noopener">insight.jci.org/articles/view/95042</a> · <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8119212/" target="_blank" rel="noopener">PMC8119212</a></div>
+      <div class="r"><span class="rnum">4</span><b>UniProt — ACVR1 / ALK2, Q04771.</b> Activin receptor type-1, 509 aa; kinase domain 208–502; GS domain 178–207; His286 hinge; Thr283 gatekeeper; Lys235 ATP; Asp336; FOP variant R206H (rs121912678). <a href="https://www.uniprot.org/uniprotkb/Q04771/entry" target="_blank" rel="noopener">uniprot.org/uniprotkb/Q04771</a></div>
+      <div class="r"><span class="rnum">5</span><b>RCSB PDB 5OXG.</b> Crystal structure of the ACVR1 (ALK2) kinase in complex with LDN-212854 — type-I ATP-competitive binding, single hinge H-bond to His286. <a href="https://www.rcsb.org/structure/5OXG" target="_blank" rel="noopener">rcsb.org/structure/5OXG</a></div>
+      <div class="r"><span class="rnum">6</span><b>Recent Advances in ALK2 Inhibitors.</b> <em>ACS Omega</em> (2021) / review PMC8374899. Hinge His286 contact common to ALK2 inhibitors; Src 2.7 nM / Abl 30 nM origin activities; saracatinib among repurposed leads. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8374899/" target="_blank" rel="noopener">PMC8374899</a></div>
+      <div class="r"><span class="rnum">7</span><b>Smilde BJ, Botman E, … Eekhoff EMW.</b> "Protocol paper: … Saracatinib in Fibrodysplasia Ossificans Progressiva (STOPFOP)." <em>BMC Musculoskelet Disord</em> (2022). Design, 100 mg QD, R206H population, CT primary endpoint. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9156821/" target="_blank" rel="noopener">PMC9156821</a></div>
+      <div class="r"><span class="rnum">8</span><b>ClinicalTrials.gov — NCT04307953 (STOPFOP).</b> Phase 2, Amsterdam UMC; 100 mg saracatinib QD vs placebo; n=20; NL/DE/UK; primary endpoint Δ heterotopic bone volume by low-dose whole-body CT. <a href="https://clinicaltrials.gov/study/NCT04307953" target="_blank" rel="noopener">clinicaltrials.gov/study/NCT04307953</a></div>
+      <div class="r"><span class="rnum">9</span><b>"Dual Drug Repurposing: The Example of Saracatinib."</b> Review, PMC11050334 (2024). Origin (AstraZeneca, cancer, Src/Abl), Alzheimer's Fyn repurposing, and FOP/other indications. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11050334/" target="_blank" rel="noopener">PMC11050334</a></div>
+      <div class="r"><span class="rnum">10</span><b>IFOPA — STOPFOP trial resource.</b> Patient-facing summary: saracatinib blocks ALK2; &gt;600 prior human exposures; trial rationale and status. <a href="https://www.ifopa.org/saracatinib" target="_blank" rel="noopener">ifopa.org/saracatinib</a></div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer>
+    <div class="disclaimer">
+      <b>Research and education, not medical advice.</b> This dossier is a medicinal-chemistry case study prepared for a scientifically literate reader. Saracatinib is an <b>investigational</b> compound for FOP and is <b>not an approved treatment</b>; nothing here is a clinical recommendation, a dosing instruction, or a statement of trial outcome. Computed descriptors are public database values (RDKit-class), not re-derived; the binding pose is a rationale from homologous structures, not an experimental saracatinib–ALK2 complex. Verify against the primary sources before any scientific or clinical use.
+    </div>
+    <div class="sig">
+      <span>CURIE · SPLIT — frontier science for orphan diseases &nbsp;·&nbsp; entry 04 · repurposing dossier &nbsp;·&nbsp; 2026-07-03</span>
+      <span class="made">Made with Split</span>
+    </div>
+  </footer>
+
+</div><!-- /wrap -->
+
+<script>
+/* ------------------------------------------------------------------ *
+ *  Molecular structure — SmilesDrawer, graphite ink on warm paper
+ * ------------------------------------------------------------------ */
+var SARACATINIB_SMILES = "CN1CCN(CCOc2cc(OC3CCOCC3)c3c(Nc4c(Cl)ccc5c4OCO5)ncnc3c2)CC1";
+
+/* graphite lab-notebook theme for SmilesDrawer (near-black bonds, muted heteroatoms
+   tuned to the aubergine/paper palette) */
+var LAB_THEME = {
+  lab: {
+    C:'#25211d', O:'#7a3b3b', N:'#4a2c54', F:'#3f5d4a', CL:'#3f5d4a',
+    BR:'#7a3b3b', I:'#4a2c54', P:'#8a5a2b', S:'#8a5a2b', B:'#7d766a',
+    SI:'#7d766a', H:'#25211d', BACKGROUND:'#00000000'
+  }
+};
+
+function drawMolecule(){
+  try{
+    var opts = { width: 560, height: 380, bondThickness:1.15, bondLength:16,
+                 atomVisualization:'default', fontSizeLarge:12, fontSizeSmall:9,
+                 padding:24, themes: LAB_THEME };
+    var sd = new SmilesDrawer.SvgDrawer(opts);
+    SmilesDrawer.parse(SARACATINIB_SMILES, function(tree){
+      sd.draw(tree, 'mol-svg', 'lab', false);
+    }, function(err){
+      document.getElementById('mol-svg').outerHTML =
+        '<div class="figcap" style="padding:40px">structure render unavailable — SMILES: '+SARACATINIB_SMILES+'</div>';
+    });
+  }catch(e){
+    document.getElementById('mol-svg').outerHTML =
+      '<div class="figcap" style="padding:40px">structure render unavailable — SMILES: '+SARACATINIB_SMILES+'</div>';
+  }
+}
+if (window.SmilesDrawer){ drawMolecule(); }
+else { window.addEventListener('load', drawMolecule); }
+
+/* ------------------------------------------------------------------ *
+ *  Fragment / pharmacophore highlight toggles
+ * ------------------------------------------------------------------ */
+var FRAG_NOTES = {
+  quinazoline: "Quinazoline hinge core — the N1 nitrogen is the hydrogen-bond acceptor to the ALK2 hinge (His286). The privileged 4-anilinoquinazoline scaffold shared with EGFR-class inhibitors.",
+  aniline:     "5-chloro-1,3-benzodioxole aniline — the 4-anilino N–H is the molecule's single H-bond donor; the chloro-arene reaches the hydrophobic back pocket past the Thr283 gatekeeper.",
+  solub:       "4-methylpiperazine on an ethoxy tether — the solubilising, solvent-exposed group; basic amine that tunes aqueous solubility and points out toward solvent, not the pocket.",
+  thp:         "Oxan-4-yl (tetrahydropyranyl) ether at C5 — an oxygen-bearing morpholine-like substituent filling ribose-pocket space and modulating potency/selectivity."
+};
+document.querySelectorAll('.htag').forEach(function(tag){
+  tag.addEventListener('click', function(){
+    var on = tag.getAttribute('data-on')==='1';
+    /* single-select feel: clear others */
+    document.querySelectorAll('.htag').forEach(function(t){ t.setAttribute('data-on','0'); });
+    var note = document.getElementById('pharmNote');
+    if(on){
+      note.textContent = 'Toggle a fragment to read its pharmacophore role.';
+      note.style.color = 'var(--ink-3)';
+    } else {
+      tag.setAttribute('data-on','1');
+      note.textContent = FRAG_NOTES[tag.getAttribute('data-hl')] || '';
+      note.style.color = 'var(--plum-ink)';
+    }
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ *  Descriptor tooltips (hover definitions)
+ * ------------------------------------------------------------------ */
+var TT = {
+  mw:  "<b>Molecular weight (g/mol)</b> — total mass of the molecule. Lipinski's rule prefers &lt; 500; saracatinib's 542 is its single Ro5 violation, typical of a large kinase inhibitor. <span class='mono'>ChEMBL 542.04</span>",
+  logp:"<b>cLogP</b> — computed octanol/water partition coefficient; a measure of lipophilicity. Higher = more fat-soluble. Ro5 caps it at 5. <span class='mono'>ALogP 3.94 · XLogP 4.1</span>",
+  tpsa:"<b>TPSA</b> — topological polar surface area (Å²). Predicts membrane permeability and oral absorption; &lt; 140 Å² favours passive gut uptake. <span class='mono'>90.4 Å²</span>",
+  hbd: "<b>H-bond donors</b> — count of N–H / O–H groups. Too many hurts permeability; Ro5 ≤ 5. Saracatinib has one: the anilino N–H that also anchors the hinge. <span class='mono'>1</span>",
+  hba: "<b>H-bond acceptors</b> — count of N/O lone-pair acceptors. Ro5 ≤ 10. Saracatinib sits exactly at 10 — the ether, amine and ring nitrogens. <span class='mono'>10</span>",
+  rotb:"<b>Rotatable bonds</b> — freely rotating single bonds; a flexibility measure. Veber's rule prefers ≤ 10 for oral bioavailability. <span class='mono'>8</span>",
+  arom:"<b>Aromatic rings</b> — count of aromatic ring systems. High counts raise attrition risk; ≤ 3–4 is a common guide. Quinazoline (2 fused) + benzodioxole arene. <span class='mono'>3</span>",
+  qed: "<b>QED</b> — quantitative estimate of drug-likeness (0–1), a weighted composite of eight properties. ~0.45 is moderate — the size of a kinase inhibitor pulls it below small-molecule ideals. <span class='mono'>0.45</span>"
+};
+var tt = document.getElementById('tt');
+document.querySelectorAll('.pk[data-tt]').forEach(function(el){
+  el.addEventListener('mouseenter', function(e){
+    tt.innerHTML = TT[el.getAttribute('data-tt')];
+    tt.classList.add('on');
+    positionTT(e);
+  });
+  el.addEventListener('mousemove', positionTT);
+  el.addEventListener('mouseleave', function(){ tt.classList.remove('on'); });
+});
+function positionTT(e){
+  var pad=14, w=tt.offsetWidth, h=tt.offsetHeight;
+  var x=e.clientX+pad, y=e.clientY+pad;
+  if(x+w>window.innerWidth-10) x=e.clientX-w-pad;
+  if(y+h>window.innerHeight-10) y=e.clientY-h-pad;
+  tt.style.left=x+'px'; tt.style.top=y+'px';
+}
+
+/* ------------------------------------------------------------------ *
+ *  Copy SMILES
+ * ------------------------------------------------------------------ */
+document.getElementById('copySmiles').addEventListener('click', function(){
+  var btn=this;
+  navigator.clipboard.writeText(SARACATINIB_SMILES).then(function(){
+    btn.textContent='COPIED'; setTimeout(function(){ btn.textContent='COPY'; },1400);
+  }).catch(function(){ btn.textContent='—'; });
+});
+</script>
+</body>
+</html>

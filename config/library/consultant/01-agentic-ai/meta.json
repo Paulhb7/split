@@ -1,0 +1,10 @@
+{
+  "expert": "consultant",
+  "key": "agentic-ai",
+  "type": "deck",
+  "title": "Agentic AI — July 2026",
+  "desc": "The state of play",
+  "brief": "An executive deck, entirely in English, on the state of agentic AI as of July 2026: what an agent actually is now (the settled model/harness/protocol vocabulary), the four-layer stack (frontier models, agent CLIs, MCP/ACP/A2A interop, deployment surfaces), what changed in H1 2026 (model cadence, the Codex surge, the Anthropic repricing episode, the $60B SpaceX-Cursor deal, the MCP release candidate), benchmark evidence (SWE-bench Verified, OSWorld vs the human baseline, GAIA's model-vs-system spread), adoption data, the vendor landscape, unit economics, the four structural risks, and six dated calls for the next 12 months. Every number is grounded in July-2026 web sources, cited on-slide with a full sources slide.",
+  "da": "Swiss editorial print — warm off-white paper, near-black ink, one vermilion accent, Archivo grotesk, oversized numerals, hairline rules, completely flat.",
+  "generated": "2026-07-03"
+}

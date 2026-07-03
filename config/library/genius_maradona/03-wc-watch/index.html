@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>World Cup Watch — July 2026 · Maradona</title>
+
+<!-- =========================================================
+     FONTS — broadcast pairing:
+       Anton         → heavy condensed display + giant numerals
+       Figtree       → clean humanist sans for body / lower-thirds
+       Fraunces (opt)→ NOT used; kept off to stay distinct
+     ========================================================= -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,600&display=swap" rel="stylesheet" />
+
+<style>
+/* ===========================================================
+   FIXED 16:9 STAGE — MANDATORY BASE (verbatim from
+   frontend-slides/viewport-base.css). Slides authored at
+   1920×1080 and scaled as one unit.
+   =========================================================== */
+html, body {
+  width: 100%; height: 100%; margin: 0;
+  overflow: hidden; background: var(--stage-bg, #000);
+}
+.deck-viewport {
+  position: fixed; inset: 0; overflow: hidden;
+  background: var(--stage-bg, #000);
+}
+.deck-stage {
+  position: absolute; left: 0; top: 0;
+  width: 1920px; height: 1080px; overflow: hidden;
+  transform-origin: 0 0; background: var(--slide-bg, #fff);
+}
+.slide {
+  position: absolute; inset: 0;
+  width: 1920px; height: 1080px; overflow: hidden;
+  display: block; visibility: hidden; opacity: 0;
+  pointer-events: none; background: var(--slide-bg, #fff);
+}
+.slide.active, .slide.visible {
+  visibility: visible; opacity: 1; pointer-events: auto; z-index: 1;
+}
+img, video, canvas, svg { max-width: 100%; max-height: 100%; }
+.deck-controls {
+  position: fixed; left: 50%; bottom: 22px;
+  transform: translateX(-50%); z-index: 1000;
+}
+@media print {
+  html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+  .deck-viewport { position: static; overflow: visible; background: #fff; }
+  .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+  .slide {
+    position: relative; display: block !important; visibility: visible !important;
+    opacity: 1 !important; pointer-events: auto !important;
+    width: 1920px; height: 1080px; break-after: page; page-break-after: always;
+  }
+  .slide:last-child { break-after: auto; page-break-after: auto; }
+  .deck-controls { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important; transition-duration: 0.2s !important;
+  }
+}
+
+/* ===========================================================
+   DESIGN SYSTEM — "BROADCAST GRAPHICS"
+   Bright white/light stage, vivid saturated color blocks,
+   VERY large condensed numerals, bold team-color accents,
+   lower-third motifs. TV-graphics energy, not dark/newsprint.
+   =========================================================== */
+:root {
+  --stage-bg: #C9D2E0;                 /* letterbox surround (studio grey) */
+  --slide-bg: #F3F6FC;                 /* bright broadcast stage */
+  --panel:    #FFFFFF;                  /* card white */
+
+  --ink:      #0A101C;                  /* near-black text */
+  --ink-2:    #46536B;                  /* secondary text */
+  --line:     #D7DEEA;                  /* hairlines on light */
+
+  --blue:     #0A54FF;                  /* primary electric blue */
+  --blue-dk:  #073BC0;
+  --pink:     #FF1E6F;                  /* hot magenta */
+  --yellow:   #FFD200;                  /* vivid broadcast yellow */
+  --green:    #06C270;                  /* spring green */
+  --purple:   #6A2BFF;
+  --orange:   #FF6A1A;
+
+  --shadow: 0 20px 60px rgba(10,32,90,.14), 0 4px 14px rgba(10,32,90,.08);
+  --shadow-sm: 0 8px 22px rgba(10,32,90,.10);
+
+  --font-display: 'Anton', 'Arial Narrow', sans-serif;
+  --font-body: 'Figtree', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+.slide {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 700px at 88% -10%, rgba(10,84,255,.06), transparent 60%),
+    radial-gradient(900px 620px at -8% 108%, rgba(255,30,111,.05), transparent 60%),
+    var(--slide-bg);
+}
+
+/* --- shared type utilities --- */
+.disp { font-family: var(--font-display); font-weight: 400; line-height: .92; letter-spacing: .5px; text-transform: uppercase; }
+.num  { font-family: var(--font-display); font-weight: 400; font-variant-numeric: tabular-nums; letter-spacing: -1px; line-height: .82; }
+.kicker {
+  font-family: var(--font-body); font-weight: 800; text-transform: uppercase;
+  letter-spacing: .28em; font-size: 17px; color: var(--blue);
+}
+.mono-tag {
+  font-family: var(--font-body); font-weight: 700; letter-spacing: .16em;
+  text-transform: uppercase; font-size: 13px;
+}
+
+/* --- LOWER-THIRD motif: the recurring broadcast tab --- */
+.lower-third {
+  display: inline-flex; align-items: stretch; border-radius: 6px; overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.lower-third .lt-flag { width: 12px; background: var(--pink); }
+.lower-third .lt-body { background: var(--ink); color: #fff; display: flex; flex-direction: column; justify-content: center; padding: 12px 22px; }
+.lower-third .lt-top { font-family: var(--font-display); font-size: 30px; line-height: .9; letter-spacing: .5px; }
+.lower-third .lt-sub { font-size: 13px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--yellow); margin-top: 4px; }
+
+/* --- page frame chrome (top rule + slide index) --- */
+.frame-top {
+  position: absolute; top: 54px; left: 90px; right: 90px; height: 4px;
+  background: linear-gradient(90deg, var(--blue) 0 22%, var(--pink) 22% 44%, var(--yellow) 44% 66%, var(--green) 66% 100%);
+  border-radius: 3px;
+}
+.brandbar {
+  position: absolute; top: 74px; left: 90px; right: 90px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.brandbar .bl { display: flex; align-items: center; gap: 14px; }
+.brand-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 0 5px rgba(255,30,111,.16); }
+.brand-word { font-family: var(--font-display); font-size: 22px; letter-spacing: 1px; }
+.brand-sub { font-weight: 700; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-2); }
+.live-pill {
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--pink); color: #fff; padding: 7px 15px; border-radius: 999px;
+  font-weight: 800; font-size: 13px; letter-spacing: .18em; text-transform: uppercase;
+}
+.live-pill::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #fff; animation: blink 1.4s steps(1) infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+
+.pagepin {
+  position: absolute; bottom: 46px; right: 90px;
+  font-family: var(--font-display); font-size: 20px; color: var(--ink-2); letter-spacing: 1px;
+}
+.pagepin b { color: var(--ink); }
+.foot-note {
+  position: absolute; bottom: 46px; left: 90px;
+  font-size: 13px; font-weight: 600; color: var(--ink-2); letter-spacing: .04em;
+  max-width: 1000px;
+}
+.foot-note b { color: var(--blue-dk); font-weight: 800; }
+
+/* content wrapper standard */
+.wrap { position: absolute; left: 90px; right: 90px; top: 132px; bottom: 96px; }
+
+/* ============================ S1 — COVER ============================ */
+#s1 { background:
+  radial-gradient(1400px 900px at 108% -12%, rgba(10,84,255,.14), transparent 62%),
+  radial-gradient(1100px 800px at -10% 112%, rgba(255,30,111,.10), transparent 60%),
+  var(--slide-bg); }
+.cover-blocks { position: absolute; inset: 0; overflow: hidden; }
+.cblock { position: absolute; opacity: .96; }
+.cb1 { top: -60px; right: -40px; width: 620px; height: 340px; background: var(--blue); transform: skewX(-12deg); }
+.cb2 { top: 250px; right: 120px; width: 420px; height: 210px; background: var(--pink); transform: skewX(-12deg); }
+.cb3 { bottom: -70px; right: -30px; width: 720px; height: 260px; background: var(--yellow); transform: skewX(-12deg); }
+.cb-line { position: absolute; right: 90px; top: 0; bottom: 0; width: 2px; background: rgba(10,16,28,.08); }
+
+.cover-inner { position: absolute; left: 96px; top: 150px; right: 96px; }
+.cover-kick { display: flex; align-items: center; gap: 16px; margin-bottom: 26px; }
+.cover-kick .tag {
+  background: var(--ink); color: #fff; padding: 9px 16px; border-radius: 5px;
+  font-family: var(--font-display); font-size: 24px; letter-spacing: 1px;
+}
+.cover-kick .tag.b { background: var(--blue); }
+.cover-title { font-family: var(--font-display); font-size: 250px; line-height: .82; letter-spacing: 1px; color: var(--ink); }
+.cover-title .em { color: var(--blue); position: relative; }
+.cover-title .em::after { content:""; position:absolute; left:0; right:-6px; bottom: 16px; height: 20px; background: var(--yellow); z-index:-1; }
+.cover-sub {
+  margin-top: 30px; max-width: 1020px; font-size: 30px; font-weight: 600; color: var(--ink-2); line-height: 1.34;
+}
+.cover-sub b { color: var(--ink); font-weight: 800; }
+.cover-meta { position: absolute; left: 96px; bottom: 92px; display: flex; align-items: center; gap: 34px; }
+.cover-meta .mt { display: flex; flex-direction: column; }
+.cover-meta .mt .k { font-weight: 800; font-size: 13px; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-2); }
+.cover-meta .mt .v { font-family: var(--font-display); font-size: 30px; color: var(--ink); letter-spacing: .5px; margin-top: 3px; }
+.cover-meta .sep { width: 2px; height: 46px; background: var(--line); }
+.sig {
+  position: absolute; right: 120px; bottom: 96px; text-align: right;
+}
+.sig .sn { font-family: var(--font-display); font-size: 56px; color: #fff; letter-spacing: 1px; line-height: .9; }
+.sig .sr { font-weight: 800; font-size: 14px; letter-spacing: .22em; text-transform: uppercase; color: var(--ink); margin-top: 8px; }
+.ten {
+  position:absolute; right: 132px; top: 132px; width: 168px; height: 168px; border-radius: 50%;
+  background: #fff; border: 6px solid var(--ink); display:flex; align-items:center; justify-content:center;
+  box-shadow: var(--shadow); transform: rotate(-8deg);
+}
+.ten span { font-family: var(--font-display); font-size: 104px; color: var(--ink); line-height:1; }
+
+/* ============================ ABOUT banner (S2) ============================ */
+.about-card {
+  position: absolute; left: 90px; right: 90px; top: 150px; bottom: 118px;
+  background: var(--panel); border-radius: 18px; box-shadow: var(--shadow);
+  border: 1px solid var(--line); overflow: hidden; display: grid; grid-template-columns: 360px 1fr;
+}
+.about-side { background: var(--ink); color: #fff; padding: 48px 44px; position: relative; }
+.about-side .as-kick { color: var(--yellow); font-weight: 800; letter-spacing: .24em; text-transform: uppercase; font-size: 15px; }
+.about-side h2 { font-family: var(--font-display); font-size: 74px; line-height: .9; margin: 16px 0 20px; letter-spacing: .5px; }
+.about-side p { font-size: 18px; line-height: 1.5; color: #C6D0E4; font-weight: 500; }
+.about-side .strip { position:absolute; left:0; top:0; bottom:0; width:12px; background: linear-gradient(var(--blue), var(--pink), var(--yellow)); }
+.about-grid { padding: 46px 52px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px 46px; align-content: center; }
+.about-item .ai-h { display:flex; align-items:center; gap:12px; margin-bottom: 10px; }
+.about-item .chip {
+  font-family: var(--font-display); font-size: 15px; color:#fff; letter-spacing:1px;
+  padding: 5px 11px; border-radius: 5px;
+}
+.chip.why { background: var(--blue); } .chip.ctx { background: var(--pink); }
+.chip.use { background: var(--green); } .chip.ass { background: var(--purple); }
+.about-item .ai-t { font-family: var(--font-display); font-size: 23px; letter-spacing:.5px; color: var(--ink); }
+.about-item p { font-size: 17px; line-height: 1.5; color: var(--ink-2); font-weight: 500; margin: 0; }
+.about-item p b { color: var(--ink); font-weight: 800; }
+
+/* ============================ SECTION HEADER pattern ============================ */
+.sec-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 30px; }
+.sec-head .sh-l .kick { margin-bottom: 12px; }
+.sec-head h2 { font-family: var(--font-display); font-size: 92px; line-height: .86; letter-spacing: .5px; color: var(--ink); }
+.sec-head h2 .u { color: var(--blue); }
+.sec-head .sh-r { text-align: right; max-width: 520px; }
+.sec-head .sh-r .big { font-family: var(--font-display); font-size: 26px; color: var(--ink); letter-spacing: .5px; }
+.sec-head .sh-r .sml { font-size: 15px; font-weight: 600; color: var(--ink-2); margin-top: 6px; line-height: 1.4; }
+
+/* ============================ S3 — GOLDEN BOOT ============================ */
+.boot-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 34px; height: 100%; }
+.boot-lead {
+  background: var(--ink); border-radius: 18px; padding: 40px 44px; color:#fff; position: relative; overflow: hidden;
+  box-shadow: var(--shadow); display:flex; flex-direction: column;
+}
+.boot-lead .glow { position:absolute; width: 520px; height: 520px; border-radius:50%;
+  background: radial-gradient(circle, rgba(255,210,0,.32), transparent 60%); right:-160px; top:-140px; }
+.boot-lead .bl-top { display:flex; align-items:center; gap: 12px; z-index:1; }
+.boot-lead .bl-top .badge { background: var(--yellow); color: var(--ink); font-family: var(--font-display); font-size: 17px; padding: 6px 13px; border-radius: 5px; letter-spacing:1px; }
+.boot-lead .bl-top .co { font-weight: 800; letter-spacing:.2em; text-transform:uppercase; font-size:14px; color:#AEBAD2; }
+.tie-wrap { display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; z-index:1; }
+.tie-card { background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); border-radius: 14px; padding: 22px 24px; }
+.tie-card .flag { width: 44px; height: 30px; border-radius: 4px; margin-bottom: 14px; box-shadow: 0 3px 8px rgba(0,0,0,.35); }
+.tie-card .name { font-family: var(--font-display); font-size: 40px; line-height:.9; letter-spacing:.5px; }
+.tie-card .nat { font-weight: 800; font-size: 13px; letter-spacing:.2em; text-transform:uppercase; color:#AEBAD2; margin-top:4px; }
+.tie-card .gnum { font-family: var(--font-display); font-size: 118px; line-height:.8; margin-top: 12px; letter-spacing:-2px; }
+.tie-card .glabel { font-weight:800; font-size:12px; letter-spacing:.22em; text-transform:uppercase; color:#AEBAD2; }
+.tie-card.lead .gnum { color: var(--yellow); }
+.tie-card.lead { border-color: var(--yellow); background: rgba(255,210,0,.08); }
+.tiebreak { margin-top: auto; z-index:1; font-size:15px; color:#C6D0E4; font-weight:500; line-height:1.45; padding-top: 22px; }
+.tiebreak b { color: var(--yellow); font-weight:800; }
+
+.boot-chase { display:flex; flex-direction: column; gap: 14px; }
+.chase-row {
+  background: var(--panel); border:1px solid var(--line); border-radius: 12px;
+  display:grid; grid-template-columns: 62px 1fr auto; align-items:center; gap: 18px;
+  padding: 14px 22px; box-shadow: var(--shadow-sm);
+}
+.chase-row .rk { font-family: var(--font-display); font-size: 34px; color: var(--ink-2); text-align:center; }
+.chase-row .who .nm { font-family: var(--font-display); font-size: 30px; letter-spacing:.5px; line-height:.9; }
+.chase-row .who .ct { font-weight: 700; font-size: 12.5px; letter-spacing:.16em; text-transform:uppercase; color: var(--ink-2); margin-top:3px; }
+.chase-row .gg { display:flex; align-items:baseline; gap:8px; }
+.chase-row .gg .n { font-family: var(--font-display); font-size: 52px; line-height:.8; }
+.chase-row .gg .l { font-weight:800; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color: var(--ink-2); }
+.chase-row.three .gg .n { color: var(--ink-2); font-size: 40px; }
+.chase-row .barflag { width: 8px; height: 40px; border-radius: 3px; }
+.pack-note { background: var(--blue); color:#fff; border-radius:12px; padding: 14px 22px; font-weight:600; font-size:15.5px; line-height:1.4; }
+.pack-note b { color: var(--yellow); font-weight:800; }
+
+/* ============================ S4 / S5 — feature split ============================ */
+.feat { display:grid; grid-template-columns: 1fr 1fr; gap: 40px; height:100%; }
+.feat-panel {
+  border-radius: 20px; padding: 46px 48px; position: relative; overflow: hidden;
+  box-shadow: var(--shadow); display:flex; flex-direction:column;
+}
+.feat-panel.blue { background: var(--blue); color:#fff; }
+.feat-panel.pinkbg { background: var(--pink); color:#fff; }
+.feat-panel .fp-kick { font-weight:800; letter-spacing:.24em; text-transform:uppercase; font-size:15px; opacity:.9; }
+.feat-panel .fp-title { font-family: var(--font-display); font-size: 120px; line-height:.82; letter-spacing:.5px; margin: 12px 0 6px; }
+.feat-panel .fp-flag { display:inline-flex; width: 78px; height: 52px; border-radius:6px; box-shadow:0 6px 16px rgba(0,0,0,.3); margin-bottom: 20px; }
+.feat-panel .fp-lead { font-size: 21px; font-weight:600; line-height:1.42; opacity:.96; }
+.feat-panel .fp-lead b { font-weight: 900; }
+.feat-stats { margin-top:auto; display:grid; grid-template-columns: 1fr 1fr; gap: 22px; padding-top: 30px; }
+.feat-stat .fs-n { font-family: var(--font-display); font-size: 76px; line-height:.8; letter-spacing:-1px; }
+.feat-stat .fs-l { font-weight:700; font-size:14px; letter-spacing:.06em; line-height:1.35; margin-top:8px; opacity:.92; }
+.feat-panel .huge-bg { position:absolute; font-family: var(--font-display); font-size: 560px; line-height:.7; right:-40px; bottom:-120px; opacity:.10; letter-spacing:-6px; }
+
+.feat-detail { display:flex; flex-direction: column; gap: 20px; }
+.detail-card { background: var(--panel); border:1px solid var(--line); border-radius:16px; padding: 26px 30px; box-shadow: var(--shadow-sm); }
+.detail-card .dc-h { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.detail-card .dc-ic { width: 40px; height:40px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-family: var(--font-display); font-size:22px; color:#fff; }
+.detail-card .dc-t { font-family: var(--font-display); font-size: 28px; letter-spacing:.5px; }
+.detail-card p { font-size: 17px; line-height:1.5; color: var(--ink-2); font-weight:500; margin:0; }
+.detail-card p b { color: var(--ink); font-weight:800; }
+.verdict {
+  background: var(--ink); color:#fff; border-radius:16px; padding: 26px 30px; margin-top: auto; position: relative;
+}
+.verdict .vk { color: var(--yellow); font-weight:800; letter-spacing:.22em; text-transform:uppercase; font-size:14px; margin-bottom:10px; }
+.verdict p { font-size: 20px; line-height:1.45; font-weight:600; margin:0; font-style: italic; }
+.verdict p b { color:#fff; font-weight:900; font-style: normal; }
+
+/* mini form strip */
+.form-strip { display:flex; gap:6px; margin-top: 14px; }
+.form-strip .pip { width: 30px; height: 30px; border-radius:6px; display:flex; align-items:center; justify-content:center;
+  font-family: var(--font-display); font-size:16px; color:#fff; }
+.pip.w { background: var(--green); } .pip.d { background:#9AA6BC; } .pip.l { background:#E23; }
+
+/* ============================ S6 — PLAYER OF TOURNAMENT ============================ */
+.potm { display:grid; grid-template-columns: 1.25fr 1fr; gap: 36px; height:100%; }
+.potm-hero {
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dk) 60%, #0A2A8A 100%);
+  border-radius: 20px; color:#fff; padding: 44px 48px; position:relative; overflow:hidden; box-shadow: var(--shadow);
+  display:flex; flex-direction: column;
+}
+.potm-hero .ph-num { position:absolute; right:-30px; top:-70px; font-family: var(--font-display); font-size: 460px; opacity:.12; line-height:.7; }
+.potm-hero .ph-kick { font-weight:800; letter-spacing:.24em; text-transform:uppercase; font-size:15px; color: var(--yellow); }
+.potm-hero .ph-name { font-family: var(--font-display); font-size: 132px; line-height:.82; margin: 10px 0 4px; letter-spacing:.5px; }
+.potm-hero .ph-role { display:flex; align-items:center; gap:14px; }
+.potm-hero .ph-role .fl { width: 60px; height:40px; border-radius:5px; box-shadow:0 4px 12px rgba(0,0,0,.35); }
+.potm-hero .ph-role .rt { font-weight:700; font-size:16px; letter-spacing:.14em; text-transform:uppercase; }
+.potm-hero .ph-body { font-size: 20px; font-weight:600; line-height:1.44; margin-top: 26px; max-width: 620px; opacity:.97; }
+.potm-hero .ph-body b { font-weight:900; }
+.potm-hero .ph-stats { margin-top:auto; display:grid; grid-template-columns: repeat(3,1fr); gap: 20px; padding-top: 26px; }
+.potm-hero .ps .n { font-family: var(--font-display); font-size: 64px; line-height:.8; color: var(--yellow); }
+.potm-hero .ps .l { font-weight:700; font-size:12.5px; letter-spacing:.05em; margin-top:6px; line-height:1.3; }
+
+.potm-vs { display:flex; flex-direction: column; gap: 18px; }
+.vs-tag { text-align:center; font-family: var(--font-display); font-size:26px; color: var(--ink-2); letter-spacing:2px; }
+.rival-card { background: var(--panel); border:1px solid var(--line); border-radius:16px; padding: 26px 30px; box-shadow: var(--shadow-sm); position: relative; }
+.rival-card .rc-name { font-family: var(--font-display); font-size:52px; line-height:.86; letter-spacing:.5px; }
+.rival-card .rc-nat { font-weight:800; font-size:13px; letter-spacing:.2em; text-transform:uppercase; color: var(--ink-2); margin:4px 0 14px; }
+.rival-card ul { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px; }
+.rival-card li { display:flex; gap:12px; align-items:flex-start; font-size:16px; font-weight:500; color: var(--ink-2); line-height:1.4; }
+.rival-card li .b { width:9px; height:9px; border-radius:2px; margin-top:6px; flex:0 0 auto; }
+.rival-card li b { color: var(--ink); font-weight:800; }
+.potm-call { background: var(--pink); color:#fff; border-radius:16px; padding: 22px 30px; margin-top:auto; }
+.potm-call .pk { font-weight:800; letter-spacing:.22em; text-transform:uppercase; font-size:13px; color: var(--yellow); }
+.potm-call p { margin:8px 0 0; font-size: 19px; font-weight:700; line-height:1.4; font-style: italic; }
+
+/* ============================ S7 — BEST GOAL ============================ */
+.goal-wrap { display:grid; grid-template-columns: 1.3fr 1fr; gap: 38px; height:100%; }
+.goal-hero { background: var(--ink); border-radius:20px; padding: 44px 48px; color:#fff; position:relative; overflow:hidden; box-shadow: var(--shadow); display:flex; flex-direction:column; }
+.goal-hero .pitch { position:absolute; inset:0; opacity:.14;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 118px, rgba(255,255,255,.5) 118px 120px),
+    radial-gradient(circle at 50% 118%, rgba(6,194,112,.5), transparent 40%);
+}
+.goal-hero .gh-kick { font-weight:800; letter-spacing:.24em; text-transform:uppercase; font-size:15px; color: var(--green); z-index:1; }
+.goal-hero .gh-title { font-family: var(--font-display); font-size: 84px; line-height:.86; margin: 10px 0 4px; z-index:1; letter-spacing:.5px; }
+.goal-hero .gh-scorer { z-index:1; display:flex; align-items:baseline; gap:16px; margin: 20px 0; }
+.goal-hero .gh-scorer .sn { font-family: var(--font-display); font-size:56px; color: var(--yellow); letter-spacing:.5px; }
+.goal-hero .gh-scorer .sm { font-weight:700; font-size:15px; letter-spacing:.14em; text-transform:uppercase; color:#AEBAD2; }
+.goal-hero .gh-body { z-index:1; font-size:19px; font-weight:500; line-height:1.5; color:#D3DBED; max-width: 640px; }
+.goal-hero .gh-body b { color:#fff; font-weight:800; }
+.goal-hero .assist-bar { z-index:1; margin-top:auto; display:flex; gap: 26px; padding-top: 28px; }
+.goal-hero .ab .n { font-family: var(--font-display); font-size:44px; color:#fff; line-height:.8; }
+.goal-hero .ab .l { font-weight:700; font-size:12.5px; letter-spacing:.08em; color:#AEBAD2; margin-top:6px; }
+
+.goal-side { display:flex; flex-direction:column; gap: 16px; }
+.gs-head { font-family: var(--font-display); font-size: 30px; letter-spacing:.5px; color: var(--ink); }
+.contender { background: var(--panel); border:1px solid var(--line); border-left: 8px solid var(--blue); border-radius:12px; padding: 18px 24px; box-shadow: var(--shadow-sm); }
+.contender.c2 { border-left-color: var(--pink); }
+.contender.c3 { border-left-color: var(--purple); }
+.contender .cn { font-family: var(--font-display); font-size:26px; letter-spacing:.5px; line-height:.9; }
+.contender .cn .vs { color: var(--ink-2); font-size:18px; }
+.contender p { margin:6px 0 0; font-size:15.5px; font-weight:500; color: var(--ink-2); line-height:1.42; }
+.contender p b { color: var(--ink); font-weight:800; }
+
+/* ============================ S8 — RECORDS SLAB ============================ */
+.rec-grid { display:grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: 1fr 1fr; gap: 26px; height:100%; }
+.rec {
+  border-radius: 18px; padding: 30px 30px; position: relative; overflow: hidden; box-shadow: var(--shadow-sm);
+  display:flex; flex-direction: column; justify-content: space-between;
+}
+.rec .rc-n { font-family: var(--font-display); font-size: 118px; line-height:.78; letter-spacing:-2px; }
+.rec .rc-l { font-weight:700; font-size:16px; line-height:1.35; }
+.rec .rc-w { font-weight:800; font-size:12px; letter-spacing:.18em; text-transform:uppercase; margin-bottom: 10px; }
+.rec.a { background: var(--blue); color:#fff; } .rec.a .rc-w { color: var(--yellow); }
+.rec.b { background: var(--panel); border:1px solid var(--line); color: var(--ink); } .rec.b .rc-n { color: var(--pink); } .rec.b .rc-w { color: var(--ink-2); }
+.rec.c { background: var(--ink); color:#fff; } .rec.c .rc-n { color: var(--yellow); } .rec.c .rc-w { color: var(--green); }
+.rec.d { background: var(--panel); border:1px solid var(--line); color: var(--ink); } .rec.d .rc-n { color: var(--blue); } .rec.d .rc-w { color: var(--ink-2); }
+.rec.e { background: var(--pink); color:#fff; } .rec.e .rc-w { color: var(--yellow); }
+.rec.f { background: var(--panel); border:1px solid var(--line); color: var(--ink); } .rec.f .rc-n { color: var(--green); } .rec.f .rc-w { color: var(--ink-2); }
+.rec.g { background: var(--green); color:#fff; } .rec.g .rc-w { color: var(--ink); }
+.rec.h { background: var(--purple); color:#fff; } .rec.h .rc-w { color: var(--yellow); }
+.rec .rc-n small { font-size: 44px; letter-spacing:0; }
+
+/* ============================ S9 — WHO'S LEFT / BRACKET ============================ */
+.bracket { display:grid; grid-template-columns: 1fr 200px 1fr; gap: 26px; height:100%; align-items: stretch; }
+.br-col { display:flex; flex-direction: column; gap: 12px; }
+.br-col .col-h { font-family: var(--font-display); font-size: 24px; letter-spacing:.5px; color: var(--ink-2); margin-bottom:2px; }
+.tie {
+  background: var(--panel); border:1px solid var(--line); border-radius:11px; overflow:hidden; box-shadow: var(--shadow-sm);
+  display:flex; flex-direction: column;
+}
+.tie .team { display:flex; align-items:center; gap:12px; padding: 11px 16px; }
+.tie .team + .team { border-top: 1px solid var(--line); }
+.tie .team .fl { width: 30px; height: 21px; border-radius:3px; flex:0 0 auto; box-shadow:0 2px 5px rgba(0,0,0,.15); }
+.tie .team .tn { font-family: var(--font-display); font-size: 24px; letter-spacing:.5px; line-height:1; color: var(--ink); }
+.tie .team .seed { margin-left:auto; font-weight:800; font-size:12px; letter-spacing:.1em; color: var(--ink-2); }
+.tie.tbd .team .tn { color: var(--ink-2); }
+.tie .date { background: #EEF2FA; padding: 5px 16px; font-weight:800; font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color: var(--ink-2); }
+.br-mid { display:flex; flex-direction: column; align-items:center; justify-content:center; gap: 18px; }
+.trophy {
+  width: 150px; height: 150px; border-radius: 20px; background: var(--yellow); display:flex; flex-direction:column;
+  align-items:center; justify-content:center; box-shadow: var(--shadow); border: 4px solid var(--ink);
+}
+.trophy .tw { font-family: var(--font-display); font-size: 30px; color: var(--ink); line-height:.9; text-align:center; }
+.trophy .td { font-family: var(--font-display); font-size: 58px; color: var(--ink); line-height:.8; }
+.br-mid .mnote { text-align:center; font-weight:700; font-size:13px; letter-spacing:.06em; color: var(--ink-2); line-height:1.4; max-width: 180px; }
+.br-mid .rd-pill { background: var(--blue); color:#fff; font-family: var(--font-display); font-size:18px; padding:6px 14px; border-radius:6px; letter-spacing:.5px; }
+
+/* ============================ S10 — MARADONA PICKS ============================ */
+.picks { display:grid; grid-template-columns: 1fr; gap: 26px; height:100%; grid-template-rows: auto 1fr; }
+.final-band {
+  background: var(--ink); border-radius: 20px; color:#fff; padding: 34px 46px; box-shadow: var(--shadow);
+  display:grid; grid-template-columns: 1fr auto 1fr; align-items:center; position:relative; overflow:hidden;
+}
+.final-band .fb-glow { position:absolute; width:600px; height:600px; border-radius:50%; background: radial-gradient(circle, rgba(10,84,255,.35), transparent 60%); left:50%; top:50%; transform:translate(-50%,-50%); }
+.final-band .fteam { z-index:1; display:flex; flex-direction: column; }
+.final-band .fteam.r { align-items: flex-end; text-align:right; }
+.final-band .fteam .fl { width: 92px; height:60px; border-radius:7px; margin-bottom:14px; box-shadow:0 6px 18px rgba(0,0,0,.4); }
+.final-band .fteam .fn { font-family: var(--font-display); font-size: 92px; line-height:.82; letter-spacing:.5px; }
+.final-band .fteam .fr { font-weight:700; font-size:14px; letter-spacing:.16em; text-transform:uppercase; color:#AEBAD2; margin-top:8px; }
+.final-band .center { z-index:1; text-align:center; padding: 0 46px; }
+.final-band .center .vs { font-family: var(--font-display); font-size: 96px; color: var(--yellow); line-height:.8; }
+.final-band .center .lbl { font-weight:800; font-size:13px; letter-spacing:.22em; text-transform:uppercase; color:#AEBAD2; margin-top:8px; }
+
+.picks-body { display:grid; grid-template-columns: 1.35fr 1fr; gap: 30px; }
+.champ {
+  background: linear-gradient(135deg, var(--yellow), #FFB300); border-radius:20px; padding: 40px 46px; color: var(--ink);
+  position:relative; overflow:hidden; box-shadow: var(--shadow); display:flex; flex-direction:column;
+}
+.champ .cw { font-weight:900; letter-spacing:.24em; text-transform:uppercase; font-size:16px; }
+.champ .cflag { width: 96px; height:64px; border-radius:8px; margin: 16px 0 8px; box-shadow:0 8px 20px rgba(0,0,0,.25); }
+.champ .cname { font-family: var(--font-display); font-size: 150px; line-height:.8; letter-spacing:1px; }
+.champ .creason { font-size: 20px; font-weight:600; line-height:1.42; margin-top: 18px; max-width: 620px; }
+.champ .creason b { font-weight:900; }
+.champ .ctrophy { position:absolute; right:-30px; bottom:-50px; font-family: var(--font-display); font-size: 380px; opacity:.16; line-height:.7; }
+.picks-notes { display:flex; flex-direction: column; gap: 16px; }
+.pn { background: var(--panel); border:1px solid var(--line); border-radius:14px; padding: 22px 26px; box-shadow: var(--shadow-sm); }
+.pn .pn-h { font-family: var(--font-display); font-size:24px; letter-spacing:.5px; color: var(--ink); display:flex; align-items:center; gap:10px; }
+.pn .pn-h .dot { width:12px; height:12px; border-radius:50%; }
+.pn p { margin:8px 0 0; font-size:16px; font-weight:500; color: var(--ink-2); line-height:1.44; }
+.pn p b { color: var(--ink); font-weight:800; }
+.pn.warn { background: var(--ink); color:#fff; border:none; }
+.pn.warn .pn-h { color:#fff; } .pn.warn p { color:#C6D0E4; } .pn.warn p b { color: var(--yellow); }
+
+/* ============================ S11 — SOURCES ============================ */
+.src-wrap { columns: 2; column-gap: 54px; margin-top: 6px; }
+.src {
+  break-inside: avoid; background: var(--panel); border:1px solid var(--line); border-radius: 12px;
+  padding: 18px 22px; margin-bottom: 16px; box-shadow: var(--shadow-sm); display:grid; grid-template-columns: 44px 1fr; gap: 16px; align-items:center;
+}
+.src .sn { font-family: var(--font-display); font-size: 30px; color: var(--blue); text-align:center; }
+.src .st { font-family: var(--font-display); font-size: 21px; letter-spacing:.4px; line-height:.95; color: var(--ink); }
+.src .su { font-size: 13.5px; font-weight:600; color: var(--ink-2); margin-top: 5px; word-break: break-all; }
+.src .su b { color: var(--blue-dk); font-weight:800; }
+.src-note { position:absolute; bottom: 96px; left: 90px; right: 90px; font-size: 15px; font-weight:600; color: var(--ink-2); line-height:1.5; }
+.src-note b { color: var(--ink); font-weight:800; }
+
+/* ============================ S12 — CLOSE ============================ */
+#s12 { background:
+  radial-gradient(1300px 900px at 12% -10%, rgba(255,30,111,.14), transparent 60%),
+  radial-gradient(1100px 800px at 108% 110%, rgba(10,84,255,.14), transparent 60%),
+  var(--slide-bg); }
+.close-inner { position:absolute; left: 96px; top: 220px; right: 96px; }
+.close-big { font-family: var(--font-display); font-size: 210px; line-height:.82; color: var(--ink); letter-spacing:1px; }
+.close-big .u { color: var(--blue); }
+.close-sub { font-size: 30px; font-weight:600; color: var(--ink-2); margin-top: 30px; max-width: 1100px; line-height:1.4; }
+.close-sub b { color: var(--ink); font-weight:800; }
+.close-quote { position:absolute; left:96px; bottom: 150px; display:flex; align-items:center; gap: 24px; }
+.close-quote .bar { width: 8px; height: 90px; background: linear-gradient(var(--blue), var(--pink), var(--yellow)); border-radius:4px; }
+.close-quote .q { font-family: var(--font-display); font-size: 40px; color: var(--ink); font-style: italic; letter-spacing:.5px; line-height:.95; }
+.close-quote .q small { display:block; font-family: var(--font-body); font-size:16px; font-style: normal; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color: var(--pink); margin-top:12px; }
+.close-ten { position:absolute; right: 140px; bottom: 150px; width: 210px; height:210px; border-radius:50%; background: var(--ink); display:flex; align-items:center; justify-content:center; box-shadow: var(--shadow); }
+.close-ten span { font-family: var(--font-display); font-size: 130px; color: var(--yellow); line-height:1; }
+
+/* ============================ NAV / PROGRESS ============================ */
+.nav-btn {
+  background: rgba(10,16,28,.82); color:#fff; border:none; width: 46px; height:46px; border-radius: 50%;
+  font-size: 20px; cursor: pointer; display:flex; align-items:center; justify-content:center;
+  transition: background .2s, transform .2s; backdrop-filter: blur(6px);
+}
+.nav-btn:hover { background: var(--blue); transform: scale(1.06); }
+.deck-controls { display:flex; gap: 12px; align-items:center; }
+.nav-count { font-family: var(--font-display); color: var(--ink); font-size: 18px; letter-spacing:1px; background:#fff; padding:8px 14px; border-radius:999px; box-shadow: var(--shadow-sm); }
+.progress-bar { position: fixed; top:0; left:0; height: 5px; background: linear-gradient(90deg, var(--blue), var(--pink), var(--yellow)); z-index: 1001; transition: width .35s ease; box-shadow: 0 0 12px rgba(10,84,255,.4); }
+
+/* entrance animation */
+.reveal { opacity: 0; transform: translateY(26px); }
+.slide.active .reveal { animation: rise .7s cubic-bezier(.2,.7,.2,1) forwards; }
+.slide.active .reveal.d1 { animation-delay:.06s; } .slide.active .reveal.d2 { animation-delay:.14s; }
+.slide.active .reveal.d3 { animation-delay:.22s; } .slide.active .reveal.d4 { animation-delay:.30s; }
+.slide.active .reveal.d5 { animation-delay:.38s; } .slide.active .reveal.d6 { animation-delay:.46s; }
+@keyframes rise { to { opacity:1; transform:none; } }
+.pop { opacity:0; transform: scale(.9); }
+.slide.active .pop { animation: pop .6s cubic-bezier(.2,.9,.3,1.2) forwards; }
+.slide.active .pop.d1{animation-delay:.1s;} .slide.active .pop.d2{animation-delay:.2s;} .slide.active .pop.d3{animation-delay:.3s;}
+@keyframes pop { to { opacity:1; transform:none; } }
+</style>
+</head>
+<body>
+<div class="progress-bar" id="progressBar"></div>
+<div class="deck-viewport" id="viewport">
+  <div class="deck-stage" id="stage">
+
+  <!-- ==================================================== S1 — COVER ==================================================== -->
+  <section class="slide active" id="s1">
+    <div class="cover-blocks">
+      <div class="cblock cb1"></div>
+      <div class="cblock cb2"></div>
+      <div class="cblock cb3"></div>
+      <div class="cb-line"></div>
+    </div>
+    <div class="ten pop d1"><span>10</span></div>
+    <div class="cover-inner">
+      <div class="cover-kick reveal d1">
+        <span class="tag b">FIFA WORLD CUP 26</span>
+        <span class="tag">USA · CANADA · MEXICO</span>
+        <span class="live-pill">Live · Knockouts</span>
+      </div>
+      <div class="cover-title reveal d2">WORLD CUP<br><span class="em">WATCH</span></div>
+      <div class="cover-sub reveal d3">Who is lighting up the tournament <b>right now</b> — the Golden Boot race, the team that looks unbeatable, the surprise nobody saw coming, and my call for the final. <b>Every number web-verified.</b></div>
+    </div>
+    <div class="cover-meta reveal d4">
+      <div class="mt"><span class="k">Dispatch</span><span class="v">3 July 2026</span></div>
+      <div class="sep"></div>
+      <div class="mt"><span class="k">Stage</span><span class="v">Round of 32 → 16</span></div>
+      <div class="sep"></div>
+      <div class="mt"><span class="k">Final</span><span class="v">19 Jul · MetLife</span></div>
+    </div>
+    <div class="sig reveal d5">
+      <div class="sn" style="color:var(--ink)">MARADONA</div>
+      <div class="sr">Split · the boss's eyes on the game</div>
+    </div>
+    <div class="pagepin"><b>01</b> / 12</div>
+  </section>
+
+  <!-- ==================================================== S2 — ABOUT / BRIEF ==================================================== -->
+  <section class="slide" id="s2">
+    <div class="frame-top"></div>
+    <div class="brandbar">
+      <div class="bl"><span class="brand-dot"></span><span class="brand-word">WC WATCH</span><span class="brand-sub">the briefing</span></div>
+      <span class="live-pill">About this dispatch</span>
+    </div>
+    <div class="about-card">
+      <div class="about-side">
+        <div class="strip"></div>
+        <div class="as-kick">Read me first</div>
+        <h2>ABOUT<br>THIS<br>DECK</h2>
+        <p>A matchday broadcast in slides. The tournament is live, so this is a snapshot with a timestamp — the numbers are true as of 3 July 2026, mid-knockouts. Open it again after the quarter-finals and the story will have moved.</p>
+      </div>
+      <div class="about-grid">
+        <div class="about-item reveal d1">
+          <div class="ai-h"><span class="chip why">WHY</span><span class="ai-t">The goal</span></div>
+          <p>The boss wanted one high-energy read on <b>who's on fire at World Cup 2026 right now</b> — scorers, teams, the best goal, and a verdict on the final. Not a full history; the pulse of the tournament today.</p>
+        </div>
+        <div class="about-item reveal d2">
+          <div class="ai-h"><span class="chip ctx">CONTEXT</span><span class="ai-t">The moment</span></div>
+          <p>It's <b>3 July 2026</b>. The 48-team World Cup is in the <b>Round of 32 → Round of 16</b> crossover. Group stage done, the bracket is filling in, and Argentina v Cape Verde closes the last-32 today.</p>
+        </div>
+        <div class="about-item reveal d3">
+          <div class="ai-h"><span class="chip use">USE IT</span><span class="ai-t">How to read</span></div>
+          <p>Arrow keys or space to move. Twelve slides, big numbers, one verdict at the end. <b>Every stat is web-sourced</b> — the sources slide lists exactly where each came from and when.</p>
+        </div>
+        <div class="about-item reveal d4">
+          <div class="ai-h"><span class="chip ass">ASSUMED</span><span class="ai-t">My defaults</span></div>
+          <p>Broadcast-graphics look, football-only, no betting lines (that's the Financier's table). Live fixtures still to play are marked <b>TBD</b> — I don't invent scorelines. Mbappé leads the Boot on the assists tiebreak.</p>
+        </div>
+      </div>
+    </div>
+    <div class="foot-note">Snapshot timestamp <b>2026-07-03</b> · Sources: FIFA, ESPN, FOX Sports, Sky Sports, Yahoo Sports, Wikipedia, Al Jazeera, NPR — see slide 11.</div>
+    <div class="pagepin"><b>02</b> / 12</div>
+  </section>
+
+  <!-- ==================================================== S3 — GOLDEN BOOT ==================================================== -->
+  <section class="slide" id="s3">
+    <div class="frame-top"></div>
+    <div class="brandbar">
+      <div class="bl"><span class="brand-dot"></span><span class="brand-word">WC WATCH</span><span class="brand-sub">the scorers</span></div>
+      <span class="live-pill">adidas Golden Boot</span>
+    </div>
+    <div class="wrap">
+      <div class="sec-head reveal d1">
+        <div class="sh-l">
+          <div class="kicker">Race for the top scorer</div>
+          <h2>THE GOLDEN <span class="u">BOOT</span></h2>
+        </div>
+        <div class="sh-r">
+          <div class="big">TWO MEN ON SIX</div>
+          <div class="sml">Mbappé leads on the assists tiebreak. Kane &amp; Haaland breathing down their necks on five.</div>
+        </div>
+      </div>
+      <div class="boot-grid">
+        <div class="boot-lead reveal d2">
+          <div class="glow"></div>
+          <div class="bl-top"><span class="badge">TIED · FIRST</span><span class="co">6 goals apiece</span></div>
+          <div class="tie-wrap">
+            <div class="tie-card lead pop d1">
+              <div class="flag" style="background:linear-gradient(180deg,#0055A4 33%,#fff 33% 66%,#EF4135 66%)"></div>
+              <div class="name">MBAPPÉ</div>
+              <div class="nat">France</div>
+              <div class="gnum">6</div>
+              <div class="glabel">Goals · +2 assists</div>
+            </div>
+            <div class="tie-card pop d2">
+              <div class="flag" style="background:linear-gradient(180deg,#75AADB 33%,#fff 33% 66%,#75AADB 66%)"></div>
+              <div class="name">MESSI</div>
+              <div class="nat">Argentina</div>
+              <div class="gnum">6</div>
+              <div class="glabel">Goals · 0 assists</div>
+            </div>
+          </div>
+          <div class="tiebreak">Level on goals — the Boot is decided by <b>assists as the tiebreaker</b>, and Mbappé's two put his nose in front. Messi's six include the tournament's opening-night <b>hat-trick vs Algeria</b>. This one runs to the last kick.</div>
+        </div>
+        <div class="boot-chase">
+          <div class="chase-row reveal d3">
+            <div class="rk">3</div>
+            <div class="who"><div class="nm">HARRY KANE</div><div class="ct">England · captain</div></div>
+            <div class="gg"><span class="n">5</span><span class="l">gls</span></div>
+          </div>
+          <div class="chase-row reveal d3">
+            <div class="rk">3</div>
+            <div class="who"><div class="nm">ERLING HAALAND</div><div class="ct">Norway · striker</div></div>
+            <div class="gg"><span class="n">5</span><span class="l">gls</span></div>
+          </div>
+          <div class="chase-row three reveal d4">
+            <div class="rk">5</div>
+            <div class="who"><div class="nm">OYARZABAL · DEMBÉLÉ · VINÍCIUS JR</div><div class="ct">Spain · France · Brazil</div></div>
+            <div class="gg"><span class="n">4</span><span class="l">gls</span></div>
+          </div>
+          <div class="chase-row three reveal d4">
+            <div class="rk">8</div>
+            <div class="who"><div class="nm">RONALDO · BALOGUN · QUIÑONES +4</div><div class="ct">POR · USA · MEX · CAN · MAR · SUI · BRA</div></div>
+            <div class="gg"><span class="n">3</span><span class="l">gls</span></div>
+          </div>
+          <div class="pack-note reveal d5">The chasing pack still alive: <b>Kane, Vinícius, Dembélé, Oyarzabal</b> all have knockout ties left to feast on. Haaland &amp; Messi could be eliminated within a week — the Boot may hinge on who <b>survives</b>, not just who scores.</div>
+        </div>
+      </div>
+    </div>
+    <div class="foot-note">Golden Boot standings via <b>FOX Sports · Yahoo Sports · FIFA</b>, as of 2026-07-03. Tiebreak = assists, then minutes played.</div>
+    <div class="pagepin"><b>03</b> / 12</div>
+  </section>
+
+  <!-- ==================================================== S4 — STANDOUT TEAM (FRANCE) ==================================================== -->
+  <section class="slide" id="s4">
+    <div class="frame-top"></div>
+    <div class="brandbar">
+      <div class="bl"><span class="brand-dot"></span><span class="brand-word">WC WATCH</span><span class="brand-sub">the standout</span></div>
+      <span class="live-pill">Team of the tournament</span>
+    </div>
+    <div class="wrap">
+      <div class="feat">
+        <div class="feat-panel blue reveal d1">
+          <div class="huge-bg">1</div>
+          <div class="fp-kick">Power ranking · No.1</div>
+          <div class="fp-title">FRANCE</div>
+          <div class="fp-flag" style="background:linear-gradient(90deg,#0055A4 33%,#fff 33% 66%,#EF4135 66%)"></div>
+          <div class="fp-lead">The most complete side in the field. Won all three group games without flooring the accelerator, and the counter-attack is <b>perfect for the personnel</b>. Sixteen of twenty first-place votes in ESPN's post-group ranking.</div>
+          <div class="feat-stats">
+            <div class="feat-stat"><div class="fs-n">3+</div><div class="fs-l">goals in each of their last 5 World Cup matches — longest active streak</div></div>
+            <div class="feat-stat"><div class="fs-n">16/20</div><div class="fs-l">first-place votes in the ESPN power ranking after the group stage</div></div>
+          </div>
+        </div>
+        <div class="feat-detail">
+          <div class="detail-card reveal d2">
+            <div class="dc-h"><div class="dc-ic" style="background:var(--blue)">A</div><div class="dc-t">The attack that won't stop</div></div>
+            <p><b>Dembélé</b> ripped a hat-trick past Norway; <b>Mbappé</b> leads the Boot on six and broke France's all-time men's scoring record with a laser past Mendy vs Senegal. <b>Olise</b> is the tournament's assist king. Three creators, one machine.</p>
+          </div>
+          <div class="detail-card reveal d3">
+            <div class="dc-h"><div class="dc-ic" style="background:var(--pink)">R</div><div class="dc-t">Route so far</div></div>
+            <p>Topped their group, then <b>France 3–0 Sweden</b> in the Round of 32. Next: <b>Paraguay in the Round of 16</b> (4 Jul, Philadelphia) — the giant-killers who knocked out Germany on penalties. A banana-skin, on paper only.</p>
+            <div class="form-strip">
+              <span class="pip w">W</span><span class="pip w">W</span><span class="pip w">W</span><span class="pip w">W</span><span class="pip w">W</span>
+            </div>
+          </div>
+          <div class="verdict reveal d4">
+            <div class="vk">Diego's read</div>
+            <p><b>They look like the team to beat.</b> But a side that scores four every night can forget how to defend one. The football is a joy — I just want to see them in a real fight before I crown them.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot-note">Power ranking &amp; votes: <b>ESPN post-group rankings</b>. R32 result &amp; scoring streak: <b>ESPN · Wikipedia</b>, 2026-07-03.</div>
+    <div class="pagepin"><b>04</b> / 12</div>
+  </section>
+
+  <!-- ==================================================== S5 — SURPRISE PACKAGE (CAPE VERDE) ==================================================== -->
+  <section class="slide" id="s5">
+    <div class="frame-top"></div>
+    <div class="brandbar">
+      <div class="bl"><span class="brand-dot"></span><span class="brand-word">WC WATCH</span><span class="brand-sub">the fairytale</span></div>
+      <span class="live-pill">Surprise package</span>
+    </div>
+    <div class="wrap">
+      <div class="feat">
+        <div class="feat-panel pinkbg reveal d1">
+          <div class="huge-bg">?</div>
+          <div class="fp-kick">The story of the tournament</div>
+          <div class="fp-title">CAPE<br>VERDE</div>
+          <div class="fp-flag" style="background:linear-gradient(180deg,#003893 60%,#fff 60% 78%,#CF2027 78%)"></div>
+          <div class="fp-lead">Population half a million. World Cup debutants. And now the <b>smallest nation ever to reach the knockout stage</b> in the tournament's 96-year history — the Blue Sharks did it with three draws and a wall in front of goal.</div>
+          <div class="feat-stats">
+            <div class="feat-stat"><div class="fs-n">~525k</div><div class="fs-l">people — the smallest nation to ever make the World Cup knockouts</div></div>
+            <div class="feat-stat"><div class="fs-n">3</div><div class="fs-l">draws from three games — vs Spain, Uruguay &amp; Saudi Arabia to finish 2nd</div></div>
+          </div>
+        </div>
+        <div class="feat-detail">
+          <div class="detail-card reveal d2">
+            <div class="dc-h"><div class="dc-ic" style="background:var(--green)">40</div><div class="dc-t">Vozinha, the 40-year-old wall</div></div>
+            <p>Their goalkeeper kept <b>two clean sheets</b> and made <b>seven saves against Spain alone</b>, becoming an overnight sensation. Diaspora-built too — six of the starting XI born abroad, from the Netherlands to Portugal.</p>
+          </div>
+          <div class="detail-card reveal d3">
+            <div class="dc-h"><div class="dc-ic" style="background:var(--blue)">R</div><div class="dc-t">And they're not alone</div></div>
+            <p>Africa is having a <b>World Cup moment</b>: <b>Morocco</b> leads all nations with seven goals and bounced the Netherlands on penalties. <b>Colombia</b> is the ranking's biggest climber (+5). The old order is being made to sweat.</p>
+          </div>
+          <div class="verdict reveal d4">
+            <div class="vk">Diego's read</div>
+            <p><b>This is why we watch.</b> A nation the size of a town, holding the European champions, dreaming out loud. Next up: <b>Messi's Argentina</b>. The fairytale probably ends there — but nobody can take the group stage from them.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot-note">Cape Verde detail: <b>Al Jazeera · NPR · ESPN</b>. Morocco &amp; Colombia: <b>NPR · ESPN power rankings</b>, 2026-07-03.</div>
+    <div class="pagepin"><b>05</b> / 12</div>
+  </section>
+
+  <!-- ==================================================== S6 — PLAYER OF THE TOURNAMENT ==================================================== -->
+  <section class="slide" id="s6">
+    <div class="frame-top"></div>
+    <div class="brandbar">
+      <div class="bl"><span class="brand-dot"></span><span class="brand-word">WC WATCH</span><span class="brand-sub">the man</span></div>
+      <span class="live-pill">Player of the tournament · so far</span>
+    </div>
+    <div class="wrap">
+      <div class="potm">
+        <div class="potm-hero reveal d1">
+          <div class="ph-num">10</div>
+          <div class="ph-kick">My pick · half-way home</div>
+          <div class="ph-name">MBAPPÉ</div>
+          <div class="ph-role">
+            <span class="fl" style="background:linear-gradient(90deg,#0055A4 33%,#fff 33% 66%,#EF4135 66%)"></span>
+            <span class="rt">France · No.10 · forward</span>
+          </div>
+          <div class="ph-body">Six goals and two assists, and he's rewriting the record book while he does it — <b>18 career World Cup goals</b> passing Klose, <b>10 knockout-stage goals</b> passing the Brazilian Ronaldo, and <b>seven multi-goal games</b> in this tournament alone, double anyone else. He is carrying the No.1 team.</div>
+          <div class="ph-stats">
+            <div class="ps"><div class="n">6</div><div class="l">goals<br>this cup</div></div>
+            <div class="ps"><div class="n">18</div><div class="l">career WC<br>goals (2nd all-time)</div></div>
+            <div class="ps"><div class="n">10</div><div class="l">knockout goals<br>— a record</div></div>
+          </div>
+        </div>
+        <div class="potm-vs">
+          <div class="vs-tag reveal d2">— PUSHING HIM HARD —</div>
+          <div class="rival-card reveal d3">
+            <div class="rc-name">MESSI</div>
+            <div class="rc-nat">Argentina · No.10 · aged 38</div>
+            <ul>
+              <li><span class="b" style="background:var(--blue)"></span><span>Level on <b>6 goals</b>; opened his cup with a <b>hat-trick vs Algeria</b>, tying Klose's all-time record.</span></li>
+              <li><span class="b" style="background:var(--pink)"></span><span><b>27 career World Cup goal contributions</b> — the most in the tournament's history.</span></li>
+              <li><span class="b" style="background:var(--yellow)"></span><span>Became the <b>oldest player to score a WC hat-trick</b>, at 38. Sentiment says him; the assist column says Mbappé.</span></li>
+            </ul>
+          </div>
+          <div class="potm-call reveal d4">
+            <div class="pk">The verdict</div>
+            <p>"Mbappé for form and records. Messi for the soul of it. If Argentina go deep, the story flips — but on the numbers today, it's the Frenchman."</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot-note">Records &amp; contributions: <b>ESPN stats feature · Yahoo Sports · FOX Sports</b>. Messi hat-trick: <b>ESPN · PBS · FIFA</b>, 2026-07-03.</div>
+    <div class="pagepin"><b>06</b> / 12</div>
+  </section>
+
+  <!-- ==================================================== S7 — BEST GOAL ==================================================== -->
+  <section class="slide" id="s7">
+    <div class="frame-top"></div>
+    <div class="brandbar">
+      <div class="bl"><span class="brand-dot"></span><span class="brand-word">WC WATCH</span><span class="brand-sub">the moment</span></div>
+      <span class="live-pill">Goal of the tournament</span>
+    </div>
+    <div class="wrap">
+      <div class="goal-wrap">
+        <div class="goal-hero reveal d1">
+          <div class="pitch"></div>
+          <div class="gh-kick">My goal of the tournament · so far</div>
+          <div class="gh-title">THE ONE-TWO<br>WITH WIRTZ</div>
+          <div class="gh-scorer">
+            <span class="sn">DENIZ UNDAV</span>
+            <span class="sm">Germany · group stage</span>
+          </div>
+          <div class="gh-body">A goal you build, not blast. Undav played a <b>delightful exchange of passes with Florian Wirtz</b> — wall pass, drop, run — and then the <b>unerring side-foot finish</b>, placement over power. It's the one FIFA's fan vote keeps coming back to for Goal of the Tournament: not the hardest hit, the <b>best made</b>.</div>
+          <div class="assist-bar">
+            <div class="ab"><div class="n">1-2</div><div class="l">give-and-go with Wirtz</div></div>
+            <div class="ab"><div class="n">SIDE</div><div class="l">-foot placement, not power</div></div>
+            <div class="ab"><div class="n">GOTT</div><div class="l">live in FIFA's fan vote</div></div>
+          </div>
+        </div>
+        <div class="goal-side">
+          <div class="gs-head reveal d2">ALSO IN THE VOTE</div>
+          <div class="contender reveal d3">
+            <div class="cn">MESSI <span class="vs">· off De Paul</span></div>
+            <p>Argentina's No.10 collected a <b>superb Rodrigo De Paul pass</b> and <b>found the top corner</b> — the trademark left-foot bend that's been in his locker for twenty years.</p>
+          </div>
+          <div class="contender c2 reveal d4">
+            <div class="cn">MESSI <span class="vs">· solo vs Algeria</span></div>
+            <p>The pick of his hat-trick: <b>ball in midfield, dribble forward, onto the left foot, top corner</b>. A one-man goal on opening night — vintage.</p>
+          </div>
+          <div class="contender c3 reveal d5">
+            <div class="cn">MBAPPÉ <span class="vs">· vs Senegal</span></div>
+            <p>Not subtle — <b>a laser past Édouard Mendy</b> that set France's all-time men's scoring record. Pure violence, and it counts.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot-note">Goal descriptions: <b>Yahoo Sports goal leaders · Sky Sports</b>; FIFA <b>Goal of the Tournament</b> fan vote (play.fifa.com/gott), 2026-07-03.</div>
+    <div class="pagepin"><b>07</b> / 12</div>
+  </section>
+
+  <!-- ==================================================== S8 — RECORDS SLAB ==================================================== -->
+  <section class="slide" id="s8">
+    <div class="frame-top"></div>
+    <div class="brandbar">
+      <div class="bl"><span class="brand-dot"></span><span class="brand-word">WC WATCH</span><span class="brand-sub">the numbers</span></div>
+      <span class="live-pill">Stat board</span>
+    </div>
+    <div class="wrap">
+      <div class="sec-head reveal d1" style="margin-bottom:22px">
+        <div class="sh-l">
+          <div class="kicker">The tournament in eight numbers</div>
+          <h2>THE BIG <span class="u">BOARD</span></h2>
+        </div>
+        <div class="sh-r"><div class="sml">Records tumbling in the knockouts. Every figure verified against ESPN's stats feature and the Golden Boot trackers, 2026-07-03.</div></div>
+      </div>
+      <div class="rec-grid" style="height:calc(100% - 150px)">
+        <div class="rec a reveal d2"><div class="rc-w">Assists · leader</div><div class="rc-n">5</div><div class="rc-l">Michael Olise (France) — most assists; only Pelé (6, 1970) has more since 1966</div></div>
+        <div class="rec b reveal d2"><div class="rc-w">Golden Boot · top</div><div class="rc-n">6</div><div class="rc-l">Goals each for Mbappé &amp; Messi, level at the summit</div></div>
+        <div class="rec c reveal d3"><div class="rc-w">Mbappé · knockouts</div><div class="rc-n">10</div><div class="rc-l">Career knockout-stage goals — a new World Cup record, past R. Ronaldo</div></div>
+        <div class="rec d reveal d3"><div class="rc-w">Messi · all-time</div><div class="rc-n">27</div><div class="rc-l">Career WC goal contributions — the most in tournament history</div></div>
+        <div class="rec e reveal d4"><div class="rc-w">Haaland · streak</div><div class="rc-n">13</div><div class="rc-l">Straight competitive internationals scoring — <b>25</b> goals across the run</div></div>
+        <div class="rec f reveal d4"><div class="rc-w">Morocco · goals</div><div class="rc-n">7</div><div class="rc-l">Most of any nation in the tournament — leading Africa's charge</div></div>
+        <div class="rec g reveal d5"><div class="rc-w">France · run</div><div class="rc-n">3<small>+</small></div><div class="rc-l">Goals in each of their last five World Cup matches — active best</div></div>
+        <div class="rec h reveal d5"><div class="rc-w">Mbappé · career WC</div><div class="rc-n">18</div><div class="rc-l">Goals — 2nd all-time, one behind Messi's 19, past Klose</div></div>
+      </div>
+    </div>
+    <div class="foot-note">Compiled from <b>ESPN WC 2026 stats feature</b>, <b>FOX Sports</b> &amp; <b>Yahoo Sports</b> Golden Boot trackers. Snapshot 2026-07-03.</div>
+    <div class="pagepin"><b>08</b> / 12</div>
+  </section>
+
+  <!-- ==================================================== S9 — WHO'S LEFT / BRACKET ==================================================== -->
+  <section class="slide" id="s9">
+    <div class="frame-top"></div>
+    <div class="brandbar">
+      <div class="bl"><span class="brand-dot"></span><span class="brand-word">WC WATCH</span><span class="brand-sub">the draw</span></div>
+      <span class="live-pill">Round of 16 · who's left</span>
+    </div>
+    <div class="wrap">
+      <div class="sec-head reveal d1" style="margin-bottom:18px">
+        <div class="sh-l"><div class="kicker">The last 16 · 4–7 July</div><h2>WHO'S <span class="u">LEFT</span></h2></div>
+        <div class="sh-r"><div class="big">8 TIES TO THE QUARTERS</div><div class="sml">QFs 9–11 Jul · Final 19 Jul, MetLife (New Jersey). Two ties still carry a live group-stage decider — marked TBD.</div></div>
+      </div>
+      <div class="bracket">
+        <div class="br-col">
+          <div class="col-h reveal d2">LEFT SIDE</div>
+          <div class="tie reveal d2">
+            <div class="team"><span class="fl" style="background:linear-gradient(90deg,#0055A4 33%,#fff 33% 66%,#EF4135 66%)"></span><span class="tn">FRANCE</span><span class="seed">No.1</span></div>
+            <div class="team"><span class="fl" style="background:linear-gradient(180deg,#D52B1E 33%,#fff 33% 66%,#0038A8 66%)"></span><span class="tn">PARAGUAY</span><span class="seed">pens</span></div>
+            <div class="date">Sat 4 Jul · Philadelphia</div>
+          </div>
+          <div class="tie reveal d2">
+            <div class="team"><span class="fl" style="background:linear-gradient(180deg,#FF0000 50%,#fff 50%)"></span><span class="tn">CANADA</span><span class="seed">host</span></div>
+            <div class="team"><span class="fl" style="background:linear-gradient(180deg,#C1272D 60%,#006233 60%)"></span><span class="tn">MOROCCO</span><span class="seed">7 gls</span></div>
+            <div class="date">Sat 4 Jul · Houston</div>
+          </div>
+          <div class="tie reveal d3">
+            <div class="team"><span class="fl" style="background:linear-gradient(135deg,#009C3B 60%,#FFDF00 60%)"></span><span class="tn">BRAZIL</span><span class="seed">Sel.</span></div>
+            <div class="team"><span class="fl" style="background:linear-gradient(90deg,#BA0C2F 40%,#00205B 40%)"></span><span class="tn">NORWAY</span><span class="seed">Haaland</span></div>
+            <div class="date">Sun 5 Jul · New Jersey</div>
+          </div>
+          <div class="tie reveal d3">
+            <div class="team"><span class="fl" style="background:linear-gradient(180deg,#006847 33%,#fff 33% 66%,#CE1126 66%)"></span><span class="tn">MEXICO</span><span class="seed">host</span></div>
+            <div class="team"><span class="fl" style="background:linear-gradient(45deg,#fff 47%,#CF142B 47% 53%,#fff 53%),#00247D"></span><span class="tn">ENGLAND</span><span class="seed">Kane 5</span></div>
+            <div class="date">Mon 6 Jul · Mexico City</div>
+          </div>
+        </div>
+        <div class="br-mid">
+          <div class="rd-pill reveal d4">FINAL</div>
+          <div class="trophy pop d2"><div class="tw">WORLD<br>CUP</div><div class="td">26</div></div>
+          <div class="mnote reveal d4">19 July · MetLife Stadium<br>East Rutherford, NJ</div>
+        </div>
+        <div class="br-col">
+          <div class="col-h reveal d2" style="text-align:right">RIGHT SIDE</div>
+          <div class="tie reveal d2">
+            <div class="team"><span class="fl" style="background:linear-gradient(180deg,#FF0000 33%,#006600 33% 66%,#FF0000 66%)"></span><span class="tn">PORTUGAL</span><span class="seed">CR7</span></div>
+            <div class="team"><span class="fl" style="background:linear-gradient(180deg,#AA151B 25%,#F1BF00 25% 75%,#AA151B 75%)"></span><span class="tn">SPAIN</span><span class="seed">Euro ch.</span></div>
+            <div class="date">Mon 6 Jul · Arlington</div>
+          </div>
+          <div class="tie reveal d2">
+            <div class="team"><span class="fl" style="background:linear-gradient(180deg,#B22234 50%,#3C3B6E 50%)"></span><span class="tn">USA</span><span class="seed">host</span></div>
+            <div class="team"><span class="fl" style="background:linear-gradient(90deg,#000 33%,#FDDA24 33% 66%,#EF3340 66%)"></span><span class="tn">BELGIUM</span><span class="seed">a.e.t.</span></div>
+            <div class="date">Tue 7 Jul · Seattle</div>
+          </div>
+          <div class="tie tbd reveal d3">
+            <div class="team"><span class="fl" style="background:linear-gradient(180deg,#75AADB 33%,#fff 33% 66%,#75AADB 66%)"></span><span class="tn">ARG / CPV</span><span class="seed">R32 today</span></div>
+            <div class="team"><span class="fl" style="background:#8894ac"></span><span class="tn">AUS / EGY</span><span class="seed">TBD</span></div>
+            <div class="date">Tue 7 Jul · Atlanta</div>
+          </div>
+          <div class="tie tbd reveal d3">
+            <div class="team"><span class="fl" style="background:linear-gradient(180deg,#DA291C 40%,#fff 40% 55%,#DA291C 55%)"></span><span class="tn">SWITZERLAND</span><span class="seed">qual.</span></div>
+            <div class="team"><span class="fl" style="background:#8894ac"></span><span class="tn">COL / GHA</span><span class="seed">TBD</span></div>
+            <div class="date">Tue 7 Jul · Vancouver</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot-note">Bracket &amp; fixtures: <b>Sky Sports · FIFA · Wikipedia</b>. TBD ties await a live group decider. Snapshot 2026-07-03.</div>
+    <div class="pagepin"><b>09</b> / 12</div>
+  </section>
+
+  <!-- ==================================================== S10 — MARADONA'S PICKS ==================================================== -->
+  <section class="slide" id="s10">
+    <div class="frame-top"></div>
+    <div class="brandbar">
+      <div class="bl"><span class="brand-dot"></span><span class="brand-word">WC WATCH</span><span class="brand-sub">the call</span></div>
+      <span class="live-pill">Diego's picks</span>
+    </div>
+    <div class="wrap">
+      <div class="picks">
+        <div class="final-band reveal d1">
+          <div class="fb-glow"></div>
+          <div class="fteam">
+            <span class="fl" style="background:linear-gradient(90deg,#0055A4 33%,#fff 33% 66%,#EF4135 66%)"></span>
+            <span class="fn">FRANCE</span>
+            <span class="fr">No.1 · the machine</span>
+          </div>
+          <div class="center"><div class="vs">VS</div><div class="lbl">my final · 19 July</div></div>
+          <div class="fteam r">
+            <span class="fl" style="background:linear-gradient(180deg,#75AADB 33%,#fff 33% 66%,#75AADB 66%)"></span>
+            <span class="fn">ARGENTINA</span>
+            <span class="fr">the heart · No.2 seed</span>
+          </div>
+        </div>
+        <div class="picks-body">
+          <div class="champ reveal d2">
+            <div class="ctrophy">★</div>
+            <div class="cw">My winner</div>
+            <div class="cflag" style="background:linear-gradient(90deg,#0055A4 33%,#fff 33% 66%,#EF4135 66%)"></div>
+            <div class="cname">FRANCE</div>
+            <div class="creason">Head says France. The most complete team, the deepest attack, three goals a night and <b>Mbappé in the form of his life</b>. On this evidence they have to be favourites — and I don't pick with sentiment when the football is this clear.</div>
+          </div>
+          <div class="picks-notes">
+            <div class="pn reveal d3">
+              <div class="pn-h"><span class="dot" style="background:var(--pink)"></span>The heart's pick</div>
+              <p>If Argentina and <b>Messi</b> reach the final, I want them to win it — the perfect ending. But want isn't the same as call.</p>
+            </div>
+            <div class="pn reveal d4">
+              <div class="pn-h"><span class="dot" style="background:var(--blue)"></span>The dark horse</div>
+              <p><b>Spain</b>, the European champions, lie in wait — and must beat <b>Portugal</b> first. If anyone stops France's rhythm, it's them.</p>
+            </div>
+            <div class="pn warn reveal d5">
+              <div class="pn-h"><span class="dot" style="background:var(--yellow)"></span>The honest bit</div>
+              <p>A call, <b>not a bet</b> — odds are the Financier's table. And the game humbles every prediction. <b>El fútbol se juega, no se calcula</b> — but I did the sums first.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot-note">A verdict, not a wager. Seedings &amp; form via <b>ESPN power rankings</b>. Picks are Maradona's read on the football, 2026-07-03.</div>
+    <div class="pagepin"><b>10</b> / 12</div>
+  </section>
+
+  <!-- ==================================================== S11 — SOURCES ==================================================== -->
+  <section class="slide" id="s11">
+    <div class="frame-top"></div>
+    <div class="brandbar">
+      <div class="bl"><span class="brand-dot"></span><span class="brand-word">WC WATCH</span><span class="brand-sub">the receipts</span></div>
+      <span class="live-pill">Sources · verified</span>
+    </div>
+    <div class="wrap">
+      <div class="sec-head reveal d1" style="margin-bottom:20px">
+        <div class="sh-l"><div class="kicker">Every number traces back here</div><h2>SOURCES</h2></div>
+        <div class="sh-r"><div class="sml">All figures accessed 3 July 2026. The tournament is live — treat every stat as a snapshot of that date.</div></div>
+      </div>
+      <div class="src-wrap">
+        <div class="src reveal d2"><div class="sn">1</div><div><div class="st">FIFA — Golden Boot &amp; Goal of the Tournament</div><div class="su"><b>fifa.com</b> /tournaments/mens/worldcup/canadamexicousa2026 · play.fifa.com/gott</div></div></div>
+        <div class="src reveal d2"><div class="sn">2</div><div><div class="st">ESPN — WC 2026 stats feature (Mbappé/Messi/Olise/Haaland)</div><div class="su"><b>espn.co.uk</b> /football/story/_/id/49230559</div></div></div>
+        <div class="src reveal d3"><div class="sn">3</div><div><div class="st">ESPN — power rankings after the group stage</div><div class="su"><b>espn.com</b> /soccer/story/_/id/49196824</div></div></div>
+        <div class="src reveal d3"><div class="sn">4</div><div><div class="st">FOX Sports — Golden Boot race tracker</div><div class="su"><b>foxsports.com</b> /stories/soccer/2026-fifa-world-cup-golden-boot-tracker</div></div></div>
+        <div class="src reveal d4"><div class="sn">5</div><div><div class="st">Yahoo Sports — World Cup goal leaders</div><div class="su"><b>sports.yahoo.com</b> /soccer/article/world-cup-goal-leaders-golden-boot…</div></div></div>
+        <div class="src reveal d4"><div class="sn">6</div><div><div class="st">Sky Sports — bracket &amp; knockout fixtures</div><div class="su"><b>skysports.com</b> /football/news/11095/13556636</div></div></div>
+        <div class="src reveal d5"><div class="sn">7</div><div><div class="st">Wikipedia — 2026 FIFA World Cup knockout stage</div><div class="su"><b>en.wikipedia.org</b> /wiki/2026_FIFA_World_Cup_knockout_stage</div></div></div>
+        <div class="src reveal d5"><div class="sn">8</div><div><div class="st">Al Jazeera &amp; NPR &amp; PBS — Cape Verde, Africa's moment, Messi hat-trick</div><div class="su"><b>aljazeera.com</b> · <b>npr.org</b> /2026/06/26/nx-s1-5867404 · <b>pbs.org</b> /newshour</div></div></div>
+      </div>
+    </div>
+    <div class="src-note"><b>Method.</b> Live figures pulled via web search on 2026-07-03 and cross-checked across at least two outlets before printing. Fixtures still to be played are marked <b>TBD</b>; no scoreline, scorer, or stat has been invented. Where sources differ on a still-forming bracket, the FIFA/Sky Sports last-published draw wins.</div>
+    <div class="pagepin"><b>11</b> / 12</div>
+  </section>
+
+  <!-- ==================================================== S12 — CLOSE ==================================================== -->
+  <section class="slide" id="s12">
+    <div class="close-inner">
+      <div class="kicker reveal d1" style="font-size:20px; margin-bottom:22px">World Cup Watch · 3 July 2026</div>
+      <div class="close-big reveal d2">THE BALL<br>IS <span class="u">ROLLING</span></div>
+      <div class="close-sub reveal d3">France look unstoppable, Cape Verde made history, and two No.10s are chasing the same Boot. <b>Come back after the quarter-finals</b> — this story is only half-told.</div>
+    </div>
+    <div class="close-quote reveal d4">
+      <div class="bar"></div>
+      <div class="q">"El fútbol se juega."<small>The football is played — Maradona, in Split</small></div>
+    </div>
+    <div class="close-ten pop d2"><span>10</span></div>
+    <div class="pagepin"><b>12</b> / 12</div>
+  </section>
+
+  </div><!-- /stage -->
+</div><!-- /viewport -->
+
+<!-- ==================================================== CONTROLS ==================================================== -->
+<div class="deck-controls">
+  <button class="nav-btn" id="prevBtn" aria-label="Previous slide">‹</button>
+  <span class="nav-count" id="navCount">01 / 12</span>
+  <button class="nav-btn" id="nextBtn" aria-label="Next slide">›</button>
+</div>
+
+<script>
+/* ===========================================================
+   FIXED-STAGE SCALER — scale the 1920×1080 stage to viewport,
+   letterbox, never reflow. (frontend-slides invariant)
+   =========================================================== */
+(function () {
+  const stage = document.getElementById('stage');
+  const viewport = document.getElementById('viewport');
+  function fit() {
+    const vw = viewport.clientWidth, vh = viewport.clientHeight;
+    const scale = Math.min(vw / 1920, vh / 1080);
+    const x = (vw - 1920 * scale) / 2, y = (vh - 1080 * scale) / 2;
+    stage.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+  }
+  window.addEventListener('resize', fit);
+  window.addEventListener('load', fit);
+  fit();
+
+  /* ---------------- SLIDE NAVIGATION ---------------- */
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  let cur = 0;
+  const pad = n => String(n + 1).padStart(2, '0');
+  const navCount = document.getElementById('navCount');
+  const progressBar = document.getElementById('progressBar');
+
+  function show(i) {
+    cur = Math.max(0, Math.min(total - 1, i));
+    slides.forEach((s, k) => s.classList.toggle('active', k === cur));
+    navCount.textContent = `${pad(cur)} / ${String(total).padStart(2, '0')}`;
+    progressBar.style.width = ((cur + 1) / total * 100) + '%';
+  }
+  function next() { show(cur + 1); }
+  function prev() { show(cur - 1); }
+
+  document.getElementById('nextBtn').addEventListener('click', next);
+  document.getElementById('prevBtn').addEventListener('click', prev);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(total - 1); }
+  });
+  /* touch swipe for phones */
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.changedTouches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) { dx < 0 ? next() : prev(); }
+  }, { passive: true });
+
+  show(0);
+})();
+</script>
+</body>
+</html>

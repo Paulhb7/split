@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joint-Embedding Predictive Architectures: State of the Art, July 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#141414;
+    --link:#1b1bd0;
+    --rule:#141414;
+    --faint:#8a8a8a;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background:#ffffff;
+    color:var(--ink);
+    font-family:"STIX Two Text", "Times New Roman", serif;
+    font-size:17px;
+    line-height:1.58;
+    text-rendering:optimizeLegibility;
+    font-variant-numeric: oldstyle-nums;
+  }
+  .page{
+    max-width:704px;
+    margin:0 auto;
+    padding:72px 24px 96px;
+  }
+  /* ---- arXiv-style vertical stamp ---- */
+  .stamp{
+    position:fixed;
+    left:14px; top:50%;
+    transform:translateY(-50%);
+    writing-mode:vertical-rl;
+    transform-origin:center;
+    rotate:180deg;
+    font-family:"Courier New", Courier, monospace;
+    font-size:12.5px;
+    letter-spacing:.08em;
+    color:#999;
+    white-space:nowrap;
+    user-select:none;
+  }
+  @media (max-width:1020px){ .stamp{ display:none; } }
+
+  /* ---- Title block ---- */
+  header{ text-align:center; margin-bottom:2.6rem; }
+  h1{
+    font-size:1.72rem;
+    font-weight:700;
+    line-height:1.28;
+    margin-bottom:1.35rem;
+  }
+  .authors{ font-size:1.02rem; margin-bottom:.28rem; }
+  .affil{ font-size:.9rem; font-style:italic; color:#333; margin-bottom:.28rem; }
+  .date{ font-size:.9rem; color:#333; }
+
+  /* ---- Abstract ---- */
+  .abstract{
+    margin:2.1rem 2.3rem 0;
+    font-size:.93rem;
+    line-height:1.55;
+    text-align:justify;
+    hyphens:auto;
+  }
+  .abstract .abshead{
+    display:block; text-align:center;
+    font-weight:700; font-size:.95rem;
+    letter-spacing:.02em;
+    margin-bottom:.55rem;
+  }
+
+  /* ---- Reader's note (exec summary) ---- */
+  .readers-note{
+    border:1px solid var(--rule);
+    margin:2.3rem 0 0;
+    padding:14px 18px 12px;
+    font-size:.875rem;
+    line-height:1.52;
+    text-align:justify;
+    hyphens:auto;
+  }
+  .readers-note .rn-head{
+    display:block;
+    font-variant:small-caps;
+    letter-spacing:.09em;
+    font-weight:700;
+    font-size:.9rem;
+    margin-bottom:.45rem;
+  }
+  .readers-note p{ margin-bottom:.45rem; }
+  .readers-note p:last-child{ margin-bottom:0; }
+  .readers-note b{ font-variant:small-caps; letter-spacing:.05em; font-weight:700; }
+
+  /* ---- Body ---- */
+  main p{
+    text-align:justify;
+    hyphens:auto;
+    margin-bottom:.95rem;
+  }
+  h2{
+    font-size:1.28rem;
+    font-weight:700;
+    margin:2.5rem 0 1rem;
+  }
+  h2 .no, h3 .no{ display:inline-block; min-width:2.1rem; }
+  h3{
+    font-size:1.06rem;
+    font-weight:700;
+    margin:1.9rem 0 .8rem;
+  }
+  h3 .no{ min-width:2.6rem; }
+  a{ color:var(--link); text-decoration:none; }
+  a:hover{ text-decoration:underline; }
+  em{ font-style:italic; }
+  .tt{ font-family:"Courier New", Courier, monospace; font-size:.86em; }
+
+  /* ---- Citations ---- */
+  sup.cite{
+    font-size:.68em;
+    line-height:0;
+    vertical-align:super;
+  }
+  sup.cite a{ color:var(--link); }
+  .cite-pop{
+    position:absolute;
+    max-width:400px;
+    background:#fff;
+    border:1px solid var(--rule);
+    padding:10px 13px;
+    font-size:.8rem;
+    line-height:1.45;
+    text-align:left;
+    box-shadow:5px 5px 0 rgba(0,0,0,.07);
+    z-index:50;
+  }
+  .cite-pop a{ word-break:break-all; }
+
+  /* ---- Figures ---- */
+  figure{
+    border:1px solid var(--rule);
+    margin:2rem 0;
+    padding:20px 18px 12px;
+  }
+  figure svg{ display:block; width:100%; height:auto; }
+  figcaption{
+    font-size:.84rem;
+    line-height:1.5;
+    text-align:justify;
+    hyphens:auto;
+    margin-top:12px;
+    padding-top:10px;
+    border-top:1px solid #ddd;
+  }
+  figcaption b{ font-weight:700; }
+
+  /* ---- Tables (booktabs) ---- */
+  .tablewrap{ margin:2rem 0; overflow-x:auto; }
+  .tabcaption{
+    font-size:.84rem;
+    line-height:1.5;
+    text-align:justify;
+    hyphens:auto;
+    margin-bottom:.6rem;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:.83rem;
+    line-height:1.42;
+  }
+  thead th{
+    border-top:1.6px solid var(--rule);
+    border-bottom:.8px solid var(--rule);
+    font-weight:700;
+    text-align:left;
+    padding:6px 8px 5px;
+    vertical-align:bottom;
+  }
+  tbody td{
+    padding:5px 8px;
+    text-align:left;
+    vertical-align:top;
+  }
+  tbody tr:last-child td{ border-bottom:1.6px solid var(--rule); }
+  td.num, th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  .tabnote{ font-size:.76rem; color:#444; margin-top:.5rem; text-align:justify; }
+
+  /* ---- Footnotes ---- */
+  .fnrule{
+    border:none;
+    border-top:1px solid var(--rule);
+    width:34%;
+    margin:2.8rem 0 .8rem;
+  }
+  .footnotes{ font-size:.82rem; line-height:1.5; }
+  .footnotes p{ margin-bottom:.5rem; text-align:justify; }
+
+  /* ---- References ---- */
+  .refs{
+    font-size:.86rem;
+    line-height:1.5;
+  }
+  .refs ol{ list-style:none; counter-reset:refc; }
+  .refs li{
+    counter-increment:refc;
+    position:relative;
+    padding-left:2.3rem;
+    margin-bottom:.62rem;
+    text-align:justify;
+    hyphens:auto;
+  }
+  .refs li::before{
+    content:"[" counter(refc) "]";
+    position:absolute;
+    left:0;
+    font-variant-numeric:tabular-nums;
+  }
+  .refs li:target{ background:#f4f4f4; }
+
+  /* ---- Colophon ---- */
+  .colophon{
+    margin-top:3.2rem;
+    padding-top:1rem;
+    border-top:1px solid var(--rule);
+    font-size:.78rem;
+    color:#555;
+    text-align:center;
+    font-style:italic;
+  }
+
+  @media print{
+    .stamp{ display:none; }
+    body{ font-size:11.5pt; }
+    a{ color:var(--ink); }
+  }
+</style>
+</head>
+<body>
+
+<div class="stamp">Split Research Library&nbsp;&nbsp;·&nbsp;&nbsp;scientist / 01-jepa-sota&nbsp;&nbsp;·&nbsp;&nbsp;compiled 3 Jul 2026</div>
+
+<div class="page">
+
+<header>
+  <h1>Joint-Embedding Predictive Architectures:<br>State of the Art, July 2026</h1>
+  <p class="authors">The Scientist</p>
+  <p class="affil">Split Research Library — Field Review</p>
+  <p class="date">3 July 2026</p>
+</header>
+
+<div class="abstract">
+  <span class="abshead">Abstract</span>
+  Four years separate Yann LeCun's 2022 position paper from the first billion-dollar laboratory founded to pursue its thesis. In between, the joint-embedding predictive architecture (JEPA) moved from proposal to working research program: I-JEPA showed that predicting representations, rather than pixels, yields semantic image features without hand-crafted augmentations; V-JEPA extended the objective to video; V-JEPA&nbsp;2 coupled a million hours of video pretraining to zero-shot robot manipulation; and LeJEPA replaced the paradigm's accumulated anti-collapse heuristics with a provable objective. This review traces the lineage, synthesizes the eight papers that carry the field's weight, tabulates the empirical record, and separates what is established — frozen-feature benchmarks, action anticipation, data-efficient robot planning — from what remains contested: intuitive physics in complex scenes, the necessity of video-native pretraining, and the standing of the generative rival. Twenty-three sources are cited; every arXiv identifier and URL was resolved against the primary literature at the date of compilation.
+</div>
+
+<aside class="readers-note">
+  <span class="rn-head">Reader's note</span>
+  <p><b>Why.</b> Commissioned as a field map for Split's library: what the JEPA architecture is, what it has demonstrated, and what it has not — the boss's standing question about LeCun's world-model program, answered from the papers rather than the press.</p>
+  <p><b>Context.</b> Written 3 July 2026. The field moved unusually fast in the preceding eight months — LeJEPA (November 2025), LeCun's departure from Meta, AMI Labs' $1.03&nbsp;B seed and two major model releases (March 2026) — so secondhand summaries are stale; every dated claim here was checked against primary sources at compile time.</p>
+  <p><b>How to use.</b> §1–2 for the concepts, Table&nbsp;2 for the numbers, §6 for what to distrust. Every superscript citation shows its full reference on hover and links to the source; all links were live at compilation.</p>
+  <p><b>What was assumed.</b> A technically literate reader comfortable with self-supervised-learning vocabulary; scope bounded to 2022–mid-2026 and to the vision-centric core plus the principal extensions; numbered citations in a Nature-adjacent style; preprints included and flagged as such.</p>
+</aside>
+
+<main>
+
+<h2 id="s1"><span class="no">1</span>Introduction: the world-model program</h2>
+
+<p>In June 2022, Yann LeCun posted <em>A Path Towards Autonomous Machine Intelligence</em><sup class="cite"><a href="#ref-1">1</a></sup> — sixty pages, versioned 0.9.2, deliberately a design document rather than a results paper. Its central claim: human-level intelligence requires an agent that learns a predictive model of the world largely by observation, and the right place to make predictions is an abstract representation space, not the space of raw sensory input. The world is only partially predictable; the exact texture of a wall or the leaves on a tree are, to a planner, noise. An architecture forced to predict them wastes its capacity. The proposed instrument is the joint-embedding predictive architecture: encode a context and a target separately, then predict the target's <em>embedding</em> from the context's embedding, conditioned on a latent variable that describes the transformation between them. Stacked hierarchically (H-JEPA) and wrapped in a modular agent — perception, world model, cost, actor, short-term memory, configurator — this was offered as the path off the treadmill of ever-larger generative models.</p>
+
+<p>Two things distinguish the program from its neighbours. First, its timing: the proposal landed at the exact moment autoregressive generation became the field's default, and it explicitly bet against that default. Second, its follow-through: unlike most position papers, this one was systematically cashed out in code over the following four years, almost entirely by one laboratory — Meta's FAIR — and by a stable cast of authors.</p>
+
+<p>The institutional arc now matters for reading the literature. FAIR carried the program from I-JEPA (2023) through V-JEPA&nbsp;2.1 (March 2026). LeCun left Meta at the end of 2025 — as the company reorganized around large-language-model scaling — and founded AMI (Advanced Machine Intelligence), headquartered in Paris<sup class="cite"><a href="#ref-19">19</a>,<a href="#ref-20">20</a></sup>. In March 2026 AMI closed a $1.03&nbsp;B seed round at a reported $3.5&nbsp;B pre-money valuation, co-led by Cathay Innovation, Greycroft, Hiro Capital, HV Capital and Bezos Expeditions — among the largest seed financings in the history of AI research companies<sup class="cite"><a href="#ref-20">20</a></sup>. The program therefore now runs in two places at once: a corporate lab that retains the V-JEPA line, and a startup whose entire thesis is this bibliography.</p>
+
+<p>This review covers June 2022 through June 2026, anchored on the eight papers in Table&nbsp;1, with supporting evidence and counter-evidence drawn from fifteen further sources. The corpus is preprint-heavy: of the anchors, only I-JEPA (CVPR 2023) and the reconstruction critique (ICML 2024) are peer-reviewed; the rest are arXiv preprints as of compilation, and claims drawn from them should be calibrated accordingly.</p>
+
+<div class="tablewrap">
+  <p class="tabcaption"><b>Table 1:</b> The anchor papers. Eight works that carry the field's weight, in chronological order. Full bibliographic entries in the References; arXiv identifiers link to the abstract pages.</p>
+  <table>
+    <thead>
+      <tr><th>Year</th><th>Paper</th><th>ID</th><th>Contribution</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>2022</td><td>A Path Towards Autonomous Machine Intelligence<sup class="cite"><a href="#ref-1">1</a></sup></td><td><a class="tt" href="https://openreview.net/forum?id=BZ5a1r-kVsf">OpenReview</a></td><td>The program: latent-space prediction inside a modular agent</td></tr>
+      <tr><td>2023</td><td>I-JEPA<sup class="cite"><a href="#ref-2">2</a></sup></td><td><a class="tt" href="https://arxiv.org/abs/2301.08243">2301.08243</a></td><td>Semantic image features without hand-crafted augmentations</td></tr>
+      <tr><td>2024</td><td>V-JEPA<sup class="cite"><a href="#ref-3">3</a></sup></td><td><a class="tt" href="https://arxiv.org/abs/2404.08471">2404.08471</a></td><td>Feature prediction as a stand-alone objective for video</td></tr>
+      <tr><td>2025</td><td>Intuitive physics from video pretraining<sup class="cite"><a href="#ref-5">5</a></sup></td><td><a class="tt" href="https://arxiv.org/abs/2502.11831">2502.11831</a></td><td>Violation-of-expectation evidence for object-level regularities</td></tr>
+      <tr><td>2025</td><td>V-JEPA&nbsp;2<sup class="cite"><a href="#ref-6">6</a></sup></td><td><a class="tt" href="https://arxiv.org/abs/2506.09985">2506.09985</a></td><td>10⁶ hours of video → zero-shot robot planning from 62&nbsp;h of trajectories</td></tr>
+      <tr><td>2025</td><td>LeJEPA<sup class="cite"><a href="#ref-11">11</a></sup></td><td><a class="tt" href="https://arxiv.org/abs/2511.08544">2511.08544</a></td><td>Provable anti-collapse: isotropic-Gaussian optimality + SIGReg</td></tr>
+      <tr><td>2026</td><td>LeWorldModel<sup class="cite"><a href="#ref-16">16</a></sup></td><td><a class="tt" href="https://arxiv.org/abs/2603.19312">2603.19312</a></td><td>First stable end-to-end action-conditioned JEPA from raw pixels</td></tr>
+      <tr><td>2026</td><td>V-JEPA&nbsp;2.1<sup class="cite"><a href="#ref-15">15</a></sup></td><td><a class="tt" href="https://arxiv.org/abs/2603.14482">2603.14482</a></td><td>Dense features; the current benchmark ceiling of the line</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 id="s2"><span class="no">2</span>The architecture, and what it rejects</h2>
+
+<h3 id="s21"><span class="no">2.1</span>Three families of self-supervision</h3>
+
+<p>Under the energy-based view of the 2022 position paper<sup class="cite"><a href="#ref-1">1</a></sup>, self-supervised architectures divide by <em>where they pay the cost of prediction</em> (Figure&nbsp;1). Joint-embedding methods of the contrastive era — SimCLR, MoCo, and the asymmetric variants BYOL and SimSiam — encode two augmented views of the same input and pull their embeddings together; collapse is held off by negative pairs or by architectural asymmetry, and what is learned is <em>invariance</em> to a hand-designed augmentation menu. Generative methods — masked autoencoders being the canonical case — reconstruct the missing input in input space, so every unpredictable pixel of texture, illumination, and occluded detail takes loss gradient. The JEPA occupies a third position: a predictor, conditioned on a variable describing the transformation between context and target (position, time offset, or action), maps the context embedding to a <em>predicted target embedding</em>, and the loss is computed there — in representation space. The encoder is thereby free to discard whatever cannot be predicted, which is precisely the detail a planner does not need.</p>
+
+<p>The distinction from BYOL-style latent bootstrapping is subtle but real: JEPA targets are different <em>parts</em> of the signal (other blocks of the image, other timesteps of the video), not other augmented views of the same content, and the predictor is explicitly told which part. No invariance prior over hand-crafted augmentations is imposed — which is what allowed I-JEPA to drop the augmentation menu entirely<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+
+<figure>
+  <svg viewBox="0 0 660 318" xmlns="http://www.w3.org/2000/svg" font-family="STIX Two Text, serif" fill="#141414">
+    <!-- panel separators -->
+    <line x1="222" y1="14" x2="222" y2="268" stroke="#cccccc" stroke-width="1"/>
+    <line x1="440" y1="14" x2="440" y2="268" stroke="#cccccc" stroke-width="1"/>
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 1 L 9 5 L 0 9 z" fill="#141414"/>
+      </marker>
+    </defs>
+
+    <!-- ============ (a) joint-embedding / contrastive ============ -->
+    <g font-size="13">
+      <text x="46" y="36" font-style="italic">x</text>
+      <text x="156" y="36" font-style="italic">y = aug(x)</text>
+      <!-- encoder boxes -->
+      <rect x="18" y="52" width="66" height="28" fill="none" stroke="#141414" stroke-width="1.1"/>
+      <text x="51" y="71" text-anchor="middle" font-size="12">Enc<tspan dy="3" font-size="9">θ</tspan></text>
+      <rect x="138" y="52" width="66" height="28" fill="none" stroke="#141414" stroke-width="1.1"/>
+      <text x="171" y="71" text-anchor="middle" font-size="12">Enc<tspan dy="3" font-size="9">θ′</tspan></text>
+      <line x1="51" y1="40" x2="51" y2="50" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <line x1="171" y1="40" x2="171" y2="50" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <!-- s labels -->
+      <text x="51" y="106" text-anchor="middle" font-style="italic" font-size="12.5">s<tspan dy="3" font-size="9">x</tspan></text>
+      <text x="171" y="106" text-anchor="middle" font-style="italic" font-size="12.5">s<tspan dy="3" font-size="9">y</tspan></text>
+      <line x1="51" y1="82" x2="51" y2="94" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <line x1="171" y1="82" x2="171" y2="94" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <!-- D box -->
+      <rect x="71" y="126" width="80" height="28" fill="none" stroke="#141414" stroke-width="1.1"/>
+      <text x="111" y="145" text-anchor="middle" font-size="12" font-style="italic">D(s<tspan dy="3" font-size="9">x</tspan><tspan dy="-3">, s</tspan><tspan dy="3" font-size="9">y</tspan><tspan dy="-3">)</tspan></text>
+      <line x1="57" y1="110" x2="88" y2="126" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <line x1="165" y1="110" x2="134" y2="126" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <!-- notes -->
+      <text x="111" y="192" text-anchor="middle" font-size="11" fill="#555">invariance to augmentations;</text>
+      <text x="111" y="208" text-anchor="middle" font-size="11" fill="#555">negatives or asymmetry vs. collapse</text>
+      <text x="111" y="258" text-anchor="middle" font-size="12.5" font-weight="bold">(a) Joint-embedding (contrastive)</text>
+    </g>
+
+    <!-- ============ (b) generative / reconstruction ============ -->
+    <g font-size="13">
+      <text x="281" y="36" text-anchor="middle" font-style="italic">x (masked)</text>
+      <text x="388" y="36" text-anchor="middle" font-style="italic">y</text>
+      <rect x="248" y="52" width="66" height="28" fill="none" stroke="#141414" stroke-width="1.1"/>
+      <text x="281" y="71" text-anchor="middle" font-size="12">Enc<tspan dy="3" font-size="9">θ</tspan></text>
+      <line x1="281" y1="40" x2="281" y2="50" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <rect x="248" y="98" width="66" height="28" fill="none" stroke="#141414" stroke-width="1.1"/>
+      <text x="281" y="117" text-anchor="middle" font-size="12">Dec<tspan dy="3" font-size="9">φ</tspan></text>
+      <line x1="281" y1="82" x2="281" y2="96" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <text x="281" y="152" text-anchor="middle" font-style="italic" font-size="12.5">ŷ</text>
+      <line x1="281" y1="128" x2="281" y2="140" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <rect x="291" y="166" width="82" height="28" fill="none" stroke="#141414" stroke-width="1.1"/>
+      <text x="332" y="185" text-anchor="middle" font-size="12" font-style="italic">D(ŷ, y)</text>
+      <line x1="285" y1="156" x2="310" y2="166" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <line x1="388" y1="44" x2="356" y2="164" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <text x="331" y="222" text-anchor="middle" font-size="11" fill="#555">loss in input space:</text>
+      <text x="331" y="238" text-anchor="middle" font-size="11" fill="#555">every unpredictable pixel is penalized</text>
+      <text x="331" y="258" text-anchor="middle" font-size="12.5" font-weight="bold">(b) Generative (reconstruction)</text>
+    </g>
+
+    <!-- ============ (c) JEPA ============ -->
+    <g font-size="13">
+      <text x="491" y="36" text-anchor="middle" font-style="italic">x (context)</text>
+      <text x="609" y="36" text-anchor="middle" font-style="italic">y (target)</text>
+      <rect x="458" y="52" width="66" height="28" fill="none" stroke="#141414" stroke-width="1.1"/>
+      <text x="491" y="71" text-anchor="middle" font-size="12">Enc<tspan dy="3" font-size="9">θ</tspan></text>
+      <rect x="570" y="52" width="78" height="28" fill="none" stroke="#141414" stroke-width="1.1" stroke-dasharray="4 3"/>
+      <text x="609" y="71" text-anchor="middle" font-size="12">Enc<tspan dy="3" font-size="9">ξ</tspan><tspan dy="-3" font-size="10"> (EMA)</tspan></text>
+      <line x1="491" y1="40" x2="491" y2="50" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <line x1="609" y1="40" x2="609" y2="50" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <text x="491" y="106" text-anchor="middle" font-style="italic" font-size="12.5">s<tspan dy="3" font-size="9">x</tspan></text>
+      <text x="609" y="106" text-anchor="middle" font-style="italic" font-size="12.5">s<tspan dy="3" font-size="9">y</tspan></text>
+      <line x1="491" y1="82" x2="491" y2="94" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <line x1="609" y1="82" x2="609" y2="94" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <!-- predictor -->
+      <rect x="458" y="126" width="66" height="28" fill="none" stroke="#141414" stroke-width="1.1"/>
+      <text x="491" y="145" text-anchor="middle" font-size="12">Pred<tspan dy="3" font-size="9">ψ</tspan></text>
+      <line x1="491" y1="110" x2="491" y2="124" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <!-- z input -->
+      <text x="443" y="145" text-anchor="end" font-style="italic" font-size="12.5">z</text>
+      <line x1="447" y1="141" x2="456" y2="141" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <!-- s hat -->
+      <text x="491" y="182" text-anchor="middle" font-style="italic" font-size="12.5">ŝ<tspan dy="3" font-size="9">y</tspan></text>
+      <line x1="491" y1="156" x2="491" y2="170" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <!-- D box -->
+      <rect x="510" y="166" width="88" height="28" fill="none" stroke="#141414" stroke-width="1.1"/>
+      <text x="554" y="185" text-anchor="middle" font-size="12" font-style="italic">D(ŝ<tspan dy="3" font-size="9">y</tspan><tspan dy="-3">, s</tspan><tspan dy="3" font-size="9">y</tspan><tspan dy="-3">)</tspan></text>
+      <line x1="498" y1="180" x2="508" y2="180" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <line x1="609" y1="110" x2="580" y2="164" stroke="#141414" stroke-width="1.1" marker-end="url(#arr)"/>
+      <text x="630" y="142" font-size="9.5" fill="#555" text-anchor="middle">stop-grad</text>
+      <text x="554" y="222" text-anchor="middle" font-size="11" fill="#555">loss in representation space:</text>
+      <text x="554" y="238" text-anchor="middle" font-size="11" fill="#555">unpredictable detail is discarded</text>
+      <text x="554" y="258" text-anchor="middle" font-size="12.5" font-weight="bold">(c) JEPA</text>
+    </g>
+
+    <!-- baseline label -->
+    <text x="330" y="304" text-anchor="middle" font-size="11.5" fill="#888" font-style="italic">where the cost of prediction is paid</text>
+  </svg>
+  <figcaption><b>Figure 1:</b> Three families of self-supervised architecture, after the taxonomy of LeCun (2022)<sup class="cite"><a href="#ref-1">1</a></sup>. (a) Contrastive joint-embedding: two encoders, a similarity loss, and invariance to hand-crafted augmentations, with negatives or asymmetry warding off collapse. (b) Generative reconstruction: the decoder must account for every pixel, predictable or not. (c) The JEPA: a predictor conditioned on a transformation variable <em>z</em> maps the context embedding to a predicted target embedding; the loss lives in representation space, and the target encoder is typically an exponential-moving-average copy with stopped gradients — the heuristic that §4 replaces with theory.</figcaption>
+</figure>
+
+<h3 id="s22"><span class="no">2.2</span>The case against reconstruction</h3>
+
+<p>The paradigm's sharpest stated motivation is Balestriero &amp; LeCun's ICML 2024 result<sup class="cite"><a href="#ref-4">4</a></sup>: learning by reconstruction allocates model capacity to the subspace of the data that explains observed <em>variance</em>, and that subspace is misaligned with perception. Their cleanest demonstration is almost embarrassing for pixel losses — on TinyImageNet, classifying from the projection onto the top principal subspace carrying 90% of pixel variance yields 45% test accuracy, while the <em>bottom</em> subspace, carrying only 20% of the variance, yields 55%. The features that matter for perception are learned last under a reconstruction objective, which the authors connect to the notoriously long training schedules of masked autoencoders. The result's scope should be kept precise: it concerns features <em>for perception</em>; it does not show that reconstruction is useless for generation, which is exactly where the rival program has flourished (§6.3).</p>
+
+<h3 id="s23"><span class="no">2.3</span>Collapse, and the heuristic era</h3>
+
+<p>The JEPA objective admits a trivial global minimum: map every input to the same embedding and prediction becomes exact and worthless. From 2023 to 2025 collapse was held off by a package of heuristics — exponential-moving-average target encoders, stop-gradients, and carefully designed masking (I-JEPA's ablations showed that large, semantically scaled target blocks and a spatially distributed context block are load-bearing choices, not details<sup class="cite"><a href="#ref-2">2</a></sup>). These devices work, but were poorly understood and brittle to tune, and the paradigm carried that debt until the theory turn of late 2025 (§4).</p>
+
+<h2 id="s3"><span class="no">3</span>The empirical record</h2>
+
+<h3 id="s31"><span class="no">3.1</span>Images: I-JEPA</h3>
+
+<p>I-JEPA<sup class="cite"><a href="#ref-2">2</a></sup> (CVPR 2023) is the proof of concept: from a single context block of an image, predict the representations of several target blocks, with the predictor conditioned on their positions. No contrastive negatives, no augmentation menu, no pixel decoder. The headline was as much efficiency as accuracy — a ViT-H/14 trained on ImageNet with 16 A100 GPUs in under 72 hours, reaching strong performance across linear classification and, notably, low-level tasks such as object counting and depth prediction, where augmentation-invariant methods shed information by construction. The masking geometry carried the semantics; that observation is the paper's real contribution.</p>
+
+<h3 id="s32"><span class="no">3.2</span>Video: V-JEPA, and the intuitive-physics result</h3>
+
+<p>V-JEPA<sup class="cite"><a href="#ref-3">3</a></sup> (2024) asked whether feature prediction can serve as a <em>stand-alone</em> objective for video — no pretrained image encoders, no text, no negatives, no reconstruction. Trained on two million videos and evaluated frozen, the largest model (ViT-H/16) reached 81.9% on Kinetics-400, 72.2% on Something-Something-v2, and 77.9% on ImageNet-1k. The cell that matters is Something-Something-v2: appearance can often be read off a single frame, but SSv2's categories are <em>motions</em>, and image-pretrained encoders lag there. Predicting features across time forces the representation to encode dynamics.</p>
+
+<p>The scientifically most interesting downstream claim came in February 2025. Garrido et&nbsp;al.<sup class="cite"><a href="#ref-5">5</a></sup> ran V-JEPA-class models through the violation-of-expectation protocol of developmental psychology — measure surprise at physically impossible events — across IntPhys, GRASP and InfLevel. Models trained to predict in representation space showed reliable sensitivity to object permanence, shape consistency and continuity; video prediction in <em>pixel</em> space and multimodal LLMs reasoning through text performed near chance on the same probes. Above-chance sensitivity emerged from as little as one week of unique video. The authors read this against the nativist "core knowledge" position: perhaps that scaffolding need not be hardwired. The result held up; its <em>ceiling</em> did not, as §6.1 documents.</p>
+
+<h3 id="s33"><span class="no">3.3</span>Action: V-JEPA 2</h3>
+
+<p>V-JEPA&nbsp;2<sup class="cite"><a href="#ref-6">6</a>,<a href="#ref-21">21</a></sup> (June 2025) is the scaling and robotics paper. Pretrained action-free on over one million hours of internet video, it reached 77.3% top-1 on SSv2 and a state-of-the-art 39.7 recall-at-5 on Epic-Kitchens-100 action anticipation, surpassing task-specific models; aligned with an 8&nbsp;B-parameter language model it set marks on video question answering (84.0 on PerceptionTest, 76.9 on TempCompass). The result to remember, though, is the division of labour: a latent action-conditioned world model, V-JEPA&nbsp;2-AC, was post-trained on <em>less than 62 hours</em> of unlabeled robot trajectories from the DROID dataset, then deployed zero-shot on Franka arms in labs it had never seen, reaching 65–80% success on pick-and-place with novel objects — no rewards, no demonstrations in the target environment, planning by optimizing action sequences against the latent predictor. Internet video taught the dynamics; a sliver of interaction data grounded the actions. The same release shipped three physical-reasoning benchmarks — IntPhys&nbsp;2, MVPBench, CausalVQA — one of which promptly complicated the story (§6.1).</p>
+
+<h3 id="s34"><span class="no">3.4</span>Consolidation: V-JEPA 2.1</h3>
+
+<p>V-JEPA&nbsp;2.1<sup class="cite"><a href="#ref-15">15</a></sup> (March 2026) is a consolidation release aimed at the line's known weakness — dense, per-patch feature quality (§6.2). It combines a dense predictive loss, deep self-supervision at multiple encoder layers, and multimodal tokenizers unifying image and video training. It reports 77.7% on SSv2 (against 70.1 for the frame-wise DINOv3), 40.8 recall-at-5 on Epic-Kitchens-100, and 7.71 mAP on Ego4D short-term object-interaction anticipation. Table&nbsp;2 assembles the record.</p>
+
+<div class="tablewrap">
+  <p class="tabcaption"><b>Table 2:</b> The empirical record of the JEPA line, 2024–2026, as reported in the cited papers. Frozen-backbone (probe) evaluation unless noted. The last two rows are the same experimental logic — violation-of-expectation — at two levels of scene complexity; their disagreement is the field's central open problem (§6.1).</p>
+  <table>
+    <thead>
+      <tr><th>Capability</th><th>Benchmark</th><th class="num">Result</th><th>Model</th><th>Src.</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Appearance (video)</td><td>Kinetics-400, top-1</td><td class="num">81.9</td><td>V-JEPA ViT-H/16</td><td><a href="#ref-3">[3]</a></td></tr>
+      <tr><td>Motion understanding</td><td>Something-Something-v2, top-1</td><td class="num">72.2 → 77.3 → 77.7</td><td>V-JEPA → 2 → 2.1</td><td><a href="#ref-3">[3]</a>,<a href="#ref-6">[6]</a>,<a href="#ref-15">[15]</a></td></tr>
+      <tr><td>Image transfer</td><td>ImageNet-1k, top-1</td><td class="num">77.9</td><td>V-JEPA ViT-H/16</td><td><a href="#ref-3">[3]</a></td></tr>
+      <tr><td>Action anticipation</td><td>Epic-Kitchens-100, R@5</td><td class="num">39.7 → 40.8</td><td>V-JEPA&nbsp;2 → 2.1</td><td><a href="#ref-6">[6]</a>,<a href="#ref-15">[15]</a></td></tr>
+      <tr><td>Interaction anticipation</td><td>Ego4D STA, mAP</td><td class="num">7.71</td><td>V-JEPA&nbsp;2.1</td><td><a href="#ref-15">[15]</a></td></tr>
+      <tr><td>Video QA (with 8&nbsp;B LLM)</td><td>PerceptionTest / TempCompass</td><td class="num">84.0 / 76.9</td><td>V-JEPA&nbsp;2 + LLM</td><td><a href="#ref-6">[6]</a></td></tr>
+      <tr><td>Zero-shot manipulation</td><td>Franka pick-and-place, unseen labs</td><td class="num">65–80% succ.</td><td>V-JEPA&nbsp;2-AC (62&nbsp;h DROID)</td><td><a href="#ref-6">[6]</a></td></tr>
+      <tr><td>Intuitive physics, simple scenes</td><td>IntPhys / GRASP / InfLevel (VoE)</td><td class="num">≫ chance</td><td>V-JEPA class (pixel &amp; MLLM baselines ≈ chance)</td><td><a href="#ref-5">[5]</a></td></tr>
+      <tr><td>Intuitive physics, complex scenes</td><td>IntPhys&nbsp;2 (VoE)</td><td class="num">≈ 0.52 vs. human 96.4%</td><td>V-JEPA&nbsp;2 and all tested frontier models</td><td><a href="#ref-7">[7]</a></td></tr>
+    </tbody>
+  </table>
+  <p class="tabnote">Arrows denote successive generations of the same line. "≈ 0.52" is the accuracy of the best-performing V-JEPA-2 variant reported on IntPhys 2's complex-scene split, against a 0.5 random baseline.</p>
+</div>
+
+<h2 id="s4"><span class="no">4</span>The theory turn (2025–2026)</h2>
+
+<p>Through 2025 the paradigm's embarrassment was that nobody could say <em>why</em> its anti-collapse machinery worked. LeJEPA<sup class="cite"><a href="#ref-11">11</a></sup> (November 2025) is the answer, and arguably the most consequential JEPA paper since I-JEPA. Balestriero &amp; LeCun prove that the isotropic Gaussian is the <em>unique</em> distribution of embeddings that minimizes worst-case downstream prediction risk, then construct an objective that enforces it: SIGReg (Sketched Isotropic Gaussian Regularization) matches one-dimensional random projections of the embedding distribution to a univariate Gaussian via characteristic functions, with the Cramér–Wold theorem guaranteeing that matching the sketches matches the joint. The result runs in linear time and memory, exposes a single trade-off hyperparameter, and dispenses with EMA target encoders and stop-gradients altogether. The reference implementation is public<sup class="cite"><a href="#ref-23">23</a></sup>.</p>
+
+<p>LeWorldModel<sup class="cite"><a href="#ref-16">16</a></sup> (March 2026) applies the cure to the harder patient. Its diagnosis: end-to-end latent world models have historically failed because next-embedding prediction admits the collapsed solution — map every frame to the same point and the future becomes trivially predictable. Closing that door with SIGReg, LeWM trains what its authors present as the first <em>stable, end-to-end, action-conditioned</em> JEPA from raw pixels, with exactly two loss terms — next-embedding prediction plus the regularizer — cutting the tunable hyperparameters of comparable end-to-end systems from six to one. It is reward-free and reconstruction-free by construction. Alongside it, Klindt, LeCun &amp; Balestriero<sup class="cite"><a href="#ref-17">17</a></sup> ask the pointed follow-up — <em>when</em> does the LeJEPA objective actually recover a world model, rather than a shortcut that merely satisfies the loss — and characterize conditions on data and predictor under which minimizers encode environment structure.</p>
+
+<p>The direction of travel is unmistakable: heuristics are being replaced by theorems. What is <em>not</em> yet demonstrated publicly — and this is inference, not reported fact — is that the theorem-clean recipes match the heuristic-era systems at frontier scale; V-JEPA&nbsp;2.1, the current benchmark ceiling, still trains in the older style.</p>
+
+<figure>
+  <svg viewBox="0 0 690 240" xmlns="http://www.w3.org/2000/svg" font-family="STIX Two Text, serif" fill="#141414">
+    <defs>
+      <marker id="tarr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+        <path d="M 0 1 L 9 5 L 0 9 z" fill="#141414"/>
+      </marker>
+    </defs>
+    <!-- axis -->
+    <line x1="26" y1="118" x2="680" y2="118" stroke="#141414" stroke-width="1.3" marker-end="url(#tarr)"/>
+    <!-- year ticks, labels above the axis -->
+    <g font-size="11" fill="#888">
+      <line x1="36"  y1="114" x2="36"  y2="122" stroke="#888"/><text x="36"  y="108" text-anchor="middle">2022</text>
+      <line x1="176" y1="114" x2="176" y2="122" stroke="#888"/><text x="176" y="108" text-anchor="middle">2023</text>
+      <line x1="316" y1="114" x2="316" y2="122" stroke="#888"/><text x="316" y="108" text-anchor="middle">2024</text>
+      <line x1="456" y1="114" x2="456" y2="122" stroke="#888"/><text x="456" y="108" text-anchor="middle">2025</text>
+      <line x1="596" y1="114" x2="596" y2="122" stroke="#888"/><text x="596" y="108" text-anchor="middle">2026</text>
+    </g>
+    <!-- events: above -->
+    <g font-size="11">
+      <!-- Jun 2022 position paper -->
+      <circle cx="100" cy="118" r="2.6"/>
+      <line x1="100" y1="115" x2="100" y2="94" stroke="#141414" stroke-width="0.9"/>
+      <text x="95" y="88" text-anchor="start">Jun ’22 — <tspan font-style="italic">position paper</tspan></text>
+      <!-- Feb 2024 V-JEPA + recon critique -->
+      <circle cx="333" cy="118" r="2.6"/>
+      <line x1="333" y1="115" x2="333" y2="94" stroke="#141414" stroke-width="0.9"/>
+      <text x="333" y="74" text-anchor="middle">Feb ’24 — V-JEPA ·</text>
+      <text x="333" y="88" text-anchor="middle">reconstruction critique</text>
+      <!-- Jun 2025 V-JEPA 2 -->
+      <circle cx="520" cy="118" r="2.6"/>
+      <line x1="520" y1="115" x2="520" y2="66" stroke="#141414" stroke-width="0.9"/>
+      <text x="570" y="60" text-anchor="end">Jun ’25 — V-JEPA 2 · IntPhys 2</text>
+      <!-- Nov 2025 LeJEPA -->
+      <circle cx="577" cy="118" r="2.6"/>
+      <line x1="577" y1="115" x2="577" y2="40" stroke="#141414" stroke-width="0.9"/>
+      <text x="618" y="34" text-anchor="end">Nov ’25 — LeJEPA</text>
+      <!-- Mar 2026 cluster -->
+      <circle cx="625" cy="118" r="2.6"/>
+      <line x1="625" y1="115" x2="625" y2="18" stroke="#141414" stroke-width="0.9"/>
+      <text x="672" y="12" text-anchor="end">Mar ’26 — LeWM · V-JEPA 2.1 · AMI $1.03 B</text>
+    </g>
+    <!-- events: below -->
+    <g font-size="11">
+      <!-- Jan 2023 I-JEPA -->
+      <circle cx="182" cy="118" r="2.6"/>
+      <line x1="182" y1="121" x2="182" y2="152" stroke="#141414" stroke-width="0.9"/>
+      <text x="182" y="166" text-anchor="middle">Jan ’23 — I-JEPA</text>
+      <!-- Feb 2025 intuitive physics -->
+      <circle cx="473" cy="118" r="2.6"/>
+      <line x1="473" y1="121" x2="473" y2="152" stroke="#141414" stroke-width="0.9"/>
+      <text x="468" y="166" text-anchor="middle">Feb ’25 — intuitive physics</text>
+      <!-- Sep + Dec 2025: LLM-JEPA / VL-JEPA -->
+      <circle cx="555" cy="118" r="2.6"/>
+      <line x1="555" y1="121" x2="555" y2="186" stroke="#141414" stroke-width="0.9"/>
+      <circle cx="590" cy="118" r="2.6"/>
+      <line x1="590" y1="121" x2="590" y2="186" stroke="#141414" stroke-width="0.9"/>
+      <line x1="555" y1="186" x2="590" y2="186" stroke="#141414" stroke-width="0.9"/>
+      <text x="645" y="200" text-anchor="end">Sep–Dec ’25 — LLM-JEPA · VL-JEPA</text>
+      <!-- Jun 2026 probing -->
+      <circle cx="660" cy="118" r="2.6"/>
+      <line x1="660" y1="121" x2="660" y2="216" stroke="#141414" stroke-width="0.9"/>
+      <text x="672" y="230" text-anchor="end">Jun ’26 — layerwise probing</text>
+    </g>
+  </svg>
+  <figcaption><b>Figure 2:</b> The lineage, June 2022 – June 2026. The rightward crowding is the field's actual shape: of the fourteen dated events plotted, nine fall after May 2025. March 2026 alone delivered a stable end-to-end world model (LeWM<sup class="cite"><a href="#ref-16">16</a></sup>), the line's benchmark ceiling (V-JEPA&nbsp;2.1<sup class="cite"><a href="#ref-15">15</a></sup>), and a $1.03&nbsp;B institution built on the bibliography (AMI<sup class="cite"><a href="#ref-20">20</a></sup>).</figcaption>
+</figure>
+
+<h2 id="s5"><span class="no">5</span>Beyond vision</h2>
+
+<p>The paradigm is crossing modality boundaries, so far at pilot scale. LLM-JEPA<sup class="cite"><a href="#ref-9">9</a></sup> (September 2025) — notable as the first crossing into language by the paradigm's own authors — adds an embedding-prediction term across paired views of the same content (a code snippet and its natural-language description) to the standard next-token loss, and reports consistent gains over standard finetuning across the Llama-3, Gemma-2, OpenELM and OLMo families on NL-RX, GSM8K, Spider and RottenTomatoes, along with reduced overfitting. VL-JEPA<sup class="cite"><a href="#ref-12">12</a></sup> (December 2025) rebuilds the vision-language interface itself: rather than autoregressively decoding tokens, it predicts <em>continuous embeddings</em> of the target text, and reports average performance across eight video-classification and eight video-retrieval datasets exceeding CLIP, SigLIP&nbsp;2 and Perception Encoder. In control, ACT-JEPA<sup class="cite"><a href="#ref-14">14</a></sup> applies the objective to policy representation learning, reporting up to 40% improvement in world-model understanding and up to 10% higher task success.</p>
+
+<p>Around this core, the variant literature has become dense — object-level and causal masking, bidirectional prediction, variational formulations, and JEPAs for graphs, audio, EEG and point clouds<span class="fnref"><sup>∗</sup></span>. Density of variants is the signature of a paradigm being stress-tested, not of one that has consolidated; few of these have independent replications yet.</p>
+
+<h2 id="s6"><span class="no">6</span>What remains contested</h2>
+
+<h3 id="s61"><span class="no">6.1</span>The physics gap</h3>
+
+<p>The sharpest self-inflicted wound in the corpus: IntPhys&nbsp;2<sup class="cite"><a href="#ref-7">7</a></sup>, released by FAIR alongside V-JEPA&nbsp;2, extends the violation-of-expectation protocol to complex, photorealistic scenes — and there, humans score 96.4% while all tested frontier models, V-JEPA&nbsp;2 included, sit at or barely above chance (the best V-JEPA-2 variant reaches ≈&nbsp;0.52 against a 0.5 baseline). This is the same experimental logic under which JEPA models beat pixel and multimodal-LLM baselines on simpler scenes<sup class="cite"><a href="#ref-5">5</a></sup>. Two 2026 follow-ups deepen the concern: a layerwise probing study across video foundation models finds intuitive-physics information weak regardless of training data, suggesting the failure is not a matter of scale alone<sup class="cite"><a href="#ref-18">18</a></sup>, and a position paper argues that visual data may be insufficient in principle, drawing on developmental evidence that children acquire physical intuitions through embodied interaction<sup class="cite"><a href="#ref-13">13</a></sup>. Add the horizon problem — V-JEPA&nbsp;2 ingests and predicts over seconds of video, beyond which the past is simply forgotten<sup class="cite"><a href="#ref-22">22</a></sup> — and the honest summary reads: JEPA models demonstrably capture object-level regularities that pixel-space and text-space systems miss, <em>and</em> they remain far from human physical understanding in cluttered scenes. Both halves are true. Press coverage tends to quote only the first.</p>
+
+<h3 id="s62"><span class="no">6.2</span>Is video-native prediction necessary?</h3>
+
+<p>A quieter dispute, largely inside Meta itself. DINO-world<sup class="cite"><a href="#ref-8">8</a></sup> (July 2025) trains a future predictor <em>on top of frozen DINOv2 image features</em> over large-scale uncurated video, outperforms prior models on segmentation and depth forecasting, and can be fine-tuned action-conditioned for planning — suggesting that much of the "world model" can live in the predictor while a plain image encoder supplies the vocabulary. Independent probing sharpens the trade-off: DINOv3's frame-wise features beat V-JEPA&nbsp;2 on spatially discriminable, pose-identifiable actions, while V-JEPA&nbsp;2 is more consistent on genuinely temporal ones<sup class="cite"><a href="#ref-10">10</a></sup>. V-JEPA&nbsp;2.1's dense-feature agenda<sup class="cite"><a href="#ref-15">15</a></sup> — and its headline 77.7 vs. 70.1 over DINOv3 on SSv2 — is best read as the video-native camp's rebuttal. The underlying question stands open: how much world model must be in the encoder, and how much can be bolted on afterwards.</p>
+
+<h3 id="s63"><span class="no">6.3</span>The generative rival</h3>
+
+<p>The JEPA program's founding argument is that reconstruction wastes capacity on unpredictable, task-irrelevant variance<sup class="cite"><a href="#ref-4">4</a></sup>. That argument must now coexist with the empirical success of generation at scale: DeepMind's Genie&nbsp;3 (August 2025) generates interactive, photorealistic 720p worlds at 24 frames per second with minutes-scale consistency<sup class="cite"><a href="#ref-24">24</a></sup> — a generative world model that plainly works <em>as an environment</em>. The plausible reconciliation, which is inference rather than consensus: generation earns its cost where the output must be rendered (simulation, synthetic environments, media), while latent prediction wins where the output is a decision under compute constraints (perception, planning, robotics). V-JEPA&nbsp;2-AC's 62-hour robot result and Genie&nbsp;3's dreamed worlds are impressive on axes that do not intersect — yet. The two programs will eventually compete directly on embodied benchmarks, and that contest has not happened in public.</p>
+
+<h3 id="s64"><span class="no">6.4</span>The institutional bet</h3>
+
+<p>Meta reorganized its AI effort around large-language-model scaling while its chief AI scientist departed to build world models elsewhere<sup class="cite"><a href="#ref-19">19</a></sup>; FAIR continues to ship the V-JEPA line regardless. Two frontier organizations now hold opposite readings of the same evidence, and the market priced the contrarian side at $3.5&nbsp;B pre-money on a seed round<sup class="cite"><a href="#ref-20">20</a></sup>. That is noteworthy sociology of science — capital as a proxy for credence — but it is evidence about beliefs, not about the world. The benchmarks in Table&nbsp;2, and the gap in §6.1, remain the actual scoreboard.</p>
+
+<h2 id="s7"><span class="no">7</span>Open problems</h2>
+
+<p>Seven problems, ordered roughly by how much of the 2022 program hangs on them:</p>
+
+<p><em>(i) Hierarchy.</em> H-JEPA — prediction at multiple timescales and abstraction levels — remains the position paper's centerpiece and is still unbuilt at scale; every shipped JEPA is single-level. <em>(ii) Long horizons.</em> Context and prediction spans are seconds; no published JEPA sustains minutes-scale latent rollouts without drift<sup class="cite"><a href="#ref-22">22</a></sup>. <em>(iii) Planning cost.</em> Optimizing action sequences against a latent predictor is expensive per decision; real-time closed-loop control from a JEPA world model is undemonstrated. <em>(iv) Scaling laws.</em> There is no public compute-optimal analysis for JEPA objectives comparable to the LLM scaling literature; nobody can yet say what a 10× budget buys. <em>(v) Evaluation.</em> Frozen probes measure representations, not world models; intrinsic evaluation of latent predictors is immature, and IntPhys&nbsp;2<sup class="cite"><a href="#ref-7">7</a></sup> is currently the only widely used probe that frontier models fail. <em>(vi) The latent variable.</em> The 2022 design carries uncertainty in <em>z</em>; deployed JEPAs mostly collapse it to masking geometry or action tokens, leaving multimodal futures — the actual hard case of prediction — unexplored. <em>(vii) Language.</em> LLM-JEPA operates at finetuning scale<sup class="cite"><a href="#ref-9">9</a></sup>; whether a JEPA objective can carry language <em>pretraining</em> is untested in public.</p>
+
+<h2 id="s8"><span class="no">8</span>Assessment and reading order</h2>
+
+<div class="tablewrap">
+  <p class="tabcaption"><b>Table 3:</b> The review's verdicts, compressed. "Established" = replicated or reported across independent groups; "probable" = strong single-source evidence; "contested" = credible evidence on both sides as of July 2026.</p>
+  <table>
+    <thead><tr><th>Standing</th><th>Claim</th></tr></thead>
+    <tbody>
+      <tr><td>Established</td><td>Latent-space prediction learns strong frozen features for motion-centric video tasks, at favourable compute, without augmentation engineering<sup class="cite"><a href="#ref-2">2</a>,<a href="#ref-3">3</a>,<a href="#ref-15">15</a></sup>.</td></tr>
+      <tr><td>Established</td><td>Reconstruction objectives misallocate capacity for perception tasks<sup class="cite"><a href="#ref-4">4</a></sup>.</td></tr>
+      <tr><td>Probable</td><td>Internet-scale video + minimal interaction data suffices for useful zero-shot manipulation<sup class="cite"><a href="#ref-6">6</a></sup> (single lab; awaiting independent replication).</td></tr>
+      <tr><td>Probable</td><td>Collapse is now a solved problem in principle — isotropic-Gaussian regularization replaces the heuristic package<sup class="cite"><a href="#ref-11">11</a>,<a href="#ref-16">16</a></sup> (theory strong; frontier-scale parity unshown).</td></tr>
+      <tr><td>Contested</td><td>"JEPA models understand intuitive physics" — true on simple scenes<sup class="cite"><a href="#ref-5">5</a></sup>, at chance on complex ones<sup class="cite"><a href="#ref-7">7</a>,<a href="#ref-18">18</a></sup>; possibly unreachable from visual data alone<sup class="cite"><a href="#ref-13">13</a></sup>.</td></tr>
+      <tr><td>Contested</td><td>Video-native pretraining beats frozen image features + a learned predictor<sup class="cite"><a href="#ref-8">8</a>,<a href="#ref-10">10</a>,<a href="#ref-15">15</a></sup>.</td></tr>
+      <tr><td>Contested</td><td>Latent prediction, not generation, is the road to world models<sup class="cite"><a href="#ref-4">4</a>,<a href="#ref-24">24</a></sup>.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>For a reader entering the field, the efficient path through the anchors: the position paper<sup class="cite"><a href="#ref-1">1</a></sup> (§§1–4 suffice) for the program; I-JEPA<sup class="cite"><a href="#ref-2">2</a></sup> and V-JEPA<sup class="cite"><a href="#ref-3">3</a></sup> for the mechanism; Garrido et&nbsp;al.<sup class="cite"><a href="#ref-5">5</a></sup> and V-JEPA&nbsp;2<sup class="cite"><a href="#ref-6">6</a></sup> for the strongest claims; LeJEPA<sup class="cite"><a href="#ref-11">11</a></sup> and LeWorldModel<sup class="cite"><a href="#ref-16">16</a></sup> for where the theory now stands; then IntPhys&nbsp;2<sup class="cite"><a href="#ref-7">7</a></sup> and the layerwise probing study<sup class="cite"><a href="#ref-18">18</a></sup> as the corrective, so that enthusiasm and evidence finish the course in the same place.</p>
+
+<p>The four-year arc admits a one-sentence summary: the architecture works, the theory caught up, the robots moved — and the word "understanding" is still doing more work in the press releases than in the benchmarks.</p>
+
+<hr class="fnrule">
+<div class="footnotes">
+  <p><sup>∗</sup> A non-exhaustive sample of the 2026 variant literature: Causal-JEPA (object-level latent masking, <a href="https://arxiv.org/abs/2602.11389">arXiv:2602.11389</a>), BiJEPA (bidirectional prediction, <a href="https://arxiv.org/abs/2603.00049">arXiv:2603.00049</a>), Var-JEPA (variational formulation bridging predictive and generative SSL, <a href="https://arxiv.org/abs/2603.20111">arXiv:2603.20111</a>). None is yet independently replicated; they are cited here as evidence of activity, not of results.</p>
+</div>
+
+<hr class="fnrule" style="margin-top:2.4rem">
+
+<section class="refs" id="refs">
+  <h2 style="margin-top:1.2rem"><span class="no" style="min-width:0;margin-right:.6rem"></span>References</h2>
+  <ol>
+    <li id="ref-1">LeCun, Y. <em>A Path Towards Autonomous Machine Intelligence</em> (version 0.9.2). OpenReview (2022). <a href="https://openreview.net/forum?id=BZ5a1r-kVsf">openreview.net/forum?id=BZ5a1r-kVsf</a></li>
+    <li id="ref-2">Assran, M., Duval, Q., Misra, I., Bojanowski, P., Vincent, P., Rabbat, M., LeCun, Y. &amp; Ballas, N. Self-supervised learning from images with a joint-embedding predictive architecture. <em>CVPR</em> (2023). <a href="https://arxiv.org/abs/2301.08243">arXiv:2301.08243</a></li>
+    <li id="ref-3">Bardes, A., Garrido, Q., Ponce, J., Chen, X., Rabbat, M., LeCun, Y., Assran, M. &amp; Ballas, N. Revisiting feature prediction for learning visual representations from video (V-JEPA). Preprint (2024). <a href="https://arxiv.org/abs/2404.08471">arXiv:2404.08471</a></li>
+    <li id="ref-4">Balestriero, R. &amp; LeCun, Y. Learning by reconstruction produces uninformative features for perception. <em>ICML</em> (2024). <a href="https://arxiv.org/abs/2402.11337">arXiv:2402.11337</a></li>
+    <li id="ref-5">Garrido, Q., Ballas, N., Assran, M., Bardes, A., Najman, L., Rabbat, M., Dupoux, E. &amp; LeCun, Y. Intuitive physics understanding emerges from self-supervised pretraining on natural videos. Preprint (2025). <a href="https://arxiv.org/abs/2502.11831">arXiv:2502.11831</a></li>
+    <li id="ref-6">Assran, M., Bardes, A., Fan, D., Garrido, Q. <em>et&nbsp;al.</em> V-JEPA 2: self-supervised video models enable understanding, prediction and planning. Preprint (2025). <a href="https://arxiv.org/abs/2506.09985">arXiv:2506.09985</a></li>
+    <li id="ref-7">Bordes, F., Garrido, Q., Kao, J. T., Williams, A., Rabbat, M. &amp; Dupoux, E. IntPhys 2: benchmarking intuitive physics understanding in complex synthetic environments. Preprint (2025). <a href="https://arxiv.org/abs/2506.09849">arXiv:2506.09849</a></li>
+    <li id="ref-8">Baldassarre, F., Szafraniec, M., Terver, B., Khalidov, V., Massa, F., LeCun, Y. <em>et&nbsp;al.</em> Back to the features: DINO as a foundation for video world models. Preprint (2025). <a href="https://arxiv.org/abs/2507.19468">arXiv:2507.19468</a></li>
+    <li id="ref-9">Huang, H., LeCun, Y. &amp; Balestriero, R. LLM-JEPA: large language models meet joint embedding predictive architectures. Preprint (2025). <a href="https://arxiv.org/abs/2509.14252">arXiv:2509.14252</a></li>
+    <li id="ref-10">Kodathala, S. V. &amp; Vunnam, R. Temporal vs. spatial: comparing DINOv3 and V-JEPA2 feature representations for video action analysis. Preprint (2025). <a href="https://arxiv.org/abs/2509.21595">arXiv:2509.21595</a></li>
+    <li id="ref-11">Balestriero, R. &amp; LeCun, Y. LeJEPA: provable and scalable self-supervised learning without the heuristics. Preprint (2025). <a href="https://arxiv.org/abs/2511.08544">arXiv:2511.08544</a></li>
+    <li id="ref-12">Chen, D., Shukor, M., Moutakanni, T., Chung, W., Yu, J., Kasarla, T. <em>et&nbsp;al.</em> VL-JEPA: joint embedding predictive architecture for vision-language. Preprint (2025). <a href="https://arxiv.org/abs/2512.10942">arXiv:2512.10942</a></li>
+    <li id="ref-13">Su, E., Legris, S., Gureckis, T. M. &amp; Ren, M. Opinion: learning intuitive physics may require more than visual data. Preprint (2025). <a href="https://arxiv.org/abs/2512.06232">arXiv:2512.06232</a></li>
+    <li id="ref-14">Vujinovic, A. &amp; Kovacevic, A. ACT-JEPA: joint-embedding predictive architecture for efficient policy representation learning. Preprint (2025). <a href="https://arxiv.org/abs/2501.14622">arXiv:2501.14622</a></li>
+    <li id="ref-15">Mur-Labadia, L., Muckley, M., Bar, A., Assran, M., Sinha, K., Rabbat, M., LeCun, Y., Ballas, N. &amp; Bardes, A. V-JEPA 2.1: unlocking dense features in video self-supervised learning. Preprint (2026). <a href="https://arxiv.org/abs/2603.14482">arXiv:2603.14482</a></li>
+    <li id="ref-16">Maes, L., Le Lidec, Q., Scieur, D., LeCun, Y. &amp; Balestriero, R. LeWorldModel: stable end-to-end joint-embedding predictive architecture from pixels. Preprint (2026). <a href="https://arxiv.org/abs/2603.19312">arXiv:2603.19312</a></li>
+    <li id="ref-17">Klindt, D., LeCun, Y. &amp; Balestriero, R. When does LeJEPA learn a world model? Preprint (2026). <a href="https://arxiv.org/abs/2605.26379">arXiv:2605.26379</a></li>
+    <li id="ref-18">Punzo, S., Caselli, N., Pantelidis, I., Massafra, F., Lo Sardo, S., Salehi, M. <em>et&nbsp;al.</em> Do video foundation models understand intuitive physics? A layerwise probing analysis. Preprint (2026). <a href="https://arxiv.org/abs/2606.09646">arXiv:2606.09646</a></li>
+    <li id="ref-19">MIT Technology Review. Yann LeCun's new venture is a contrarian bet against large language models (22 January 2026). <a href="https://www.technologyreview.com/2026/01/22/1131661/yann-lecuns-new-venture-ami-labs/">technologyreview.com/2026/01/22/1131661</a></li>
+    <li id="ref-20">TechCrunch. Yann LeCun's AMI Labs raises $1.03 billion to build world models (9 March 2026). <a href="https://techcrunch.com/2026/03/09/yann-lecuns-ami-labs-raises-1-03-billion-to-build-world-models/">techcrunch.com/2026/03/09</a>; see also <a href="https://techcrunch.com/2026/01/23/whos-behind-ami-labs-yann-lecuns-world-model-startup/">Who's behind AMI Labs (23 January 2026)</a>.</li>
+    <li id="ref-21">Meta AI. Introducing the V-JEPA 2 world model and new benchmarks for physical reasoning (11 June 2025). <a href="https://ai.meta.com/blog/v-jepa-2-world-model-benchmarks/">ai.meta.com/blog/v-jepa-2-world-model-benchmarks</a></li>
+    <li id="ref-22">Quanta Magazine. How one AI model creates a physical intuition of its environment (3 October 2025). <a href="https://www.quantamagazine.org/how-one-ai-model-creates-a-physical-intuition-of-its-environment-20251003/">quantamagazine.org</a></li>
+    <li id="ref-23">Balestriero, R. <em>et&nbsp;al.</em> LeJEPA reference implementation. GitHub (2025). <a href="https://github.com/rbalestr-lab/lejepa">github.com/rbalestr-lab/lejepa</a>; V-JEPA 2 code and models: <a href="https://github.com/facebookresearch/vjepa2">github.com/facebookresearch/vjepa2</a></li>
+    <li id="ref-24">Google DeepMind. Genie 3: a new frontier for world models (5 August 2025). <a href="https://deepmind.google/blog/genie-3-a-new-frontier-for-world-models/">deepmind.google/blog/genie-3</a></li>
+  </ol>
+</section>
+
+<p class="colophon">Prepared by the Scientist for the Split Research Library. Field boundaries: June 2022 – June 2026, vision-centric core and principal extensions. All arXiv identifiers and URLs resolved via arXiv and OpenAlex lookups on 3 July 2026. Preprints are flagged as such; of the anchor papers, only [2] and [4] are peer-reviewed at compilation.</p>
+
+</main>
+</div>
+
+<script>
+(function(){
+  // Citation hover popovers: build from the reference list.
+  var pop = null;
+  function removePop(){ if(pop){ pop.remove(); pop = null; } }
+  document.querySelectorAll('sup.cite a, .tablewrap a[href^="#ref-"]').forEach(function(a){
+    var href = a.getAttribute('href');
+    if(!href || href.indexOf('#ref-') !== 0) return;
+    a.addEventListener('mouseenter', function(){
+      removePop();
+      var ref = document.querySelector(href);
+      if(!ref) return;
+      pop = document.createElement('div');
+      pop.className = 'cite-pop';
+      var n = href.replace('#ref-','');
+      pop.innerHTML = '<b>[' + n + ']</b>&nbsp; ' + ref.innerHTML;
+      document.body.appendChild(pop);
+      var r = a.getBoundingClientRect();
+      var top = r.bottom + window.scrollY + 6;
+      var left = r.left + window.scrollX - 40;
+      var maxLeft = window.scrollX + document.documentElement.clientWidth - 420;
+      if(left > maxLeft) left = Math.max(window.scrollX + 8, maxLeft);
+      if(left < window.scrollX + 8) left = window.scrollX + 8;
+      pop.style.top = top + 'px';
+      pop.style.left = left + 'px';
+      pop.addEventListener('mouseleave', removePop);
+    });
+    a.addEventListener('mouseleave', function(){
+      // small delay so the pointer can travel into the popover
+      setTimeout(function(){
+        if(pop && !pop.matches(':hover')) removePop();
+      }, 180);
+    });
+  });
+  window.addEventListener('scroll', removePop, {passive:true});
+})();
+</script>
+
+</body>
+</html>

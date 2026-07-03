@@ -1,0 +1,10 @@
+{
+  "expert": "genius_gaudi",
+  "key": "room-redesign",
+  "type": "space",
+  "title": "Room redesign",
+  "desc": "Floor plan + look",
+  "brief": "Redesign a 24 m2 living room in a Haussmann Paris apartment while keeping its bones — the mouldings, the point-de-Hongrie herringbone, the tall casement. The sheet delivers a to-scale BEFORE and AFTER floor plan in SVG (furniture footprints, circulation, dimensions), an interactive elements list that highlights each piece on a live mini-plan with its role/footprint/material/indicative cost, a one-point interior elevation of the window wall drawn as linework (not a render), a warm material and colour palette built entirely as CSS/SVG tiles, a zoning rationale in Gaudi's organic-but-livable voice, and the three design moves that transform the room — curve the seating toward the light, make the chimney breast the spine, round the dead corner into a table. Everything self-contained, no external assets.",
+  "da": "Architect's warm drawing: blueprint-cream/warm-paper ground (#F3EAD7) with a faint drafting graticule, sepia-brown ink line (#3A3025, never black), ONE terracotta accent (#C04A26); fine architectural linework — thin rules, dimension ticks, hatching, a cartouche title block; Chivo technical sans + Chivo Mono for cotes/legends + Bitter slab-serif for field notes; drafting-table feel, warm and crafted, distinct from every ivory-navy legal and greige studio piece in the library.",
+  "generated": "2026-07-03"
+}

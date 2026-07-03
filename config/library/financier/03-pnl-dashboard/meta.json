@@ -1,0 +1,10 @@
+{
+  "expert": "financier",
+  "key": "pnl-dashboard",
+  "type": "dashboard",
+  "title": "P&L dashboard",
+  "desc": "Live, interactive",
+  "brief": "An interactive P&L tracking dashboard for 'Brume', a fictional D2C skincare brand — 18 months of coherent monthly data (revenue by channel, COGS, gross margin, opex by category, EBITDA, cash). KPI header cards, a monthly waterfall, margin trend, channel mix, opex breakdown, a month selector and channel filter; all data embedded, all views cross-filter.",
+  "da": "Plum ledger — warm porcelain ground, near-black ink, one deep plum accent plus a muted warm neutral, hairline-ruled sharp-cornered cards, quiet row striping, no soft shadows; IBM Plex Sans + IBM Plex Mono for every numeral, account-book energy.",
+  "generated": "2026-07-03"
+}

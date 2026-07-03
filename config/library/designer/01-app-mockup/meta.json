@@ -1,0 +1,10 @@
+{
+  "expert": "designer",
+  "key": "app-mockup",
+  "type": "app",
+  "title": "App mockup — Marée",
+  "desc": "4 clickable screens",
+  "brief": "A design case study for Marée, a concept iOS app for sea swimmers and coastal people — tides, water temperature, safe-swim windows, and nearby coves. Four genuinely interactive screens sit in slim iPhone frames: Now (swim verdict, tide curve, live temperature), Tides (7-day chart where tapping a day redraws the curve and its high/low events), Spots (nearby coves with a map/list toggle), and Journal (a swim log). Each frame's bottom tab bar actually switches screens. The page around them is a 'studio greige' case study: warm plinth-gray ground, near-black Hanken Grotesk, thin baseline rules, screens presented as objects on plinths, and the design rationale, decisions, palette and type specimen.",
+  "da": "Studio greige — warm plinth-gray ground, near-black ink, Hanken Grotesk chrome, objects on plinths; one accent (tidal teal) borrowed from the app's own marine, sand-toned, data-forward design system.",
+  "generated": "2026-07-03"
+}

@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The solar system, now — NASA Eyes · Ride</title>
+<meta name="description" content="NASA's own real-time 3D view of the solar system — every planet and 150+ spacecraft at their true positions — wrapped with today's distances from JPL Horizons." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<!--
+  Built from the `nasa-eyes` skill reference template (references/eyes-viewer.html).
+  Layout is the template's fixed layout — hero iframe + dossier rail + starfield.
+  Per the skill, only EYES_DATA is re-authored; the accent is re-skinned to NASA
+  worm red #FC3D21 (the template's Saturn gold is reserved elsewhere), and the
+  dossier rail carries the brief-mandated planets table + About-this collapsible,
+  rendered in the template's exact visual language.
+-->
+<style>
+  :root{
+    --void:#05060a; --void2:#0b1026;
+    --accent:#FC3D21;            /* one scientific accent — NASA worm red */
+    --star:#eaf0ff;
+    --dim:rgba(234,240,255,.58); --dim2:rgba(234,240,255,.34);
+    --grotesk:"Space Grotesk",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{min-height:100%;background:var(--void);color:var(--star);font-family:var(--grotesk);overflow-x:hidden}
+  body{background:radial-gradient(140% 100% at 50% -10%, var(--void2), var(--void) 60%)}
+  #stars{position:fixed;inset:0;z-index:0;display:block}
+  main{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:clamp(20px,4vw,46px)}
+
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.36em;text-transform:uppercase;color:var(--dim);
+    display:flex;align-items:center;gap:12px}
+  .eyebrow .tick{width:26px;height:1px;background:linear-gradient(90deg,var(--accent),transparent)}
+  h1{font-family:var(--grotesk);font-weight:600;font-size:clamp(28px,5vw,52px);line-height:1.02;margin:.28em 0 .14em;
+    text-shadow:0 2px 50px rgba(252,61,33,.22)}
+  .sub{font-family:var(--mono);font-size:12.5px;color:var(--dim);letter-spacing:.02em}
+  .sub b{color:var(--accent);font-weight:600}
+  .exec{max-width:64ch;margin-top:16px;font-size:14.5px;line-height:1.62;color:rgba(234,240,255,.84)}
+  .exec b{color:var(--accent);font-weight:600}
+
+  /* About-this — the _discipline exec-summary header, small + collapsible */
+  .about{max-width:64ch;margin-top:14px;border-left:2px solid rgba(252,61,33,.4);padding-left:14px}
+  .about summary{cursor:pointer;list-style:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--dim2);user-select:none}
+  .about summary::-webkit-details-marker{display:none}
+  .about summary::after{content:" +";color:var(--accent)}
+  .about[open] summary::after{content:" −"}
+  .about[open]{border-left-color:var(--accent)}
+  .about dl{margin-top:10px;display:grid;grid-template-columns:max-content 1fr;gap:6px 14px}
+  .about dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);padding-top:2px}
+  .about dd{font-size:12.5px;line-height:1.55;color:var(--dim)}
+
+  .viewer{display:grid;grid-template-columns:1fr;gap:20px;margin-top:26px}
+  @media(min-width:920px){ .viewer{grid-template-columns:1.7fr 1fr} }
+
+  .hero{position:relative;border-radius:16px;overflow:hidden;min-height:60vh;
+    box-shadow:0 30px 90px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05), 0 0 70px rgba(252,61,33,.07)}
+  .hero iframe{width:100%;height:100%;min-height:60vh;border:0;display:block;background:#000}
+  .hatch{position:absolute;right:12px;bottom:12px;font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+    color:var(--star);text-decoration:none;background:rgba(5,6,10,.66);border:1px solid rgba(255,255,255,.14);
+    padding:7px 11px;border-radius:9px;backdrop-filter:blur(6px)}
+  .hatch:hover{border-color:var(--accent);color:var(--accent)}
+  .caption{margin-top:10px;font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--dim2);letter-spacing:.02em}
+  .caption b{color:var(--dim);font-weight:600}
+
+  aside{display:flex;flex-direction:column;gap:22px}
+  .panel-h{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim2);
+    margin-bottom:12px}
+  .panel-h em{font-style:normal;color:var(--accent)}
+  .panel-src{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;color:var(--dim2);margin:-8px 0 10px}
+
+  /* the planets table — same row language as .fact, four mono columns */
+  .planets{display:flex;flex-direction:column}
+  .prow{display:grid;grid-template-columns:1.1fr 1fr 1fr .9fr;gap:8px;padding:7px 0;
+    border-bottom:1px solid rgba(255,255,255,.06);align-items:baseline}
+  .prow.head{border-bottom:1px solid rgba(255,255,255,.12);padding-bottom:5px}
+  .prow.head span{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);text-align:right}
+  .prow.head span:first-child{text-align:left}
+  .prow .n{font-size:13px;color:var(--dim)}
+  .prow .n b{color:var(--star);font-weight:500}
+  .prow .d{font-family:var(--mono);font-size:12px;color:var(--star);text-align:right;font-variant-numeric:tabular-nums}
+  .prow .d.lt{color:var(--dim)}
+  .prow.here .n b{color:var(--accent)}
+  .prow.here .d{color:var(--dim2)}
+
+  .facts{display:flex;flex-direction:column;gap:0}
+  .fact{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .fact .k{font-size:13px;color:var(--dim)}
+  .fact .kk{display:flex;flex-direction:column;gap:2px}
+  .fact .src{font-family:var(--mono);font-size:9.5px;color:var(--dim2);letter-spacing:.03em}
+  .fact .v{font-family:var(--mono);font-size:12.5px;color:var(--star);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .papers{display:flex;flex-direction:column;gap:12px}
+  .paper{display:block;text-decoration:none;color:inherit;padding-left:14px;border-left:2px solid rgba(252,61,33,.4);
+    transition:.15s}
+  .paper:hover{border-left-color:var(--accent)}
+  .paper .t{font-size:13px;line-height:1.4;color:var(--star)}
+  .paper .m{font-family:var(--mono);font-size:10.5px;color:var(--dim2);margin-top:3px}
+  .paper .s{font-size:12px;line-height:1.46;color:var(--dim);margin-top:6px}
+  .paper .s b{color:var(--accent);font-weight:600}
+
+  footer{margin-top:26px;font-family:var(--mono);font-size:10.5px;color:var(--dim2);letter-spacing:.04em;
+    display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
+  footer .cite{color:var(--dim)}
+  .demoflag{color:var(--accent);opacity:.85}
+</style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+  <main>
+    <div class="eyebrow"><span class="tick"></span><span id="eyebrow">Ride · NASA Eyes</span></div>
+    <h1 id="title">—</h1>
+    <div class="sub" id="sub">—</div>
+
+    <details class="about">
+      <summary>About this</summary>
+      <dl id="aboutList"></dl>
+    </details>
+
+    <p class="exec" id="exec"></p>
+
+    <div class="viewer">
+      <div>
+        <div class="hero">
+          <iframe id="frame" title="NASA Eyes on the Solar System" loading="lazy" allow="fullscreen" allowfullscreen
+                  referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <a class="hatch" id="hatch" target="_blank" rel="noopener">Open in NASA Eyes ↗</a>
+        </div>
+        <p class="caption" id="caption"></p>
+      </div>
+      <aside>
+        <div>
+          <div class="panel-h">Where everything is <em>·</em> today</div>
+          <div class="panel-src" id="planetsSrc"></div>
+          <div class="planets" id="planets"></div>
+        </div>
+        <div>
+          <div class="panel-h">Dossier · the facts</div>
+          <div class="facts" id="facts"></div>
+        </div>
+        <div>
+          <div class="panel-h">Sources &amp; literature</div>
+          <div class="papers" id="papers"></div>
+        </div>
+      </aside>
+    </div>
+
+    <footer>
+      <span class="cite" id="cite"></span>
+      <span class="demoflag" id="demoflag"></span>
+    </footer>
+  </main>
+
+<script>
+  /* ───────────── THE ONLY BLOCK RIDE REWRITES ─────────────
+     App: Eyes on the Solar System, home view, clean-embed params (verified).
+     Figures: JPL Horizons API (ssd.jpl.nasa.gov/api/horizons.api), fetched
+     2026-07-03, observer ephemeris, CENTER='500@399' (geocentre),
+     QUANTITIES='19,20' → r = heliocentric range, delta = range from Earth.
+     Light times derived from delta at 499.004784 s per au.
+     Framing headers of eyes.nasa.gov checked clear the same day
+     (no X-Frame-Options, no frame-ancestors). */
+  const EYES_DATA = {
+    eyebrow: "Ride · NASA Eyes · Solar System",
+    title: "The solar system, now",
+    instant: "2026-07-03 · ephemerides epoch 00:00 UTC · JPL Horizons / DE440-441",
+    about: [
+      ["Why", "A Split library showcase from Ride: proof that an answer can be flown through, not just charted — NASA's own real-time view, framed with the numbers that make it true."],
+      ["Context", "Built 2026-07-03. The window is NASA's Eyes on the Solar System (embed headers verified open that day); every figure in the rail was fetched the same morning from the JPL Horizons API and baked into this file."],
+      ["How to use", "Drag to look around, scroll to fly, double-click any body or spacecraft to visit it. The rail gives today's true distances; “Open in NASA Eyes ↗” opens the full app if the frame is ever blocked."],
+      ["Assumed", "Geocentric distances at the stated epoch, in astronomical units; the eight planets (Pluto flies in the window, not in the table). The figures are a snapshot — the sky has moved since."]
+    ],
+    exec: "That window is not an artist's impression — it is <b>NASA's own Eyes on the Solar System</b>, placing every planet and <b>150+ missions</b> where JPL's ephemerides say they are, at this minute. Drag to look, scroll to fly, double-click anything to visit it. The rail beside it is the same sky in numbers: where everything actually stands today, straight from Horizons.",
+    embedUrl: "https://eyes.nasa.gov/apps/solar-system/#/home?featured=false&detailPanel=false&logo=false&search=false&shareButton=false&menu=false&collapseSettingsOptions=true&hideFullScreenToggle=true",
+    caption: "<b>Eyes on the Solar System, live</b> — bodies at their true positions for the moment you opened this page. The time controls at the bottom of the frame fly 1950→2050; the view is yours to pilot. Visualisation: NASA Eyes (eyes.nasa.gov).",
+    planetsSrc: "JPL Horizons · geocentric · 2026-07-03 00:00 UTC · au",
+    /* r = distance from the Sun · delta = distance from Earth · lt = light travel time (from delta) */
+    planets: [
+      { n: "Mercury", r: "0.4663", delta: "0.5973", lt: "4 m 58 s" },
+      { n: "Venus",   r: "0.7224", delta: "1.0280", lt: "8 m 33 s" },
+      { n: "Earth",   r: "1.0166", delta: "—",      lt: "you're here", here: true },
+      { n: "Mars",    r: "1.4444", delta: "2.1005", lt: "17 m 28 s" },
+      { n: "Jupiter", r: "5.2769", delta: "6.2243", lt: "51 m 46 s" },
+      { n: "Saturn",  r: "9.4622", delta: "9.4635", lt: "1 h 19 m" },
+      { n: "Uranus",  r: "19.4575", delta: "20.2564", lt: "2 h 48 m" },
+      { n: "Neptune", r: "29.8802", delta: "29.7445", lt: "4 h 07 m" }
+    ],
+    facts: [
+      { k: "In the window",          v: "150+ missions · 1950→2050", src: "science.nasa.gov/eyes" },
+      { k: "Closest planet, today",  v: "Mercury · 0.5973 au",       src: "Horizons 199 @ epoch" },
+      { k: "Farthest planet, today", v: "Neptune · 29.7445 au",      src: "Horizons 899 @ epoch" },
+      { k: "Sunlight reaches you in",v: "8 min 27 s",                src: "Horizons 10 @ epoch · r⊕ 1.0166 au" },
+      { k: "Voyager 1, right now",   v: "170.27 au · 23 h 36 m",     src: "Horizons −31 @ epoch · light time" },
+      { k: "Ephemeris behind it all",v: "DE440 / DE441",             src: "Park et al. 2021, AJ 161:105" }
+    ],
+    papers: [
+      { t: "The JPL Planetary and Lunar Ephemerides DE440 and DE441",
+        m: "Park, Folkner, Williams & Boggs · The Astronomical Journal 161:105 · 2021",
+        url: "https://iopscience.iop.org/article/10.3847/1538-3881/abd414",
+        s: "The ephemeris under every figure in this rail: orbits numerically integrated and fit to ground- and space-based tracking. <b>DE440</b> spans 1550–2650; <b>DE441</b> runs −13,200 to +17,191 for deep-time work." },
+      { t: "Eyes on the Solar System — NASA Science",
+        m: "NASA / JPL · science.nasa.gov/eyes · accessed 2026-07-03",
+        url: "https://science.nasa.gov/eyes/",
+        s: "NASA's own statement of what the window shows: <b>over 150 missions</b>, 1950→2050, a “simulated live view” of planets, moons, comets and spacecraft built on real trajectory data." },
+      { t: "Horizons System — solar-system ephemerides on demand",
+        m: "JPL Solar System Dynamics · ssd.jpl.nasa.gov/horizons",
+        url: "https://ssd.jpl.nasa.gov/horizons/",
+        s: "Where the table's distances came from — the same service mission navigators query. Open API, no key (<b>ssd.jpl.nasa.gov/api/horizons.api</b>); ask it yourself and check me." }
+    ],
+    cite: "Visualisation: NASA Eyes (eyes.nasa.gov) · figures: JPL Horizons API, DE440/441, epoch 2026-07-03 00:00 UTC",
+    demo: "Ride · Split library · 2026-07-03"
+  };
+
+  /* ───────────── render (fixed) ───────────── */
+  const $ = id => document.getElementById(id);
+  $("eyebrow").textContent = EYES_DATA.eyebrow;
+  $("title").textContent = EYES_DATA.title;
+  $("sub").innerHTML = "<b>▸</b> " + EYES_DATA.instant;
+  $("exec").innerHTML = EYES_DATA.exec || "";
+  $("frame").src = EYES_DATA.embedUrl;
+  $("hatch").href = EYES_DATA.embedUrl;
+  $("caption").innerHTML = EYES_DATA.caption || "";
+  $("cite").textContent = EYES_DATA.cite;
+  $("demoflag").textContent = EYES_DATA.demo;
+  $("aboutList").innerHTML = EYES_DATA.about
+    .map(([t, d]) => `<dt>${t}</dt><dd>${d}</dd>`).join("");
+  $("planetsSrc").textContent = EYES_DATA.planetsSrc;
+  $("planets").innerHTML =
+    `<div class="prow head"><span>body</span><span>r ☉</span><span>Δ ⊕</span><span>light</span></div>` +
+    EYES_DATA.planets.map(p =>
+      `<div class="prow${p.here ? " here" : ""}"><span class="n"><b>${p.n}</b></span>` +
+      `<span class="d">${p.r}</span><span class="d">${p.delta}</span><span class="d lt">${p.lt}</span></div>`).join("");
+  $("facts").innerHTML = EYES_DATA.facts
+    .map(f => `<div class="fact"><span class="kk"><span class="k">${f.k}</span>${f.src ? `<span class="src">${f.src}</span>` : ""}</span><span class="v">${f.v}</span></div>`).join("");
+  $("papers").innerHTML = EYES_DATA.papers
+    .map(p => `<a class="paper" href="${p.url}" target="_blank" rel="noopener"><div class="t">${p.t}</div><div class="m">${p.m}</div>${p.s?`<div class="s">${p.s}</div>`:""}</a>`).join("");
+
+  /* ───────────── one ambient motion: a slow parallax starfield ───────────── */
+  const cv = $("stars"), g = cv.getContext("2d");
+  let W, H, stars;
+  function resize(){
+    W = cv.width = innerWidth; H = cv.height = innerHeight;
+    stars = Array.from({length: Math.round(W*H/9000)}, () => ({
+      x: Math.random()*W, y: Math.random()*H, z: Math.random()*0.8+0.2,
+      r: Math.random()*1.2+0.2, p: Math.random()*6.28
+    }));
+  }
+  addEventListener("resize", resize); resize();
+  let t = 0;
+  (function draw(){
+    requestAnimationFrame(draw); t += 0.006;
+    g.clearRect(0,0,W,H);
+    for(const s of stars){
+      s.y += s.z*0.12; if(s.y > H) s.y = 0;          // slow drift
+      const tw = 0.5 + 0.5*Math.sin(t*2 + s.p);       // gentle twinkle
+      g.beginPath(); g.arc(s.x, s.y, s.r, 0, 6.2832);
+      g.fillStyle = `rgba(234,240,255,${(0.18 + tw*0.55*s.z).toFixed(3)})`;
+      g.fill();
+    }
+  })();
+</script>
+</body>
+</html>

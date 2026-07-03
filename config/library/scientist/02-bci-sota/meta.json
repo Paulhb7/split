@@ -1,0 +1,10 @@
+{
+  "expert": "scientist",
+  "key": "bci-sota",
+  "type": "deck",
+  "title": "Non-invasive BCI atlas",
+  "desc": "The field, mapped",
+  "brief": "A state-of-the-art field map of non-invasive brain-computer interfaces as of July 2026: the four reading modalities (EEG, fNIRS, OPM-MEG, functional ultrasound) drawn as an anatomical atlas; decoding advances (Meta Brain2Qwerty MEG brain-to-text, fMRI semantic decoding, imagined-speech classification) and foundation models for neural data; the labs and companies with their 2025-26 results (Meta FAIR, Caltech+INSERM, UT Austin, Kernel, Neurable, Cognixion, LumiMind/INSIDE, Cerca Magnetics); a performance table across BCI paradigms; applications; the hard limits (SNR, calibration, drift, spatial blur); and a five-year trajectory. Web-grounded and cited, preprints flagged.",
+  "da": "Clinical atlas: pale cool-gray/white paper, electric-blue and violet signal accents, thin-line SVG head montages and tissue cross-sections, humanist Instrument Sans with a mono for plate labels, soft shadows, airy negative space.",
+  "generated": "2026-07-03"
+}

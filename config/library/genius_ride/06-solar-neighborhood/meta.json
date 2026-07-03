@@ -1,0 +1,10 @@
+{
+  "expert": "genius_ride",
+  "key": "solar-neighborhood",
+  "type": "scene",
+  "title": "The solar neighborhood",
+  "desc": "Nearest stars, in 3D",
+  "brief": "A Three.js fly-through of the 111 stars within 20 light-years of the Sun, each placed at its true 3D position from the HYG database v41 (Hipparcos + Gliese/GJ + Yale catalogues, epoch J2000): RA, declination and parallax distance converted to xyz, with the Sun at the origin. Every star is a glowing point coloured by its real spectral type — O/B blue-white through G yellow and K orange to M red — and sized by luminosity, so the palette is literally the data, and the picture it draws is honest: 70 of the 111 neighbours are faint red dwarfs, punctuated by a handful of naked-eye landmarks. Drag to orbit, scroll to zoom, hover for a name and click for a dossier (distance, spectral type, luminosity, apparent magnitude, and confirmed or notable candidate planets — Proxima b and d, Barnard's four sub-Earths, Ross 128 b, Alpha Centauri Ab). A nearest-ten rail, amber distance shells at 5/10/15/20 ly, and a spectral-colour legend with live class counts. Planet notes verified against Wikipedia's nearest-stars tables on 3 July 2026; the catalogue is baked in, so it renders instantly and offline.",
+  "da": "Stellar cartography: warm true-black void with a soft vignette, stars in their real naturalistic black-body colours, and one warm amber accent (#e8a54b) reserved for labels, reticle, distance shells and UI. Fraunces for star names, Archivo for the interface, Space Mono for every figure; fine amber graticule, glow-not-borders throughout.",
+  "generated": "2026-07-03"
+}

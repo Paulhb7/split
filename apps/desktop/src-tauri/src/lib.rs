@@ -1190,6 +1190,77 @@ fn list_experts() -> Result<String, String> {
     serde_json::to_string(&merged).map_err(|e| e.to_string())
 }
 
+// The library: shipped showcase deliverables under `config/library/<expert>/
+// <piece>/` — each piece a self-contained `index.html` + `meta.json` (+
+// optional `thumb.png`). Returns a flat JSON array of every valid piece's
+// meta.json enriched with `expert`, `dir` (the piece folder name the Gallery
+// joins onto `examples[].lib`), absolute `entry`/`thumb` paths (served to the
+// webview via the asset protocol) and the entry `mtime` (cache-bust). Pieces
+// missing either file are skipped silently — the Gallery falls back to its SVG.
+#[tauri::command]
+fn library_index() -> Result<String, String> {
+    let lib = REPO_ROOT.join("config").join("library");
+    let mut out: Vec<serde_json::Value> = Vec::new();
+    let Ok(experts) = std::fs::read_dir(&lib) else {
+        return Ok("[]".into());
+    };
+    for expert in experts.flatten() {
+        let epath = expert.path();
+        let Some(slug) = epath.file_name().and_then(|s| s.to_str()).map(String::from) else {
+            continue;
+        };
+        if !epath.is_dir() || slug.starts_with('.') {
+            continue;
+        }
+        let Ok(pieces) = std::fs::read_dir(&epath) else {
+            continue;
+        };
+        for piece in pieces.flatten() {
+            let dir = piece.path();
+            let entry = dir.join("index.html");
+            let Ok(body) = std::fs::read_to_string(dir.join("meta.json")) else {
+                continue;
+            };
+            if !entry.is_file() {
+                continue;
+            }
+            let Ok(mut meta) = serde_json::from_str::<serde_json::Value>(&body) else {
+                continue;
+            };
+            let Some(obj) = meta.as_object_mut() else {
+                continue;
+            };
+            let Some(dir_name) = dir.file_name().and_then(|s| s.to_str()) else {
+                continue;
+            };
+            obj.insert("expert".into(), slug.clone().into());
+            obj.insert("dir".into(), dir_name.into());
+            obj.insert("entry".into(), entry.to_string_lossy().into_owned().into());
+            let thumb = dir.join("thumb.png");
+            if thumb.is_file() {
+                obj.insert("thumb".into(), thumb.to_string_lossy().into_owned().into());
+            }
+            if let Ok(mtime) = std::fs::metadata(&entry)
+                .and_then(|md| md.modified())
+                .map(|m| m.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs())
+            {
+                obj.insert("mtime".into(), mtime.into());
+            }
+            out.push(meta);
+        }
+    }
+    out.sort_by(|a, b| {
+        let key = |v: &serde_json::Value| {
+            (
+                v["expert"].as_str().unwrap_or_default().to_string(),
+                v["dir"].as_str().unwrap_or_default().to_string(),
+            )
+        };
+        key(a).cmp(&key(b))
+    });
+    serde_json::to_string(&out).map_err(|e| e.to_string())
+}
+
 // Spawn a harness's login command directly (no Terminal). These CLIs all do
 // browser-based OAuth — running them as a detached subprocess is enough; the
 // CLI opens the user's default browser itself. Stdout/stderr are dropped (the
@@ -2767,6 +2838,7 @@ pub fn run() {
             read_session_events,
             delete_archived_session,
             list_experts,
+            library_index,
             browser_login,
             tool_login,
             tool_status,

@@ -1,0 +1,10 @@
+{
+  "expert": "genius_gaudi",
+  "key": "walkthrough",
+  "type": "scene",
+  "title": "3D walk-through",
+  "desc": "Explore the space",
+  "brief": "An explorable three.js model of a compact one-bed apartment — Casa Corba, 42 m² — built as an architectural visualization rather than a game: a living zone with a linen sofa, oval oak coffee table and hand-loomed rug; a kitchen nook in oak with a limestone worktop and brass fittings; a dining corner with a pedestal table and curved-back chairs; a terracotta reading chair with a brass arc lamp. The Gaudí gesture is a real catenary arch (y = a·cosh(x/a), the curve that carries its own load) dividing living from dining, and a sculpted three-tier trencadís shelf whose salvaged-tile shards land on a teal-glazed ground. Everything is procedural geometry with procedural materials — no textures, no images. Soft realistic daylight: a cool hemisphere fill plus one warm directional sun that streams through the punched left-wall window and casts soft PCF shadows, with a faint sunbeam. Drag to orbit and scroll to zoom (OrbitControls); tap one of five saved viewpoints to glide the camera there on an eased path; or press Walk for first-person WASD movement with pointer-lock mouse-look at eye height, clamped inside the room. Click any furniture piece for a floating callout naming its material, role and dimensions. A Day/Evening toggle swings the sun low and warm, dims the fill, and brings up the pendant and lamp glow. Capped render loop, and prefers-reduced-motion disables auto-easing (instant cuts, no drift).",
+  "da": "Architectural viz — a warm sunlit interior, not a void: off-white lime plaster (#F4EFE6), pale limestone floor, natural oak and walnut, with a single Gaudí accent in trencadís teal (#2E9B8F) partnered by terracotta (#C97B4A); soft daylight, ACES tone mapping, minimal floating glass UI; Marcellus for inscriptional labels, Jost for the interface.",
+  "generated": "2026-07-03"
+}

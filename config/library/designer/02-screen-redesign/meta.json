@@ -1,0 +1,10 @@
+{
+  "expert": "designer",
+  "key": "screen-redesign",
+  "type": "site",
+  "title": "Screen redesign",
+  "desc": "Before → after, annotated",
+  "brief": "A screen-redesign case study for a fictional French public-administration form page (\"Demande d'attestation\" on a made-up portal — no real administration or brand named or imitated). It sets a realistically bad BEFORE — a dense two-column table cramming ~14 fields at once, administrative jargon, a wall of tiny legalese, and a confusing row of four equal-weight buttons — against an AFTER that redesigns it to a single column with plain-language labels, progressive disclosure across three short steps, one clear primary action, contextual help under each field, and a visibly-focused input state. Both renders are built in real HTML/CSS, not images. The centerpiece is an interactive drag-the-divider before/after slider (pointer + touch + keyboard), and below it six numbered annotation markers pinned to the AFTER render that highlight in sync with a matching rationale card on hover, plus a four-figure change ledger and design notes. Demo disclaimer throughout; fake data, non-functional screen.",
+  "da": "Red-pencil review: cool paper ground (#F5F6F4) with a barely-there plotting grid, near-black ink, Schibsted Grotesk throughout, and ONE 'correction red' (#E23A2E) reserved for the reviewer's hand — the slider handle, the annotation pins, and hand-drawn underlines. The two form renders stay in a neutral graphite world of their own so the red reads as annotation laid on top.",
+  "generated": "2026-07-03"
+}

@@ -1,0 +1,1234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PERIGEE — Orbital Logistics. Rideshare launch + last-mile transfer.</title>
+<meta name="description" content="PERIGEE flies your payload to orbit on PERIGEE-1, then APOGEE carries it the last mile — to the exact orbit your mission needs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira:ital,wdth,wght@0,50..125,100..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ================================================================
+   PERIGEE — orbital logistics
+   Palette: near-black / bone hairlines / ONE signal orange.
+   Type: Saira variable (expanded display vs condensed section
+   titles) + IBM Plex Mono for engineering annotation.
+   Motion: transform/opacity only, IntersectionObserver reveals,
+   full prefers-reduced-motion fallback.
+   ================================================================ */
+:root{
+  --bg:#0b0c0e;
+  --bg2:#0e1013;
+  --ink:#e9ebee;
+  --mut:#9aa1a9;
+  --dim:#5c636b;
+  --line:rgba(233,235,238,.10);
+  --line2:rgba(233,235,238,.30);
+  --acc:#ff6a00;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'Saira',system-ui,-apple-system,sans-serif;
+  --pad:clamp(20px,5vw,64px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:var(--sans);font-weight:400;font-stretch:100%;
+  font-size:16px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+::selection{background:var(--acc);color:#0b0c0e}
+img,svg{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+section{scroll-margin-top:88px}
+.wrap{max-width:1320px;margin:0 auto;padding-left:var(--pad);padding-right:var(--pad)}
+
+/* ---- page frame: technical-sheet vertical hairlines + corner ticks */
+.frame-l,.frame-r{position:fixed;top:0;bottom:0;width:1px;background:var(--line);z-index:1;pointer-events:none}
+.frame-l{left:calc(50% - min(660px,50vw - 10px))}
+.frame-r{right:calc(50% - min(660px,50vw - 10px))}
+@media (max-width:760px){.frame-l,.frame-r{display:none}}
+
+/* ---- mono micro-label utility */
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.mono-s{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase}
+
+/* ---- corner ticks on drawing panes */
+.ticks{position:relative}
+.ticks::before,.ticks::after,
+.ticks .tk::before,.ticks .tk::after{
+  content:"";position:absolute;width:14px;height:14px;pointer-events:none;
+  border:0 solid var(--line2);
+}
+.ticks::before{top:-1px;left:-1px;border-top-width:1px;border-left-width:1px}
+.ticks::after{top:-1px;right:-1px;border-top-width:1px;border-right-width:1px}
+.ticks .tk::before{bottom:-1px;left:-1px;border-bottom-width:1px;border-left-width:1px}
+.ticks .tk::after{bottom:-1px;right:-1px;border-bottom-width:1px;border-right-width:1px}
+
+/* ================= about-this banner (exec summary) ============= */
+.about{border-bottom:1px solid var(--line);background:var(--bg2);position:relative;z-index:40}
+.about summary{
+  list-style:none;cursor:pointer;display:flex;align-items:center;gap:14px;
+  padding:9px var(--pad);color:var(--dim);
+  font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+}
+.about summary::-webkit-details-marker{display:none}
+.about summary .dotk{width:5px;height:5px;background:var(--acc);flex:none}
+.about summary .plus{margin-left:auto;color:var(--dim);transition:transform .25s}
+.about[open] summary .plus{transform:rotate(45deg)}
+.about summary:hover{color:var(--mut)}
+.about-body{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:28px;
+  padding:6px var(--pad) 22px;
+}
+.about-body h3{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--acc);margin-bottom:7px;font-weight:500}
+.about-body p{font-size:12.5px;line-height:1.6;color:var(--mut);max-width:38ch}
+@media (max-width:900px){.about-body{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.about-body{grid-template-columns:1fr}}
+
+/* ======================== nav =================================== */
+.nav{
+  position:sticky;top:0;z-index:50;
+  border-bottom:1px solid transparent;transition:background .3s,border-color .3s;
+}
+.nav.scrolled{background:rgba(11,12,14,.94);border-bottom-color:var(--line)}
+.nav-in{display:flex;align-items:center;gap:34px;height:64px}
+.brand{display:flex;align-items:center;gap:11px}
+.brand svg{flex:none}
+.brand-word{
+  font-weight:800;font-stretch:125%;font-size:17px;letter-spacing:.34em;text-transform:uppercase;
+}
+.nav-links{display:flex;gap:26px;margin-left:auto}
+.nav-links a{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);transition:color .2s}
+.nav-links a:hover{color:var(--ink)}
+.nav .btn{margin-left:6px}
+@media (max-width:860px){.nav-links{display:none}}
+
+/* ---- buttons */
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  padding:13px 22px;border:1px solid var(--line2);color:var(--ink);
+  transition:background .2s,color .2s,border-color .2s;white-space:nowrap;
+}
+.btn:hover{border-color:var(--ink)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#0b0c0e;font-weight:500}
+.btn.pri:hover{background:transparent;color:var(--acc)}
+.btn .ar{font-family:var(--sans);font-weight:600}
+.nav .btn{padding:9px 16px;font-size:10px}
+
+/* ======================== hero ================================== */
+.hero{
+  position:relative;overflow:hidden;
+  background-image:
+    linear-gradient(var(--line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:96px 96px;
+  background-position:center top;
+}
+.hero::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 30% 20%,transparent 40%,var(--bg) 100%);pointer-events:none}
+.hero .wrap{position:relative;z-index:2;display:grid;grid-template-columns:1.15fr .85fr;gap:24px;align-items:stretch;min-height:calc(100svh - 64px)}
+.hero-copy{display:flex;flex-direction:column;justify-content:center;padding:56px 0 40px}
+.kicker{display:flex;align-items:center;gap:12px;color:var(--mut);margin-bottom:26px}
+.kicker::before{content:"";width:34px;height:1px;background:var(--acc)}
+h1{
+  font-weight:900;font-stretch:125%;text-transform:uppercase;
+  font-size:clamp(48px,7.5vw,120px);line-height:.92;letter-spacing:-.012em;
+}
+h1 .l{display:block}
+h1 .hollow{
+  color:transparent;-webkit-text-stroke:1.5px var(--line2);
+}
+h1 .dot{color:var(--acc);-webkit-text-stroke:0;}
+.hero-sub{margin-top:28px;max-width:52ch;color:var(--mut);font-size:16.5px;line-height:1.7}
+.hero-sub strong{color:var(--ink);font-weight:600}
+.hero-cta{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap}
+
+/* hero drawing pane */
+.hero-draw{
+  position:relative;border-left:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;padding:40px 8px 40px 28px;
+}
+.hero-draw svg{width:min(100%,430px);height:auto}
+.hero-draw .plate{
+  position:absolute;top:26px;right:0;text-align:right;color:var(--dim);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;line-height:2;
+}
+.hero-draw .plate b{color:var(--mut);font-weight:500}
+@media (max-width:980px){
+  .hero .wrap{grid-template-columns:1fr;min-height:0}
+  .hero-draw{border-left:0;border-top:1px solid var(--line);padding:34px 0}
+  .hero-draw svg{width:min(100%,360px)}
+}
+
+/* hero bottom strip — live counters */
+.hero-strip{border-top:1px solid var(--line);position:relative;z-index:2;background:rgba(11,12,14,.6)}
+.hero-strip .wrap{display:grid;grid-template-columns:auto 1fr auto;gap:34px;align-items:center;padding-top:20px;padding-bottom:20px;min-height:0}
+.tminus{display:flex;align-items:baseline;gap:16px}
+.tminus .tlab{color:var(--acc);font-family:var(--mono);font-size:11px;letter-spacing:.22em}
+.tcells{display:flex;gap:14px}
+.tcell{text-align:center}
+.tcell .v{font-family:var(--mono);font-size:clamp(22px,2.6vw,30px);font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
+.tcell .u{font-family:var(--mono);font-size:8.5px;letter-spacing:.22em;color:var(--dim);margin-top:3px}
+.tsep{font-family:var(--mono);font-size:22px;color:var(--dim);align-self:flex-start;line-height:1.3}
+.strip-mid{color:var(--dim);font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;line-height:2}
+.strip-mid b{color:var(--mut);font-weight:500}
+.range{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--mut);text-transform:uppercase}
+.range .dot{width:7px;height:7px;border-radius:50%;background:var(--acc)}
+@media (prefers-reduced-motion:no-preference){.range .dot{animation:blink 1.6s steps(2,start) infinite}}
+@keyframes blink{50%{opacity:.25}}
+@media (max-width:900px){
+  .hero-strip .wrap{grid-template-columns:1fr;gap:16px}
+  .strip-mid{display:none}
+}
+
+/* ================= telemetry marquee ============================ */
+.tape{border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;background:var(--bg2)}
+.tape-in{display:flex;width:max-content;padding:11px 0}
+.tape-seq{display:flex;gap:44px;padding-right:44px;white-space:nowrap;color:var(--dim);font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase}
+.tape-seq .sep{color:var(--acc)}
+@media (prefers-reduced-motion:no-preference){
+  .tape-in{animation:tape 68s linear infinite}
+  .tape:hover .tape-in{animation-play-state:paused}
+}
+@keyframes tape{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.tape{overflow-x:auto}}
+
+/* ================= stats band =================================== */
+.stats .wrap{display:grid;grid-template-columns:repeat(4,1fr);padding-top:0;padding-bottom:0}
+.stat{padding:56px 28px;border-left:1px solid var(--line)}
+.stat:first-child{border-left:0;padding-left:0}
+.stat .num{
+  font-weight:800;font-stretch:125%;font-size:clamp(38px,4.4vw,60px);line-height:1;
+  font-variant-numeric:tabular-nums;letter-spacing:-.01em;
+}
+.stat .num em{font-style:normal;color:var(--acc)}
+.stat .lab{margin-top:14px;color:var(--mut)}
+.stat .ft{margin-top:6px;color:var(--dim);font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase}
+@media (max-width:900px){
+  .stats .wrap{grid-template-columns:1fr 1fr}
+  .stat{padding:34px 22px}
+  .stat:nth-child(3){border-left:0;padding-left:0}
+  .stat:nth-child(-n+2){border-bottom:1px solid var(--line)}
+}
+@media (max-width:520px){
+  .stats .wrap{grid-template-columns:1fr}
+  .stat{border-left:0;padding-left:0;border-bottom:1px solid var(--line)}
+  .stat:last-child{border-bottom:0}
+}
+
+/* ================= section header =============================== */
+.sect{border-top:1px solid var(--line);padding:clamp(72px,9vw,130px) 0}
+.shead{display:flex;align-items:baseline;gap:26px;flex-wrap:wrap;margin-bottom:clamp(44px,6vw,84px)}
+.shead .idx{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--acc)}
+.shead h2{
+  font-weight:800;font-stretch:62%;text-transform:uppercase;
+  font-size:clamp(44px,7.4vw,108px);line-height:.95;letter-spacing:.005em;
+}
+.shead .meta{margin-left:auto;color:var(--dim);font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;align-self:flex-end;padding-bottom:10px}
+@media (max-width:700px){.shead .meta{margin-left:0}}
+
+/* ================= vehicles ===================================== */
+.vehicle{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,4vw,64px);align-items:center}
+.vehicle + .vehicle{margin-top:clamp(64px,8vw,110px);padding-top:clamp(64px,8vw,110px);border-top:1px solid var(--line)}
+.vehicle:nth-child(even){grid-template-columns:.95fr 1.05fr}
+.vehicle:nth-child(even) .vd{order:2}
+.vd{background:var(--bg2);border:1px solid var(--line);padding:clamp(22px,3vw,44px) clamp(14px,2vw,30px)}
+.vd svg{width:100%;height:auto}
+.vd .sheetno{display:flex;justify-content:space-between;color:var(--dim);font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:16px}
+.vi .vrole{color:var(--acc);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.vi .vrole::before{content:"";width:26px;height:1px;background:var(--acc)}
+.vi h3{
+  font-weight:900;font-stretch:125%;text-transform:uppercase;
+  font-size:clamp(38px,4.6vw,62px);line-height:.95;letter-spacing:-.01em;
+}
+.vi h3 span{color:var(--dim);font-weight:300;font-stretch:100%}
+.vi .vdesc{margin-top:22px;color:var(--mut);max-width:52ch;line-height:1.7}
+.vi .vdesc strong{color:var(--ink);font-weight:600}
+.spec{margin-top:34px;border-top:1px solid var(--line)}
+.spec-row{display:grid;grid-template-columns:200px 1fr;gap:16px;padding:11px 0;border-bottom:1px solid var(--line)}
+.spec-row dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);padding-top:3px}
+.spec-row dd{font-family:var(--mono);font-size:12.5px;color:var(--ink);letter-spacing:.02em}
+.spec-row dd small{color:var(--dim);font-size:10px;letter-spacing:.08em}
+@media (max-width:980px){
+  .vehicle,.vehicle:nth-child(even){grid-template-columns:1fr}
+  .vehicle:nth-child(even) .vd{order:0}
+  .spec-row{grid-template-columns:150px 1fr}
+}
+
+/* ================= last mile (transfer diagram) ================= */
+.mile{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(28px,4vw,72px);align-items:center}
+.mile-copy h3{font-weight:800;font-stretch:62%;text-transform:uppercase;font-size:clamp(30px,3.4vw,46px);line-height:1.02}
+.mile-copy>p{margin-top:20px;color:var(--mut);max-width:46ch;line-height:1.7}
+.steps{margin-top:38px;border-top:1px solid var(--line)}
+.step{display:grid;grid-template-columns:56px 1fr;gap:18px;padding:20px 0;border-bottom:1px solid var(--line)}
+.step .n{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--acc);padding-top:3px}
+.step h4{font-weight:700;font-stretch:110%;text-transform:uppercase;font-size:14px;letter-spacing:.06em}
+.step p{color:var(--dim);font-size:13px;line-height:1.65;margin-top:5px;max-width:52ch}
+.mile-draw{background:var(--bg2);border:1px solid var(--line);padding:clamp(18px,2.6vw,40px)}
+.mile-draw svg{width:100%;height:auto}
+@media (max-width:980px){.mile{grid-template-columns:1fr}}
+
+/* ================= manifest ===================================== */
+.man-scroll{overflow-x:auto}
+.man{min-width:820px;border-top:1px solid var(--line2)}
+.man-h,.man-r{
+  display:grid;grid-template-columns:150px 1.2fr 1fr 1.1fr 150px;gap:20px;align-items:center;
+  padding:0 4px;
+}
+.man-h{padding-top:14px;padding-bottom:14px;border-bottom:1px solid var(--line);color:var(--dim)}
+.man-r{padding-top:22px;padding-bottom:22px;border-bottom:1px solid var(--line);position:relative;transition:background .2s}
+.man-r::before{content:"";position:absolute;left:-1px;top:0;bottom:0;width:2px;background:var(--acc);transform:scaleY(0);transition:transform .25s;transform-origin:top}
+.man-r:hover{background:rgba(233,235,238,.02)}
+.man-r:hover::before{transform:scaleY(1)}
+.man-r .mid{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.06em}
+.man-r .mname{display:block;color:var(--dim);font-size:9px;letter-spacing:.18em;text-transform:uppercase;margin-top:4px}
+.man-r .orb,.man-r .win{font-family:var(--mono);font-size:11.5px;color:var(--mut);letter-spacing:.04em}
+.man-r .win{font-variant-numeric:tabular-nums}
+.cap{display:flex;align-items:center;gap:12px}
+.cap .bar{position:relative;flex:1;height:1px;background:var(--line2);max-width:150px}
+.cap .bar i{position:absolute;left:0;top:-1px;height:3px;background:var(--acc);width:var(--w,0%);transition:width 1.2s cubic-bezier(.2,.7,.2,1)}
+.cap .pc{font-family:var(--mono);font-size:10px;color:var(--mut);letter-spacing:.1em;font-variant-numeric:tabular-nums;min-width:82px}
+.chip{
+  justify-self:start;font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+  border:1px solid var(--line2);color:var(--mut);padding:5px 10px;white-space:nowrap;
+}
+.chip.ok{color:var(--dim);border-color:var(--line)}
+.chip.hot{color:var(--acc);border-color:var(--acc)}
+.man-foot{display:flex;justify-content:space-between;gap:20px;padding-top:18px;color:var(--dim);font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;flex-wrap:wrap}
+
+/* ================= fly with us (estimator) ====================== */
+.fly{background:var(--bg2)}
+.fly-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,5vw,90px);align-items:start}
+.fly-copy h2{
+  font-weight:900;font-stretch:125%;text-transform:uppercase;
+  font-size:clamp(48px,6.6vw,96px);line-height:.92;letter-spacing:-.012em;
+}
+.fly-copy h2 em{font-style:normal;color:transparent;-webkit-text-stroke:1.5px var(--line2)}
+.fly-copy p{margin-top:26px;color:var(--mut);max-width:44ch;line-height:1.7}
+.fly-copy .assur{margin-top:36px;display:grid;gap:0;border-top:1px solid var(--line)}
+.fly-copy .assur li{list-style:none;display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--line);color:var(--mut);font-size:13.5px}
+.fly-copy .assur li::before{content:"—";color:var(--acc);flex:none}
+.est{border:1px solid var(--line2);background:var(--bg);padding:clamp(24px,3vw,40px)}
+.est-h{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:24px}
+.est-h .t{font-weight:700;font-stretch:110%;text-transform:uppercase;letter-spacing:.08em;font-size:14px}
+.est-h .n{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase}
+.est label.flab{display:flex;justify-content:space-between;align-items:baseline;color:var(--dim);font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:12px}
+.est label.flab output{color:var(--ink);font-size:13px;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--line2)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:14px;height:14px;background:var(--acc);
+  margin-top:-6.5px;border-radius:0;
+}
+input[type=range]::-moz-range-track{height:1px;background:var(--line2)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;background:var(--acc);border:0;border-radius:0}
+.rmarks{display:flex;justify-content:space-between;color:var(--dim);font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;margin-top:6px}
+.seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:26px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{
+  border:1px solid var(--line);padding:12px 8px;text-align:center;cursor:pointer;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);
+  transition:border-color .2s,color .2s;line-height:1.5;
+}
+.seg label small{display:block;color:var(--dim);font-size:8.5px;letter-spacing:.1em}
+.seg input:checked + label{border-color:var(--acc);color:var(--ink)}
+.seg input:checked + label small{color:var(--acc)}
+.seg input:focus-visible + label{outline:2px solid var(--acc);outline-offset:2px}
+.est-out{margin-top:28px;border-top:1px solid var(--line)}
+.eo-row{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--mut)}
+.eo-row[hidden]{display:none}
+.eo-row .v{color:var(--ink);font-variant-numeric:tabular-nums}
+.eo-total{display:flex;justify-content:space-between;align-items:baseline;padding:18px 0 6px}
+.eo-total .t{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.eo-total .v{font-weight:800;font-stretch:125%;font-size:clamp(30px,3.2vw,42px);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.eo-total .v i{font-style:normal;color:var(--acc)}
+.eo-note{color:var(--dim);font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;margin-top:4px}
+.est .btn{width:100%;justify-content:center;margin-top:24px}
+@media (max-width:980px){.fly-grid{grid-template-columns:1fr}}
+
+/* ================= careers ====================================== */
+.jobs{border-top:1px solid var(--line2)}
+.job{
+  display:grid;grid-template-columns:1fr 220px 240px 44px;gap:20px;align-items:center;
+  padding:24px 4px;border-bottom:1px solid var(--line);transition:background .2s;position:relative;
+}
+.job::before{content:"";position:absolute;left:-1px;top:0;bottom:0;width:2px;background:var(--acc);transform:scaleY(0);transition:transform .25s;transform-origin:top}
+.job:hover{background:rgba(233,235,238,.02)}
+.job:hover::before{transform:scaleY(1)}
+.job .role{font-weight:700;font-stretch:110%;text-transform:uppercase;font-size:15px;letter-spacing:.05em}
+.job .team,.job .site{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.job .go{font-weight:600;color:var(--dim);text-align:right;transition:color .2s,transform .2s}
+.job:hover .go{color:var(--acc);transform:translateX(4px)}
+.jobs-foot{display:flex;justify-content:space-between;padding-top:20px;color:var(--dim);font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;flex-wrap:wrap;gap:12px}
+@media (max-width:860px){
+  .job{grid-template-columns:1fr 44px}
+  .job .team,.job .site{display:none}
+}
+
+/* ================= footer ======================================= */
+footer{border-top:1px solid var(--line2);padding:clamp(56px,7vw,96px) 0 40px}
+.foot-word{
+  font-weight:900;font-stretch:125%;text-transform:uppercase;
+  font-size:clamp(54px,11vw,170px);line-height:.9;letter-spacing:-.01em;
+  color:transparent;-webkit-text-stroke:1.5px var(--line2);
+  margin-bottom:clamp(40px,5vw,72px);user-select:none;
+}
+.foot-word i{font-style:normal;color:var(--acc);-webkit-text-stroke:0}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:36px;padding-bottom:52px;border-bottom:1px solid var(--line)}
+.foot-grid h4{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:16px;font-weight:500}
+.foot-grid ul{list-style:none}
+.foot-grid li{margin-bottom:10px}
+.foot-grid a{color:var(--mut);font-size:13.5px;transition:color .2s}
+.foot-grid a:hover{color:var(--ink)}
+.foot-blurb{color:var(--dim);font-size:13px;line-height:1.7;max-width:34ch}
+.foot-bot{display:flex;justify-content:space-between;gap:20px;padding-top:24px;color:var(--dim);font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;flex-wrap:wrap;line-height:2}
+@media (max-width:860px){.foot-grid{grid-template-columns:1fr 1fr}}
+
+/* ================= reveals ====================================== */
+.rv{opacity:1;transform:none}
+@media (prefers-reduced-motion:no-preference){
+  .rv{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s)}
+  .rv.in{opacity:1;transform:none}
+}
+
+/* ================= blueprint SVG shared ========================= */
+.bp{color:var(--line2)}
+.bp .ln{stroke:currentColor;stroke-width:1.1;fill:none;vector-effect:non-scaling-stroke}
+.bp .ln2{stroke:var(--line);stroke-width:1;fill:none;vector-effect:non-scaling-stroke}
+.bp .dsh{stroke:currentColor;stroke-width:1;fill:none;stroke-dasharray:5 4;opacity:.75;vector-effect:non-scaling-stroke}
+.bp .ctr{stroke:currentColor;stroke-width:.8;fill:none;stroke-dasharray:12 5 2 5;opacity:.5;vector-effect:non-scaling-stroke}
+.bp .dim{stroke:var(--acc);stroke-width:1;fill:none;vector-effect:non-scaling-stroke}
+.bp .dimf{fill:var(--acc)}
+.bp text{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;fill:var(--mut)}
+.bp text.dimt{fill:var(--acc);font-size:10px}
+.bp text.wm{fill:var(--dim);font-family:var(--sans);font-weight:600;font-stretch:125%;letter-spacing:.5em;font-size:13px}
+.bp .ldr{stroke:var(--line2);stroke-width:.8;fill:none;vector-effect:non-scaling-stroke}
+.bp .nd{fill:var(--line2)}
+.bp .acc{stroke:var(--acc)}
+@media (prefers-reduced-motion:no-preference){
+  .bp.draw .ln{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.5s cubic-bezier(.4,0,.2,1) forwards;animation-delay:calc(var(--i,0)*.14s + .15s)}
+  .bp.draw .dim{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.2s cubic-bezier(.4,0,.2,1) forwards;animation-delay:calc(var(--i,0)*.14s + 1s)}
+  .bp.draw .dsh,.bp.draw .ctr,.bp.draw text,.bp.draw .ldr,.bp.draw .nd,.bp.draw .dimf{opacity:0;animation:fdin .9s forwards;animation-delay:calc(var(--i,0)*.14s + .9s)}
+}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fdin{to{opacity:1}}
+/* dashed + centerline keep their reduced opacity as target */
+@media (prefers-reduced-motion:no-preference){
+  .bp.draw .dsh{animation-name:fdin75}
+  .bp.draw .ctr{animation-name:fdin5}
+}
+@keyframes fdin75{to{opacity:.75}}
+@keyframes fdin5{to{opacity:.5}}
+
+/* orbit diagram: OTV dot along transfer path */
+.otv-dot{display:none}
+@supports (offset-path: path("M0,0 L10,10")){
+  .otv-dot{display:block;offset-path:path("M446,306 A176,168 0 0 0 94,306");offset-rotate:0deg}
+  @media (prefers-reduced-motion:no-preference){
+    .otv-dot{animation:fly 12s cubic-bezier(.45,.05,.55,.95) infinite alternate}
+  }
+}
+@keyframes fly{from{offset-distance:0%}to{offset-distance:100%}}
+</style>
+<noscript><style>.rv{opacity:1;transform:none}</style></noscript>
+</head>
+<body>
+
+<div class="frame-l" aria-hidden="true"></div>
+<div class="frame-r" aria-hidden="true"></div>
+
+<!-- ============ about-this (exec summary, per Split discipline) -->
+<details class="about">
+  <summary><span class="dotk" aria-hidden="true"></span>About this artifact<span class="plus" aria-hidden="true">+</span></summary>
+  <div class="about-body">
+    <div><h3>Why</h3><p>A flagship landing page for PERIGEE, a fictional orbital-logistics company — rideshare launches plus last-mile orbital transfer vehicles. Built as a library showcase of what the Engineer expert ships.</p></div>
+    <div><h3>Context</h3><p>Single self-contained HTML file, no build step, no stock photography. Hero vehicle, transfer diagram and vehicle sheets are hand-drawn thin-line SVG. All figures are fictional and deliberately conservative.</p></div>
+    <div><h3>How to use</h3><p>Scroll. The T-minus clock and manifest windows compute live from a fixed 16-day launch cadence. The payload estimator gives indicative pricing; the request button pre-fills an email. Anchors in the nav.</p></div>
+    <div><h3>What I assumed</h3><p>Near-black aerospace direction: Saira expanded vs condensed display, blueprint hairlines, one signal-orange accent. Motion is transform-only and honors reduced-motion. Design refs: UI Pro Max (typography, motion-accessibility guidance).</p></div>
+  </div>
+</details>
+
+<!-- ============ nav ============================================ -->
+<nav class="nav" id="nav" aria-label="Primary">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top" aria-label="Perigee — home">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+        <ellipse cx="10.5" cy="10" rx="8.2" ry="5.4" transform="rotate(-20 10.5 10)" fill="none" stroke="#e9ebee" stroke-width="1.1"/>
+        <circle cx="12.5" cy="10" r="1.6" fill="#5c636b"/>
+        <circle cx="3.6" cy="12.6" r="2" fill="#ff6a00"/>
+      </svg>
+      <span class="brand-word">Perigee</span>
+    </a>
+    <div class="nav-links">
+      <a href="#vehicles">Vehicles</a>
+      <a href="#lastmile">Last mile</a>
+      <a href="#manifest">Manifest</a>
+      <a href="#careers">Careers</a>
+    </div>
+    <a class="btn pri" href="#fly">Book payload</a>
+  </div>
+</nav>
+
+<main id="top">
+
+<!-- ============ hero =========================================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-copy">
+      <p class="kicker mono rv">Rideshare launch &nbsp;+&nbsp; last-mile orbital transfer</p>
+      <h1>
+        <span class="l rv" style="--d:.05s">Launch is</span>
+        <span class="l rv" style="--d:.15s">half the</span>
+        <span class="l hollow rv" style="--d:.25s">journey<span class="dot">.</span></span>
+      </h1>
+      <p class="hero-sub rv" style="--d:.35s">
+        Rideshare gets you to space. It rarely gets you to <strong>your orbit</strong>.
+        PERIGEE flies your payload up on <strong>PERIGEE-1</strong>, then our
+        <strong>APOGEE</strong> transfer vehicle carries it the last mile — altitude,
+        plane and phasing to the numbers your mission actually needs.
+      </p>
+      <div class="hero-cta rv" style="--d:.45s">
+        <a class="btn pri" href="#fly">Book a payload <span class="ar">→</span></a>
+        <a class="btn" href="#manifest">View manifest</a>
+      </div>
+    </div>
+
+    <div class="hero-draw" aria-label="Engineering line drawing of the PERIGEE-1 launch vehicle">
+      <p class="plate" aria-hidden="true">
+        DWG PGE-1-GA-004<br>
+        <b>PERIGEE-1 · GENERAL ARRANGEMENT</b><br>
+        SCALE 1:180 · SHEET 1/3
+      </p>
+      <svg class="bp draw" viewBox="-48 0 508 1000" role="img" aria-labelledby="rocketTitle">
+        <title id="rocketTitle">Thin-line engineering drawing of the PERIGEE-1 two-stage launch vehicle with dimension callouts</title>
+        <!-- centerline -->
+        <line class="ctr" x1="230" y1="26" x2="230" y2="972" style="--i:0"/>
+        <!-- fairing ogive -->
+        <g style="--i:1">
+          <path class="ln" pathLength="1" d="M230,52 C210,74 196,110 190,168 L190,236 L196,268"/>
+          <path class="ln" pathLength="1" d="M230,52 C250,74 264,110 270,168 L270,236 L264,268"/>
+          <line class="ln" pathLength="1" x1="196" y1="268" x2="264" y2="268"/>
+        </g>
+        <!-- stage 2 -->
+        <g style="--i:2">
+          <line class="ln" pathLength="1" x1="196" y1="268" x2="196" y2="390"/>
+          <line class="ln" pathLength="1" x1="264" y1="268" x2="264" y2="390"/>
+          <path class="dsh" d="M196,302 Q230,330 264,302"/>
+          <!-- RCS ticks -->
+          <line class="ln" pathLength="1" x1="190" y1="282" x2="196" y2="282"/>
+          <line class="ln" pathLength="1" x1="264" y1="282" x2="270" y2="282"/>
+        </g>
+        <!-- interstage -->
+        <g style="--i:3">
+          <line class="ln" pathLength="1" x1="196" y1="390" x2="264" y2="390"/>
+          <line class="ln" pathLength="1" x1="196" y1="398" x2="264" y2="398"/>
+          <line class="ln" pathLength="1" x1="196" y1="390" x2="196" y2="398"/>
+          <line class="ln" pathLength="1" x1="264" y1="390" x2="264" y2="398"/>
+        </g>
+        <!-- grid fins -->
+        <g style="--i:4">
+          <rect class="ln" pathLength="1" x="178" y="406" width="18" height="30" fill="none"/>
+          <line class="ln2" x1="184" y1="406" x2="184" y2="436"/>
+          <line class="ln2" x1="190" y1="406" x2="190" y2="436"/>
+          <rect class="ln" pathLength="1" x="264" y="406" width="18" height="30" fill="none"/>
+          <line class="ln2" x1="270" y1="406" x2="270" y2="436"/>
+          <line class="ln2" x1="276" y1="406" x2="276" y2="436"/>
+        </g>
+        <!-- stage 1 -->
+        <g style="--i:5">
+          <line class="ln" pathLength="1" x1="196" y1="398" x2="196" y2="836"/>
+          <line class="ln" pathLength="1" x1="264" y1="398" x2="264" y2="836"/>
+          <path class="dsh" d="M196,442 Q230,472 264,442"/>
+          <path class="dsh" d="M196,648 Q230,678 264,648"/>
+          <path class="dsh" d="M196,812 Q230,782 264,812"/>
+          <!-- umbilical panel -->
+          <rect class="ln2" x="248" y="530" width="12" height="56" fill="none"/>
+        </g>
+        <!-- vertical wordmark -->
+        <text class="wm" transform="translate(222,614) rotate(-90)" style="--i:6">PERIGEE</text>
+        <!-- aft skirt + engines -->
+        <g style="--i:6">
+          <path class="ln" pathLength="1" d="M196,836 L204,872 L256,872 L264,836"/>
+          <line class="ln" pathLength="1" x1="204" y1="872" x2="256" y2="872"/>
+          <path class="ln" pathLength="1" d="M223,872 C219,886 217,900 216,914 L244,914 C243,900 241,886 237,872"/>
+          <path class="ln" pathLength="1" d="M199,872 C196,886 194,898 193,910 L217,910"/>
+          <path class="ln" pathLength="1" d="M261,872 C264,886 266,898 267,910 L243,910"/>
+        </g>
+        <!-- callouts, left -->
+        <g style="--i:7">
+          <circle class="nd" cx="190" cy="180" r="2"/>
+          <line class="ldr" x1="190" y1="180" x2="118" y2="180"/>
+          <text x="112" y="177" text-anchor="end">FAIRING · Ø 2.6 M</text>
+          <circle class="nd" cx="196" cy="330" r="2"/>
+          <line class="ldr" x1="196" y1="330" x2="118" y2="330"/>
+          <text x="112" y="327" text-anchor="end">STAGE 2 · VAC ×1</text>
+          <circle class="nd" cx="178" cy="421" r="2"/>
+          <line class="ldr" x1="178" y1="421" x2="118" y2="421"/>
+          <text x="112" y="418" text-anchor="end">GRID FIN ×4</text>
+          <circle class="nd" cx="196" cy="700" r="2"/>
+          <line class="ldr" x1="196" y1="700" x2="118" y2="700"/>
+          <text x="112" y="697" text-anchor="end">STAGE 1 · K-1 ×7</text>
+        </g>
+        <!-- dimensions, right (single accent) -->
+        <g style="--i:8">
+          <line class="ln2" x1="234" y1="52" x2="332" y2="52"/>
+          <line class="ln2" x1="248" y1="914" x2="332" y2="914"/>
+          <line class="dim" pathLength="1" x1="324" y1="52" x2="324" y2="914"/>
+          <line class="dim" pathLength="1" x1="320" y1="56" x2="328" y2="48"/>
+          <line class="dim" pathLength="1" x1="320" y1="918" x2="328" y2="910"/>
+          <text class="dimt" transform="translate(338,502) rotate(-90)" text-anchor="middle">34.2 M</text>
+        </g>
+        <g style="--i:9">
+          <line class="ln2" x1="196" y1="880" x2="196" y2="956"/>
+          <line class="ln2" x1="264" y1="880" x2="264" y2="956"/>
+          <line class="dim" pathLength="1" x1="196" y1="948" x2="264" y2="948"/>
+          <line class="dim" pathLength="1" x1="192" y1="952" x2="200" y2="944"/>
+          <line class="dim" pathLength="1" x1="260" y1="952" x2="268" y2="944"/>
+          <text class="dimt" x="230" y="974" text-anchor="middle">Ø 2.4 M</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- live strip -->
+  <div class="hero-strip">
+    <div class="wrap">
+      <div class="tminus" role="timer" aria-label="Countdown to next launch window">
+        <span class="tlab">T–</span>
+        <div class="tcells">
+          <div class="tcell"><div class="v" id="td">--</div><div class="u">Days</div></div>
+          <div class="tsep" aria-hidden="true">:</div>
+          <div class="tcell"><div class="v" id="th">--</div><div class="u">Hrs</div></div>
+          <div class="tsep" aria-hidden="true">:</div>
+          <div class="tcell"><div class="v" id="tm">--</div><div class="u">Min</div></div>
+          <div class="tsep" aria-hidden="true">:</div>
+          <div class="tcell"><div class="v" id="ts">--</div><div class="u">Sec</div></div>
+        </div>
+      </div>
+      <p class="strip-mid">
+        NEXT: <b>PGE-23 · “NORTH FENCE”</b> · SSO 550 KM · CAPE MERIDIAN LC-1<br>
+        WINDOW OPENS <b id="twin">—</b>
+      </p>
+      <p class="range"><span class="dot" aria-hidden="true"></span> Range green</p>
+    </div>
+  </div>
+</header>
+
+<!-- ============ telemetry tape ================================= -->
+<div class="tape" aria-hidden="true">
+  <div class="tape-in">
+    <div class="tape-seq">
+      <span>APOGEE-07 · 512 × 548 KM · INC 97.42°</span><span class="sep">//</span>
+      <span>PGE-22 · STAGE 1 NOMINAL · MECO T+147 S</span><span class="sep">//</span>
+      <span>MANIFEST PGE-24 · 62% BOOKED</span><span class="sep">//</span>
+      <span>APOGEE-08 · PHASING BURN COMPLETE · ΔV 4.2 M/S</span><span class="sep">//</span>
+      <span>CAPE MERIDIAN LC-1 · RANGE GREEN</span><span class="sep">//</span>
+      <span>K-1 QUAL · 214 STARTS · CEDAR PASS TEST SITE</span><span class="sep">//</span>
+    </div>
+    <div class="tape-seq">
+      <span>APOGEE-07 · 512 × 548 KM · INC 97.42°</span><span class="sep">//</span>
+      <span>PGE-22 · STAGE 1 NOMINAL · MECO T+147 S</span><span class="sep">//</span>
+      <span>MANIFEST PGE-24 · 62% BOOKED</span><span class="sep">//</span>
+      <span>APOGEE-08 · PHASING BURN COMPLETE · ΔV 4.2 M/S</span><span class="sep">//</span>
+      <span>CAPE MERIDIAN LC-1 · RANGE GREEN</span><span class="sep">//</span>
+      <span>K-1 QUAL · 214 STARTS · CEDAR PASS TEST SITE</span><span class="sep">//</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ stats ========================================== -->
+<section class="stats" aria-label="Mission statistics">
+  <div class="wrap">
+    <div class="stat rv"><div class="num"><span class="cnt" data-count="38">38</span></div><p class="lab mono-s">Missions flown</p><p class="ft">Since first flight</p></div>
+    <div class="stat rv" style="--d:.08s"><div class="num"><span class="cnt" data-count="214">214</span></div><p class="lab mono-s">Payloads deployed</p><p class="ft">28 countries of origin</p></div>
+    <div class="stat rv" style="--d:.16s"><div class="num"><span class="cnt" data-count="41300">41,300</span><em>&nbsp;kg</em></div><p class="lab mono-s">Delivered to orbit</p><p class="ft">Cumulative, all vehicles</p></div>
+    <div class="stat rv" style="--d:.24s"><div class="num"><span class="cnt" data-count="17">17</span></div><p class="lab mono-s">Last-mile transfers</p><p class="ft">APOGEE OTV program</p></div>
+  </div>
+</section>
+
+<!-- ============ vehicles ======================================= -->
+<section class="sect" id="vehicles">
+  <div class="wrap">
+    <header class="shead rv">
+      <span class="idx">/ 01</span>
+      <h2>Vehicles</h2>
+      <span class="meta">Two airframes · one manifest</span>
+    </header>
+
+    <!-- PERIGEE-1 -->
+    <article class="vehicle">
+      <div class="vd ticks rv"><span class="tk"></span>
+        <p class="sheetno"><span>DWG PGE-1-GA-004 · PROFILE</span><span>SCALE 1:220</span></p>
+        <svg class="bp" viewBox="0 0 940 260" role="img" aria-labelledby="p1Title">
+          <title id="p1Title">Side-profile engineering drawing of PERIGEE-1 with dimensions</title>
+          <line class="ctr" x1="46" y1="130" x2="906" y2="130"/>
+          <!-- fairing -->
+          <path class="ln" d="M70,130 C96,108 130,100 178,99 L252,99 L282,105"/>
+          <path class="ln" d="M70,130 C96,152 130,160 178,161 L252,161 L282,155"/>
+          <line class="ln" x1="282" y1="105" x2="282" y2="155"/>
+          <!-- stage 2 -->
+          <line class="ln" x1="282" y1="105" x2="380" y2="105"/>
+          <line class="ln" x1="282" y1="155" x2="380" y2="155"/>
+          <path class="dsh" d="M312,105 Q338,130 312,155"/>
+          <!-- interstage -->
+          <line class="ln" x1="380" y1="105" x2="380" y2="155"/>
+          <line class="ln" x1="388" y1="105" x2="388" y2="155"/>
+          <!-- grid fins -->
+          <rect class="ln" x="398" y="83" width="28" height="16" fill="none"/>
+          <line class="ln2" x1="398" y1="88.5" x2="426" y2="88.5"/>
+          <line class="ln2" x1="398" y1="94" x2="426" y2="94"/>
+          <rect class="ln" x="398" y="161" width="28" height="16" fill="none"/>
+          <line class="ln2" x1="398" y1="166.5" x2="426" y2="166.5"/>
+          <line class="ln2" x1="398" y1="172" x2="426" y2="172"/>
+          <!-- stage 1 -->
+          <line class="ln" x1="388" y1="105" x2="810" y2="105"/>
+          <line class="ln" x1="388" y1="155" x2="810" y2="155"/>
+          <path class="dsh" d="M446,105 Q472,130 446,155"/>
+          <path class="dsh" d="M652,105 Q678,130 652,155"/>
+          <path class="dsh" d="M784,105 Q758,130 784,155"/>
+          <!-- aft skirt + bells -->
+          <path class="ln" d="M810,105 L842,99 L842,161 L810,155"/>
+          <path class="ln" d="M842,123 C856,120 870,118 884,117 L884,143 C870,142 856,140 842,137"/>
+          <path class="ln" d="M842,101 C854,99 866,97 876,96 L876,116"/>
+          <path class="ln" d="M842,159 C854,161 866,163 876,164 L876,144"/>
+          <!-- callouts -->
+          <circle class="nd" cx="178" cy="99" r="2"/><line class="ldr" x1="178" y1="99" x2="178" y2="56"/>
+          <text x="178" y="46" text-anchor="middle">FAIRING Ø 2.6 M</text>
+          <circle class="nd" cx="330" cy="105" r="2"/><line class="ldr" x1="330" y1="105" x2="330" y2="56"/>
+          <text x="330" y="46" text-anchor="middle">STAGE 2</text>
+          <circle class="nd" cx="412" cy="83" r="2"/><line class="ldr" x1="412" y1="83" x2="470" y2="46"/>
+          <text x="478" y="46">GRID FIN ×4</text>
+          <circle class="nd" cx="640" cy="105" r="2"/><line class="ldr" x1="640" y1="105" x2="640" y2="56"/>
+          <text x="640" y="46" text-anchor="middle">STAGE 1 · K-1 ×7</text>
+          <!-- dimensions -->
+          <line class="ln2" x1="70" y1="134" x2="70" y2="222"/>
+          <line class="ln2" x1="884" y1="147" x2="884" y2="222"/>
+          <line class="dim" x1="70" y1="214" x2="884" y2="214"/>
+          <line class="dim" x1="66" y1="218" x2="74" y2="210"/>
+          <line class="dim" x1="880" y1="218" x2="888" y2="210"/>
+          <text class="dimt" x="477" y="238" text-anchor="middle">34.2 M — OVERALL</text>
+          <line class="ln2" x1="286" y1="105" x2="252" y2="105"/>
+          <line class="ln2" x1="286" y1="155" x2="252" y2="155"/>
+          <line class="dim" x1="258" y1="105" x2="258" y2="155"/>
+          <line class="dim" x1="254" y1="109" x2="262" y2="101"/>
+          <line class="dim" x1="254" y1="159" x2="262" y2="151"/>
+          <text class="dimt" transform="translate(246,130) rotate(-90)" text-anchor="middle">Ø 2.4</text>
+        </svg>
+      </div>
+      <div class="vi rv" style="--d:.1s">
+        <p class="vrole mono">Launch vehicle · rideshare</p>
+        <h3>Perigee-1 <span>/ ascent</span></h3>
+        <p class="vdesc">
+          A two-stage, kerolox small-lift vehicle sized for the rideshare economy:
+          <strong>frequent, boring, on time</strong>. Seven K-1 engines on the first
+          stage give engine-out margin from the pad; a single vacuum K-1V circularizes.
+          Standard ports from 3U dispensers to 500&nbsp;kg microsats.
+        </p>
+        <dl class="spec">
+          <div class="spec-row"><dt>Height</dt><dd>34.2 m</dd></div>
+          <div class="spec-row"><dt>Diameter</dt><dd>2.4 m <small>· fairing Ø 2.6 × 5.1 m</small></dd></div>
+          <div class="spec-row"><dt>Liftoff mass</dt><dd>78 t</dd></div>
+          <div class="spec-row"><dt>Liftoff thrust</dt><dd>1,015 kN <small>· 7 × K-1, LOX / RP-1</small></dd></div>
+          <div class="spec-row"><dt>Payload</dt><dd>1,900 kg LEO <small>· 1,450 kg SSO 550 km</small></dd></div>
+          <div class="spec-row"><dt>Stages</dt><dd>2 <small>· single vacuum K-1V upper</small></dd></div>
+        </dl>
+      </div>
+    </article>
+
+    <!-- APOGEE -->
+    <article class="vehicle">
+      <div class="vd ticks rv"><span class="tk"></span>
+        <p class="sheetno"><span>DWG APG-GA-011 · DEPLOYED</span><span>SCALE 1:40</span></p>
+        <svg class="bp" viewBox="0 0 940 300" role="img" aria-labelledby="apTitle">
+          <title id="apTitle">Engineering drawing of the APOGEE orbital transfer vehicle with deployed solar arrays</title>
+          <line class="ctr" x1="120" y1="140" x2="820" y2="140"/>
+          <!-- bus (chamfered) -->
+          <path class="ln" d="M412,80 L528,80 L540,92 L540,188 L528,200 L412,200 L400,188 L400,92 Z"/>
+          <!-- prop tanks (dashed) -->
+          <circle class="dsh" cx="438" cy="140" r="22" fill="none"/>
+          <circle class="dsh" cx="502" cy="140" r="22" fill="none"/>
+          <!-- payload adapter -->
+          <circle class="ln" cx="470" cy="140" r="34" fill="none" opacity=".5"/>
+          <circle class="ln" cx="470" cy="140" r="8" fill="none"/>
+          <!-- solar arrays, left -->
+          <line class="ln" x1="400" y1="140" x2="390" y2="140"/>
+          <rect class="ln" x="304" y="112" width="86" height="56" fill="none"/>
+          <rect class="ln" x="212" y="112" width="86" height="56" fill="none"/>
+          <rect class="ln" x="120" y="112" width="86" height="56" fill="none"/>
+          <line class="ln2" x1="120" y1="140" x2="390" y2="140"/>
+          <line class="ln2" x1="147" y1="112" x2="147" y2="168"/><line class="ln2" x1="176" y1="112" x2="176" y2="168"/>
+          <line class="ln2" x1="239" y1="112" x2="239" y2="168"/><line class="ln2" x1="268" y1="112" x2="268" y2="168"/>
+          <line class="ln2" x1="331" y1="112" x2="331" y2="168"/><line class="ln2" x1="360" y1="112" x2="360" y2="168"/>
+          <!-- solar arrays, right -->
+          <line class="ln" x1="540" y1="140" x2="550" y2="140"/>
+          <rect class="ln" x="550" y="112" width="86" height="56" fill="none"/>
+          <rect class="ln" x="642" y="112" width="86" height="56" fill="none"/>
+          <rect class="ln" x="734" y="112" width="86" height="56" fill="none"/>
+          <line class="ln2" x1="550" y1="140" x2="820" y2="140"/>
+          <line class="ln2" x1="577" y1="112" x2="577" y2="168"/><line class="ln2" x1="606" y1="112" x2="606" y2="168"/>
+          <line class="ln2" x1="669" y1="112" x2="669" y2="168"/><line class="ln2" x1="698" y1="112" x2="698" y2="168"/>
+          <line class="ln2" x1="761" y1="112" x2="761" y2="168"/><line class="ln2" x1="790" y1="112" x2="790" y2="168"/>
+          <!-- main thruster -->
+          <path class="ln" d="M462,200 C458,212 454,222 452,232 L488,232 C486,222 482,212 478,200"/>
+          <!-- RCS ticks -->
+          <line class="ln" x1="400" y1="86" x2="392" y2="80"/>
+          <line class="ln" x1="540" y1="86" x2="548" y2="80"/>
+          <line class="ln" x1="400" y1="194" x2="392" y2="200"/>
+          <line class="ln" x1="540" y1="194" x2="548" y2="200"/>
+          <!-- antenna -->
+          <line class="ln" x1="500" y1="80" x2="524" y2="48"/>
+          <path class="ln" d="M516,42 A11,11 0 0 1 532,54"/>
+          <!-- callouts -->
+          <circle class="nd" cx="470" cy="106" r="2"/><line class="ldr" x1="470" y1="106" x2="470" y2="36"/>
+          <text x="462" y="28">PAYLOAD ADAPTER · PORTS ×4</text>
+          <circle class="nd" cx="438" cy="162" r="2"/><line class="ldr" x1="438" y1="162" x2="330" y2="236"/>
+          <text x="322" y="240" text-anchor="end">STORABLE BIPROP · ΔV ≤ 2,100 M/S</text>
+          <circle class="nd" cx="470" cy="232" r="2"/><line class="ldr" x1="470" y1="232" x2="470" y2="262"/>
+          <text x="478" y="266">MAIN THRUSTER · 450 N</text>
+          <circle class="nd" cx="255" cy="112" r="2"/><line class="ldr" x1="255" y1="112" x2="255" y2="60"/>
+          <text x="255" y="52" text-anchor="middle">SOLAR ARRAY · 1.2 KW BOL</text>
+          <!-- dimension -->
+          <line class="ln2" x1="120" y1="172" x2="120" y2="286"/>
+          <line class="ln2" x1="820" y1="172" x2="820" y2="286"/>
+          <line class="dim" x1="120" y1="278" x2="820" y2="278"/>
+          <line class="dim" x1="116" y1="282" x2="124" y2="274"/>
+          <line class="dim" x1="816" y1="282" x2="824" y2="274"/>
+          <text class="dimt" x="672" y="296" text-anchor="middle">4.5 M — ARRAYS DEPLOYED</text>
+        </svg>
+      </div>
+      <div class="vi rv" style="--d:.1s">
+        <p class="vrole mono">Orbital transfer vehicle · last mile</p>
+        <h3>Apogee <span>/ otv</span></h3>
+        <p class="vdesc">
+          The delivery van of low Earth orbit. APOGEE rides up as a standard
+          rideshare port, then <strong>raises, lowers, phases and re-planes</strong>
+          your spacecraft to its operational slot — or hosts it for the whole
+          mission. Storable propellant, restartable to the last kilogram.
+        </p>
+        <dl class="spec">
+          <div class="spec-row"><dt>Bus</dt><dd>1.0 × 1.0 × 1.2 m <small>· 4.5 m deployed</small></dd></div>
+          <div class="spec-row"><dt>Dry / propellant</dt><dd>320 kg / 410 kg <small>· storable biprop</small></dd></div>
+          <div class="spec-row"><dt>Delta-v</dt><dd>1,300 – 2,100 m/s <small>· manifest-dependent</small></dd></div>
+          <div class="spec-row"><dt>Hosted payload</dt><dd>Up to 450 kg</dd></div>
+          <div class="spec-row"><dt>Main thruster</dt><dd>450 N <small>· restartable, deep throttle</small></dd></div>
+          <div class="spec-row"><dt>Mission life</dt><dd>24 months <small>· 1.2 kW BOL</small></dd></div>
+        </dl>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ last mile ====================================== -->
+<section class="sect" id="lastmile">
+  <div class="wrap">
+    <header class="shead rv">
+      <span class="idx">/ 02</span>
+      <h2>The last mile</h2>
+      <span class="meta">Drop-off orbit → your orbit</span>
+    </header>
+    <div class="mile">
+      <div class="mile-copy rv">
+        <h3>Rideshare drops you where the bus goes. We take you home.</h3>
+        <p>
+          A shared launch delivers every passenger to one insertion orbit.
+          If your mission needs a different altitude, a different plane, or a
+          precise slot in a constellation, that gap is yours to close — unless
+          APOGEE closes it for you.
+        </p>
+        <ol class="steps">
+          <li class="step rv"><span class="n">01</span><div><h4>Rideshare drop-off</h4><p>PERIGEE-1 inserts the stack at the manifest orbit. APOGEE separates with your spacecraft aboard.</p></div></li>
+          <li class="step rv" style="--d:.08s"><span class="n">02</span><div><h4>Phasing &amp; plane change</h4><p>A sequence of restartable burns walks altitude, RAAN and phase toward your target — fuel-optimal, ground-supervised.</p></div></li>
+          <li class="step rv" style="--d:.16s"><span class="n">03</span><div><h4>Precision insertion</h4><p>Release inside the agreed tolerance box, with a state vector you can hand straight to operations.</p></div></li>
+        </ol>
+      </div>
+      <div class="mile-draw ticks rv" style="--d:.1s"><span class="tk"></span>
+        <svg class="bp" viewBox="0 0 560 560" role="img" aria-labelledby="xferTitle">
+          <title id="xferTitle">Orbit transfer diagram: dashed transfer ellipse between insertion orbit and customer orbit</title>
+          <!-- Earth -->
+          <circle class="ln" cx="270" cy="306" r="64" fill="none"/>
+          <path class="ln2" d="M212,280 Q270,296 328,280"/>
+          <path class="ln2" d="M206,306 Q270,324 334,306"/>
+          <path class="ln2" d="M212,332 Q270,350 328,332"/>
+          <!-- insertion orbit -->
+          <circle class="ln" cx="270" cy="306" r="112" fill="none" opacity=".55"/>
+          <!-- customer orbit -->
+          <circle class="ln" cx="270" cy="306" r="200" fill="none"/>
+          <!-- transfer ellipse (accent, dashed) -->
+          <path class="dim" d="M446,306 A176,168 0 0 0 94,306" stroke-dasharray="6 5" fill="none"/>
+          <!-- burn nodes -->
+          <circle class="dimf" cx="446" cy="306" r="4"/>
+          <circle class="dimf" cx="94" cy="306" r="4"/>
+          <!-- OTV dot riding the transfer -->
+          <g class="otv-dot" aria-hidden="true"><rect x="-4" y="-4" width="8" height="8" fill="#ff6a00"/></g>
+          <!-- labels -->
+          <line class="ldr" x1="446" y1="306" x2="486" y2="352"/>
+          <text x="490" y="366" text-anchor="start">ΔV₁</text>
+          <text x="490" y="382" text-anchor="start" opacity=".7">DEPARTURE</text>
+          <line class="ldr" x1="94" y1="306" x2="66" y2="252"/>
+          <text x="60" y="240" text-anchor="start">ΔV₂</text>
+          <text x="60" y="224" text-anchor="start" opacity=".7">INSERTION</text>
+          <text x="270" y="176" text-anchor="middle" opacity=".8">INSERTION ORBIT · 450 KM</text>
+          <text x="270" y="86" text-anchor="middle">CUSTOMER ORBIT</text>
+          <text x="270" y="311" text-anchor="middle" opacity=".6">EARTH</text>
+          <text x="270" y="530" text-anchor="middle" opacity=".55">TRANSFER GEOMETRY — NOT TO SCALE</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ manifest ======================================= -->
+<section class="sect" id="manifest">
+  <div class="wrap">
+    <header class="shead rv">
+      <span class="idx">/ 03</span>
+      <h2>Launch manifest</h2>
+      <span class="meta">Rolling 16-day cadence · Cape Meridian LC-1</span>
+    </header>
+    <div class="man-scroll rv">
+      <div class="man">
+        <div class="man-h mono-s" aria-hidden="true">
+          <span>Mission</span><span>Orbit</span><span>Window (NET)</span><span>Manifest</span><span>Status</span>
+        </div>
+        <div class="man-r">
+          <div><span class="mid">PGE-21</span><span class="mname">Quiet Meadow</span></div>
+          <span class="orb">SSO · 525 km · 97.5°</span>
+          <span class="win">2026 MAR 11</span>
+          <div class="cap"><div class="bar"><i style="--w:100%"></i></div><span class="pc">100% FLOWN</span></div>
+          <span class="chip ok">Complete</span>
+        </div>
+        <div class="man-r">
+          <div><span class="mid">PGE-22</span><span class="mname">Long Lever</span></div>
+          <span class="orb">LEO · 45.0° · 500 km</span>
+          <span class="win">2026 MAY 02</span>
+          <div class="cap"><div class="bar"><i style="--w:100%"></i></div><span class="pc">100% FLOWN</span></div>
+          <span class="chip ok">Complete</span>
+        </div>
+        <div class="man-r">
+          <div><span class="mid">PGE-23</span><span class="mname">North Fence</span></div>
+          <span class="orb">SSO · 550 km · 97.6°</span>
+          <span class="win" data-cycle="0">NEXT WINDOW</span>
+          <div class="cap"><div class="bar"><i style="--w:94%"></i></div><span class="pc">94% BOOKED</span></div>
+          <span class="chip">Integration</span>
+        </div>
+        <div class="man-r">
+          <div><span class="mid">PGE-24</span><span class="mname">Copper Gate + APG-09</span></div>
+          <span class="orb">SSO · 550 km + transfer</span>
+          <span class="win" data-cycle="1">+48 DAYS</span>
+          <div class="cap"><div class="bar"><i style="--w:62%"></i></div><span class="pc">62% BOOKED</span></div>
+          <span class="chip hot">Booking</span>
+        </div>
+        <div class="man-r">
+          <div><span class="mid">PGE-25</span><span class="mname">Still Water</span></div>
+          <span class="orb">LEO · 53.0° · 480 km</span>
+          <span class="win" data-cycle="2">+96 DAYS</span>
+          <div class="cap"><div class="bar"><i style="--w:38%"></i></div><span class="pc">38% BOOKED</span></div>
+          <span class="chip hot">Booking</span>
+        </div>
+        <div class="man-r">
+          <div><span class="mid">PGE-26</span><span class="mname">First Frost</span></div>
+          <span class="orb">SSO · 500 km · 97.4°</span>
+          <span class="win" data-cycle="3">+144 DAYS</span>
+          <div class="cap"><div class="bar"><i style="--w:11%"></i></div><span class="pc">11% BOOKED</span></div>
+          <span class="chip hot">Booking</span>
+        </div>
+      </div>
+    </div>
+    <p class="man-foot rv"><span>NET = no earlier than · windows recompute against the live cadence</span><span>Manifest requests close T–90 days</span></p>
+  </div>
+</section>
+
+<!-- ============ fly with us ==================================== -->
+<section class="sect fly" id="fly">
+  <div class="wrap">
+    <div class="fly-grid">
+      <div class="fly-copy rv">
+        <p class="mono" style="color:var(--acc);margin-bottom:22px">/ 04 &nbsp;·&nbsp; Fly with us</p>
+        <h2>Your orbit.<br><em>Priced in</em><br>seconds.</h2>
+        <p>
+          Set your payload mass, pick a destination, and get an indicative
+          manifest price with the next available flight. A mission manager
+          confirms the numbers within two working days.
+        </p>
+        <ul class="assur">
+          <li>Standard interfaces — 8″ and 15″ ports, 3U–16U dispensers</li>
+          <li>Late load: hardware accepted to T–14 days</li>
+          <li>Reflight assurance included on every booking</li>
+          <li>Licensing and range coordination handled by us</li>
+        </ul>
+      </div>
+
+      <form class="est ticks rv" style="--d:.12s" aria-label="Payload price estimator" onsubmit="return false"><span class="tk"></span>
+        <div class="est-h"><span class="t">Payload estimator</span><span class="n">FORM PGE-EST-01 · INDICATIVE</span></div>
+
+        <label class="flab" for="mass">Payload mass <output id="massOut" for="mass">150 kg</output></label>
+        <input type="range" id="mass" min="5" max="450" step="5" value="150">
+        <div class="rmarks" aria-hidden="true"><span>5 KG</span><span>150</span><span>300</span><span>450 KG</span></div>
+
+        <fieldset class="seg" style="border:0">
+          <legend class="flab" style="display:block;margin-bottom:12px;padding:0;color:var(--dim);font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase">Destination orbit</legend>
+          <input type="radio" name="orbit" id="oSSO" value="sso" checked>
+          <label for="oSSO">SSO 550 km<small>Rideshare drop-off</small></label>
+          <input type="radio" name="orbit" id="oLEO" value="leo">
+          <label for="oLEO">LEO mid-inc<small>45–53° · 480 km</small></label>
+          <input type="radio" name="orbit" id="oCus" value="custom">
+          <label for="oCus">Custom orbit<small>Via APOGEE OTV</small></label>
+        </fieldset>
+
+        <div class="est-out" aria-live="polite">
+          <div class="eo-row"><span>LAUNCH SEGMENT</span><span class="v" id="pLaunch">$930,000</span></div>
+          <div class="eo-row" id="rowXfer" hidden><span>LAST-MILE TRANSFER</span><span class="v" id="pXfer">$0</span></div>
+          <div class="eo-row"><span>EFFECTIVE RATE</span><span class="v" id="pRate">$6,200 / kg</span></div>
+          <div class="eo-row"><span>ASSIGNED FLIGHT</span><span class="v" id="pFlight">PGE-24 · SSO 550</span></div>
+          <div class="eo-total"><span class="t">Indicative total</span><span class="v" id="pTotal">$930,000<i>.</i></span></div>
+          <p class="eo-note">Standard integration · firm quote follows mission review</p>
+        </div>
+
+        <a class="btn pri" id="reqBtn" href="mailto:missions@perigee.space?subject=Manifest%20request">Request manifest slot <span class="ar">→</span></a>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ============ careers ======================================== -->
+<section class="sect" id="careers">
+  <div class="wrap">
+    <header class="shead rv">
+      <span class="idx">/ 05</span>
+      <h2>Careers</h2>
+      <span class="meta">05 open roles · hardware ships here</span>
+    </header>
+    <div class="jobs rv">
+      <a class="job" href="mailto:careers@perigee.space?subject=Application%20—%20GNC%20Engineer%2C%20APOGEE">
+        <span class="role">GNC Engineer — APOGEE program</span>
+        <span class="team">Guidance · Nav · Control</span>
+        <span class="site">El Segundo, CA</span>
+        <span class="go" aria-hidden="true">→</span>
+      </a>
+      <a class="job" href="mailto:careers@perigee.space?subject=Application%20—%20Propulsion%20Test%20Engineer">
+        <span class="role">Propulsion Test Engineer</span>
+        <span class="team">K-1 engine</span>
+        <span class="site">Cedar Pass Test Site, NV</span>
+        <span class="go" aria-hidden="true">→</span>
+      </a>
+      <a class="job" href="mailto:careers@perigee.space?subject=Application%20—%20Structures%20Technician">
+        <span class="role">Structures Technician — Stage 1</span>
+        <span class="team">Airframe</span>
+        <span class="site">El Segundo, CA</span>
+        <span class="go" aria-hidden="true">→</span>
+      </a>
+      <a class="job" href="mailto:careers@perigee.space?subject=Application%20—%20Mission%20Manager%2C%20Rideshare">
+        <span class="role">Mission Manager — Rideshare</span>
+        <span class="team">Payloads</span>
+        <span class="site">El Segundo, CA</span>
+        <span class="go" aria-hidden="true">→</span>
+      </a>
+      <a class="job" href="mailto:careers@perigee.space?subject=Application%20—%20Launch%20Operations%20Engineer">
+        <span class="role">Launch Operations Engineer</span>
+        <span class="team">Range &amp; pad</span>
+        <span class="site">Cape Meridian LC-1</span>
+        <span class="go" aria-hidden="true">→</span>
+      </a>
+    </div>
+    <p class="jobs-foot rv"><span>No role that fits? Write anyway — careers@perigee.space</span><span>We hire people who ship hardware</span></p>
+  </div>
+</section>
+
+<!-- ============ footer ========================================= -->
+<footer>
+  <div class="wrap">
+    <p class="foot-word rv" aria-hidden="true">Perigee<i>.</i></p>
+    <div class="foot-grid">
+      <div>
+        <h4>Orbital logistics</h4>
+        <p class="foot-blurb">Rideshare launch on PERIGEE-1. Last-mile delivery on APOGEE. One manifest, door to door.</p>
+      </div>
+      <div>
+        <h4>Flight</h4>
+        <ul>
+          <li><a href="#manifest">Launch manifest</a></li>
+          <li><a href="#fly">Book a payload</a></li>
+          <li><a href="mailto:missions@perigee.space?subject=Payload%20User%27s%20Guide%20request">Payload user's guide</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Vehicles</h4>
+        <ul>
+          <li><a href="#vehicles">PERIGEE-1</a></li>
+          <li><a href="#vehicles">APOGEE OTV</a></li>
+          <li><a href="#lastmile">The last mile</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#careers">Careers</a></li>
+          <li><a href="mailto:press@perigee.space">Press kit</a></li>
+          <li><a href="mailto:hello@perigee.space">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bot">
+      <span>© 2026 Perigee Orbital Logistics · Cape Meridian LC-1 · 34.71° N, 120.58° W</span>
+      <span>Perigee is a fictional company — a design demonstration built by Q / Split</span>
+    </div>
+  </div>
+</footer>
+
+</main>
+
+<script>
+(function(){
+  "use strict";
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- nav scrolled state ---------- */
+  var nav = document.getElementById("nav");
+  var onScroll = function(){ nav.classList.toggle("scrolled", window.scrollY > 8); };
+  window.addEventListener("scroll", onScroll, {passive:true});
+  onScroll();
+
+  /* ---------- reveals ---------- */
+  var rvs = document.querySelectorAll(".rv");
+  if (reduced || !("IntersectionObserver" in window)) {
+    rvs.forEach(function(el){ el.classList.add("in"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }
+      });
+    }, {rootMargin:"0px 0px -8% 0px", threshold:0.05});
+    rvs.forEach(function(el){ io.observe(el); });
+  }
+
+  /* ---------- count-up stats ---------- */
+  var fmt = function(n){ return Math.round(n).toLocaleString("en-US"); };
+  var counters = document.querySelectorAll(".cnt");
+  if (!reduced && "IntersectionObserver" in window) {
+    var cio = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (!e.isIntersecting) return;
+        cio.unobserve(e.target);
+        var el = e.target, target = parseFloat(el.dataset.count), t0 = null, DUR = 1800;
+        var tick = function(ts){
+          if (t0 === null) t0 = ts;
+          var p = Math.min((ts - t0) / DUR, 1);
+          var eased = 1 - Math.pow(1 - p, 3);
+          el.textContent = fmt(target * eased);
+          if (p < 1) requestAnimationFrame(tick); else el.textContent = fmt(target);
+        };
+        el.textContent = "0";
+        requestAnimationFrame(tick);
+      });
+    }, {threshold:0.4});
+    counters.forEach(function(el){ cio.observe(el); });
+  }
+
+  /* ---------- launch cadence: deterministic, timeless ----------
+     Epoch: 2026-01-08 06:42 UTC. Windows every 16 days forever.
+     The countdown and manifest windows derive from the same clock. */
+  var EPOCH = Date.UTC(2026, 0, 8, 6, 42, 0);
+  var PERIOD = 16 * 86400000;
+  var nextWindow = function(){
+    var now = Date.now();
+    var k = Math.ceil((now - EPOCH) / PERIOD);
+    var t = EPOCH + k * PERIOD;
+    if (t <= now) t += PERIOD;
+    return t;
+  };
+  var target = nextWindow();
+
+  var MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  var fmtWin = function(ms){
+    var d = new Date(ms);
+    return d.getUTCFullYear() + " " + MON[d.getUTCMonth()] + " " +
+           String(d.getUTCDate()).padStart(2,"0");
+  };
+  var fmtWinFull = function(ms){
+    var d = new Date(ms);
+    return fmtWin(ms) + " · " + String(d.getUTCHours()).padStart(2,"0") + ":" +
+           String(d.getUTCMinutes()).padStart(2,"0") + " UTC";
+  };
+
+  /* hero window label */
+  var twin = document.getElementById("twin");
+  if (twin) twin.textContent = fmtWinFull(target);
+
+  /* manifest NET windows: next window + n cadence cycles (booking rows spaced 3 cycles ≈ 48 d) */
+  document.querySelectorAll(".win[data-cycle]").forEach(function(el){
+    var n = parseInt(el.dataset.cycle, 10);
+    el.textContent = fmtWin(target + n * 3 * PERIOD);
+  });
+
+  /* ---------- T-minus clock ---------- */
+  var td = document.getElementById("td"), th = document.getElementById("th"),
+      tm = document.getElementById("tm"), ts = document.getElementById("ts");
+  var p2 = function(n){ return String(n).padStart(2,"0"); };
+  var tickClock = function(){
+    var now = Date.now();
+    if (target - now <= 0) { target = nextWindow(); if (twin) twin.textContent = fmtWinFull(target); }
+    var s = Math.max(0, Math.floor((target - now) / 1000));
+    td.textContent = p2(Math.floor(s / 86400));
+    th.textContent = p2(Math.floor(s % 86400 / 3600));
+    tm.textContent = p2(Math.floor(s % 3600 / 60));
+    ts.textContent = p2(s % 60);
+  };
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  /* ---------- payload estimator ---------- */
+  var PRICING = {
+    sso:    { label:"SSO 550 km",   rate:6200, min:58000, flight:"PGE-24 · SSO 550" },
+    leo:    { label:"LEO mid-inc",  rate:5400, min:52000, flight:"PGE-25 · LEO 53°" },
+    custom: { label:"Custom orbit", rate:6200, min:58000, flight:"PGE-24 + APOGEE-09",
+              xferRate:2400, xferBase:180000 }
+  };
+  var mass = document.getElementById("mass"),
+      massOut = document.getElementById("massOut"),
+      pLaunch = document.getElementById("pLaunch"),
+      pXfer = document.getElementById("pXfer"),
+      rowXfer = document.getElementById("rowXfer"),
+      pRate = document.getElementById("pRate"),
+      pFlight = document.getElementById("pFlight"),
+      pTotal = document.getElementById("pTotal"),
+      reqBtn = document.getElementById("reqBtn");
+  var usd = function(n){ return "$" + Math.round(n).toLocaleString("en-US"); };
+  var orbitVal = function(){
+    var r = document.querySelector('input[name="orbit"]:checked');
+    return r ? r.value : "sso";
+  };
+  var recalc = function(){
+    var kg = parseInt(mass.value, 10);
+    var o = PRICING[orbitVal()];
+    massOut.textContent = kg + " kg";
+    var launch = Math.max(kg * o.rate, o.min);
+    var xfer = 0;
+    if (o.xferRate) { xfer = o.xferBase + kg * o.xferRate; rowXfer.hidden = false; }
+    else { rowXfer.hidden = true; }
+    var total = launch + xfer;
+    pLaunch.textContent = usd(launch);
+    pXfer.textContent = usd(xfer);
+    pRate.textContent = usd(total / kg) + " / kg";
+    pFlight.textContent = o.flight;
+    pTotal.innerHTML = usd(total) + "<i>.</i>";
+    reqBtn.href = "mailto:missions@perigee.space?subject=" + encodeURIComponent(
+      "Manifest request — " + o.flight) + "&body=" + encodeURIComponent(
+      "Payload mass: " + kg + " kg\nDestination: " + o.label +
+      "\nIndicative total: " + usd(total) + "\n\nMission summary:\n");
+  };
+  mass.addEventListener("input", recalc);
+  document.querySelectorAll('input[name="orbit"]').forEach(function(r){
+    r.addEventListener("change", recalc);
+  });
+  recalc();
+})();
+</script>
+</body>
+</html>

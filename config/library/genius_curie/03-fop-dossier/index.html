@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fibrodysplasia Ossificans Progressiva — A Clinical Dossier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;0,7..72,700;1,7..72,400;1,7..72,500&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* warm bone / ivory paper — deliberately NOT arXiv white, NOT clinical-blue */
+    --paper:      #f4efe4;
+    --paper-deep: #ece4d4;
+    --card:       #fbf8f0;
+    --rule:       #d8cdb8;
+    --rule-soft:  #e4dbc9;
+    --ink:        #2a2622;
+    --ink-soft:   #4d463d;
+    --ink-faint:  #6f665a;
+    /* one deep clinical accent — oxblood */
+    --ox:         #7b2d26;
+    --ox-deep:    #5c1f1a;
+    --ox-tint:    #f0e2dc;
+    --ox-wash:    #f6ebe6;
+    --teal:       #2f5d57;   /* used sparingly for the "healthy / physiologic" state only */
+    --shadow:     0 1px 2px rgba(60,44,30,.05), 0 8px 26px rgba(80,52,30,.06);
+    --shadow-lift:0 2px 6px rgba(60,44,30,.08), 0 18px 44px rgba(80,52,30,.10);
+    --maxw: 860px;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #f8f3e8 0%, rgba(248,243,232,0) 60%),
+      var(--paper);
+    color: var(--ink);
+    font-family: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.62;
+    letter-spacing: .002em;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection { background: var(--ox-tint); color: var(--ox-deep); }
+
+  .sheet {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 30px 120px;
+  }
+
+  /* ————— Masthead ————— */
+  header.masthead {
+    padding: 62px 0 30px;
+    border-bottom: 2.5px solid var(--ox);
+    position: relative;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--ox);
+    font-weight: 500;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .eyebrow .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--ox); display:inline-block; opacity:.55; }
+  .eyebrow .muted { color: var(--ink-faint); letter-spacing:.22em; }
+  h1.title {
+    font-family: "Literata", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(34px, 6vw, 52px);
+    line-height: 1.06;
+    letter-spacing: -0.014em;
+    margin: 20px 0 12px;
+    color: var(--ink);
+    max-width: 15ch;
+  }
+  h1.title em { font-style: italic; color: var(--ox-deep); font-weight: 500; }
+  .standfirst {
+    font-family: "Literata", Georgia, serif;
+    font-size: clamp(17px, 2.4vw, 20px);
+    line-height: 1.5;
+    color: var(--ink-soft);
+    font-weight: 400;
+    max-width: 62ch;
+    margin: 0 0 6px;
+    font-style: italic;
+  }
+  .byline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--ink-faint);
+    letter-spacing: .04em;
+    margin-top: 20px;
+    display: flex;
+    gap: 8px 20px;
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+  .byline b { color: var(--ox); font-weight: 600; }
+
+  /* ————— "About this" exec-summary banner (collapsible) ————— */
+  details.about {
+    margin: 26px 0 0;
+    background: var(--ox-wash);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--ox);
+    border-radius: 8px;
+    padding: 0;
+    box-shadow: var(--shadow);
+  }
+  details.about > summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 14px 20px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ox);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+  }
+  details.about > summary::-webkit-details-marker { display: none; }
+  details.about > summary .chev {
+    margin-left: auto;
+    transition: transform .2s ease;
+    font-size: 14px;
+    opacity:.7;
+  }
+  details.about[open] > summary .chev { transform: rotate(90deg); }
+  .about-body {
+    padding: 4px 22px 20px;
+    font-size: 15px;
+    line-height: 1.58;
+    color: var(--ink-soft);
+  }
+  .about-body p { margin: 10px 0; }
+  .about-body b { color: var(--ink); font-weight: 600; }
+  .about-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 4px 26px;
+    margin-top: 6px;
+  }
+  .about-grid > div { padding: 6px 0; }
+  .about-k {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ox);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* ————— At-a-glance panel ————— */
+  .glance {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0;
+    margin: 34px 0 8px;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card);
+    box-shadow: var(--shadow-lift);
+  }
+  .stat {
+    padding: 20px 22px 18px;
+    border-right: 1px solid var(--rule-soft);
+    border-bottom: 1px solid var(--rule-soft);
+    position: relative;
+  }
+  .stat .lab {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 7px;
+  }
+  .stat .val {
+    font-family: "Literata", Georgia, serif;
+    font-weight: 600;
+    font-size: 25px;
+    line-height: 1.05;
+    color: var(--ox-deep);
+    letter-spacing: -0.01em;
+  }
+  .stat .val small { font-size: 14px; color: var(--ink-soft); font-weight: 400; display:block; margin-top:3px; font-family:"Source Sans 3",sans-serif; letter-spacing:0; }
+  .stat .val .mono { font-family:"IBM Plex Mono",monospace; font-size:19px; }
+
+  /* ————— Section structure ————— */
+  section { margin-top: 52px; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 9px;
+    margin-bottom: 22px;
+  }
+  .sec-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ox);
+    letter-spacing: .04em;
+    flex: none;
+    padding-top: 3px;
+  }
+  h2 {
+    font-family: "Literata", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(22px, 3.4vw, 28px);
+    line-height: 1.14;
+    letter-spacing: -0.012em;
+    margin: 0;
+    color: var(--ink);
+  }
+  h3 {
+    font-family: "Literata", Georgia, serif;
+    font-weight: 600;
+    font-size: 18.5px;
+    color: var(--ink);
+    margin: 26px 0 8px;
+    letter-spacing: -0.006em;
+  }
+  p { margin: 0 0 15px; }
+  .lead { font-size: 18.5px; color: var(--ink-soft); font-family:"Literata",serif; line-height:1.55; }
+  a.ref, sup a {
+    color: var(--ox);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  a.inline { color: var(--ox-deep); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  a.inline:hover { border-bottom-color: var(--ox); }
+
+  /* footnote-style superscript citations */
+  sup.cite { font-size: .68em; line-height: 0; vertical-align: super; }
+  sup.cite a {
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 500;
+    padding: 0 1px;
+  }
+  sup.cite a:hover { background: var(--ox-tint); border-radius: 2px; }
+
+  .mono { font-family: "IBM Plex Mono", monospace; }
+  .gene { font-family: "IBM Plex Mono", monospace; font-size: .9em; background: var(--ox-wash); color: var(--ox-deep); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--rule-soft); font-weight: 500; }
+  em.term { font-style: italic; color: var(--ink); }
+  strong { font-weight: 600; color: var(--ink); }
+
+  ul.tight, ol.tight { margin: 8px 0 16px; padding-left: 22px; }
+  ul.tight li, ol.tight li { margin: 7px 0; padding-left: 4px; }
+  ul.tight li::marker { color: var(--ox); }
+  ol.tight li::marker { color: var(--ox); font-family:"IBM Plex Mono",monospace; font-size:.85em; }
+
+  /* ————— Boxed figure ————— */
+  figure.box {
+    margin: 28px 0;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lift);
+    overflow: hidden;
+  }
+  figure.box .fig-cap-top {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ox);
+    padding: 13px 22px 0;
+    display:flex; gap:12px; align-items:center;
+  }
+  figure.box .fig-cap-top .rule { flex:1; height:1px; background:var(--rule-soft); }
+  figure.box .fig-body { padding: 8px 22px 6px; }
+  figure.box svg { display:block; width:100%; height:auto; }
+  figure.box figcaption {
+    padding: 4px 22px 18px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink-faint);
+    border-top: 1px solid var(--rule-soft);
+    margin-top: 8px;
+    padding-top: 14px;
+  }
+  figure.box figcaption b { color: var(--ink-soft); }
+
+  /* ————— Callout / clinical-warning box ————— */
+  .callout {
+    margin: 26px 0;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--ox);
+    border-radius: 8px;
+    padding: 18px 22px;
+    box-shadow: var(--shadow);
+  }
+  .callout.danger { background: var(--ox-wash); border-left-color: var(--ox); }
+  .callout .co-head {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ox);
+    font-weight: 600;
+    margin-bottom: 8px;
+    display:flex; align-items:center; gap:9px;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .warn-i {
+    width: 18px; height:18px; flex:none;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+
+  /* ————— Tables ————— */
+  .tbl-wrap { margin: 22px 0; overflow-x: auto; border:1px solid var(--rule); border-radius:10px; box-shadow:var(--shadow); }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 14.5px;
+    background: var(--card);
+    min-width: 640px;
+  }
+  thead th {
+    background: var(--paper-deep);
+    text-align: left;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ox-deep);
+    font-weight: 600;
+    padding: 12px 14px;
+    border-bottom: 2px solid var(--ox);
+    vertical-align: bottom;
+  }
+  tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+    color: var(--ink-soft);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--ox-wash); }
+  td .drug { font-family:"Literata",serif; font-weight:600; color:var(--ink); font-size:15px; }
+  td .sub { display:block; color:var(--ink-faint); font-size:12.5px; margin-top:1px; }
+  .pill {
+    display:inline-block;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:10.5px;
+    font-weight:500;
+    letter-spacing:.03em;
+    padding:2px 8px;
+    border-radius:20px;
+    border:1px solid var(--rule);
+    white-space:nowrap;
+  }
+  .pill.approved { background:#e9f0e6; border-color:#c4d6bd; color:#2f5d2a; }
+  .pill.pdufa    { background:var(--ox-tint); border-color:#d9b8b2; color:var(--ox-deep); }
+  .pill.ph3      { background:#eef1f4; border-color:#c9d3dd; color:#33506e; }
+  .pill.ph2      { background:#f3eee2; border-color:#d8cdb0; color:#6b5a2c; }
+  .pill.stopped  { background:#efe7e2; border-color:#d8c7bd; color:#7a4a34; }
+  .pill.terminated { background:#f0e6e2; border-color:#d9c1b7; color:#8a3a2a; }
+  .nct { font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--ox); text-decoration:none; font-weight:500; border-bottom:1px dotted var(--rule); }
+  .nct:hover { border-bottom-color:var(--ox); }
+
+  /* ————— Two-column phenotype grid ————— */
+  .duo { display:grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 22px 0; }
+  .duo .pane {
+    background: var(--card);
+    border:1px solid var(--rule);
+    border-radius: 10px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .duo .pane h4 {
+    margin:0 0 10px; font-family:"Literata",serif; font-size:16px; color:var(--ink);
+    display:flex; align-items:center; gap:9px;
+  }
+  .duo .pane h4 .tag { font-family:"IBM Plex Mono",monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#fff; background:var(--ox); padding:2px 7px; border-radius:4px; font-weight:500; }
+  .duo .pane ul { margin:0; padding-left:18px; font-size:14.5px; color:var(--ink-soft); }
+  .duo .pane li { margin:6px 0; }
+  @media (max-width: 620px) { .duo { grid-template-columns: 1fr; } }
+
+  /* ————— Reference list ————— */
+  section.refs { margin-top: 60px; }
+  ol.reflist { margin: 0; padding: 0; counter-reset: r; list-style: none; }
+  ol.reflist li {
+    counter-increment: r;
+    position: relative;
+    padding: 12px 0 12px 42px;
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+  ol.reflist li::before {
+    content: "[" counter(r) "]";
+    position: absolute; left: 0; top: 12px;
+    font-family:"IBM Plex Mono",monospace;
+    font-size: 12px;
+    color: var(--ox);
+    font-weight: 600;
+  }
+  ol.reflist li b { color: var(--ink); font-weight:600; }
+  ol.reflist li a { color: var(--ox); text-decoration:none; word-break: break-word; }
+  ol.reflist li a:hover { text-decoration: underline; }
+  ol.reflist li .src { color: var(--ink-faint); font-style: italic; }
+
+  /* ————— Footer / disclaimer ————— */
+  footer {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 2px solid var(--ox);
+    font-size: 13px;
+    color: var(--ink-faint);
+    line-height: 1.55;
+  }
+  footer .disc {
+    background: var(--ox-wash);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    font-family: "Source Sans 3", sans-serif;
+  }
+  footer .disc b { color: var(--ox-deep); }
+  footer .colophon { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.04em; display:flex; gap:8px 18px; flex-wrap:wrap; }
+  footer .colophon b { color: var(--ox); }
+
+  .dagger { color: var(--ox); font-weight:600; }
+  .drop { }
+  .drop::first-letter {
+    font-family:"Literata",serif;
+    font-weight:600;
+    font-size: 3.1em;
+    float: left;
+    line-height: .82;
+    padding: 6px 10px 0 0;
+    color: var(--ox-deep);
+  }
+
+  @media (max-width: 640px) {
+    .sheet { padding: 0 20px 90px; }
+    body { font-size: 16px; }
+    .stat { border-right: none; }
+  }
+  @media print {
+    body { background: #fff; }
+    .glance, figure.box, .callout, .tbl-wrap, .duo .pane, details.about { box-shadow: none; }
+    details.about[open] { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- ===================== MASTHEAD ===================== -->
+  <header class="masthead">
+    <div class="eyebrow">
+      <span>Clinical Dossier</span><span class="dot"></span>
+      <span>Orphan &amp; Ultra-Rare Disease</span><span class="dot"></span>
+      <span class="muted">Prepared by Curie · Split</span>
+    </div>
+    <h1 class="title">Fibrodysplasia Ossificans Progressiva</h1>
+    <p class="standfirst">A single gene mistake turns the body&rsquo;s own repair signal into a builder of bone. Muscle, tendon and ligament are quietly replaced by a second skeleton — and the surgeon&rsquo;s knife only makes it worse.</p>
+    <div class="byline">
+      <span><b>OMIM</b> 135100</span>
+      <span><b>Gene</b> ACVR1 / ALK2</span>
+      <span><b>Variant</b> R206H · c.617G&gt;A</span>
+      <span><b>Compiled</b> 3 July 2026</span>
+    </div>
+
+    <!-- Exec-summary "About this" collapsible -->
+    <details class="about" open>
+      <summary>About this dossier <span class="chev">›</span></summary>
+      <div class="about-body">
+        <div class="about-grid">
+          <div><span class="about-k">Why</span> A rigorous, citable single-page clinical report on FOP — the disease, its molecular cause, how it is diagnosed and managed, and the 2026 therapeutic landscape — for a reader who needs the science to be right.</div>
+          <div><span class="about-k">Context</span> An ultra-rare, autosomal-dominant disorder (&lt;1,000 confirmed patients worldwide). Every clinical fact, gene coordinate, structure ID and trial number below was verified against primary sources on 3 July 2026.</div>
+          <div><span class="about-k">How to use it</span> Read top-to-bottom, or jump to a section. Superscript numbers are footnote citations linking to the reference list; hover to preview. Open in a browser to print or share.</div>
+          <div><span class="about-k">What is assumed</span> A clinically literate reader. Where the evidence is a lead rather than a result — a repurposing hypothesis, an unpublished endpoint — that gap is stated plainly, not smoothed over.</div>
+        </div>
+      </div>
+    </details>
+  </header>
+
+  <!-- ===================== AT-A-GLANCE ===================== -->
+  <div class="glance" aria-label="At a glance">
+    <div class="stat">
+      <div class="lab">Prevalence</div>
+      <div class="val">~1 in 1M<small>≈ 800–900 confirmed cases worldwide<sup class="cite"><a href="#r1">1</a><a href="#r5">5</a></sup></small></div>
+    </div>
+    <div class="stat">
+      <div class="lab">Inheritance</div>
+      <div class="val">AD<small>Autosomal dominant; &gt;95% de novo / sporadic<sup class="cite"><a href="#r2">2</a></sup></small></div>
+    </div>
+    <div class="stat">
+      <div class="lab">Causal variant</div>
+      <div class="val"><span class="mono">R206H</span><small>ACVR1 in ~97% of classic FOP<sup class="cite"><a href="#r3">3</a></sup></small></div>
+    </div>
+    <div class="stat">
+      <div class="lab">The tell at birth</div>
+      <div class="val">Great toe<small>Congenital hallux valgus / monophalangism<sup class="cite"><a href="#r2">2</a><a href="#r4">4</a></sup></small></div>
+    </div>
+    <div class="stat">
+      <div class="lab">Approved therapy</div>
+      <div class="val">Sohonos<small>Palovarotene — FDA 16 Aug 2023<sup class="cite"><a href="#r9">9</a></sup></small></div>
+    </div>
+    <div class="stat">
+      <div class="lab">Under FDA review</div>
+      <div class="val">2 filings<small>Garetosmab · zilurgisertib (2026)<sup class="cite"><a href="#r11">11</a><a href="#r13">13</a></sup></small></div>
+    </div>
+  </div>
+
+  <!-- ===================== 1 · CLINICAL PICTURE ===================== -->
+  <section id="clinical">
+    <div class="sec-head"><span class="sec-num">§1</span><h2>The clinical picture</h2></div>
+    <p class="lead drop">Fibrodysplasia ossificans progressiva announces itself before any bone has formed. Almost every child born with classic FOP has a short, inturned great toe — a <em class="term">monophalangic hallux</em> with valgus deviation — present at birth and, in retrospect, the single most reliable early sign of the disease.<sup class="cite"><a href="#r2">2</a><a href="#r4">4</a></sup> It is frequently the only clue for years, and it is almost universally missed.</p>
+
+    <p>Then, usually within the first decade, the ossification begins. Episodes of painful, warm, tumour-like soft-tissue swelling — <strong>flare-ups</strong> — erupt, often after minor trauma, an intramuscular injection, a viral illness, muscular over-stretching, fatigue or a fall; some arise with no trigger at all.<sup class="cite"><a href="#r1">1</a><a href="#r4">4</a></sup> What looks like an inflammatory mass is the opening act of <em class="term">heterotopic ossification</em> (HO): the flare resolves not by healing back to muscle, but by laying down qualitatively normal bone where bone should never be — through muscle, fascia, tendon, ligament and aponeurosis.<sup class="cite"><a href="#r1">1</a></sup></p>
+
+    <p>The march of new bone follows a strikingly consistent anatomical order — the same sequence in which the embryonic skeleton once formed:<sup class="cite"><a href="#r2">2</a><a href="#r4">4</a></sup></p>
+    <ul class="tight">
+      <li><strong>Axial before appendicular</strong> — the neck, spine and shoulder girdle ossify before the limbs.</li>
+      <li><strong>Cranial before caudal</strong> — upper body before lower.</li>
+      <li><strong>Proximal before distal</strong>, and <strong>dorsal before ventral</strong>.</li>
+    </ul>
+    <p>Over years, a second skeleton bridges the joints. Ribbons and plates of heterotopic bone lock the spine, fuse the jaw, immobilise the shoulders and hips, and progressively imprison the patient — the reason FOP has long carried the lay name &ldquo;stone-man syndrome.&rdquo; Most patients are confined to a wheelchair by their thirties, and thoracic insufficiency from a rigid chest wall is the leading cause of premature death.<sup class="cite"><a href="#r1">1</a><a href="#r4">4</a></sup></p>
+
+    <div class="callout danger">
+      <div class="co-head"><span class="warn-i" aria-hidden="true">⚠</span> The iatrogenic catastrophe</div>
+      <p>The cruelest feature of FOP is that <strong>trauma to soft tissue provokes bone</strong>. A diagnostic <strong>biopsy of a flare-up can trigger explosive, permanent heterotopic ossification</strong> and must never be performed; the same is true of <strong>intramuscular injections</strong> (including many routine vaccines given IM), dental blocks, and elective surgery to &ldquo;remove&rdquo; existing HO — excised bone reliably regrows, often worse.<sup class="cite"><a href="#r4">4</a><a href="#r14">14</a></sup> The single most protective act a clinician can perform is to recognise the toe, make the diagnosis on sight, and <em class="term">not cut</em>.</p>
+    </div>
+  </section>
+
+  <!-- ===================== 2 · MOLECULAR MECHANISM ===================== -->
+  <section id="mechanism">
+    <div class="sec-head"><span class="sec-num">§2</span><h2>The molecular mechanism</h2></div>
+    <p class="lead">FOP is a disease of a single, hyperactive receptor. In ~97% of people with classic FOP the cause is one recurrent heterozygous point mutation — <span class="gene">c.617G&gt;A</span> in <span class="gene">ACVR1</span>, replacing arginine 206 with histidine (<strong>R206H</strong>) — making it one of the most specific genotype–phenotype relationships in all of medicine.<sup class="cite"><a href="#r3">3</a></sup></p>
+
+    <p><span class="gene">ACVR1</span> (also called <em class="term">ALK2</em>; UniProt <a class="inline" href="https://www.uniprot.org/uniprotkb/Q04771/entry" target="_blank" rel="noopener">Q04771</a>, 509 aa) encodes a type&nbsp;I BMP receptor serine/threonine kinase.<sup class="cite"><a href="#r6">6</a></sup> Residue 206 sits in its <strong>GS domain</strong> (the glycine–serine-rich regulatory segment, residues 178–207), the switch that sits just N-terminal to the kinase domain (208–502) and keeps the receptor silent until it is legitimately activated.<sup class="cite"><a href="#r6">6</a><a href="#r7">7</a></sup> In the healthy receptor the GS domain is clamped by the inhibitory protein <strong>FKBP12</strong>; the R206H substitution destabilises that clamp, loosening the autoinhibited state.<sup class="cite"><a href="#r7">7</a></sup></p>
+
+    <p>But the decisive lesion is not simply &ldquo;more signalling.&rdquo; In 2015 two groups showed that R206H confers a <strong>neofunction</strong>: the mutant receptor gains the ability to respond to <strong>Activin&nbsp;A</strong> — a ligand that, at the wild-type receptor, binds but produces <em class="term">no</em> signal (a non-signalling complex).<sup class="cite"><a href="#r8">8</a></sup> In FOP cells, Activin&nbsp;A — abundant at sites of injury and inflammation — now drives the mutant ACVR1 to fire the canonical BMP pathway, phosphorylating <strong>SMAD1/5/8</strong> and transcribing an osteochondrogenic program in tissue-resident <em class="term">fibro-adipogenic progenitors</em> (FAPs).<sup class="cite"><a href="#r8">8</a><a href="#r15">15</a></sup> This is the molecular reason a flare-up ends in bone, and why injury — which floods tissue with Activin&nbsp;A — is such a potent trigger. Blocking Activin&nbsp;A abolishes HO in FOP mouse models, and that single insight defines an entire therapeutic axis.<sup class="cite"><a href="#r15">15</a></sup></p>
+
+    <!-- ————— SVG MECHANISM DIAGRAM ————— -->
+    <figure class="box">
+      <div class="fig-cap-top"><span>Figure 1</span><span class="rule"></span><span>Wild-type vs R206H signalling</span></div>
+      <div class="fig-body">
+        <svg viewBox="0 0 800 430" role="img" aria-label="Diagram contrasting the wild-type ACVR1 receptor, which does not signal in response to Activin A, with the mutant R206H receptor, which gains responsiveness to Activin A and drives SMAD1/5/8 phosphorylation and heterotopic bone.">
+          <defs>
+            <style>
+              .lbl { font-family:"IBM Plex Mono",monospace; font-size:12px; fill:#4d463d; }
+              .lblx{ font-family:"IBM Plex Mono",monospace; font-size:10.5px; fill:#6f665a; letter-spacing:.04em; }
+              .hd  { font-family:"Literata",serif; font-size:15px; font-weight:600; }
+              .big { font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; }
+            </style>
+            <marker id="arrOx" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#7b2d26"/>
+            </marker>
+            <marker id="arrTeal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#2f5d57"/>
+            </marker>
+          </defs>
+
+          <!-- divider -->
+          <line x1="400" y1="24" x2="400" y2="406" stroke="#d8cdb8" stroke-width="1" stroke-dasharray="3 4"/>
+
+          <!-- ========== LEFT: WILD-TYPE ========== -->
+          <text x="30" y="34" class="hd" fill="#2f5d57">Wild-type ACVR1</text>
+          <text x="30" y="52" class="lblx">Physiologic · silent to Activin A</text>
+
+          <!-- membrane -->
+          <rect x="24" y="150" width="352" height="26" fill="#ece4d4" stroke="#d8cdb8" stroke-width="1"/>
+          <text x="30" y="167" class="lblx" fill="#8a8172">cell membrane</text>
+
+          <!-- receptor pair WT -->
+          <rect x="120" y="120" width="26" height="120" rx="5" fill="#e7efe9" stroke="#2f5d57" stroke-width="1.6"/>
+          <rect x="200" y="120" width="26" height="120" rx="5" fill="#e7efe9" stroke="#2f5d57" stroke-width="1.6"/>
+          <text x="133" y="258" class="lblx" text-anchor="middle">ALK2</text>
+          <text x="213" y="258" class="lblx" text-anchor="middle">Type II</text>
+
+          <!-- FKBP12 clamp -->
+          <circle cx="133" cy="205" r="12" fill="#cfe0d6" stroke="#2f5d57" stroke-width="1.3"/>
+          <text x="133" y="209" class="lblx" text-anchor="middle" font-size="8">FKBP12</text>
+
+          <!-- Activin A ligand -->
+          <ellipse cx="173" cy="96" rx="30" ry="15" fill="#f0e2dc" stroke="#7b2d26" stroke-width="1.4"/>
+          <text x="173" y="100" class="lblx" text-anchor="middle" fill="#7b2d26">Activin A</text>
+          <line x1="173" y1="111" x2="173" y2="118" stroke="#7b2d26" stroke-width="1.4"/>
+
+          <!-- NO signal -->
+          <g transform="translate(133,300)">
+            <circle r="20" fill="none" stroke="#2f5d57" stroke-width="2.4"/>
+            <line x1="-14" y1="14" x2="14" y2="-14" stroke="#2f5d57" stroke-width="2.4"/>
+          </g>
+          <text x="133" y="352" class="lbl" text-anchor="middle" fill="#2f5d57">no signal</text>
+          <text x="133" y="370" class="lblx" text-anchor="middle">non-signalling complex</text>
+
+          <!-- ========== RIGHT: R206H ========== -->
+          <text x="424" y="34" class="hd" fill="#7b2d26">Mutant · R206H</text>
+          <text x="424" y="52" class="lblx" fill="#7b2d26">Neofunction · responds to Activin A</text>
+
+          <rect x="424" y="150" width="352" height="26" fill="#ece4d4" stroke="#d8cdb8" stroke-width="1"/>
+
+          <!-- receptor pair MUT -->
+          <rect x="520" y="120" width="26" height="120" rx="5" fill="#f3e2dd" stroke="#7b2d26" stroke-width="1.8"/>
+          <rect x="600" y="120" width="26" height="120" rx="5" fill="#f3e2dd" stroke="#7b2d26" stroke-width="1.8"/>
+          <text x="533" y="258" class="lblx" text-anchor="middle" fill="#7b2d26">ALK2*</text>
+          <text x="613" y="258" class="lblx" text-anchor="middle">Type II</text>
+          <!-- lost clamp (dashed, faded) -->
+          <circle cx="533" cy="205" r="12" fill="none" stroke="#c9a9a2" stroke-width="1.1" stroke-dasharray="2 3"/>
+          <text x="500" y="209" class="lblx" text-anchor="end" font-size="8" fill="#a9776e">FKBP12 ↓</text>
+          <!-- R206H star -->
+          <g transform="translate(533,132)">
+            <circle r="7" fill="#7b2d26"/>
+            <text x="0" y="3" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#fff" font-weight="700">*</text>
+          </g>
+          <text x="533" y="112" class="big" text-anchor="middle" fill="#7b2d26">R206H</text>
+
+          <!-- Activin A ligand engaged -->
+          <ellipse cx="573" cy="96" rx="30" ry="15" fill="#7b2d26" stroke="#5c1f1a" stroke-width="1.2"/>
+          <text x="573" y="100" class="lblx" text-anchor="middle" fill="#fff">Activin A</text>
+          <line x1="573" y1="111" x2="573" y2="118" stroke="#7b2d26" stroke-width="2"/>
+
+          <!-- signal cascade -->
+          <line x1="533" y1="242" x2="533" y2="286" stroke="#7b2d26" stroke-width="2.2" marker-end="url(#arrOx)"/>
+          <rect x="486" y="290" width="94" height="30" rx="6" fill="#f0e2dc" stroke="#7b2d26" stroke-width="1.4"/>
+          <text x="533" y="309" class="big" text-anchor="middle" fill="#5c1f1a">p-SMAD1/5/8</text>
+
+          <line x1="533" y1="322" x2="533" y2="352" stroke="#7b2d26" stroke-width="2.2" marker-end="url(#arrOx)"/>
+          <rect x="470" y="356" width="126" height="30" rx="6" fill="#7b2d26" stroke="#5c1f1a" stroke-width="1"/>
+          <text x="533" y="375" class="big" text-anchor="middle" fill="#fff">heterotopic BONE</text>
+
+          <!-- FAP note -->
+          <text x="666" y="309" class="lblx" fill="#6f665a">in FAP</text>
+          <text x="666" y="322" class="lblx" fill="#6f665a">progenitors</text>
+        </svg>
+      </div>
+      <figcaption><b>Fig. 1 —</b> At the wild-type receptor (left), Activin&nbsp;A binds but forms a <em>non-signalling</em> complex; the GS domain stays clamped by FKBP12. The R206H substitution (right) destabilises that autoinhibition and, critically, grants the receptor a <em>neofunction</em> — it now transduces Activin&nbsp;A into canonical BMP signalling (p-SMAD1/5/8), driving fibro-adipogenic progenitors to make bone. Mechanism per Hino/Hatsell 2015 and reviews;<sup class="cite"><a href="#r7">7</a><a href="#r8">8</a><a href="#r15">15</a></sup> schematic, not to structural scale.</figcaption>
+    </figure>
+
+    <p>The kinase domain of ALK2 has been solved crystallographically — e.g. <strong>PDB <a class="inline" href="https://www.rcsb.org/structure/3H9R" target="_blank" rel="noopener">3H9R</a></strong>, the ALK2 kinase in complex with FKBP12 and the inhibitor dorsomorphin (X-ray, 2.35&nbsp;Å) — and these structures explain <em class="term">why</em> FOP mutations misbehave: they break the interactions that stabilise the inactive kinase and displace FKBP12, tipping the receptor toward a signalling-competent conformation.<sup class="cite"><a href="#r7">7</a></sup> That same ATP-binding cleft is the pocket every small-molecule ALK2 inhibitor in the pipeline is built to occupy.</p>
+  </section>
+
+  <!-- ===================== 3 · DIAGNOSIS & IMAGING ===================== -->
+  <section id="diagnosis">
+    <div class="sec-head"><span class="sec-num">§3</span><h2>Diagnosis &amp; the imaging course</h2></div>
+    <p class="lead">FOP is a clinical diagnosis made on sight — and it can be made without a single invasive test.</p>
+    <p>The pairing is essentially pathognomonic: <strong>congenital great-toe malformation</strong> plus <strong>soft-tissue swellings that mature into heterotopic bone</strong>.<sup class="cite"><a href="#r4">4</a><a href="#r14">14</a></sup> A plain radiograph of the feet shows the short, monophalangic hallux; imaging of an active region later shows sheets and columns of ectopic bone in soft tissue. <strong>Genetic confirmation</strong> — sequencing <span class="gene">ACVR1</span> for the <span class="mono">c.617G&gt;A</span> (R206H) variant — is definitive and, crucially, non-invasive.<sup class="cite"><a href="#r3">3</a><a href="#r14">14</a></sup></p>
+
+    <div class="duo">
+      <div class="pane">
+        <h4><span class="tag">Do</span> Recognise it early</h4>
+        <ul>
+          <li>Examine the great toes of any child with unexplained soft-tissue lumps.</li>
+          <li>Confirm with <span class="mono">ACVR1</span> R206H sequencing — a blood test, not a biopsy.</li>
+          <li>Stage the skeleton with low-dose whole-body CT for HO burden where needed.<sup class="cite"><a href="#r10">10</a></sup></li>
+        </ul>
+      </div>
+      <div class="pane">
+        <h4><span class="tag" style="background:#8a3a2a;">Never</span> Confirm by cutting</h4>
+        <ul>
+          <li>No diagnostic <strong>biopsy</strong> of a flare — it seeds new bone.</li>
+          <li>No <strong>intramuscular</strong> injections; use SC/oral routes and avoid IM vaccines where possible.<sup class="cite"><a href="#r14">14</a></sup></li>
+          <li>No surgical excision of HO to &ldquo;free&rdquo; a joint — it regrows.</li>
+        </ul>
+      </div>
+    </div>
+
+    <p>The tragedy of misdiagnosis is well documented: because the swellings mimic aggressive fibromatosis, sarcoma or infection, historical series report that a large majority of patients were misdiagnosed — often only <em class="term">after</em> a biopsy or excision had already triggered irreversible ossification.<sup class="cite"><a href="#r5">5</a></sup> The whole point of knowing the toe sign is to stop that first, catastrophic cut.</p>
+  </section>
+
+  <!-- ===================== 4 · MANAGEMENT ===================== -->
+  <section id="management">
+    <div class="sec-head"><span class="sec-num">§4</span><h2>Management today — and what not to do</h2></div>
+    <p class="lead">There is no cure. Care is protective, anticipatory, and organised around one principle: do not provoke bone.</p>
+
+    <p><strong>Flare management.</strong> International expert guidance (a modified-Delphi physician consensus, and updated 2025 medical guidelines) recommends a short, <strong>high-dose corticosteroid course</strong> — approximately 1–2&nbsp;mg/kg/day of prednisone (max ~100&nbsp;mg) — started <em class="term">within 24 hours</em> of a flare involving a major joint, and continued for a few days; it may also be used prophylactically after unavoidable trauma or before non-avoidable surgery.<sup class="cite"><a href="#r10">10</a><a href="#r14">14</a></sup> This blunts the inflammatory flare; it does not reverse bone already formed.</p>
+
+    <p><strong>Prevention is the therapy.</strong> Because injury is the trigger, day-to-day management is overwhelmingly about avoidance and protection:<sup class="cite"><a href="#r10">10</a><a href="#r14">14</a></sup></p>
+    <ul class="tight">
+      <li><strong>Fall prevention</strong> — home safety, mobility aids, and protective headgear; prompt medical attention (and consideration of prophylactic steroids) after any fall.</li>
+      <li><strong>Avoid IM injections and biopsies</strong> entirely; give vaccines subcutaneously where an alternative exists; use extreme caution with dental blocks.</li>
+      <li><strong>Anaesthesia planning</strong> — awake fibre-optic intubation and careful positioning for the fused jaw and rigid neck/chest; no elective surgery to remove HO.</li>
+      <li><strong>Respiratory and dental surveillance</strong>, physiotherapy that never forces a stiff joint, and multidisciplinary care through an FOP centre.</li>
+    </ul>
+
+    <div class="callout">
+      <div class="co-head">Patient &amp; clinician resource</div>
+      <p>The <a class="inline" href="https://www.ifopa.org/" target="_blank" rel="noopener">International FOP Association (IFOPA)</a> maintains the FOP registry, treatment guidelines, and a directory of expert centres; it is the definitive first stop for a newly suspected or confirmed case.</p>
+    </div>
+  </section>
+
+  <!-- ===================== 5 · THERAPEUTIC LANDSCAPE ===================== -->
+  <section id="landscape">
+    <div class="sec-head"><span class="sec-num">§5</span><h2>The therapeutic landscape · July 2026</h2></div>
+    <p class="lead">For two centuries FOP had no treatment. In the last three years it has acquired its first approved drug and a genuine pipeline — organised around two rational targets: <strong>the retinoid pathway</strong>, <strong>the Activin&nbsp;A ligand</strong>, and <strong>the ALK2 kinase itself</strong>.</p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:22%">Agent</th>
+            <th style="width:20%">Mechanism</th>
+            <th style="width:16%">Trial (identifier)</th>
+            <th style="width:14%">Status · 2026</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="drug">Palovarotene</span><span class="sub">Sohonos · Ipsen</span></td>
+            <td>Selective RARγ agonist (retinoid pathway)</td>
+            <td>MOVE, Ph 3 open-label<br><a class="nct" href="https://clinicaltrials.gov/study/NCT03312634" target="_blank" rel="noopener">NCT03312634</a></td>
+            <td><span class="pill approved">Approved</span></td>
+            <td>First-ever approved FOP therapy — FDA 16 Aug 2023 (US, Canada, Australia). Not approved in the EU. Reduced new HO vs untreated; carries growth-plate / premature epiphyseal closure risk in children.<sup class="cite"><a href="#r9">9</a><a href="#r12">12</a></sup></td>
+          </tr>
+          <tr>
+            <td><span class="drug">Garetosmab</span><span class="sub">REGN2477 · Regeneron</span></td>
+            <td>Anti-Activin A monoclonal antibody</td>
+            <td>OPTIMA, Ph 3<br><a class="nct" href="https://clinicaltrials.gov/study/NCT05394116" target="_blank" rel="noopener">NCT05394116</a></td>
+            <td><span class="pill pdufa">FDA priority review</span></td>
+            <td>63 adults; 94% / 90% reduction in new HO lesions vs placebo and &gt;99% reduction in new HO volume at 56 wk. BLA accepted; target action date Aug 2026.<sup class="cite"><a href="#r11">11</a></sup></td>
+          </tr>
+          <tr>
+            <td><span class="drug">Zilurgisertib</span><span class="sub">INCB000928 · Incyte / Mirum</span></td>
+            <td>Oral ALK2 (ACVR1) kinase inhibitor</td>
+            <td>PROGRESS, Ph 2<br><a class="nct" href="https://clinicaltrials.gov/study/NCT05090891" target="_blank" rel="noopener">NCT05090891</a></td>
+            <td><span class="pill pdufa">FDA priority review</span></td>
+            <td>Pivotal Ph 2 (Part 1) filed as an NDA; FDA priority review with a PDUFA decision expected 26 Sep 2026. Mirum licensed worldwide rights from Incyte (May 2026); US compassionate-use programme open (age 12+).<sup class="cite"><a href="#r13">13</a></sup></td>
+          </tr>
+          <tr>
+            <td><span class="drug">Fidrisertib</span><span class="sub">IPN60130 · Ipsen</span></td>
+            <td>Oral ALK2 (ACVR1) kinase inhibitor</td>
+            <td>FALKON, Ph 2<br><a class="nct" href="https://clinicaltrials.gov/study/NCT05039515" target="_blank" rel="noopener">NCT05039515</a></td>
+            <td><span class="pill terminated">Did not meet endpoint</span></td>
+            <td>The randomized, placebo-controlled Ph 2 was stopped after the Part A primary analysis did not show a reduction in HO volume vs placebo — a candid reminder that a rational target does not guarantee a clinical win.<sup class="cite"><a href="#r16">16</a></sup></td>
+          </tr>
+          <tr>
+            <td><span class="drug">Saracatinib</span><span class="sub">AZD0530 · repurposed</span></td>
+            <td>Src-family / ALK2 kinase inhibitor (see §6)</td>
+            <td>STOPFOP, Ph 2<br><a class="nct" href="https://clinicaltrials.gov/study/NCT04307953" target="_blank" rel="noopener">NCT04307953</a></td>
+            <td><span class="pill ph2">Completed · reporting</span></td>
+            <td>EU academic phase 2 (20 patients), 6-mo RCT + 12-mo open-label extension; primary endpoint = change in HO volume on low-dose whole-body CT. Trial completed and results were presented at ASBMR 2025; full peer-reviewed outcome pending.<sup class="cite"><a href="#r17">17</a><a href="#r18">18</a></sup></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:13.5px;color:var(--ink-faint);margin-top:-4px;">Two mechanisms, one disease: the antibody (garetosmab) removes the aberrant <em>signal</em> (Activin&nbsp;A); the kinase inhibitors (zilurgisertib, fidrisertib, saracatinib) block the mutant <em>receiver</em> (ALK2). Palovarotene works further downstream on chondrogenesis via RARγ. Status verified against ClinicalTrials.gov, company releases and IFOPA on 3 July 2026.</p>
+  </section>
+
+  <!-- ===================== 6 · REPURPOSING ANGLE ===================== -->
+  <section id="repurposing">
+    <div class="sec-head"><span class="sec-num">§6</span><h2>The repurposing angle</h2></div>
+    <p class="lead drop">This is where an orphan disease borrows a drug that has already paid its dues in safety. <strong>Saracatinib (AZD0530)</strong> was developed by AstraZeneca as an oral <em class="term">Src-family / Abl kinase inhibitor</em> and taken through numerous phase&nbsp;I–II oncology trials — hormone-receptor-negative breast cancer, recurrent osteosarcoma, pancreatic and colorectal cancer — where it was ultimately shelved for lack of efficacy.<sup class="cite"><a href="#r17">17</a></sup></p>
+
+    <p>But a shelved oncology drug carries something precious: a documented human safety and pharmacokinetic profile. When kinase-inhibitor screens flagged saracatinib as a <strong>potent inhibitor of the ALK2/ACVR1 kinase</strong> — the exact receptor mutated in FOP — and it was shown to prevent heterotopic ossification in FOP mouse models, the case for repurposing was immediate: skip years of first-in-human safety work and go straight to a proof-of-concept efficacy trial.<sup class="cite"><a href="#r17">17</a><a href="#r18">18</a></sup> That trial is <strong>STOPFOP</strong> (<a class="inline" href="https://clinicaltrials.gov/study/NCT04307953" target="_blank" rel="noopener">NCT04307953</a>), a European academic phase&nbsp;2 rescued from the brink of collapse by IFOPA patient-community funding — a rare-disease story in miniature.<sup class="cite"><a href="#r18">18</a></sup></p>
+
+    <div class="callout">
+      <div class="co-head">Curie&rsquo;s discipline — a lead is not a result</div>
+      <p>Repurposing is the fastest ethical route to a rare-disease therapy, but it earns no free pass on efficacy. The logic that a drug hits the right kinase gets it <em class="term">into</em> the clinic; it does not get it <em class="term">through</em>. FALKON — a purpose-built ALK2 inhibitor that failed its endpoint — is the cautionary case:<sup class="cite"><a href="#r16">16</a></sup> right target, wrong outcome. The honest reading of saracatinib in July 2026 is a completed trial with results presented but not yet fully published; the definitive verdict waits on the peer-reviewed data, not the mechanism.</p>
+    </div>
+  </section>
+
+  <!-- ===================== 7 · STATE OF THE SCIENCE ===================== -->
+  <section id="state">
+    <div class="sec-head"><span class="sec-num">§7</span><h2>State of the science — July 2026</h2></div>
+    <p class="lead">FOP is, mechanistically, one of the best-understood rare diseases in existence — a single recurrent mutation, a single hyperactive receptor, one neofunction, one traceable signalling axis to bone. That clarity is exactly why it has become a proving ground for rational, targeted therapy.</p>
+    <p>Three years on from the first-ever approval (palovarotene, 2023), the field now has <strong>two more filings under FDA priority review</strong> — Regeneron&rsquo;s Activin-A antibody garetosmab (action date August 2026) and Incyte/Mirum&rsquo;s oral ALK2 inhibitor zilurgisertib (PDUFA September 2026)<sup class="cite"><a href="#r11">11</a><a href="#r13">13</a></sup> — attacking the pathway at two different points. Should either or both clear, FOP would move within a single decade from <em class="term">untreatable</em> to a disease with multiple mechanistically distinct options.</p>
+    <p>The honesty that this dossier owes its reader: none of these agents <em class="term">reverses</em> bone already laid down — they aim to prevent the next flare&rsquo;s ossification. FALKON&rsquo;s failure<sup class="cite"><a href="#r16">16</a></sup> is a reminder that inhibiting the right kinase is necessary, not sufficient. And the deepest ambition — gene-level correction of the R206H allele, or durable Activin-A blockade — remains preclinical.<sup class="cite"><a href="#r15">15</a></sup> The trajectory is genuinely, unusually hopeful; the work is not finished. For a disease that had nothing to offer for two hundred years, that is a remarkable place to stand — and precisely the kind of frontier where the next repurposing insight, or the next antibody, changes a life.</p>
+  </section>
+
+  <!-- ===================== REFERENCES ===================== -->
+  <section class="refs" id="references">
+    <div class="sec-head"><span class="sec-num">§</span><h2>References</h2></div>
+    <p style="font-size:13.5px;color:var(--ink-faint);margin-top:-6px;">All links verified working on 3 July 2026. Primary databases (OMIM, UniProt, RCSB PDB, ClinicalTrials.gov), peer-reviewed literature (PubMed / PMC), and the disease foundation (IFOPA).</p>
+    <ol class="reflist">
+      <li id="r1"><b>Cellular and molecular mechanisms of heterotopic ossification in FOP.</b> <span class="src">PMC review, 2024.</span> <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11048698/" target="_blank" rel="noopener">ncbi.nlm.nih.gov/pmc/articles/PMC11048698</a></li>
+      <li id="r2"><b>Fibrodysplasia Ossificans Progressiva: Clinical and Genetic Aspects.</b> Kaplan FS et&nbsp;al. <span class="src">Orphanet J Rare Dis / PMC.</span> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3253727/" target="_blank" rel="noopener">pmc.ncbi.nlm.nih.gov/articles/PMC3253727</a></li>
+      <li id="r3"><b>ACVR1<sup>R206H</sup> receptor mutation causes FOP by imparting responsiveness to Activin A.</b> Hatsell SJ et&nbsp;al. <span class="src">Sci Transl Med, 2015 (PubMed 26333933).</span> <a href="https://pubmed.ncbi.nlm.nih.gov/26333933/" target="_blank" rel="noopener">pubmed.ncbi.nlm.nih.gov/26333933</a></li>
+      <li id="r4"><b>Fibrodysplasia Ossificans Progressiva — GeneReviews.</b> Pignolo RJ, Kaplan FS et&nbsp;al. <span class="src">NCBI Bookshelf, NBK558090.</span> <a href="https://www.ncbi.nlm.nih.gov/books/NBK558090/" target="_blank" rel="noopener">ncbi.nlm.nih.gov/books/NBK558090</a></li>
+      <li id="r5"><b>Fibrodysplasia ossificans progressiva: MedlinePlus Genetics.</b> <span class="src">U.S. National Library of Medicine.</span> <a href="https://medlineplus.gov/genetics/condition/fibrodysplasia-ossificans-progressiva/" target="_blank" rel="noopener">medlineplus.gov/genetics/condition/fibrodysplasia-ossificans-progressiva</a></li>
+      <li id="r6"><b>ACVR1 — Activin receptor type-1 (Q04771).</b> <span class="src">UniProtKB. GS domain 178–207; kinase 208–502; R206H / rs121912678; FOP MIM 135100.</span> <a href="https://www.uniprot.org/uniprotkb/Q04771/entry" target="_blank" rel="noopener">uniprot.org/uniprotkb/Q04771</a></li>
+      <li id="r7"><b>Structure of the BMP receptor ALK2 and implications for FOP.</b> Chaikuad A et&nbsp;al. <span class="src">J Biol Chem 287:36990 (2012). PDB 3H9R (ALK2–FKBP12–dorsomorphin, 2.35&nbsp;Å).</span> <a href="https://www.rcsb.org/structure/3H9R" target="_blank" rel="noopener">rcsb.org/structure/3H9R</a></li>
+      <li id="r8"><b>Neofunction of ACVR1 in fibrodysplasia ossificans progressiva.</b> Hino K et&nbsp;al. <span class="src">PNAS 112:15438 (2015).</span> <a href="https://www.pnas.org/doi/10.1073/pnas.1510540112" target="_blank" rel="noopener">pnas.org/doi/10.1073/pnas.1510540112</a></li>
+      <li id="r9"><b>US FDA approves Ipsen&rsquo;s Sohonos (palovarotene), the first treatment for FOP.</b> <span class="src">Ipsen press release, 16 Aug 2023.</span> <a href="https://www.ipsen.com/us/press-releases/us-fda-approves-ipsens-sohonostm-palovarotene-capsules-the-first-and-only-treatment-for-people-with-fibrodysplasia-ossificans-progressiva/" target="_blank" rel="noopener">ipsen.com — Sohonos FDA approval</a></li>
+      <li id="r10"><b>Medical guidelines for fibrodysplasia ossificans progressiva.</b> <span class="src">JBMR Plus 9(11):ziaf150 (2025).</span> <a href="https://academic.oup.com/jbmrplus/article/9/11/ziaf150/8258639" target="_blank" rel="noopener">academic.oup.com/jbmrplus/article/9/11/ziaf150</a></li>
+      <li id="r11"><b>Regeneron announces positive Phase 3 (OPTIMA) — garetosmab prevents &gt;99% of abnormal bone formation.</b> <span class="src">Regeneron / GlobeNewswire, 17 Sep 2025. NCT05394116.</span> <a href="https://investor.regeneron.com/news-releases/news-release-details/regeneron-announces-positive-phase-3-trial-adults-ultra-rare" target="_blank" rel="noopener">investor.regeneron.com — OPTIMA Ph 3</a></li>
+      <li id="r12"><b>Reduction of new HO in the open-label Phase 3 MOVE trial of palovarotene.</b> Pignolo RJ et&nbsp;al. <span class="src">J Bone Miner Res 38(3):381 (2023). NCT03312634.</span> <a href="https://academic.oup.com/jbmr/article/38/3/381/7610246" target="_blank" rel="noopener">academic.oup.com/jbmr/article/38/3/381</a></li>
+      <li id="r13"><b>Mirum &amp; Incyte announce positive pivotal Phase 2 (PROGRESS) results for zilurgisertib in FOP; FDA priority review, PDUFA 26 Sep 2026.</b> <span class="src">Mirum / IFOPA, May 2026. NCT05090891.</span> <a href="https://www.ifopa.org/zilurgisertib-press-release-may-2026" target="_blank" rel="noopener">ifopa.org/zilurgisertib-press-release-may-2026</a></li>
+      <li id="r14"><b>International physician survey on management of FOP: a modified Delphi study.</b> Kaplan FS et&nbsp;al. <span class="src">Orphanet J Rare Dis 12:64 (2017).</span> <a href="https://ojrd.biomedcentral.com/articles/10.1186/s13023-017-0659-4" target="_blank" rel="noopener">ojrd.biomedcentral.com — Delphi management</a></li>
+      <li id="r15"><b>The obligatory role of Activin A in the formation of heterotopic bone in FOP.</b> Lees-Shepard JB / Upadhyay J et&nbsp;al. <span class="src">PubMed 28629737; Nat Commun (2018).</span> <a href="https://pubmed.ncbi.nlm.nih.gov/28629737/" target="_blank" rel="noopener">pubmed.ncbi.nlm.nih.gov/28629737</a></li>
+      <li id="r16"><b>Fidrisertib (IPN60130) FALKON trial — Part A primary analysis did not meet the HO-volume endpoint; study terminated.</b> <span class="src">ClinicalTrials.gov NCT05039515.</span> <a href="https://clinicaltrials.gov/study/NCT05039515" target="_blank" rel="noopener">clinicaltrials.gov/study/NCT05039515</a></li>
+      <li id="r17"><b>Dual drug repurposing: the example of saracatinib (AZD0530).</b> <span class="src">PMC, 2024 — Src inhibitor of oncology origin repurposed as an ALK2 inhibitor.</span> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11050334/" target="_blank" rel="noopener">pmc.ncbi.nlm.nih.gov/articles/PMC11050334</a></li>
+      <li id="r18"><b>STOPFOP protocol — multicentre, double-blind, randomized 6-mo placebo-controlled study of saracatinib in FOP.</b> <span class="src">BMC Musculoskelet Disord 23:519 (2022). NCT04307953.</span> <a href="https://bmcmusculoskeletdisord.biomedcentral.com/articles/10.1186/s12891-022-05471-x" target="_blank" rel="noopener">bmcmusculoskeletdisord.biomedcentral.com — STOPFOP protocol</a></li>
+    </ol>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer>
+    <div class="disc">
+      <b>Research &amp; education, not medical advice.</b> This dossier is a scientific summary compiled for educational and research purposes. It is not a substitute for professional medical evaluation, diagnosis or treatment. Anyone with a suspected or confirmed diagnosis of FOP should be managed by clinicians experienced in the disease — see the <a class="inline" href="https://www.ifopa.org/" target="_blank" rel="noopener">IFOPA</a> for expert centres. Drug approval and trial statuses change; figures reflect sources available on 3 July 2026.
+    </div>
+    <div class="colophon">
+      <span><b>Prepared by</b> Curie — frontier scientist for orphan diseases</span>
+      <span><b>Surface</b> Split</span>
+      <span><b>Compiled</b> 2026-07-03</span>
+      <span><b>Anchor</b> FOP · OMIM 135100 · ACVR1 R206H</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

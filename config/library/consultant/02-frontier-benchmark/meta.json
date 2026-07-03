@@ -1,0 +1,10 @@
+{
+  "expert": "consultant",
+  "key": "frontier-benchmark",
+  "type": "deck",
+  "title": "Frontier models benchmark",
+  "desc": "July 2026, scored",
+  "brief": "A benchmark deck of the most powerful frontier AI models as of July 2026 — Anthropic (Claude Fable 5 / Opus 4.8 / Sonnet 5), OpenAI (GPT-5.5, GPT-5.6 preview), Google DeepMind (Gemini 3.1 Pro / 3.5 Flash), xAI (Grok 4.3), DeepSeek (V4), Meta (Muse Spark) and Mistral (Medium 3.5 / Large 3). Per-model cards (release, context window, modalities, pricing), head-to-head benchmark tables (reasoning, coding, agentic, long-context), a cost-vs-performance chart, and a which-model-for-which-job recommendation matrix. Every number web-verified against July-2026 sources; full source manifest on the final slide.",
+  "da": "Mission-control terminal: near-black #0B0E14 stage, phosphor-green and amber data accents, JetBrains Mono numerals, dense ruled tables, thin HUD frames with corner ticks — restrained, no scanline kitsch.",
+  "generated": "2026-07-03"
+}

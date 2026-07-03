@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Subject Syllabus — Italian, zero to A2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500;1,6..72,600&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f4ede0;
+    --paper:#efe7d6;
+    --card:#f8f2e6;
+    --fg:#211a12;
+    --ink-soft:#3b3025;
+    --muted:#8b8478;
+    --hair:#d8cdb8;
+    --hair-strong:#c4b79c;
+    --accent:#8a2a1a;      /* oxblood */
+    --accent-soft:#b8543f;
+    --tick:#8a2a1a;
+    --good:#0f5e5e;         /* deep teal, second scholarly hue for "good" grade */
+    --gold:#a07820;
+    --serif:'Newsreader', Georgia, 'Times New Roman', serif;
+    --sans:'Inter Tight', system-ui, sans-serif;
+    --measure:74ch;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--fg);
+    font-family:var(--serif);
+    font-size:19px;
+    line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    /* faint paper grain */
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  }
+  ::selection{background:rgba(138,42,26,.16);}
+
+  .wrap{max-width:920px;margin:0 auto;padding:0 40px 120px;}
+
+  /* ---- masthead ---- */
+  .masthead{padding:64px 0 30px;border-bottom:none;}
+  .kicker{
+    font-family:var(--sans);
+    font-size:12px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--accent);font-weight:600;margin-bottom:20px;
+  }
+  .kicker .dot{color:var(--hair-strong);margin:0 10px;}
+  .masthead h1{
+    font-family:var(--serif);
+    font-weight:600;font-size:clamp(38px,6vw,64px);
+    line-height:1.02;letter-spacing:-.01em;margin:0 0 12px;
+  }
+  .masthead h1 em{font-style:italic;color:var(--accent);font-weight:500;}
+  .masthead .sub{
+    font-family:var(--serif);font-style:italic;font-size:clamp(18px,2.4vw,23px);
+    color:var(--ink-soft);max-width:60ch;margin:0;
+  }
+  .rule-double{border:0;height:0;margin:26px 0 0;
+    border-top:2px solid var(--fg);border-bottom:1px solid var(--fg);
+    padding-top:4px;}
+
+  /* ---- section scaffolding ---- */
+  section{margin-top:58px;}
+  .sec-head{
+    display:flex;align-items:baseline;gap:24px;cursor:pointer;
+    user-select:none;position:relative;
+  }
+  .sec-head[aria-disabled="true"]{cursor:default;}
+  .sec-num{
+    font-family:var(--serif);font-weight:700;font-style:normal;
+    font-size:clamp(64px,11vw,120px);line-height:.8;color:var(--fg);
+    letter-spacing:-.03em;flex:none;
+    -webkit-text-stroke:0;position:relative;
+  }
+  .sec-num::after{
+    content:"";position:absolute;left:2px;right:2px;bottom:-8px;height:3px;
+    background:var(--accent);transform:scaleX(0);transform-origin:left;
+    transition:transform .5s cubic-bezier(.2,.7,.2,1);
+  }
+  .revealed .sec-num::after{transform:scaleX(1);}
+  .sec-meta{flex:1;padding-bottom:8px;}
+  .sec-label{
+    font-family:var(--sans);font-size:12.5px;letter-spacing:.3em;
+    text-transform:uppercase;color:var(--muted);font-weight:600;
+    display:flex;align-items:baseline;gap:14px;
+  }
+  .sec-title{
+    font-family:var(--serif);font-size:clamp(22px,3vw,31px);
+    font-weight:600;margin:4px 0 0;letter-spacing:-.01em;
+  }
+  .chev{margin-left:auto;font-family:var(--sans);font-size:13px;color:var(--muted);
+    align-self:center;transition:transform .3s ease;font-weight:500;
+    display:inline-flex;align-items:center;gap:7px;}
+  .collapsed .chev{transform:none;}
+  .chev svg{transition:transform .3s ease;}
+  .collapsed .chev svg{transform:rotate(-90deg);}
+
+  .sec-body{
+    overflow:hidden;
+    transition:max-height .45s cubic-bezier(.4,0,.2,1),opacity .35s ease,margin .35s ease;
+    opacity:1;margin-top:26px;
+  }
+  .collapsed .sec-body{max-height:0 !important;opacity:0;margin-top:0;}
+
+  /* one-line summary bar shown when Goals collapses */
+  .summary-bar{
+    display:none;align-items:center;gap:16px;margin-top:14px;
+    font-family:var(--sans);font-size:13px;color:var(--muted);
+    border-top:1px solid var(--hair);padding-top:12px;
+  }
+  .collapsed .summary-bar{display:flex;}
+  .summary-bar b{color:var(--ink-soft);font-weight:600;}
+  .summary-bar .pill-mini{
+    font-family:var(--sans);font-size:11px;letter-spacing:.04em;
+    border:1px solid var(--hair-strong);border-radius:2px;padding:2px 8px;color:var(--ink-soft);
+  }
+
+  /* ================= GOALS (01) ================= */
+  .about-lead{
+    font-family:var(--serif);font-size:clamp(22px,3.4vw,30px);line-height:1.3;
+    font-weight:400;max-width:26ch;letter-spacing:-.01em;margin:0 0 10px;
+  }
+  .about-lead b{color:var(--accent);font-weight:600;font-style:italic;}
+  .deadline{
+    font-family:var(--sans);font-size:13px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:34px;
+  }
+  .goal-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:0;
+    border-top:1px solid var(--hair-strong);border-bottom:1px solid var(--hair-strong);
+    margin:0 0 36px;
+  }
+  .goal-cell{padding:20px 24px 20px 0;border-right:1px solid var(--hair);}
+  .goal-cell:last-child{border-right:0;}
+  .goal-cell .k{font-family:var(--sans);font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:600;}
+  .goal-cell .v{font-family:var(--serif);font-size:24px;font-weight:600;line-height:1.15;}
+  .goal-cell .v small{font-size:15px;color:var(--muted);font-weight:400;font-style:italic;}
+
+  .about-cols{display:grid;grid-template-columns:1fr 1fr;gap:34px 48px;}
+  @media(max-width:640px){.about-cols{grid-template-columns:1fr;}}
+  .about-block h4{
+    font-family:var(--sans);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--accent);font-weight:600;margin:0 0 8px;
+  }
+  .about-block p{margin:0;font-size:17.5px;line-height:1.58;color:var(--ink-soft);}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+  .chip{
+    font-family:var(--sans);font-size:12px;color:var(--ink-soft);
+    border:1px solid var(--hair-strong);border-radius:2px;padding:4px 10px;
+    background:rgba(255,255,255,.35);
+  }
+
+  /* ================= PROGRAM (02) ================= */
+  .prog-intro{font-style:italic;color:var(--ink-soft);max-width:60ch;margin:0 0 30px;}
+  .weeks{border-top:1px solid var(--hair-strong);}
+  .wk{border-bottom:1px solid var(--hair);}
+  .wk-head{
+    display:grid;grid-template-columns:74px 1fr auto;align-items:baseline;gap:18px;
+    padding:16px 0 15px;cursor:pointer;user-select:none;
+  }
+  .wk-no{
+    font-family:var(--serif);font-weight:700;font-size:30px;line-height:1;color:var(--accent);
+    letter-spacing:-.02em;
+  }
+  .wk-no small{display:block;font-family:var(--sans);font-size:9.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--muted);font-weight:600;margin-top:2px;}
+  .wk-titles h3{font-family:var(--serif);font-size:20px;font-weight:600;margin:0;line-height:1.25;}
+  .wk-titles .theme{font-family:var(--sans);font-size:12.5px;color:var(--muted);letter-spacing:.02em;margin-top:3px;}
+  .wk-cta{font-family:var(--sans);font-size:12px;color:var(--muted);align-self:center;transition:transform .3s;}
+  .wk.open .wk-cta{transform:rotate(90deg);}
+  .wk-detail{overflow:hidden;max-height:0;transition:max-height .4s cubic-bezier(.4,0,.2,1);}
+  .wk.open .wk-detail{max-height:640px;}
+  .wk-detail-inner{padding:2px 0 22px 92px;}
+  @media(max-width:560px){.wk-detail-inner{padding-left:0;}}
+  .wk-row{display:flex;gap:12px;margin-bottom:11px;align-items:baseline;}
+  .wk-row .lbl{font-family:var(--sans);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);font-weight:600;flex:none;width:74px;padding-top:2px;}
+  .wk-row .txt{font-size:17px;line-height:1.5;color:var(--ink-soft);}
+  .wk-row .txt b{color:var(--fg);font-weight:600;}
+  .readings{margin-top:14px;border-top:1px dashed var(--hair-strong);padding-top:12px;}
+  .readings .rl{font-family:var(--sans);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);font-weight:600;margin-bottom:8px;}
+  .readings ul{margin:0;padding:0;list-style:none;}
+  .readings li{font-size:16px;color:var(--ink-soft);padding:3px 0 3px 22px;position:relative;line-height:1.45;}
+  .readings li::before{content:"§";position:absolute;left:0;font-style:italic;color:var(--accent-soft);
+    font-family:var(--serif);font-size:15px;}
+  .readings li .src{font-family:var(--sans);font-size:11px;color:var(--muted);}
+
+  /* ================= DASHBOARD (03) — coursepack ================= */
+  .dash-header{margin-bottom:6px;}
+  .dash-course{font-family:var(--serif);font-size:clamp(24px,3.6vw,32px);font-weight:600;
+    letter-spacing:-.01em;line-height:1.1;margin:0;text-transform:uppercase;}
+  .dash-metaline{font-family:var(--sans);font-size:13px;color:var(--muted);letter-spacing:.03em;margin-top:8px;
+    display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+  .dash-metaline .sep{color:var(--hair-strong);}
+  .dash-metaline b{color:var(--ink-soft);font-weight:600;}
+
+  .para-num{
+    font-family:var(--serif);font-style:italic;font-variant:small-caps;
+    font-weight:600;color:var(--accent);font-size:19px;letter-spacing:.02em;
+  }
+  .para-head{display:flex;align-items:baseline;gap:14px;margin:0 0 4px;}
+  .para-head .t{font-family:var(--serif);font-size:19px;font-weight:600;letter-spacing:.01em;text-transform:uppercase;
+    font-size:15px;letter-spacing:.14em;}
+  .para-head .r{margin-left:auto;font-family:var(--sans);font-size:12px;color:var(--muted);font-weight:500;}
+  .para-head .r b{color:var(--accent);}
+  .hairline{border:0;border-top:1px solid var(--hair-strong);margin:0 0 16px;}
+  .para{margin-top:34px;}
+  .para:first-of-type{margin-top:26px;}
+
+  /* --- §1 flashcard reviewer --- */
+  .reviewer{margin-left:2px;}
+  .card-stage{position:relative;perspective:1600px;margin:6px 0 4px;min-height:230px;}
+  .flashcard{
+    position:relative;width:100%;min-height:230px;cursor:pointer;
+    transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.8,.25,1);
+  }
+  .flashcard.flipped{transform:rotateX(180deg);}
+  .face{
+    position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    background:var(--card);border:1px solid var(--hair-strong);
+    box-shadow:0 1px 0 #fff inset, 0 10px 26px -20px rgba(60,40,20,.5);
+    border-radius:3px;padding:26px 30px;display:flex;flex-direction:column;
+  }
+  .face .corner{font-family:var(--sans);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--muted);font-weight:600;display:flex;justify-content:space-between;}
+  .face .corner .tag{color:var(--accent);}
+  .face .prompt{flex:1;display:flex;align-items:center;}
+  .face .prompt .word{font-family:var(--serif);font-size:clamp(26px,4.6vw,40px);font-weight:600;line-height:1.14;letter-spacing:-.01em;}
+  .face .prompt .word .hint{display:block;font-family:var(--sans);font-size:13px;color:var(--muted);
+    font-weight:400;letter-spacing:.02em;margin-top:8px;text-transform:none;}
+  .face .foot{font-family:var(--sans);font-size:11.5px;color:var(--muted);letter-spacing:.03em;}
+  .face .foot em{font-style:italic;font-family:var(--serif);color:var(--ink-soft);font-size:14px;}
+  .back{transform:rotateX(180deg);background:#f2ead9;}
+  .back .answer{font-family:var(--serif);font-size:clamp(24px,4vw,34px);font-weight:600;color:var(--accent);line-height:1.16;}
+  .back .en{font-family:var(--serif);font-style:italic;font-size:20px;color:var(--ink-soft);margin-top:4px;}
+  .back .ex{font-family:var(--serif);font-size:16px;color:var(--ink-soft);margin-top:12px;line-height:1.42;border-top:1px dashed var(--hair-strong);padding-top:11px;}
+  .back .ex .it{font-style:italic;color:var(--fg);}
+
+  .grade-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;
+    max-height:0;overflow:hidden;opacity:0;transition:max-height .35s ease,opacity .3s ease;}
+  .reviewer.showing .grade-row{max-height:120px;opacity:1;}
+  .grade{
+    font-family:var(--sans);font-size:14px;font-weight:600;letter-spacing:.02em;
+    padding:12px 8px 11px;border-radius:3px;border:1px solid var(--hair-strong);
+    background:var(--card);color:var(--fg);cursor:pointer;text-align:center;line-height:1.15;
+    transition:transform .12s ease,background .2s ease,border-color .2s ease,color .2s ease;
+  }
+  .grade:hover{transform:translateY(-2px);}
+  .grade small{display:block;font-family:var(--sans);font-size:10.5px;font-weight:500;color:var(--muted);margin-top:3px;letter-spacing:.04em;}
+  .grade.again:hover{border-color:var(--accent);color:var(--accent);}
+  .grade.again:hover small{color:var(--accent-soft);}
+  .grade.good:hover{border-color:var(--good);color:var(--good);}
+  .grade.good:hover small{color:var(--good);}
+  .grade.easy:hover{border-color:var(--gold);color:var(--gold);}
+  .grade.easy:hover small{color:var(--gold);}
+  .grade:active{transform:translateY(0) scale(.97);}
+  .flip-hint{font-family:var(--sans);font-size:12px;color:var(--muted);text-align:center;margin-top:14px;letter-spacing:.04em;}
+  .reviewer.showing .flip-hint{display:none;}
+
+  .deck-empty{
+    background:var(--card);border:1px dashed var(--hair-strong);border-radius:3px;
+    padding:30px;text-align:center;
+  }
+  .deck-empty .big{font-family:var(--serif);font-size:26px;font-weight:600;color:var(--good);margin-bottom:6px;}
+  .deck-empty .sm{font-family:var(--sans);font-size:13px;color:var(--muted);line-height:1.5;}
+  .deck-empty .next{font-family:var(--serif);font-style:italic;color:var(--ink-soft);margin-top:8px;font-size:15px;}
+  .deck-empty button{margin-top:16px;}
+
+  .rev-stats{display:flex;gap:26px;margin-top:16px;font-family:var(--sans);font-size:12px;color:var(--muted);letter-spacing:.02em;flex-wrap:wrap;}
+  .rev-stats .st b{font-family:var(--serif);font-size:22px;color:var(--fg);font-weight:600;display:block;line-height:1;}
+  .rev-stats .st b.due{color:var(--accent);}
+  .rev-stats .st span{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;}
+
+  /* --- §2 weekly recall checklist --- */
+  .recall{list-style:none;margin:0;padding:0;}
+  .recall li{
+    display:flex;align-items:flex-start;gap:14px;padding:11px 0;
+    border-bottom:1px dotted var(--hair);cursor:pointer;user-select:none;
+    transition:opacity .3s ease;
+  }
+  .recall li:last-child{border-bottom:0;}
+  .recall .mark{
+    font-family:var(--sans);flex:none;width:22px;font-size:18px;line-height:1.35;
+    color:var(--muted);text-align:center;position:relative;transition:color .2s ease;
+  }
+  .recall .mark::before{content:"\25EF";}
+  .recall li.done .mark{color:var(--accent);}
+  .recall li.done .mark::before{content:"\2713";animation:mark-in .22s cubic-bezier(.2,.8,.2,1);}
+  @keyframes mark-in{0%{transform:scale(.4);opacity:0;}100%{transform:scale(1);opacity:1;}}
+  .recall .txt{font-size:17px;line-height:1.42;color:var(--fg);transition:color .3s;}
+  .recall li.done .txt{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--hair-strong);}
+  .recall .tag{font-family:var(--sans);font-size:11px;color:var(--muted);margin-left:auto;flex:none;padding-top:3px;letter-spacing:.02em;}
+
+  /* --- §3 checkpoint --- */
+  .checkpoint{}
+  .checkpoint .cp-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .checkpoint .cp-title{font-family:var(--serif);font-size:19px;font-weight:600;}
+  .checkpoint .cp-due{font-family:var(--sans);font-size:12px;color:var(--muted);letter-spacing:.03em;}
+  .checkpoint .cp-due b{color:var(--accent);}
+  .checkpoint .cp-desc{font-style:italic;color:var(--ink-soft);font-size:16px;margin:6px 0 12px;}
+  .cp-log{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .cp-log input{
+    font-family:var(--sans);font-size:14px;width:78px;padding:7px 9px;
+    border:1px solid var(--hair-strong);border-radius:3px;background:var(--card);color:var(--fg);
+  }
+  .cp-log input:focus{outline:none;border-color:var(--accent);}
+  .cp-log .of{font-family:var(--serif);font-style:italic;color:var(--muted);}
+  .cp-last{font-family:var(--serif);font-style:italic;font-size:16px;color:var(--ink-soft);margin-top:12px;}
+  .cp-last b{color:var(--accent);font-style:normal;}
+
+  /* --- §4 streak strip --- */
+  .streak-count{font-family:var(--serif);font-style:italic;font-variant:small-caps;
+    text-align:center;font-size:19px;color:var(--ink-soft);letter-spacing:.04em;margin-bottom:12px;}
+  .streak-count b{color:var(--accent);font-style:normal;font-variant:normal;font-weight:600;}
+  .streak-strip{display:flex;gap:0;flex-wrap:wrap;align-items:flex-end;justify-content:center;}
+  .wkgroup{display:flex;gap:3px;padding:0 7px;border-right:1px solid var(--hair);}
+  .wkgroup:last-child{border-right:0;}
+  .sq{width:13px;height:13px;border-radius:2px;background:var(--hair);transition:background .16s ease,transform .16s ease;}
+  .sq.on{background:var(--accent);}
+  .sq.on.landed{animation:land .18s ease;}
+  .sq.today{box-shadow:0 0 0 2px rgba(138,42,26,.28);}
+  @keyframes land{0%{transform:scale(.3);}100%{transform:scale(1);}}
+  .streak-legend{font-family:var(--sans);font-size:10.5px;color:var(--muted);text-align:center;margin-top:10px;letter-spacing:.12em;text-transform:uppercase;}
+
+  /* --- §5 progress ring + concept matrix --- */
+  .prog-split{display:grid;grid-template-columns:170px 1fr;gap:34px;align-items:center;}
+  @media(max-width:560px){.prog-split{grid-template-columns:1fr;gap:20px;justify-items:center;}}
+  .ring-wrap{text-align:center;}
+  .ring{transform:rotate(-90deg);}
+  .ring .track{fill:none;stroke:var(--hair);stroke-width:11;}
+  .ring .val{fill:none;stroke:var(--accent);stroke-width:11;stroke-linecap:round;
+    transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1);}
+  .ring-label{font-family:var(--serif);font-weight:600;}
+  .ring-cap{font-family:var(--sans);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:6px;}
+
+  .matrix{width:100%;}
+  .mrow{display:grid;grid-template-columns:130px 1fr auto;align-items:center;gap:14px;padding:7px 0;border-bottom:1px dotted var(--hair);}
+  .mrow:last-child{border-bottom:0;}
+  .mrow .mn{font-family:var(--sans);font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .dots{display:flex;gap:5px;}
+  .dots i{width:11px;height:11px;border-radius:50%;background:var(--hair);display:block;transition:background .3s ease;}
+  .dots i.on{background:var(--accent);}
+  .mrow .ml{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted);text-align:right;min-width:96px;}
+  .mrow.done .ml{color:var(--good);}
+
+  /* footer / reset */
+  .colophon{margin-top:74px;border-top:2px solid var(--fg);padding-top:18px;
+    display:flex;justify-content:space-between;align-items:baseline;gap:18px;flex-wrap:wrap;
+    font-family:var(--sans);font-size:12px;color:var(--muted);letter-spacing:.03em;}
+  .colophon .mark{font-family:var(--serif);font-style:italic;color:var(--ink-soft);}
+  .btn{
+    font-family:var(--sans);font-size:12.5px;font-weight:600;letter-spacing:.04em;
+    padding:8px 16px;border-radius:3px;border:1px solid var(--hair-strong);
+    background:var(--card);color:var(--ink-soft);cursor:pointer;transition:all .2s ease;
+  }
+  .btn:hover{border-color:var(--accent);color:var(--accent);}
+  .btn.solid{background:var(--accent);color:#f8f2e6;border-color:var(--accent);}
+  .btn.solid:hover{background:#72200f;color:#fff;}
+  .link-reset{background:none;border:0;color:var(--muted);font-family:var(--sans);font-size:12px;cursor:pointer;text-decoration:underline;text-decoration-color:var(--hair-strong);text-underline-offset:3px;}
+  .link-reset:hover{color:var(--accent);}
+
+  @media(prefers-reduced-motion:reduce){
+    *{transition:none !important;animation:none !important;}
+    html{scroll-behavior:auto;}
+    .flashcard{transition:none;}
+  }
+  @media(max-width:640px){
+    .wrap{padding:0 22px 90px;}
+    .goal-grid{grid-template-columns:1fr;}
+    .goal-cell{border-right:0;border-bottom:1px solid var(--hair);}
+    .goal-cell:last-child{border-bottom:0;}
+    body{font-size:18px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ MASTHEAD ============ -->
+  <header class="masthead">
+    <div class="kicker">Split Coach <span class="dot">·</span> Learning track <span class="dot">·</span> Coursepack</div>
+    <h1>Subject Syllabus — <em>Italiano</em>, zero&nbsp;to&nbsp;A2</h1>
+    <p class="sub">A twelve-week handout you open every day: grammar, vocabulary, one small project a week, and a spaced-repetition deck that keeps it all from leaking out.</p>
+    <hr class="rule-double" />
+  </header>
+
+  <!-- ============ 01 · GOALS ============ -->
+  <section id="sec-goals" class="sec-block revealed">
+    <div class="sec-head" data-toggle="goals">
+      <div class="sec-num">01</div>
+      <div class="sec-meta">
+        <div class="sec-label">The course</div>
+        <div class="sec-title">Goals &amp; brief</div>
+      </div>
+      <span class="chev">About this
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+    </div>
+
+    <div class="summary-bar">
+      <b>Italian → A2 in 12 weeks</b> · ~5&nbsp;h/week · <span class="pill-mini">Grammar + vocab + weekly project</span> · <span class="pill-mini">SRS deck</span>
+    </div>
+
+    <div class="sec-body" id="body-goals">
+      <p class="about-lead">From <b>nothing</b> to holding a simple conversation — <b>A2</b> — in a single term.</p>
+      <div class="deadline">12-week term · target level A2 (CEFR) · ~5 hours a week</div>
+
+      <div class="goal-grid">
+        <div class="goal-cell">
+          <div class="k">Subject</div>
+          <div class="v">Italian <small>from zero</small></div>
+        </div>
+        <div class="goal-cell">
+          <div class="k">Target level</div>
+          <div class="v">A2 <small>· CEFR</small></div>
+        </div>
+        <div class="goal-cell">
+          <div class="k">Weekly budget</div>
+          <div class="v">~5 h <small>· ≈45 min/day</small></div>
+        </div>
+      </div>
+
+      <div class="about-cols">
+        <div class="about-block">
+          <h4>Why this exists</h4>
+          <p>You committed to Italian to A2 over one term. This handout is the plan and the daily instrument in one file — so twelve weeks from now the goal, the route, and your own progress are all still here, no memory of this conversation required.</p>
+        </div>
+        <div class="about-block">
+          <h4>Context</h4>
+          <p>Zero starting point, roughly five hours a week (about 45 minutes a day). A2 means: introduce yourself, order, shop, describe your day, cope with a simple past. The route is twelve weekly modules, each a grammar spine + a vocabulary field + one tiny project to force output.</p>
+        </div>
+        <div class="about-block">
+          <h4>How to use it</h4>
+          <p>Land here every day on the <b>Dashboard (03)</b>: clear the review queue (flip a card, grade it honestly), tick the week's recall targets, log Friday's self-check. The <b>Program (02)</b> is reference — open a week when you sit down to study it.</p>
+        </div>
+        <div class="about-block">
+          <h4>What I assumed</h4>
+          <div class="chips">
+            <span class="chip">Absolute beginner</span>
+            <span class="chip">Self-study, no tutor</span>
+            <span class="chip">~5 h / week</span>
+            <span class="chip">CEFR A2 by wk 12</span>
+            <span class="chip">SRS ≈ SM-2 lite</span>
+            <span class="chip">Free resources first</span>
+          </div>
+          <p style="margin-top:12px;font-size:15px;">Redirect any of these and I'll rebuild the plan around the real numbers.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 · PROGRAM ============ -->
+  <section id="sec-program" class="sec-block revealed collapsed">
+    <div class="sec-head" data-toggle="program">
+      <div class="sec-num">02</div>
+      <div class="sec-meta">
+        <div class="sec-label">Twelve modules</div>
+        <div class="sec-title">The syllabus, week by week</div>
+      </div>
+      <span class="chev">Open
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+    </div>
+    <div class="sec-body" id="body-program">
+      <p class="prog-intro">Each week is one grammar spine, one vocabulary field, and one small project that forces you to produce Italian. Tap a week to expand its readings and resources.</p>
+      <div class="weeks" id="weeks"><!-- populated by JS from SYLLABUS --></div>
+    </div>
+  </section>
+
+  <!-- ============ 03 · DASHBOARD ============ -->
+  <section id="sec-dash" class="sec-block revealed">
+    <div class="sec-head" aria-disabled="true">
+      <div class="sec-num">03</div>
+      <div class="sec-meta">
+        <div class="sec-label">Every day</div>
+        <div class="sec-title">Dashboard</div>
+      </div>
+      <span class="chev" style="opacity:.55;">Daily landing</span>
+    </div>
+    <div class="sec-body" style="max-height:none;">
+
+      <div class="dash-header">
+        <h2 class="dash-course">Italiano — A2 Track</h2>
+        <div class="dash-metaline">
+          <span>Week <b id="wk-now">01</b> of 12</span>
+          <span class="sep">·</span>
+          <span id="today-date">—</span>
+          <span class="sep">·</span>
+          <span><b id="learned-count">0</b> cards learned</span>
+        </div>
+      </div>
+      <hr class="rule-double" style="margin:14px 0 4px;" />
+
+      <!-- §1 Review queue: flashcard reviewer -->
+      <div class="para">
+        <div class="para-head">
+          <span class="para-num">§1</span>
+          <span class="t">Today's review queue</span>
+          <span class="r"><b id="due-badge">0</b> due</span>
+        </div>
+        <hr class="hairline" />
+        <div class="reviewer" id="reviewer">
+          <div class="card-stage" id="card-stage">
+            <div class="flashcard" id="flashcard">
+              <div class="face front">
+                <div class="corner"><span class="tag" id="fc-cat">—</span><span id="fc-progress">card 1</span></div>
+                <div class="prompt"><div class="word"><span id="fc-front">—</span><span class="hint" id="fc-hint"></span></div></div>
+                <div class="foot">Recall the Italian &nbsp;·&nbsp; <em>tap to reveal</em></div>
+              </div>
+              <div class="face back">
+                <div class="corner"><span class="tag" id="bc-cat">—</span><span id="bc-pos"></span></div>
+                <div class="prompt"><div>
+                  <div class="answer" id="bc-answer">—</div>
+                  <div class="en" id="bc-en"></div>
+                  <div class="ex" id="bc-ex"></div>
+                </div></div>
+                <div class="foot">How well did you know it?</div>
+              </div>
+            </div>
+          </div>
+          <div class="flip-hint">Click the card to flip · then grade below</div>
+          <div class="grade-row" id="grade-row">
+            <button class="grade again" data-grade="again">Again<small>&lt; 1 min · relearn</small></button>
+            <button class="grade good" data-grade="good">Good<small>on schedule</small></button>
+            <button class="grade easy" data-grade="easy">Easy<small>push it out</small></button>
+          </div>
+          <div class="rev-stats" id="rev-stats">
+            <div class="st"><b class="due" id="stat-due">0</b><span>due now</span></div>
+            <div class="st"><b id="stat-new">0</b><span>new left</span></div>
+            <div class="st"><b id="stat-reviewed">0</b><span>done today</span></div>
+            <div class="st"><b id="stat-total">0</b><span>deck size</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- §2 Weekly recall checklist -->
+      <div class="para">
+        <div class="para-head">
+          <span class="para-num">§2</span>
+          <span class="t">This week's recall targets</span>
+          <span class="r"><b id="recall-done">0</b>/<span id="recall-total">0</span></span>
+        </div>
+        <hr class="hairline" />
+        <ul class="recall" id="recall-list"><!-- populated by JS --></ul>
+      </div>
+
+      <!-- §3 Friday checkpoint -->
+      <div class="para">
+        <div class="para-head">
+          <span class="para-num">§3</span>
+          <span class="t">Week checkpoint</span>
+          <span class="r">ⓘ <b>Fri</b></span>
+        </div>
+        <hr class="hairline" />
+        <div class="checkpoint">
+          <div class="cp-top">
+            <span class="cp-title">Self-assessment · comprehension check</span>
+            <span class="cp-due">due <b>Friday</b> · ~20 min</span>
+          </div>
+          <p class="cp-desc">A short listen-and-read on this week's theme, then score yourself out of 20 on how much you understood.</p>
+          <div class="cp-log">
+            <span style="font-family:var(--sans);font-size:12px;color:var(--muted);letter-spacing:.06em;">SCORE</span>
+            <input type="number" id="cp-input" min="0" max="20" step="1" placeholder="—" />
+            <span class="of">/ 20</span>
+            <button class="btn" id="cp-save" style="margin-left:6px;">Log this week</button>
+          </div>
+          <div class="cp-last" id="cp-last">No checkpoint logged yet.</div>
+        </div>
+      </div>
+
+      <!-- §4 Study streak -->
+      <div class="para">
+        <div class="para-head">
+          <span class="para-num">§4</span>
+          <span class="t">Study streak</span>
+          <span class="r"><b id="streak-badge">0</b>-day run</span>
+        </div>
+        <hr class="hairline" />
+        <div class="streak-count"><b id="streak-num">0</b> days studied</div>
+        <div class="streak-strip" id="streak-strip"><!-- 12 weeks -->
+        </div>
+        <div class="streak-legend">One block per day · a day counts when you review a card</div>
+      </div>
+
+      <!-- §5 Progress ring + concept matrix -->
+      <div class="para">
+        <div class="para-head">
+          <span class="para-num">§5</span>
+          <span class="t">Concept mastery</span>
+          <span class="r"><b id="matrix-mastered">0</b> / <span id="matrix-total">0</span></span>
+        </div>
+        <hr class="hairline" />
+        <div class="prog-split">
+          <div class="ring-wrap">
+            <svg class="ring" width="150" height="150" viewBox="0 0 150 150">
+              <circle class="track" cx="75" cy="75" r="62"></circle>
+              <circle class="val" id="ring-val" cx="75" cy="75" r="62"
+                      stroke-dasharray="389.6" stroke-dashoffset="389.6"></circle>
+              <text x="75" y="72" text-anchor="middle" class="ring-label" font-size="30" fill="#211a12" transform="rotate(90 75 75)" id="ring-pct" style="transform:none;">0%</text>
+              <text x="75" y="92" text-anchor="middle" font-family="Inter Tight" font-size="10" letter-spacing="1.5" fill="#8b8478" style="text-transform:uppercase;" id="ring-sub">learned</text>
+            </svg>
+            <div class="ring-cap">of the deck learned</div>
+          </div>
+          <div class="matrix" id="matrix"><!-- populated by JS --></div>
+        </div>
+      </div>
+
+      <div class="colophon">
+        <span class="mark">Built by Split · Coach · coursepack signature</span>
+        <button class="link-reset" id="reset-btn">Reset all progress</button>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var SLUG = "italian-a2";
+  var K = {
+    first:   "split."+SLUG+".firstOpen",
+    cards:   "split."+SLUG+".cards",
+    recall:  "split."+SLUG+".recall",
+    check:   "split."+SLUG+".checkpoints",
+    days:    "split."+SLUG+".days",
+    concepts:"split."+SLUG+".concepts",
+    last:    "split."+SLUG+".lastSection"
+  };
+  var DAY = 86400000;
+  function todayKey(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  function now(){ return Date.now(); }
+  function load(k,f){ try{ var v=localStorage.getItem(k); return v==null?f:JSON.parse(v); }catch(e){ return f; } }
+  function save(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+
+  /* ---------------- content ---------------- */
+  var SYLLABUS = [
+    {w:1, title:"Sounds, greetings & being", theme:"Alphabet · essere · ciao/buongiorno",
+     grammar:"The alphabet & spelling, subject pronouns, <b>essere</b> (to be) present tense, gender of nouns (-o / -a).",
+     vocab:"Greetings, courtesy (per favore, grazie, prego), numbers 0–20, nationalities.",
+     project:"Record a 30-second spoken self-introduction: name, where you're from, how you are.",
+     read:[["Learn the Italian sounds","Coffee Break Italian, ep. 1–2"],["ci / ch / gli pronunciation","YouTube: 'Italian pronunciation in 10 min'"]]},
+    {w:2, title:"Having, and the articles", theme:"avere · il/la/lo/i/le · numbers to 100",
+     grammar:"<b>avere</b> (to have), definite articles (il, lo, la, l', i, gli, le), indefinite (un, uno, una).",
+     vocab:"Family, age (ho 25 anni), numbers 21–100, colours.",
+     project:"Write 6 sentences describing your family with names, ages and one colour each.",
+     read:[["Definite & indefinite articles","'Italy Made Easy' article grammar page"],["avere idioms (ho fame, ho sete)","Anki note: avere expressions"]]},
+    {w:3, title:"Regular -are verbs", theme:"parlare · abitare · daily verbs",
+     grammar:"Present tense of regular <b>-are</b> verbs (parlare, abitare, lavorare, studiare), simple negation (non).",
+     vocab:"Everyday actions, professions, days of the week.",
+     project:"Describe your typical weekday in 8 sentences using at least five -are verbs.",
+     read:[["-are conjugation drill","Conjuguemos / Italian verb trainer"],["Talking about your job","Duolingo 'Work' unit"]]},
+    {w:4, title:"-ere & -ire verbs, questions", theme:"prendere · dormire · asking things",
+     grammar:"Regular <b>-ere</b> and <b>-ire</b> verbs (incl. -isc- type: capire, finire), yes/no & question words (dove, quando, come, perché).",
+     vocab:"Food & drink basics, the café, question words.",
+     project:"Script and role-play ordering a coffee and a pastry at a bar (both sides).",
+     read:[["-ire verbs incl. -isc-","LanguageTransfer Italian, track 12–14"],["Café vocabulary","'Al bar' vocab sheet"]]},
+    {w:5, title:"Going, coming & the near future", theme:"andare · venire · a/in with places",
+     grammar:"Irregular <b>andare, venire, fare</b>; prepositions of place (a Roma, in Italia, da…); near future with andare a + infinitive.",
+     vocab:"Places in town, transport, directions (a destra, sinistra, dritto).",
+     project:"Draw or list a route across town and narrate it: 'Vado al mercato, poi…'.",
+     read:[["andare / venire / fare","News in Slow Italian, beginner clip"],["Prepositions a vs in","'Italy Made Easy' prepositions guide"]]},
+    {w:6, title:"Review & first checkpoint", theme:"Consolidate weeks 1–5 · A1 midpoint",
+     grammar:"No new grammar — mixed review of the present tense, articles, negation and questions.",
+     vocab:"Recycle everything so far; fill vocabulary gaps you noticed.",
+     project:"Mini-mock: a 12-line written self-portrait (family, job, town, a typical day, plans).",
+     read:[["A1 self-check quiz","CEFR A1 sample tasks (free PDFs)"],["Spaced review week","Clear your Anki/SRS backlog fully"]]},
+    {w:7, title:"Reflexives & the daily routine", theme:"mi chiamo · svegliarsi · la giornata",
+     grammar:"Reflexive verbs (chiamarsi, alzarsi, lavarsi), reflexive pronouns, telling the time (che ore sono?).",
+     vocab:"Daily routine, parts of the day, clock time, the bathroom & morning.",
+     project:"Write your morning routine hour by hour using six reflexive verbs.",
+     read:[["Reflexive verbs","'Italy Made Easy' reflexives lesson"],["Telling the time","Time-in-Italian video + quiz"]]},
+    {w:8, title:"Talking about the past", theme:"passato prossimo · avere/essere",
+     grammar:"<b>Passato prossimo</b> with avere (ho mangiato) and with essere (sono andato/a) — agreement, common past participles.",
+     vocab:"Weekend & leisure, time markers (ieri, la settimana scorsa).",
+     project:"Tell the story of last weekend in 8 past-tense sentences.",
+     read:[["Passato prossimo, part 1","LearnAmo YouTube — passato prossimo"],["essere vs avere auxiliaries","Auxiliary-choice cheat sheet"]]},
+    {w:9, title:"Describing & comparing", theme:"adjectives · più/meno · piacere",
+     grammar:"Adjective agreement (bello, buono), comparatives (più… di / meno… di), the verb <b>piacere</b> (mi piace / mi piacciono).",
+     vocab:"Adjectives of personality & appearance, tastes & preferences, food likes.",
+     project:"Write a short review of a dish or place: what it's like and whether you liked it.",
+     read:[["How piacere really works","'Italy Made Easy' piacere lesson"],["Comparatives","News in Slow Italian, adjectives clip"]]},
+    {w:10, title:"Shopping & quantity", theme:"quanto costa · partitivo · del/della",
+     grammar:"The partitive (del, dello, della, dei…), quantity words (un po' di, molto, troppo), 'quanto costa?' and prices.",
+     vocab:"At the market & shop, weights & quantities, money, clothing.",
+     project:"Script a market dialogue: buy three items, ask prices, handle change.",
+     read:[["The partitive","Grammar page: 'partitivo articolo'"],["Shopping phrases","'Al mercato' role-play sheet"]]},
+    {w:11, title:"Plans, wishes & the future", theme:"volere/potere/dovere · futuro semplice",
+     grammar:"Modal verbs <b>volere, potere, dovere</b>; a first look at the <b>futuro semplice</b> (andrò, sarà) for plans.",
+     vocab:"Travel & holidays, weather, months & seasons.",
+     project:"Write a 10-sentence plan for a weekend trip to an Italian city.",
+     read:[["Modal verbs","LearnAmo — volere potere dovere"],["Futuro semplice intro","Beginner futuro video"]]},
+    {w:12, title:"A2 exam & consolidation", theme:"Full review · CEFR A2 self-assessment",
+     grammar:"Everything, applied: present, past, near/simple future, modals, piacere, partitive.",
+     vocab:"Broad review; polish the fields you're weakest in.",
+     project:"Record a 3-minute unscripted talk: introduce yourself, describe your week, tell a past event, and one future plan.",
+     read:[["CEFR A2 self-assessment grid","Council of Europe A2 descriptors"],["A2 sample speaking tasks","Free A2 mock (CILS / CELI samples)"]]}
+  ];
+
+  var RECALL = [
+    {t:"Say the alphabet & spell your name aloud", tag:"wk 1"},
+    {t:"Conjugate essere & avere from memory", tag:"wk 1–2"},
+    {t:"Give the correct article for 20 nouns", tag:"wk 2"},
+    {t:"Run a full -are / -ere / -ire verb by heart", tag:"wk 3–4"},
+    {t:"Order a coffee & a pastry out loud", tag:"wk 4"},
+    {t:"Clear the SRS review queue below", tag:"daily"}
+  ];
+
+  // Concept fields tracked against learned cards (auto-updates from the deck).
+  var CONCEPTS = [
+    {id:"greet", name:"Greetings & basics", cats:["Basics","Courtesy"]},
+    {id:"verbs", name:"Core verbs",         cats:["Essere","Avere","Verbs"]},
+    {id:"food",  name:"Food & café",        cats:["Food","Café"]},
+    {id:"time",  name:"Time & routine",     cats:["Time","Routine"]},
+    {id:"place", name:"Places & travel",    cats:["Places","Travel"]},
+    {id:"past",  name:"Past & future",      cats:["Past","Future"]}
+  ];
+
+  // ~30 seeded Italian cards. cat lines up with CONCEPTS.cats.
+  var SEED = [
+    {f:"hello (informal)",       a:"ciao",           cat:"Basics",   pos:"interj", en:"hi / bye", ex:"Ciao! Come stai? — <i>Hi! How are you?</i>"},
+    {f:"good morning",           a:"buongiorno",     cat:"Basics",   pos:"phrase", en:"good day", ex:"Buongiorno, un caffè per favore. — <i>Good morning, a coffee please.</i>"},
+    {f:"thank you",              a:"grazie",         cat:"Courtesy", pos:"interj", en:"thanks",   ex:"Grazie mille! — <i>Thanks a lot!</i>"},
+    {f:"please",                 a:"per favore",     cat:"Courtesy", pos:"phrase", en:"please",   ex:"Un tavolo per favore. — <i>A table please.</i>"},
+    {f:"you're welcome",         a:"prego",          cat:"Courtesy", pos:"interj", en:"you're welcome", ex:"— Grazie! — Prego. — <i>— Thanks! — You're welcome.</i>"},
+    {f:"yes / no",               a:"sì / no",        cat:"Basics",   pos:"adv",    en:"yes / no", ex:"Sì, certo. No, grazie. — <i>Yes, of course. No, thanks.</i>"},
+    {f:"I am (to be)",           a:"io sono",        cat:"Essere",   pos:"verb",   en:"I am", ex:"Sono di Parigi. — <i>I'm from Paris.</i>"},
+    {f:"you are (to be)",        a:"tu sei",         cat:"Essere",   pos:"verb",   en:"you are", ex:"Sei italiano? — <i>Are you Italian?</i>"},
+    {f:"he/she is",              a:"lui / lei è",    cat:"Essere",   pos:"verb",   en:"he/she is", ex:"Lei è simpatica. — <i>She is nice.</i>"},
+    {f:"I have (to have)",       a:"io ho",          cat:"Avere",    pos:"verb",   en:"I have", ex:"Ho venticinque anni. — <i>I'm 25 (lit. I have 25 years).</i>"},
+    {f:"I'm hungry",             a:"ho fame",        cat:"Avere",    pos:"phrase", en:"I have hunger", ex:"Ho fame, mangiamo? — <i>I'm hungry, shall we eat?</i>"},
+    {f:"to speak",               a:"parlare",        cat:"Verbs",    pos:"-are",   en:"to speak", ex:"Parlo un po' d'italiano. — <i>I speak a little Italian.</i>"},
+    {f:"to live / reside",       a:"abitare",        cat:"Verbs",    pos:"-are",   en:"to live", ex:"Abito a Milano. — <i>I live in Milan.</i>"},
+    {f:"to understand",          a:"capire",         cat:"Verbs",    pos:"-ire",   en:"to understand", ex:"Non capisco. — <i>I don't understand.</i>"},
+    {f:"water",                  a:"l'acqua",        cat:"Food",     pos:"n.f.",   en:"water", ex:"Un bicchiere d'acqua. — <i>A glass of water.</i>"},
+    {f:"a coffee",               a:"un caffè",       cat:"Café",     pos:"n.m.",   en:"coffee", ex:"Un caffè, per favore. — <i>A coffee, please.</i>"},
+    {f:"the bill / check",       a:"il conto",       cat:"Café",     pos:"n.m.",   en:"the bill", ex:"Il conto, per favore. — <i>The bill, please.</i>"},
+    {f:"bread",                  a:"il pane",        cat:"Food",     pos:"n.m.",   en:"bread", ex:"Vorrei del pane. — <i>I'd like some bread.</i>"},
+    {f:"what time is it?",       a:"che ore sono?",  cat:"Time",     pos:"phrase", en:"what time?", ex:"Che ore sono? — Sono le tre. — <i>What time is it? — It's three.</i>"},
+    {f:"today / tomorrow",       a:"oggi / domani",  cat:"Time",     pos:"adv",    en:"today / tomorrow", ex:"Oggi studio, domani riposo. — <i>Today I study, tomorrow I rest.</i>"},
+    {f:"to wake up (oneself)",   a:"svegliarsi",     cat:"Routine",  pos:"refl.",  en:"to wake up", ex:"Mi sveglio alle sette. — <i>I wake up at seven.</i>"},
+    {f:"my name is…",            a:"mi chiamo…",     cat:"Routine",  pos:"refl.",  en:"I call myself", ex:"Mi chiamo Luca. — <i>My name is Luca.</i>"},
+    {f:"where is…?",             a:"dov'è…?",        cat:"Places",   pos:"phrase", en:"where is", ex:"Dov'è la stazione? — <i>Where is the station?</i>"},
+    {f:"to go",                  a:"andare",         cat:"Places",   pos:"verb",   en:"to go", ex:"Vado al mercato. — <i>I'm going to the market.</i>"},
+    {f:"right / left",           a:"destra / sinistra", cat:"Places", pos:"n.f.", en:"right / left", ex:"Gira a destra. — <i>Turn right.</i>"},
+    {f:"the train",              a:"il treno",       cat:"Travel",   pos:"n.m.",   en:"the train", ex:"Prendo il treno. — <i>I take the train.</i>"},
+    {f:"I ate (past)",           a:"ho mangiato",    cat:"Past",     pos:"passato", en:"I ate", ex:"Ieri ho mangiato la pizza. — <i>Yesterday I ate pizza.</i>"},
+    {f:"I went (past)",          a:"sono andato/a", cat:"Past",     pos:"passato", en:"I went", ex:"Sono andato a Roma. — <i>I went to Rome.</i>"},
+    {f:"I like (it)",            a:"mi piace",       cat:"Food",     pos:"verb",   en:"it pleases me", ex:"Mi piace il gelato. — <i>I like ice-cream.</i>"},
+    {f:"I would like",           a:"vorrei",         cat:"Café",     pos:"modal",  en:"I'd like", ex:"Vorrei un cornetto. — <i>I'd like a croissant.</i>"},
+    {f:"I want / can / must",    a:"voglio / posso / devo", cat:"Future", pos:"modal", en:"want/can/must", ex:"Voglio imparare l'italiano. — <i>I want to learn Italian.</i>"},
+    {f:"tomorrow I'll go",       a:"domani andrò",   cat:"Future",   pos:"futuro", en:"I will go", ex:"Domani andrò in centro. — <i>Tomorrow I'll go downtown.</i>"}
+  ];
+
+  /* ---------------- SRS state (SM-2 lite) ----------------
+     Each card: {id, done(reps>0), ivl(days), ease, due(ms), reps, lapses}
+     Grading: again → ivl 0 (due in ~1 min), ease −0.2, lapse++, reps stays counted-as-learned once seen good.
+              good  → first pass 1d, then 3d, then ivl*ease.
+              easy  → first pass 4d, then ivl*ease*1.35, ease +0.15.
+  */
+  function freshDeck(){
+    var t = now();
+    return SEED.map(function(c,i){
+      return { id:i, done:false, ivl:0, ease:2.5, due:t, reps:0, lapses:0, learned:false };
+    });
+  }
+  function loadDeck(){
+    var d = load(K.cards, null);
+    if(!d || !Array.isArray(d) || d.length !== SEED.length){ d = freshDeck(); save(K.cards,d); }
+    return d;
+  }
+
+  var deck = loadDeck();
+  var reviewedToday = load(K.days, {}).reviewed || {};
+  reviewedToday = reviewedToday[todayKey()] || 0;
+
+  function dueCards(){
+    var t = now();
+    // due if due-time passed; new cards (reps 0) come after review cards
+    var due = deck.filter(function(c){ return c.due <= t; });
+    due.sort(function(a,b){
+      var an = a.reps===0?1:0, bn = b.reps===0?1:0;
+      if(an!==bn) return an-bn;        // reviews before new
+      return a.due-b.due;
+    });
+    return due;
+  }
+  function newLeft(){ return deck.filter(function(c){ return c.reps===0; }).length; }
+  function learnedCount(){ return deck.filter(function(c){ return c.learned; }).length; }
+
+  var current = null;
+  var flipped = false;
+
+  var el = {
+    stage:document.getElementById("card-stage"),
+    card:document.getElementById("flashcard"),
+    reviewer:document.getElementById("reviewer"),
+    front:document.getElementById("fc-front"),
+    hint:document.getElementById("fc-hint"),
+    cat:document.getElementById("fc-cat"),
+    prog:document.getElementById("fc-progress"),
+    bcat:document.getElementById("bc-cat"),
+    bpos:document.getElementById("bc-pos"),
+    ans:document.getElementById("bc-answer"),
+    en:document.getElementById("bc-en"),
+    ex:document.getElementById("bc-ex"),
+    grades:document.getElementById("grade-row"),
+    dueBadge:document.getElementById("due-badge"),
+    statDue:document.getElementById("stat-due"),
+    statNew:document.getElementById("stat-new"),
+    statRev:document.getElementById("stat-reviewed"),
+    statTot:document.getElementById("stat-total"),
+    learned:document.getElementById("learned-count")
+  };
+
+  function renderCard(){
+    var due = dueCards();
+    el.statDue.textContent = due.length;
+    el.statNew.textContent = newLeft();
+    el.statRev.textContent = reviewedToday;
+    el.statTot.textContent = deck.length;
+    el.dueBadge.textContent = due.length;
+    el.learned.textContent = learnedCount();
+
+    if(due.length === 0){
+      current = null;
+      // find soonest upcoming
+      var soonest = deck.slice().sort(function(a,b){return a.due-b.due;})[0];
+      var when = "";
+      if(soonest){
+        var mins = Math.max(0, Math.round((soonest.due-now())/60000));
+        if(mins < 60) when = mins<=1 ? "in about a minute" : "in about "+mins+" minutes";
+        else if(mins < 1440) when = "in about "+Math.round(mins/60)+" hour"+(Math.round(mins/60)>1?"s":"");
+        else when = "in "+Math.round(mins/1440)+" day"+(Math.round(mins/1440)>1?"s":"");
+      }
+      el.stage.innerHTML =
+        '<div class="deck-empty">'+
+          '<div class="big">Queue clear ✓</div>'+
+          '<div class="sm">Nothing due right now. You reviewed <b>'+reviewedToday+'</b> card'+(reviewedToday===1?"":"s")+' today.</div>'+
+          (soonest ? '<div class="next">Next card due '+when+'.</div>' : '')+
+          '<button class="btn" id="study-ahead">Study ahead (10 cards)</button>'+
+        '</div>';
+      el.reviewer.classList.remove("showing");
+      var sa = document.getElementById("study-ahead");
+      if(sa) sa.addEventListener("click", studyAhead);
+      return;
+    }
+
+    current = due[0];
+    flipped = false;
+    // rebuild the flashcard node if it was replaced by the empty state
+    if(!document.getElementById("flashcard")){
+      el.stage.innerHTML = FLASHCARD_HTML;
+      rebindCardEls();
+    }
+    var c = SEED[current.id];
+    el.card.classList.remove("flipped");
+    el.reviewer.classList.remove("showing");
+    el.front.textContent = c.f;
+    el.hint.textContent = current.reps===0 ? "new word" : "review · seen "+current.reps+"×";
+    el.cat.textContent = c.cat;
+    el.prog.textContent = "1 of "+due.length+" due";
+    el.bcat.textContent = c.cat;
+    el.bpos.textContent = c.pos;
+    el.ans.textContent = c.a;
+    el.en.textContent = c.en;
+    el.ex.innerHTML = c.ex;
+  }
+
+  var FLASHCARD_HTML = document.getElementById("card-stage").innerHTML; // capture template
+
+  function rebindCardEls(){
+    el.card=document.getElementById("flashcard");
+    el.front=document.getElementById("fc-front");
+    el.hint=document.getElementById("fc-hint");
+    el.cat=document.getElementById("fc-cat");
+    el.prog=document.getElementById("fc-progress");
+    el.bcat=document.getElementById("bc-cat");
+    el.bpos=document.getElementById("bc-pos");
+    el.ans=document.getElementById("bc-answer");
+    el.en=document.getElementById("bc-en");
+    el.ex=document.getElementById("bc-ex");
+    el.card.addEventListener("click", flip);
+  }
+
+  function flip(){
+    if(!current) return;
+    flipped = !flipped;
+    el.card.classList.toggle("flipped", flipped);
+    el.reviewer.classList.toggle("showing", flipped);
+  }
+
+  function schedule(card, grade){
+    var t = now();
+    if(grade === "again"){
+      card.ease = Math.max(1.3, card.ease - 0.2);
+      card.ivl = 0;
+      card.due = t + 60000;            // ~1 minute
+      card.lapses++;
+      // still counts as learned once it has been graded good at least once (reps>0)
+    } else if(grade === "good"){
+      if(card.reps === 0){ card.ivl = 1; }
+      else if(card.reps === 1){ card.ivl = 3; }
+      else { card.ivl = Math.round(card.ivl * card.ease); }
+      card.reps++;
+      card.learned = true;
+      card.due = t + card.ivl * DAY;
+    } else { // easy
+      card.ease = Math.min(3.2, card.ease + 0.15);
+      if(card.reps === 0){ card.ivl = 4; }
+      else { card.ivl = Math.round(card.ivl * card.ease * 1.35); }
+      card.reps++;
+      card.learned = true;
+      card.due = t + card.ivl * DAY;
+    }
+    card.done = card.learned;
+  }
+
+  function markDayStudied(){
+    var days = load(K.days, {reviewed:{}, studied:[]});
+    if(!days.studied) days.studied = [];
+    if(!days.reviewed) days.reviewed = {};
+    var tk = todayKey();
+    if(days.studied.indexOf(tk) === -1){ days.studied.push(tk); }
+    days.reviewed[tk] = (days.reviewed[tk]||0) + 1;
+    save(K.days, days);
+    reviewedToday = days.reviewed[tk];
+  }
+
+  function grade(g){
+    if(!current || !flipped) return;
+    schedule(current, g);
+    save(K.cards, deck);
+    markDayStudied();
+    renderCard();
+    renderStreak();
+    renderMatrix();
+    renderRing();
+  }
+
+  function studyAhead(){
+    // pull up to 10 not-due cards forward to "now" so the boss can drill
+    var t = now();
+    var future = deck.filter(function(c){ return c.due > t; })
+                     .sort(function(a,b){return a.due-b.due;})
+                     .slice(0,10);
+    if(future.length===0) return;
+    future.forEach(function(c){ c.due = t; });
+    save(K.cards, deck);
+    renderCard();
+  }
+
+  el.card.addEventListener("click", flip);
+  Array.prototype.forEach.call(document.querySelectorAll(".grade"), function(b){
+    b.addEventListener("click", function(){ grade(b.getAttribute("data-grade")); });
+  });
+  document.addEventListener("keydown", function(e){
+    if(document.activeElement && document.activeElement.tagName==="INPUT") return;
+    if(e.code==="Space"){ e.preventDefault(); flip(); }
+    else if(flipped){
+      if(e.key==="1") grade("again");
+      else if(e.key==="2") grade("good");
+      else if(e.key==="3") grade("easy");
+    }
+  });
+
+  /* ---------------- §2 recall checklist ---------------- */
+  function renderRecall(){
+    var state = load(K.recall, {});
+    var wrap = document.getElementById("recall-list");
+    wrap.innerHTML = "";
+    var done = 0;
+    RECALL.forEach(function(item, i){
+      var on = !!state[i];
+      if(on) done++;
+      var li = document.createElement("li");
+      li.className = on ? "done" : "";
+      li.innerHTML = '<span class="mark"></span><span class="txt">'+item.t+'</span><span class="tag">'+item.tag+'</span>';
+      li.addEventListener("click", function(){
+        var s = load(K.recall, {});
+        s[i] = !s[i];
+        save(K.recall, s);
+        renderRecall();
+      });
+      wrap.appendChild(li);
+    });
+    document.getElementById("recall-done").textContent = done;
+    document.getElementById("recall-total").textContent = RECALL.length;
+  }
+
+  /* ---------------- §3 checkpoint ---------------- */
+  function renderCheckpoint(){
+    var cps = load(K.check, []);
+    var out = document.getElementById("cp-last");
+    if(cps.length === 0){ out.textContent = "No checkpoint logged yet."; return; }
+    var last = cps[cps.length-1];
+    var pct = Math.round(last.score/20*100);
+    out.innerHTML = "Last: <b>"+last.score+"/20</b> · "+pct+"% · logged "+last.date;
+  }
+  document.getElementById("cp-save").addEventListener("click", function(){
+    var v = parseInt(document.getElementById("cp-input").value, 10);
+    if(isNaN(v)) return;
+    v = Math.max(0, Math.min(20, v));
+    var cps = load(K.check, []);
+    cps.push({score:v, date:todayKey()});
+    save(K.check, cps);
+    document.getElementById("cp-input").value = "";
+    renderCheckpoint();
+    // logging the checkpoint also counts as a study day
+    markDayStudied();
+    renderStreak();
+  });
+
+  /* ---------------- §4 streak strip (12 weeks = 84 days) ---------------- */
+  function renderStreak(){
+    var days = load(K.days, {studied:[]});
+    var studied = days.studied || [];
+    var setStudied = {};
+    studied.forEach(function(d){ setStudied[d]=true; });
+
+    var strip = document.getElementById("streak-strip");
+    strip.innerHTML = "";
+    // build a 12-week calendar ending today; today is the last cell
+    var totalDays = 84;
+    var start = new Date();
+    start.setHours(0,0,0,0);
+    start.setTime(start.getTime() - (totalDays-1)*DAY);
+
+    var tkToday = todayKey();
+    var group = null;
+    for(var i=0;i<totalDays;i++){
+      if(i % 7 === 0){
+        group = document.createElement("div");
+        group.className = "wkgroup";
+        strip.appendChild(group);
+      }
+      var d = new Date(start.getTime() + i*DAY);
+      var key = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+      var sq = document.createElement("div");
+      sq.className = "sq";
+      if(setStudied[key]) sq.className += " on";
+      if(key === tkToday){ sq.className += " today"; if(setStudied[key]) sq.className += " landed"; }
+      sq.title = key + (setStudied[key] ? " · studied" : "");
+      group.appendChild(sq);
+    }
+
+    // current consecutive streak counting back from today
+    var streak = 0;
+    var cur = new Date(); cur.setHours(0,0,0,0);
+    while(true){
+      var k = cur.getFullYear()+"-"+String(cur.getMonth()+1).padStart(2,"0")+"-"+String(cur.getDate()).padStart(2,"0");
+      if(setStudied[k]){ streak++; cur.setTime(cur.getTime()-DAY); } else break;
+    }
+    document.getElementById("streak-num").textContent = streak;
+    document.getElementById("streak-badge").textContent = streak;
+  }
+
+  /* ---------------- §5 ring + concept matrix ---------------- */
+  function renderRing(){
+    var learned = learnedCount();
+    var total = deck.length;
+    var frac = total ? learned/total : 0;
+    var C = 2*Math.PI*62; // ~389.6
+    var off = C * (1-frac);
+    var ring = document.getElementById("ring-val");
+    ring.setAttribute("stroke-dasharray", C.toFixed(1));
+    ring.setAttribute("stroke-dashoffset", off.toFixed(1));
+    document.getElementById("ring-pct").textContent = Math.round(frac*100)+"%";
+  }
+
+  function renderMatrix(){
+    var wrap = document.getElementById("matrix");
+    wrap.innerHTML = "";
+    var masteredFields = 0;
+    CONCEPTS.forEach(function(field){
+      // cards in this field
+      var ids = [];
+      SEED.forEach(function(c,i){ if(field.cats.indexOf(c.cat)!==-1) ids.push(i); });
+      var totalF = ids.length;
+      var learnedF = ids.filter(function(i){ return deck[i] && deck[i].learned; }).length;
+      var dots = 8;
+      var filled = totalF ? Math.round(learnedF/totalF*dots) : 0;
+      var label, cls="";
+      if(totalF>0 && learnedF===totalF){ label="mastered"; cls="done"; masteredFields++; }
+      else if(learnedF===0){ label="not started"; }
+      else if(learnedF/totalF < 0.5){ label="early"; }
+      else { label="in progress"; }
+
+      var dotHTML = "";
+      for(var d=0; d<dots; d++){ dotHTML += '<i class="'+(d<filled?"on":"")+'"></i>'; }
+      var row = document.createElement("div");
+      row.className = "mrow"+(cls?" "+cls:"");
+      row.innerHTML = '<div class="mn">'+field.name+'</div>'+
+                      '<div class="dots">'+dotHTML+'</div>'+
+                      '<div class="ml">'+label+'</div>';
+      wrap.appendChild(row);
+    });
+    document.getElementById("matrix-mastered").textContent = masteredFields;
+    document.getElementById("matrix-total").textContent = CONCEPTS.length;
+  }
+
+  /* ---------------- §02 program weeks ---------------- */
+  function renderWeeks(){
+    var wrap = document.getElementById("weeks");
+    SYLLABUS.forEach(function(m){
+      var wk = document.createElement("div");
+      wk.className = "wk";
+      var readHTML = m.read.map(function(r){
+        return '<li>'+r[0]+' <span class="src">— '+r[1]+'</span></li>';
+      }).join("");
+      wk.innerHTML =
+        '<div class="wk-head">'+
+          '<div class="wk-no">'+String(m.w).padStart(2,"0")+'<small>Week</small></div>'+
+          '<div class="wk-titles"><h3>'+m.title+'</h3><div class="theme">'+m.theme+'</div></div>'+
+          '<div class="wk-cta">▸</div>'+
+        '</div>'+
+        '<div class="wk-detail"><div class="wk-detail-inner">'+
+          '<div class="wk-row"><span class="lbl">Grammar</span><span class="txt">'+m.grammar+'</span></div>'+
+          '<div class="wk-row"><span class="lbl">Vocab</span><span class="txt">'+m.vocab+'</span></div>'+
+          '<div class="wk-row"><span class="lbl">Project</span><span class="txt"><b>'+m.project+'</b></span></div>'+
+          '<div class="readings"><div class="rl">Readings &amp; resources</div><ul>'+readHTML+'</ul></div>'+
+        '</div></div>';
+      wk.querySelector(".wk-head").addEventListener("click", function(){
+        wk.classList.toggle("open");
+      });
+      wrap.appendChild(wk);
+    });
+  }
+
+  /* ---------------- section collapse ---------------- */
+  function setSecMax(id){
+    var body = document.getElementById(id);
+    if(!body) return;
+    var sec = body.closest(".sec-block");
+    if(sec.classList.contains("collapsed")){ return; }
+    body.style.maxHeight = body.scrollHeight + "px";
+  }
+  function toggleSection(name){
+    var map = {goals:"sec-goals", program:"sec-program"};
+    var sec = document.getElementById(map[name]);
+    var body = document.getElementById("body-"+name);
+    var willCollapse = !sec.classList.contains("collapsed");
+    if(willCollapse){
+      body.style.maxHeight = body.scrollHeight + "px";
+      requestAnimationFrame(function(){ sec.classList.add("collapsed"); body.style.maxHeight="0px"; });
+      if(name==="goals") save(K.first, false);
+    } else {
+      sec.classList.remove("collapsed");
+      body.style.maxHeight = body.scrollHeight + "px";
+      // release to auto after transition so nested week expansion isn't clipped
+      setTimeout(function(){ if(!sec.classList.contains("collapsed")) body.style.maxHeight = "none"; }, 480);
+    }
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("[data-toggle]"), function(h){
+    h.addEventListener("click", function(){ toggleSection(h.getAttribute("data-toggle")); });
+  });
+
+  /* ---------------- header meta ---------------- */
+  function renderHeader(){
+    var d = new Date();
+    var days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    var mons = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    document.getElementById("today-date").textContent =
+      days[d.getDay()]+" "+String(d.getDate()).padStart(2,"0")+" "+mons[d.getMonth()]+" "+d.getFullYear();
+    // derive "current week" from first-open date if we have a study history, else week 1
+    var st = load(K.days, {studied:[]}).studied || [];
+    var wk = 1;
+    if(st.length){
+      st.sort();
+      var first = new Date(st[0]);
+      var diff = Math.floor((d - first)/DAY);
+      wk = Math.min(12, Math.max(1, Math.floor(diff/7)+1));
+    }
+    document.getElementById("wk-now").textContent = String(wk).padStart(2,"0");
+  }
+
+  /* ---------------- reset ---------------- */
+  document.getElementById("reset-btn").addEventListener("click", function(){
+    if(!confirm("Reset the whole tracker? Your deck schedule, streak, recalls and checkpoints will be cleared.")) return;
+    Object.keys(K).forEach(function(k){ localStorage.removeItem(K[k]); });
+    location.reload();
+  });
+
+  /* ---------------- reveal animation on first open ---------------- */
+  function revealSections(){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("revealed"); io.unobserve(e.target); } });
+    }, {threshold:0.15});
+    Array.prototype.forEach.call(document.querySelectorAll(".sec-block"), function(s){ io.observe(s); });
+  }
+
+  /* ---------------- boot ---------------- */
+  function boot(){
+    // first-open logic: goals expanded on first ever open, collapsed after
+    var isFirst = load(K.first, true);
+    renderWeeks();
+    renderCard();
+    renderRecall();
+    renderCheckpoint();
+    renderStreak();
+    renderRing();
+    renderMatrix();
+    renderHeader();
+
+    // set initial section states
+    var goals = document.getElementById("sec-goals");
+    var program = document.getElementById("sec-program"); // stays collapsed (set in markup)
+    if(isFirst){
+      goals.classList.remove("collapsed");
+      setSecMax("body-goals");
+      document.getElementById("body-goals").style.maxHeight = "none";
+      save(K.first, false);
+    } else {
+      // collapse goals into summary bar
+      goals.classList.add("collapsed");
+      document.getElementById("body-goals").style.maxHeight = "0px";
+      // land on dashboard
+      setTimeout(function(){
+        var dash = document.getElementById("sec-dash");
+        if(dash) dash.scrollIntoView({behavior:"smooth", block:"start"});
+      }, 120);
+    }
+    revealSections();
+    document.getElementById("sec-goals").classList.add("revealed");
+  }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
+</script>
+</body>
+</html>
