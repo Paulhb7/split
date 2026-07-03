@@ -135,13 +135,6 @@ const SEALS: Record<string, ReactNode> = {
       <path d="M19 18 L21 24 M26 17 L28 23 M33 16 L35 22" strokeWidth="1.5" />
     </>
   ),
-  genius_bronte: (
-    <>
-      <path d="M13 37 C20 22 30 13 37 11 C36 21 28 31 17 35 Z" />
-      <path d="M18 32 L26 24" />
-      <path d="M11 39 L20 39" />
-    </>
-  ),
   genius_davinci: (
     <>
       <rect x="13" y="19" width="17" height="17" />
@@ -259,36 +252,6 @@ const SEALS: Record<string, ReactNode> = {
       <path d="M9 39 L9 33 M9 39 L15 39" strokeWidth="1.6" />
     </>
   ),
-  // — coaches —
-  coach_diet: (
-    <>
-      <path d="M24 17 C18 13 12 18 13 26 C14 34 19 38 24 35 C29 38 34 34 35 26 C36 18 30 13 24 17 Z" />
-      <path d="M24 17 L25 11" />
-      <path className="dot" d="M25 13 q5 -3 7 1 q-5 2 -7 -1 Z" />
-    </>
-  ),
-  coach_learning: (
-    <>
-      <path className="dot" d="M24 14 L39 20 L24 26 L9 20 Z" />
-      <path d="M16 23 V29 a8 3 0 0 0 16 0 V23" />
-      <path d="M39 20 V31" strokeWidth="1.5" />
-      <circle className="dot" cx="39" cy="32" r="1.6" />
-    </>
-  ),
-  coach_sport: (
-    <>
-      <path d="M16 24 H32" />
-      <path d="M13 18 V30 M17 21 V27" />
-      <path d="M35 18 V30 M31 21 V27" />
-    </>
-  ),
-  coach_cooking: (
-    <>
-      <path d="M16 30 a5 5 0 0 1 -1 -10 a6.5 6.5 0 0 1 18 0 a5 5 0 0 1 -1 10 Z" />
-      <rect x="16" y="30" width="16" height="6" rx="1.5" />
-      <path d="M24 21 V30" strokeWidth="1.4" />
-    </>
-  ),
 };
 
 // Fallback when kind is missing/unknown — a calm concentric ring.
@@ -325,13 +288,12 @@ const EXPERT_HUE: Record<string, string> = {
   // — geniuses —
   genius_davinci: "#e0603c", genius_karl: "#7c8696", genius_gaudi: "#ef7d57",
   genius_wolfgang: "#f2b53a", genius_homer: "#3f6fb0", genius_hitchcock: "#b23a48",
-  genius_bronte: "#9b6a9e", genius_ride: "#3aa0d9", genius_curie: "#39d98a",
+  genius_ride: "#3aa0d9", genius_curie: "#39d98a",
   genius_tesla: "#8b6cff", genius_alfred: "#6b8cae", genius_socrates: "#a3a05a",
   genius_indiana: "#c79a3c", genius_maradona: "#5aa9e6", genius_marcopolo: "#2bbfa0",
   genius_vatel: "#b5543f", genius_machiavelli: "#9e2b3a", genius_moriarty: "#355e7a",
   genius_faust: "#b5462a", genius_hannibal: "#7a2e3a", genius_loki: "#36b37e",
   // — coaches —
-  coach_diet: "#5ec27a", coach_learning: "#6f7bff", coach_sport: "#ff7043", coach_cooking: "#e0773c",
 };
 function hueFor(seed?: string, kind?: ExpertKind): string | undefined {
   if (seed && EXPERT_HUE[seed]) return EXPERT_HUE[seed];
