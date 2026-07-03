@@ -108,14 +108,14 @@ export function QuestionsPanel({ form, busy, onSubmit }: Props) {
       </div>
 
       <div className="qf-foot">
-        <span className="qf-auto"><span className="qf-pulse" />Se valide tout seul à la fin du minuteur</span>
+        <span className="qf-auto"><span className="qf-pulse" />Auto-continues when the timer ends</span>
         <span className="qf-spacer" />
         <button className="qf-skip" onClick={() => submit("skip")} disabled={busy}>
-          Tout passer
+          Skip all
           {!busy && <span className={"qf-timer" + (remaining <= 20 ? " warn" : "")}>{countdown}</span>}
         </button>
         <button className="qf-cont" onClick={() => submit("continue")} disabled={busy || !canContinue}>
-          {form.submitLabel || "Continuer"}
+          {form.submitLabel || "Continue"}
         </button>
       </div>
     </div>
@@ -202,5 +202,5 @@ function requiredSatisfied(form: QuestionForm, answers: Answers): boolean {
 
 // Trim a CSS font stack to its first family for the card's "body" label.
 function shortFont(stack: string): string {
-  return (stack.split(",")[0] ?? "").replace(/['"]/g, "").trim() || "corps";
+  return (stack.split(",")[0] ?? "").replace(/['"]/g, "").trim() || "body";
 }

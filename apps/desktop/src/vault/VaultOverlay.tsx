@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import type { Editor } from "@tiptap/react";
 import { MarkdownEditor } from "../conversation/MarkdownEditor";
+import { Icon } from "../shared/ui";
 import "./vault.css";
 
 interface VaultNode {
@@ -35,15 +36,15 @@ interface FilePayload {
   tooLarge?: boolean;
 }
 
-// "3 j" / "5 sem" age chip + a stale flag past three weeks — memories are
+// "3d" / "5w" age chip + a stale flag past three weeks — memories are
 // point-in-time observations, the chip is the "verify before trusting" cue.
 function ageOf(mtime: number): { label: string; stale: boolean } {
   if (!mtime) return { label: "", stale: false };
   const days = Math.max(0, Math.floor(Date.now() / 1000 - mtime) / 86400);
-  if (days < 1) return { label: "auj.", stale: false };
-  if (days < 7) return { label: `${Math.floor(days)} j`, stale: false };
+  if (days < 1) return { label: "today", stale: false };
+  if (days < 7) return { label: `${Math.floor(days)}d`, stale: false };
   const weeks = Math.floor(days / 7);
-  return { label: `${weeks} sem`, stale: days > 21 };
+  return { label: `${weeks}w`, stale: days > 21 };
 }
 
 function TreeRow({
@@ -80,7 +81,7 @@ function TreeRow({
           {node.dir ? "▸" : ""}
         </span>
         <span className="vault-ic">
-          {node.dir ? (open ? "📂" : "🗂") : isIndex ? "🧭" : node.name.endsWith(".md") ? "🧠" : "📄"}
+          <Icon name={node.dir ? "folder" : isIndex ? "compass" : node.name.endsWith(".md") ? "file-text" : "file"} size={13} />
         </span>
         <span className="vault-name">{node.name}</span>
         {!node.dir && age.label && (
@@ -211,7 +212,7 @@ export function VaultOverlay({ onClose }: { onClose: () => void }) {
     if (!vault) return;
     const today = new Date().toISOString().slice(0, 10);
     const name = window.prompt(
-      "Nouveau fichier (chemin relatif au vault)",
+      "New file (path relative to the vault)",
       `notes/${today}-note.md`,
     );
     if (!name) return;
@@ -235,7 +236,7 @@ export function VaultOverlay({ onClose }: { onClose: () => void }) {
   }, [vault, refreshTree]);
 
   const createProject = useCallback(async () => {
-    const slug = window.prompt("Slug du nouveau projet (projects/<slug>/)", "");
+    const slug = window.prompt("New project slug (projects/<slug>/)", "");
     if (!slug) return;
     try {
       await invoke("vault_create", { rel: `projects/${slug.trim()}`, dir: true });
@@ -248,7 +249,7 @@ export function VaultOverlay({ onClose }: { onClose: () => void }) {
 
   const deleteSelected = useCallback(async () => {
     if (!sel) return;
-    if (!window.confirm(`Supprimer ${sel.rel} ? (définitif)`)) return;
+    if (!window.confirm(`Delete ${sel.rel}? (permanent)`)) return;
     try {
       await invoke("vault_delete", { rel: sel.rel });
       setSel(null);
@@ -263,7 +264,7 @@ export function VaultOverlay({ onClose }: { onClose: () => void }) {
     <div className="vault-overlay">
       <div className="vault-rail">
         <div className="vault-rail-head">
-          <span className="vault-title">🗃️ Vault</span>
+          <span className="vault-title"><Icon name="vault" size={14} />Vault</span>
           <span className="vault-root" title={vault?.root}>{rootLabel}</span>
         </div>
         <div className="vault-tree">
@@ -280,11 +281,11 @@ export function VaultOverlay({ onClose }: { onClose: () => void }) {
           ))}
         </div>
         <div className="vault-rail-foot">
-          <button className="vault-foot-btn" onClick={() => void createNote()} title="Créer un fichier dans le vault">
+          <button className="vault-foot-btn" onClick={() => void createNote()} title="Create a file in the vault">
             ＋ note
           </button>
-          <button className="vault-foot-btn" onClick={() => void createProject()} title="Créer projects/<slug>/ (MEMORY.md seedé)">
-            ＋ projet
+          <button className="vault-foot-btn" onClick={() => void createProject()} title="Create projects/<slug>/ (MEMORY.md seeded)">
+            ＋ project
           </button>
           <button
             className="vault-foot-btn"
@@ -314,12 +315,12 @@ export function VaultOverlay({ onClose }: { onClose: () => void }) {
                   {saved ? "Saved ✓" : "Save"}
                 </button>
               )}
-              <button className="vault-close" onClick={() => void deleteSelected()} title="Supprimer ce fichier">🗑</button>
+              <button className="vault-close" onClick={() => void deleteSelected()} title="Delete this file" aria-label="Delete this file"><Icon name="trash" size={13} /></button>
             </>
           ) : (
             <div className="vault-head-meta">
               <b>Vault</b>
-              <small>tout ce que tes experts savent et produisent</small>
+              <small>everything your experts know and produce</small>
             </div>
           )}
           <button className="vault-close" onClick={onClose} title="Close (Esc)">✕</button>
@@ -330,8 +331,8 @@ export function VaultOverlay({ onClose }: { onClose: () => void }) {
           {!err && sel && !payload && <div className="vault-empty">…</div>}
           {!err && !sel && (
             <div className="vault-empty">
-              Choisis un fichier dans l'arbre — l'index d'un projet, un fait,
-              un livrable.
+              Pick a file in the tree — a project's index, a fact,
+              a deliverable.
             </div>
           )}
           {!err && sel && payload?.kind === "text" && isMd && (
@@ -377,12 +378,12 @@ export function VaultOverlay({ onClose }: { onClose: () => void }) {
           )}
           {!err && sel && payload?.kind === "binary" && (
             <div className="vault-empty">
-              {payload.tooLarge ? "Fichier trop volumineux pour l'aperçu." : "Aperçu indisponible pour ce format."}
+              {payload.tooLarge ? "File too large to preview." : "No preview for this format."}
               <button
                 className="vault-foot-btn"
                 onClick={() => invoke("reveal_artifact", { path: sel.path })}
               >
-                Ouvrir avec l'app par défaut
+                Open with the default app
               </button>
             </div>
           )}
