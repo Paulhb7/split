@@ -57,14 +57,27 @@ function lowEnergy(freq: Uint8Array): number {
   return n ? Math.sqrt(sum / n) / 255 : 0;
 }
 
-// Bar colour by normalized position (0 inner/bass .. 1 outer/high).
-function barColor(pos: number, v: number): string {
+// The canvas can't read CSS variables — resolve the skin's --brand once per
+// mount (parsed to rgb for alpha compositing) so the spectrum tracks the
+// active skin instead of hardcoding Classic copper. Falls back to copper.
+type Rgb = [number, number, number];
+function cssRgb(el: HTMLElement, name: string, fallback: Rgb): Rgb {
+  const v = getComputedStyle(el).getPropertyValue(name).trim().replace("#", "");
+  const m = /^([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(v);
+  if (!m) return fallback;
+  const h = m[1].length === 3 ? m[1].split("").map((c) => c + c).join("") : m[1];
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+
+// Bar colour by normalized position (0 inner/bass .. 1 outer/high) — the
+// brand accent, drifting cooler toward the highs.
+function barColor(pos: number, v: number, [br, bg, bb]: Rgb): string {
   const a = 0.35 + v * 0.65;
-  if (pos < 0.55) return `rgba(217,119,87,${a})`;
+  if (pos < 0.55) return `rgba(${br},${bg},${bb},${a})`;
   const k = (pos - 0.55) / 0.45;
-  const r = Math.round(217 - 70 * k);
-  const g = Math.round(119 - 30 * k);
-  const b = Math.round(87 + 30 * k);
+  const r = Math.round(br - 70 * k);
+  const g = Math.round(bg - 30 * k);
+  const b = Math.round(bb + 30 * k);
   return `rgba(${r},${g},${b},${a})`;
 }
 
@@ -89,6 +102,7 @@ function renderSpectrum(
   energy: number,
   peaks: Float32Array,
   glow: HTMLDivElement | null,
+  brand: Rgb,
 ): void {
   g.clearRect(0, 0, cssW, cssH);
   const cx = cssW / 2;
@@ -107,13 +121,13 @@ function renderSpectrum(
     if (v > peaks[i]) peaks[i] = v;
     else peaks[i] = Math.max(v, peaks[i] - 0.012); // slow falloff
 
-    const col = barColor(pos, v);
+    const col = barColor(pos, v, brand);
 
     for (const dir of [1, -1]) {
       const x = cx + dir * (i * (barW + gap)) + (dir === -1 ? -barW : 0);
       g.fillStyle = col;
       if (pos < 0.5 && v > 0.45) {
-        g.shadowColor = `rgba(217,119,87,${v * 0.6})`;
+        g.shadowColor = `rgba(${brand[0]},${brand[1]},${brand[2]},${v * 0.6})`;
         g.shadowBlur = 10 * v;
       } else {
         g.shadowBlur = 0;
@@ -180,6 +194,8 @@ export function SpectrePlayer({ src, name, metaText, onReveal }: Props) {
   const smoothERef = useRef(0);
   const rafRef = useRef(0);
   const draggingRef = useRef(false);
+  // Skin accent for the canvas bars — resolved from --brand on mount.
+  const brandRef = useRef<Rgb>([217, 119, 87]);
 
   const reduceMotion =
     typeof window !== "undefined" &&
@@ -208,7 +224,7 @@ export function SpectrePlayer({ src, name, metaText, onReveal }: Props) {
     const g = ctx2dRef.current;
     if (!g) return;
     const fr = synthFrame();
-    renderSpectrum(g, cssWRef.current, cssHRef.current, (i) => fr[i], 0.18, peaksRef.current, glowRef.current);
+    renderSpectrum(g, cssWRef.current, cssHRef.current, (i) => fr[i], 0.18, peaksRef.current, glowRef.current, brandRef.current);
   }
 
   function position(): number {
@@ -252,6 +268,7 @@ export function SpectrePlayer({ src, name, metaText, onReveal }: Props) {
             smoothERef.current,
             peaksRef.current,
             glowRef.current,
+            brandRef.current,
           );
       }
       paintTime(pos, dur);
@@ -439,6 +456,7 @@ export function SpectrePlayer({ src, name, metaText, onReveal }: Props) {
 
   // ---- mount / unmount ---------------------------------------------------
   useEffect(() => {
+    if (vizRef.current) brandRef.current = cssRgb(vizRef.current, "--brand", brandRef.current);
     sizeCanvas();
     drawStatic();
     paintTime(0, 0);
@@ -482,7 +500,7 @@ export function SpectrePlayer({ src, name, metaText, onReveal }: Props) {
           <button className="art-media-link" onClick={onReveal}>
             open in default app
           </button>
-          {" · visualiseur indisponible"}
+          {" · visualizer unavailable"}
         </div>
       </div>
     );
@@ -490,12 +508,12 @@ export function SpectrePlayer({ src, name, metaText, onReveal }: Props) {
 
   return (
     <div className="art-media art-media-spx">
-      <div className={`spx${playing ? " playing" : ""}${loading ? " loading" : ""}`} aria-label="Lecteur audio Spectre">
+      <div className={`spx${playing ? " playing" : ""}${loading ? " loading" : ""}`} aria-label="Spectre audio player">
         <div className="spx-head">
           <div className="spx-sigil" aria-hidden="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M12 4 L20 9 L12 12 L4 9 Z" fill="#d9b06a" opacity=".9" />
-              <path d="M12 12 L20 15 L12 20 L4 15 Z" fill="#d97757" />
+              <path d="M12 12 L20 15 L12 20 L4 15 Z" fill="var(--brand)" />
             </svg>
           </div>
           <div className="spx-titles">
@@ -506,7 +524,7 @@ export function SpectrePlayer({ src, name, metaText, onReveal }: Props) {
           </div>
           <div className="spx-status">
             <span className="spx-dot" />
-            <span>{loading ? "décodage…" : playing ? "en lecture" : "spectre"}</span>
+            <span>{loading ? "decoding…" : playing ? "playing" : "spectre"}</span>
           </div>
         </div>
 
@@ -515,7 +533,7 @@ export function SpectrePlayer({ src, name, metaText, onReveal }: Props) {
           ref={vizRef}
           role="slider"
           tabIndex={0}
-          aria-label="Spectre audio — parcourir la lecture"
+          aria-label="Audio spectrum — seek playback"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={0}
@@ -541,7 +559,7 @@ export function SpectrePlayer({ src, name, metaText, onReveal }: Props) {
           <button
             className="spx-play"
             onClick={toggle}
-            aria-label={playing ? "Pause" : "Lecture"}
+            aria-label={playing ? "Pause" : "Play"}
             aria-pressed={playing}
           >
             {playing ? (
@@ -568,7 +586,7 @@ export function SpectrePlayer({ src, name, metaText, onReveal }: Props) {
               ref={seekRef}
               role="slider"
               tabIndex={0}
-              aria-label="Position de lecture"
+              aria-label="Playback position"
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={0}
@@ -587,7 +605,7 @@ export function SpectrePlayer({ src, name, metaText, onReveal }: Props) {
           <button
             className={`spx-mute${muted ? " muted" : ""}`}
             onClick={toggleMute}
-            aria-label={muted ? "Activer le son" : "Couper le son"}
+            aria-label={muted ? "Unmute" : "Mute"}
             aria-pressed={muted}
           >
             {muted ? (
