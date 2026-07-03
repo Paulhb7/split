@@ -58,6 +58,12 @@ export interface Expert {
    * REPLACE the starter chips; experts without them fall back to `starters`.
    * Authoritative copy lives in experts.json; the frontend only displays. */
   examples?: DeliverableExample[];
+  /** Dark genius — a hidden, talk-first figure summoned only from the secret
+   * Cabinet Noir (never in the roster / gallery / composer / cast). When focused,
+   * the atelier goes black-&-gold and the deliverable stays sealed until the
+   * conversation earns it. `isActiveExpert` excludes these so they never leak
+   * into the normal surfaces; `isDarkExpert` selects them for the Cabinet Noir. */
+  dark?: boolean;
 }
 
 /** One sample deliverable shown as a card on the atelier welcome. */
@@ -73,6 +79,11 @@ export interface DeliverableExample {
   desc: string;
   /** Launch-ready instruction filled into the composer on click. */
   prompt: string;
+  /** Piece folder under `config/library/<slug>/` (e.g. "01-agentic-ai") when a
+   * real showcase deliverable backs this card — the Gallery then swaps the
+   * faux-render SVG for the piece's thumbnail and offers "open the real piece"
+   * (see `library_index` in lib.rs). Absent → SVG fallback, no viewer. */
+  lib?: string;
 }
 
 /** True when the expert is hidden from the active picker (composer, @-mention,
@@ -82,23 +93,20 @@ export const isNextExpert = (e: Expert | undefined): boolean =>
 
 export type ExpertMap = Record<string, Expert>;
 
-// Slugs hidden from the classic single-expert UI surfaces (@-picker, onboarding
-// cabinet). They still exist in the registry — Teams mode picks them up
-// directly. Toscanini (Chief of Staff) is the team conductor; it has no role
-// when there's only one expert in the room.
-const TEAMS_ONLY = new Set<string>(["toscanini"]);
-export const isClassicExpert = (slug: string) => !TEAMS_ONLY.has(slug);
-
-/** Whether an expert is fully active — not Teams-only AND not deferred to a
- * future version via `status: "next"`. The composer picker, @-mention,
- * default-expert resolution and onboarding roster all use this. The Cabinet
- * uses `isClassicExpert` directly so deferred experts still render (in their
- * own "Coming next" section). */
+/** Whether an expert is fully active — i.e. not deferred to a future version
+ * via `status: "next"`. The composer picker, @-mention, default-expert
+ * resolution and onboarding roster all use this. The Cabinet reads the registry
+ * directly so deferred experts still render (in their own "Coming next"
+ * section). */
 export const isActiveExpert = (experts: ExpertMap, slug: string): boolean =>
-  isClassicExpert(slug) && !isNextExpert(experts[slug]);
+  !isNextExpert(experts[slug]) && !isDarkExpert(experts[slug]);
+
+/** Dark genius — hidden from every normal surface, summoned only from the
+ * Cabinet Noir. The one place that selects FOR them instead of against them. */
+export const isDarkExpert = (e: Expert | undefined): boolean => !!e && !!e.dark;
 
 // Fallback roster if `list_experts` fails (matches experts.json order/defaults).
-// Slug convention: supers stay unprefixed (`consultant`, `scientist`, `toscanini`),
+// Slug convention: supers stay unprefixed (`consultant`, `scientist`, `engineer`),
 // genius agents carry the `genius_` prefix (`genius_davinci`, `genius_wolfgang`,
 // `genius_alfred`), coaches the `coach_` prefix. The `category` field stays
 // authoritative for programmatic checks; the prefix is for visual grouping.

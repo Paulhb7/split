@@ -8,7 +8,7 @@ description: "The portable Rust engine, the native ACP runner, and what a sessio
 `core-rs/` is the Rust crate the desktop shell depends on — pure stdlib + serde +
 chrono, no Tauri, no ACP SDK. It resolves the layout (`REPO_ROOT`, `CONFIG_DIR`,
 `VAR_DIR`, `WORKSPACE`, overridable per session via `SPLIT_WORKSPACE`) and exposes
-the engine surface in four modules:
+the engine surface in five modules:
 
 | Module | Responsibility |
 |---|---|
@@ -16,8 +16,10 @@ the engine surface in four modules:
 | `archive` | per-session `events.ndjson` + `meta.json` (with `acp_sid` for resume) |
 | `permissions` | allow / ask / deny with `DEFAULT_DENY` guards + glob match |
 | `harness_config` | Hermes / OpenCode model-picker translation |
+| `detection` | machine scan — which harness CLIs are really installed |
 
-Tested via `cargo test --workspace` (15 unit tests).
+Tested via `cargo test --workspace` (the core-rs unit tests + the runner
+integration suite).
 
 ## What a session is
 

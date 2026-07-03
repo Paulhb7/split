@@ -19,7 +19,12 @@ describe("applyEvent", () => {
     s = applyEvent(s, { type: "status", status: "idle" });
     expect(s.status).toBe("idle");
     expect(s.answer).toBe(""); // cleared after commit
-    expect(s.thread[s.thread.length - 1]).toEqual({ role: "agent", text: "the answer" });
+    const last = s.thread[s.thread.length - 1];
+    // The committed agent turn carries the activity fold (steps + duration)
+    // beside the text; steps is undefined when the turn ran no tools.
+    expect(last).toMatchObject({ role: "agent", text: "the answer" });
+    expect(last.steps).toBeUndefined();
+    expect(typeof last.tookMs).toBe("number");
   });
 
   it("accumulates streamed thoughts and commits them before the answer on idle", () => {
@@ -33,8 +38,9 @@ describe("applyEvent", () => {
     expect(s.thoughts).toBe("");
     expect(s.answer).toBe("");
     const last2 = s.thread.slice(-2);
+    // The thought turn commits as-is; the agent turn rides the activity fold.
     expect(last2[0]).toEqual({ role: "thought", text: "let me think…" });
-    expect(last2[1]).toEqual({ role: "agent", text: "the answer" });
+    expect(last2[1]).toMatchObject({ role: "agent", text: "the answer" });
   });
 
   it("does not append an empty agent turn when there is no answer", () => {
@@ -121,5 +127,38 @@ describe("applyEvent", () => {
     s = applyEvent(s, { type: "artifact", rel: "score/score.mp3", path: "/ws/score/score.mp3", op: "created", size: 999, mtime: 3 });
     expect(s.artifacts.map((a) => a.rel)).toEqual(["trailer.mp4", "score/score.mp3"]);
     expect(s.activeArtifact).toBe("score/score.mp3");
+  });
+
+  it("lifts a streamed <question-form> onto questionForm and strips it from the committed text", () => {
+    let s = base();
+    s = applyEvent(s, { type: "say", text: "Got it — pitch deck.\n" });
+    expect(s.questionForm).toBeNull(); // no form yet
+    s = applyEvent(s, {
+      type: "say",
+      text: `<question-form id="discovery" title="Brief">{"questions":[{"id":"angle","label":"Angle ?","type":"radio","options":["A","B"],"required":true}]}</question-form>`,
+    });
+    // parsed live off the streaming answer
+    expect(s.questionForm).not.toBeNull();
+    expect(s.questionForm!.id).toBe("discovery");
+    expect(s.questionForm!.questions[0]).toMatchObject({ id: "angle", required: true });
+
+    s = applyEvent(s, { type: "status", status: "idle" });
+    // committed agent turn keeps the prose, not the markup
+    const last = s.thread[s.thread.length - 1]!;
+    expect(last).toMatchObject({ role: "agent", text: "Got it — pitch deck." });
+    expect(last.text).not.toContain("question-form");
+    // the form persists in the pane until the boss answers
+    expect(s.questionForm!.id).toBe("discovery");
+  });
+
+  it("commits no empty agent turn for a form-only answer", () => {
+    const before = base();
+    let s = applyEvent(before, {
+      type: "say",
+      text: `<question-form id="d">{"questions":[{"id":"x","label":"X","type":"text"}]}</question-form>`,
+    });
+    s = applyEvent(s, { type: "status", status: "idle" });
+    expect(s.thread).toEqual(before.thread); // no bubble — visible text is empty
+    expect(s.questionForm).not.toBeNull(); // but the form is live in the pane
   });
 });

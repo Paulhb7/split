@@ -11,9 +11,9 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
-use split_desktop_lib::runner::{self, EventSink, RunnerInput, WireEvent, PENDING_PERMS_RUST};
 use agent_client_protocol::schema::{McpServer, McpServerStdio};
 use serde_json::Value;
+use split_desktop_lib::runner::{self, EventSink, RunnerInput, WireEvent, PENDING_PERMS_RUST};
 use tokio::sync::mpsc;
 use tokio::time::timeout;
 
@@ -239,6 +239,46 @@ async fn happy_turn_streams_vevts_injects_persona_once_and_archives() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn stop_interrupts_in_flight_turn() {
+    // The `slow` agent parks the turn after streaming a thought, until it's
+    // asked to cancel — so Stop must interrupt a genuinely in-flight prompt.
+    let mut s = start_session("slow", "slow", Vec::new());
+    let _ready = s.next_vevt("ready").await;
+
+    s.send(RunnerInput::Turn("take your time".to_string()));
+    // Confirm the turn is actually running before we interrupt it.
+    let running = s.next_vevt("status").await;
+    assert_eq!(running["status"], "running");
+    let thought = s.next_vevt("thought").await;
+    assert_eq!(thought["text"], "thinking...");
+
+    // Hit Stop while the prompt is still outstanding. The runner must observe
+    // it mid-turn (not only after the prompt resolves), cancel the agent, and
+    // flip the turn to idle/Cancelled.
+    s.send(RunnerInput::Stop);
+
+    let idle = s.next_vevt("status").await;
+    assert_eq!(
+        idle["status"], "idle",
+        "Stop should flip the in-flight turn to idle"
+    );
+    assert_eq!(
+        idle["stop"], "Cancelled",
+        "the interrupted turn must report Cancelled, not EndTurn"
+    );
+
+    let (saw_exit, logs) = s.drain_to_close().await;
+    assert!(saw_exit, "Stop must end with an exit event");
+    assert!(
+        logs.iter()
+            .any(|l| l.contains("fake-agent: cancel received")),
+        "agent should have received session/cancel; logs: {logs:?}"
+    );
+
+    let _ = std::fs::remove_dir_all(&s.base);
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn auth_required_stashes_turn_and_replays_after_auth() {
     let mut s = start_session("auth", "auth", Vec::new());
     s.next_vevt("ready").await;
@@ -322,6 +362,40 @@ async fn permission_flow_allow_deny_and_session_scope() {
     );
     assert!(
         says(&vevts).contains("perm:allowed:opt-allow"),
+        "got: {}",
+        says(&vevts)
+    );
+
+    s.send(RunnerInput::Stop);
+    s.drain_to_close().await;
+    let _ = std::fs::remove_dir_all(&s.base);
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn session_scoped_deny_skips_the_dialog() {
+    let mut s = start_session("permdeny", "perm", Vec::new());
+    s.next_vevt("ready").await;
+
+    // ── turn 1: deny for this session ────────────────────────────────────
+    s.send(RunnerInput::Turn("t1".to_string()));
+    let req = s.next_vevt("permission_request").await;
+    reply_permission(req["id"].as_str().unwrap(), None, "session");
+    let (vevts, _) = s.drain_turn().await;
+    assert!(
+        says(&vevts).contains("perm:denied"),
+        "got: {}",
+        says(&vevts)
+    );
+
+    // ── turn 2: same tool — auto-denied, no dialog ───────────────────────
+    s.send(RunnerInput::Turn("t2".to_string()));
+    let (vevts, _) = s.drain_turn().await;
+    assert!(
+        !vevts.iter().any(|v| v["type"] == "permission_request"),
+        "session-scoped deny must skip the dialog"
+    );
+    assert!(
+        says(&vevts).contains("perm:denied"),
         "got: {}",
         says(&vevts)
     );

@@ -4,8 +4,11 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { H } from "../shared/harnesses";
 import { useSmoothText, stabilizeMarkdown } from "../shared/useSmoothText";
+import { visibleAnswer } from "../shared/questionForm";
+import { QuestionsPanel, type SubmitSource } from "./QuestionsPanel";
 import { useExperts } from "../shared/util";
-import { Logo } from "../shared/ui";
+import { fitBrief } from "../shared/useComposer";
+import { Logo, Icon, type IconName } from "../shared/ui";
 import { Crest } from "../shared/Crest";
 import { TurnSpinner } from "../shared/TurnSpinner";
 import type { Session, Step } from "../shared/models";
@@ -22,22 +25,32 @@ export interface PeerAlert {
   reason: "auth" | "permission";
 }
 
-// Emoji by extension for the promoted deliverable card. Keeps the card from
-// reading as a generic file row — a deck looks like a deck, data like data.
-function artIcon(rel: string): string {
+// Stroke icon by extension for the promoted deliverable card. Keeps the card
+// from reading as a generic file row — a deck looks like a deck, data like data.
+function artIcon(rel: string): IconName {
   const ext = rel.slice(rel.lastIndexOf(".") + 1).toLowerCase();
-  if (ext === "html" || ext === "htm") return "🖥️";
-  if (ext === "md" || ext === "markdown" || ext === "txt") return "📝";
-  if (ext === "csv" || ext === "tsv" || ext === "json") return "📊";
-  if (["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext)) return "🖼️";
-  if (ext === "pdf") return "📄";
-  return "📦";
+  if (ext === "html" || ext === "htm") return "monitor";
+  if (ext === "md" || ext === "markdown" || ext === "txt") return "file-text";
+  if (ext === "csv" || ext === "tsv" || ext === "json") return "chart";
+  if (["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext)) return "image";
+  if (ext === "pdf") return "file";
+  return "box";
 }
 
 function humanMs(ms: number): string {
   const s = Math.round(ms / 1000);
   if (s < 60) return `${s}s`;
   return `${Math.floor(s / 60)}m${String(s % 60).padStart(2, "0")}`;
+}
+
+// Step status → glyph + tone. The wire carries the Debug-formatted ACP
+// ToolCallStatus (Pending / InProgress / Completed / Failed) or "" on updates
+// that omit it — anything unrecognised falls back to the neutral pending mark.
+function stepGlyph(status: string): { glyph: string; cls: string } {
+  if (status === "Completed") return { glyph: "✓", cls: "" };
+  if (status === "Failed") return { glyph: "✕", cls: " bad" };
+  if (status === "InProgress") return { glyph: "●", cls: " run" };
+  return { glyph: "○", cls: " wait" };
 }
 
 // Collapsed "what it did" fold — the secondary layer. Summarises the turn's
@@ -54,13 +67,16 @@ function ActivityFold({ steps, tookMs }: { steps: Step[]; tookMs?: number }) {
         {tookMs != null && <span className="n">{humanMs(tookMs)}</span>}
       </summary>
       <div className="didfold-body">
-        {steps.map((st, i) => (
-          <div key={i} className="didfold-step">
-            <span className="k">✓</span>
-            <span className="didfold-step-t">{st.title}</span>
-            {st.status ? <span className="didfold-step-s">{st.status}</span> : null}
-          </div>
-        ))}
+        {steps.map((st, i) => {
+          const g = stepGlyph(st.status);
+          return (
+            <div key={i} className="didfold-step">
+              <span className={"k" + g.cls}>{g.glyph}</span>
+              <span className="didfold-step-t">{st.title}</span>
+              {st.status ? <span className="didfold-step-s">{st.status}</span> : null}
+            </div>
+          );
+        })}
       </div>
     </details>
   );
@@ -74,7 +90,7 @@ function DeliverableCard({ a, onOpen }: { a: Artifact; onOpen: () => void }) {
   const name = a.rel.split("/").pop() || a.rel;
   return (
     <button className="deliv" onClick={onOpen} title={a.path}>
-      <span className="deliv-ic">{artIcon(a.rel)}</span>
+      <span className="deliv-ic"><Icon name={artIcon(a.rel)} size={17} /></span>
       <span className="deliv-meta">
         <span className="deliv-t">{name}</span>
         <span className="deliv-s">{a.op} · {a.rel}</span>
@@ -115,7 +131,7 @@ export function Conversation(props: {
   session: Session;
   experts: ReturnType<typeof useExperts>;
   value: string;
-  inputRef: React.RefObject<HTMLInputElement | null>;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
   slashQuery: string | null;
   chips: React.ReactNode;
   onBack: () => void;
@@ -129,6 +145,9 @@ export function Conversation(props: {
   onInputChange: (v: string, cursor: number | null) => void;
   onKey: (e: React.KeyboardEvent) => void;
   onReply: () => void;
+  // The boss answered the inline discovery form (compact posture). Absent in
+  // the atelier, where the right pane's QuestionsPanel owns the form.
+  onAnswerForm?: (answers: Record<string, string | string[]>, source: SubmitSource) => void;
   // Opens the native file picker → pending attachment (📎 paperclip).
   onAttach: () => void;
   onPickCommand: (name: string) => void;
@@ -150,19 +169,29 @@ export function Conversation(props: {
     session: focused, experts, value, inputRef, slashQuery, chips,
     onBack, onStop, onClose, onAuth, onPermission,
     godMode, onToggleGodMode,
-    onCancelQueued, onInputChange, onKey, onReply, onAttach, onPickCommand, onPickArtifact,
+    onCancelQueued, onInputChange, onKey, onReply, onAnswerForm, onAttach, onPickCommand, onPickArtifact,
     expanded, onTogglePosture, peers, onFocusPeer,
   } = props;
   // Scope persistence for the next permission decision (drives both Allow and
   // Deny — you pick how long the decision sticks, then allow or deny once).
   const [permScope, setPermScope] = useState<"once" | "session" | "always">("session");
+  // The header's overflow menu (posture toggle + God Mode). Keeps the header to
+  // two visible affordances — the ⋯ menu and the close/stop control.
+  const [headMenu, setHeadMenu] = useState(false);
 
   // Typewriter buffer: the wire's bursty chunks accumulate in
   // `answer`/`thoughts`; what we render is the smoothed reveal. Flushed
   // instantly when the turn ends (status leaves "running").
   const streaming = focused.status === "running";
-  const smoothAnswer = useSmoothText(focused.answer, streaming, focused.id);
+  // Strip any `<question-form>` markup from the live stream — it renders in the
+  // atelier panel, not the thread (committed turns are already stripped at the
+  // reducer's idle commit).
+  const smoothAnswer = useSmoothText(visibleAnswer(focused.answer), streaming, focused.id);
   const smoothThoughts = useSmoothText(focused.thoughts, streaming, focused.id);
+
+  // Re-fit the auto-growing reply textarea on every edit AND on mount (the
+  // draft is shared with the home composer, so it can arrive multi-line).
+  useEffect(() => fitBrief(inputRef.current), [value, inputRef]);
 
   const threadRef = useRef<HTMLDivElement>(null);
   const lastSessionRef = useRef<string | null>(null);
@@ -184,29 +213,54 @@ export function Conversation(props: {
   return (
     <div className="conv">
       <div className="conv-head">
-        <button className="iconbtn" onClick={onBack} title="Back">‹</button>
+        {/* Back — compact only. In the atelier the left rail navigates. */}
+        {!expanded && <button className="iconbtn" onClick={onBack} title="Back">‹</button>}
         <Crest kind={experts[focused.expertSlug]?.kind} seed={focused.expertSlug} size={38} />
-        <div>
-          <div className="conv-title">@{focused.expertLabel}{experts[focused.expertSlug]?.role ? <span className="conv-role"> · {experts[focused.expertSlug]?.role}</span> : null}</div>
-          <div className="conv-on">on <Logo id={focused.harness} size={13} /><b>{H[focused.harness]?.label || focused.harness}</b> · {focused.status}</div>
+        {/* Two levels: L1 identity (name + live status dot), L2 a calm mono
+            meta line — role · harness (said once, here) · connections. */}
+        <div className="who">
+          <div className="conv-l1">
+            <span className="conv-title">@{focused.expertLabel}</span>
+            <span className={"conv-dot " + focused.status} title={focused.status} />
+          </div>
+          <div className="conv-on">
+            {experts[focused.expertSlug]?.role && <span>{experts[focused.expertSlug]?.role}</span>}
+            {experts[focused.expertSlug]?.role && <span className="sep">·</span>}
+            <span className="conv-engine"><Logo id={focused.harness} size={12} /><b>{H[focused.harness]?.label || focused.harness}</b></span>
+            <ToolAuthChips skills={experts[focused.expertSlug]?.skills} />
+          </div>
         </div>
-        <span className="spacer" />
-        <ToolAuthChips skills={experts[focused.expertSlug]?.skills} />
-        <button
-          className={"iconbtn" + (expanded ? " on" : "")}
-          onClick={onTogglePosture}
-          title={expanded ? "Back to compact view" : "Open in the atelier (side by side)"}
-        >{expanded ? "⊟" : "⊡"}</button>
-        <button
-          className={"iconbtn" + (godMode ? " on" : "")}
-          onClick={onToggleGodMode}
-          title={godMode ? "God Mode ON — every tool permission is auto-approved. Click to disable." : "God Mode OFF — click to auto-approve every tool permission."}
-        >⚡</button>
-        {focused.status === "running" ? (
-          <button className="iconbtn" onClick={() => onStop(focused.id)} title="Stop">■</button>
-        ) : focused.status !== "ended" ? (
-          <button className="iconbtn" onClick={onClose} title="Close">✕</button>
-        ) : null}
+        <div className="conv-acts">
+          <div className="skin-wrap">
+            <button className="iconbtn" onClick={() => setHeadMenu((v) => !v)} title="More — layout, permissions" aria-label="More">⋯</button>
+            {headMenu && (
+              <>
+                <div className="skin-scrim" onClick={() => setHeadMenu(false)} />
+                <div className="skin-menu" role="menu">
+                  <button className="more-item" onClick={() => { setHeadMenu(false); onTogglePosture(); }} role="menuitem">
+                    <span className="more-ic">{expanded ? "⊟" : "⊡"}</span>
+                    <span className="more-meta">
+                      <b>{expanded ? "Compact view" : "Open in the atelier"}</b>
+                      <small>{expanded ? "back to the floating bar" : "side-by-side workspace"}</small>
+                    </span>
+                  </button>
+                  <button className="more-item" onClick={() => { setHeadMenu(false); onToggleGodMode(); }} role="menuitem">
+                    <span className="more-ic"><Icon name="bolt" size={13} /></span>
+                    <span className="more-meta">
+                      <b>God Mode · {godMode ? "on" : "off"}</b>
+                      <small>auto-approve every tool permission</small>
+                    </span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+          {focused.status === "running" ? (
+            <button className="iconbtn" onClick={() => onStop(focused.id)} title="Stop">■</button>
+          ) : focused.status !== "ended" ? (
+            <button className="iconbtn" onClick={onClose} title="Close">✕</button>
+          ) : null}
+        </div>
       </div>
 
       <div className="thread" ref={threadRef}>
@@ -249,18 +303,22 @@ export function Conversation(props: {
           const isAgent = turn.role !== "user" && turn.role !== "thought";
           return (
             <div key={i} className={"turn " + turn.role}>
-              <div className="turn-head">
-                <span className="role">
-                  {turn.role === "user" ? "You" : turn.role === "thought" ? `${focused.expertLabel} · thinking` : focused.expertLabel}
-                </span>
-                {isAgent && turn.text && <CopyBtn text={turn.text} />}
-              </div>
+              {/* No label on the user's own turn — the right-aligned brand
+                  bubble carries the role by position + colour. */}
+              {turn.role !== "user" && (
+                <div className="turn-head">
+                  <span className="role">
+                    {turn.role === "thought" ? `${focused.expertLabel} · thinking` : focused.expertLabel}
+                  </span>
+                  {isAgent && turn.text && <CopyBtn text={turn.text} />}
+                </div>
+              )}
               {isAgent && turn.steps?.length ? <ActivityFold steps={turn.steps} tookMs={turn.tookMs} /> : null}
               <div className="text">
                 {turn.role === "user" ? (
                   <>
                     {turn.text}
-                    {turn.files?.length ? <div className="attach">{turn.files.map((f, j) => <span key={j} className="chip">📎 {f}</span>)}</div> : null}
+                    {turn.files?.length ? <div className="attach">{turn.files.map((f, j) => <span key={j} className="chip"><Icon name="paperclip" size={11} /> {f}</span>)}</div> : null}
                   </>
                 ) : (
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{turn.text}</ReactMarkdown>
@@ -294,10 +352,20 @@ export function Conversation(props: {
           />
         )}
         {focused.auth && (
-          <div className="thinking">
-            needs sign-in:
-            {focused.auth.methods.map((m) => <button key={m.id} className="iconbtn" style={{ width: "auto", padding: "4px 10px" }} onClick={() => onAuth(focused.id, m.id)}>{m.name || m.id}</button>)}
-            {focused.auth.hasLogin && <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }} onClick={() => invoke("browser_login", { harness: focused.auth!.harness })}>Sign in</button>}
+          <div className="authask">
+            <div className="authask-head">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="7.5" cy="15.5" r="3.5" />
+                <path d="M10.5 12.5 20 3" />
+                <path d="M16 7.5 18.5 10" />
+              </svg>
+              <span className="authask-t">{H[focused.auth.harness]?.label || focused.auth.harness} needs a sign-in</span>
+            </div>
+            <div className="authask-acts">
+              {focused.auth.methods.map((m) => <button key={m.id} className="btn" onClick={() => onAuth(focused.id, m.id)}>{m.name || m.id}</button>)}
+              {focused.auth.hasLogin && <button className="btn ghost" onClick={() => invoke("browser_login", { harness: focused.auth!.harness })}>Sign in in browser</button>}
+            </div>
+            <div className="authask-hint">Your message is kept — it re-runs automatically after sign-in.</div>
           </div>
         )}
         {focused.pendingPermission && (() => {
@@ -318,11 +386,11 @@ export function Conversation(props: {
             { id: "always", label: "always" },
           ];
           const allow = () => allowId && ask(allowId, permScope === "always" ? "always-allow" : permScope);
-          const deny = () => ask(null, permScope === "always" ? "always-deny" : "once");
+          const deny = () => ask(null, permScope === "always" ? "always-deny" : permScope);
           return (
             <div className="perm">
               <div className="perm-head">
-                <span className="perm-ic">🔐</span>
+                <span className="perm-ic"><Icon name="lock" size={15} /></span>
                 <span className="perm-t">Allow an action</span>
                 <span className="perm-who">{pp.expert}</span>
               </div>
@@ -345,8 +413,21 @@ export function Conversation(props: {
             </div>
           );
         })()}
-        {focused.queued && <div className="thinking">⏳ queued · {focused.queued.display || "(file)"} <button className="xbtn" onClick={() => onCancelQueued(focused.id)}>✕</button></div>}
       </div>
+
+      {/* The expert's discovery form, inline (compact posture only — the atelier
+          renders it in the right pane). Sits between the thread and the composer
+          as the agent's current ask; answering it sends the next turn. */}
+      {!expanded && focused.questionForm && onAnswerForm && (
+        <div className="qf-inline">
+          <QuestionsPanel
+            key={focused.questionForm.id}
+            form={focused.questionForm}
+            busy={focused.status === "running"}
+            onSubmit={onAnswerForm}
+          />
+        </div>
+      )}
 
       {/* Deliverables live in the Reflet dock (right), not duplicated in the
           thread. Compact posture keeps ONLY the latest one as a headline card
@@ -374,7 +455,7 @@ export function Conversation(props: {
         <details className="logs" open={focused.status === "running"}>
           <summary>
             <span className="logs-label">logs</span>
-            <span className="logs-count">{focused.logs.length} line{focused.logs.length === 1 ? "" : "s"}</span>
+            <span className="logs-count">· {focused.logs.length}</span>
           </summary>
           <pre className="logs-pre" ref={(el) => { if (el && focused.status === "running") el.scrollTop = el.scrollHeight; }}>
             {focused.logs.slice(-200).join("\n")}
@@ -413,11 +494,26 @@ export function Conversation(props: {
                 ))}
               </div>
             )}
-            <div className="composer" style={{ marginTop: 16, marginBottom: 0 }}>
+            {/* Queued turn — pinned OUTSIDE the scrolling thread so it can't
+                drift out of sight while the composer keeps inviting the next. */}
+            {focused.queued && (
+              <div className="queuepin">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <polyline points="12 7 12 12 15.5 14" />
+                </svg>
+                <div className="queuepin-m">
+                  <span className="queuepin-l">Queued — sends when this turn ends</span>
+                  <span className="queuepin-tx">{focused.queued.display || "(file)"}</span>
+                </div>
+                <button className="queuepin-x" onClick={() => onCancelQueued(focused.id)}>Cancel</button>
+              </div>
+            )}
+            <div className="composer" style={{ marginTop: focused.queued ? 8 : 16, marginBottom: 0 }}>
               {chips}
-              <input ref={inputRef} value={value} onChange={(e) => onInputChange(e.target.value, e.target.selectionStart)} onKeyDown={onKey}
+              <textarea ref={inputRef} value={value} rows={1} onChange={(e) => onInputChange(e.target.value, e.target.selectionStart)} onKeyDown={onKey}
                 placeholder={focused.status === "running" ? `${focused.expertLabel} is working — queue the next…` : `Reply to ${focused.expertLabel}…`} />
-              <button className="clip" onClick={onAttach} title="Attach a file" aria-label="Attach a file">📎</button>
+              <button className="clip" onClick={onAttach} title="Attach a file" aria-label="Attach a file"><Icon name="paperclip" size={16} /></button>
               {focused.status === "running" ? (
                 <button className="stop" onClick={() => onStop(focused.id)}>■</button>
               ) : (

@@ -1,0 +1,10 @@
+{
+  "expert": "genius_gaudi",
+  "key": "material-board",
+  "type": "board",
+  "title": "Material & furniture board",
+  "desc": "Sourced, costed",
+  "brief": "A designer's physical sample board for a warm ~72 m2 Paris apartment (Haussmann bones, north light, oak floors kept), rendered as a single self-contained page. A material palette of six tactile CSS/SVG swatches (rift-sawn oak, Roman travertine, brushed brass, ivory boucle, lime plaster and a trencadis broken-tile mosaic) each named with where it goes and a one-line rationale; a colour story that spends all its colour on one burnt-terracotta accent over warm plaster neutrals; and a furniture & lighting shopping list of fifteen sourced pieces as cards, each with a small SVG line-drawing, its material, a realistic Paris retail price (incl. VAT) and its room. The budget genuinely sums from a data model: a sticky ledger totals the visible pieces with furniture / lighting / textile sub-totals against a 30,000 EUR envelope, filterable by room (living / bedroom / kitchen / bath) and re-totalling live when the Value / Premium sourcing switch is flipped. Estimates, not quotes.",
+  "da": "A designer's warm sample board: lime-plaster ecru ground with a woven-linen tooth, tactile CSS/SVG material swatches as the heroes pinned with brass tacks, Fraunces editorial serif for names, Figtree for specs and Martian Mono for tabular prices, thin brushed-brass hairlines, one burnt-terracotta accent — a physical interior sample board, tactile and warm.",
+  "generated": "2026-07-03"
+}

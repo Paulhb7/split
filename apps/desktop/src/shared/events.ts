@@ -74,7 +74,8 @@ export type VEvt =
   | { type: "permission_request"; id: string; toolId: string; expert: string;
       toolCall: Record<string, unknown>; options: PermissionOption[] }
   | { type: "artifact"; rel: string; path: string; op: "created" | "modified" | "deleted";
-      size: number; mtime: number };
+      size: number; mtime: number }
+  | { type: "frame"; seq: number; mime: string; data: string; ts: number };
 
 // One stdout/stderr line from a session, tagged by Rust with its id. Exactly one
 // of vevt / log / exit is meaningful per event.

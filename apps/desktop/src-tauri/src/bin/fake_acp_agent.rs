@@ -15,6 +15,9 @@
 //!     `perm:allowed:<optionId>` / `perm:denied`.
 //!   * `mcp_reject` — reject `session/new` while MCP servers are listed,
 //!     accept once the client retries without (the Vibe quirk).
+//!   * `slow` — park the turn after streaming a thought + tool_call until a
+//!     `session/cancel` arrives, then respond `Cancelled`. Lets a test prove
+//!     the runner interrupts an in-flight turn on Stop.
 //!
 //! Lifecycle messages (`session/cancel`, `session/close`) are acknowledged
 //! and logged to stderr as `fake-agent: …` lines, which the runner surfaces
@@ -53,6 +56,12 @@ async fn main() -> Result<()> {
     let authed = Arc::new(AtomicBool::new(false));
     let authed_for_new = authed.clone();
     let authed_for_auth = authed.clone();
+    // `slow` scenario: the prompt handler parks until a `session/cancel`
+    // arrives, so a test can interrupt an in-flight turn. The cancel handler
+    // flips this flag.
+    let cancelled = Arc::new(AtomicBool::new(false));
+    let cancelled_for_prompt = cancelled.clone();
+    let cancelled_for_cancel = cancelled.clone();
 
     Agent
         .builder()
@@ -105,6 +114,7 @@ async fn main() -> Result<()> {
                 // (awaiting the client's reply inside the handler would
                 // deadlock it), so the whole turn body is spawned and the
                 // responder answers from the spawned task.
+                let cancelled = cancelled_for_prompt.clone();
                 cx.clone().spawn(async move {
                     let _ = cx.send_notification(SessionNotification::new(
                         SESSION_ID,
@@ -118,6 +128,21 @@ async fn main() -> Result<()> {
                             ToolCall::new("tc-1", "fake-tool").status(ToolCallStatus::InProgress),
                         ),
                     ));
+                    if scenario() == "slow" {
+                        // Park mid-turn until the runner asks us to cancel (the
+                        // Stop path), then return Cancelled. A ~5s ceiling keeps
+                        // a misfiring test from hanging forever.
+                        for _ in 0..100 {
+                            if cancelled.load(Ordering::SeqCst) {
+                                say(&cx, "partial work before cancel");
+                                responder.respond(PromptResponse::new(StopReason::Cancelled))?;
+                                return Ok(());
+                            }
+                            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+                        }
+                        responder.respond(PromptResponse::new(StopReason::EndTurn))?;
+                        return Ok(());
+                    }
                     if scenario() == "perm" {
                         let perm = cx
                             .send_request(RequestPermissionRequest::new(
@@ -164,6 +189,7 @@ async fn main() -> Result<()> {
         .on_receive_notification(
             async move |_n: CancelNotification, _cx| {
                 eprintln!("fake-agent: cancel received");
+                cancelled_for_cancel.store(true, Ordering::SeqCst);
                 Ok(())
             },
             agent_client_protocol::on_receive_notification!(),

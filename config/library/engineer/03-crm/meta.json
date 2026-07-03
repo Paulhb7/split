@@ -1,0 +1,10 @@
+{
+  "expert": "engineer",
+  "key": "crm",
+  "type": "app",
+  "title": "CRM prototype",
+  "desc": "Working, seeded",
+  "brief": "A working single-file CRM prototype: a contacts table with search, sort and tag filters; a kanban pipeline with drag-and-drop across six stages and deal values rolling up per column; a contact detail drawer with activity timeline and a working note/call/email/meeting composer; dashboard stats (open pipeline, weighted value, won, win rate) with a stage-mix strip; localStorage persistence with export and reset; 25 seeded realistic contacts and 28 deals. Every button functional — no dead UI.",
+  "da": "Neo-brutalist workware — bone-white ground, 2px ink borders, hard offset shadows, one acid-lime accent, chunky Space Grotesk over a visible grid.",
+  "generated": "2026-07-03"
+}

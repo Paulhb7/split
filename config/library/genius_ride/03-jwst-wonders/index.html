@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recent Light — Ten Photographs from the James Webb Space Telescope, 2025–2026</title>
+<meta name="description" content="An immersive gallery of ten recent JWST releases (2025–2026), hotlinked from the official ESA/Webb archive, explained plainly and hung in order of distance.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;1,200;1,300&family=Karla:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wall:#0c0c0d;
+    --ink:#ffffff;
+    --ink-80:rgba(255,255,255,.80);
+    --ink-62:rgba(255,255,255,.62);
+    --ink-45:rgba(255,255,255,.45);
+    --ink-30:rgba(255,255,255,.30);
+    --hairline:rgba(255,255,255,.26);
+    --hairline-soft:rgba(255,255,255,.14);
+    --serif:'Spectral',Georgia,serif;
+    --sans:'Karla',-apple-system,'Helvetica Neue',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  ::selection{background:rgba(255,255,255,.92);color:#0c0c0d}
+  body{
+    background:var(--wall);
+    color:var(--ink);
+    font-family:var(--serif);
+    font-weight:300;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    line-height:1.7;
+  }
+  a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--ink-30);text-underline-offset:3px;transition:text-decoration-color .25s}
+  a:hover{text-decoration-color:var(--ink)}
+  .label{
+    font-family:var(--sans);
+    font-weight:400;
+    font-size:11px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--ink-62);
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:0 clamp(20px,5vw,64px)}
+
+  /* ————— top bar ————— */
+  .topbar{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:26px 0 22px;border-bottom:1px solid var(--hairline-soft);
+    gap:16px;flex-wrap:wrap;
+  }
+  .topbar .label{color:var(--ink-45)}
+
+  /* ————— about (exec summary) ————— */
+  details.about{border-bottom:1px solid var(--hairline-soft)}
+  details.about summary{
+    list-style:none;cursor:pointer;padding:14px 0;
+    font-family:var(--sans);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--ink-45);display:flex;align-items:center;gap:10px;
+    transition:color .25s;
+  }
+  details.about summary::-webkit-details-marker{display:none}
+  details.about summary:hover{color:var(--ink)}
+  details.about summary::before{content:"+";font-family:var(--serif);font-weight:200;font-size:15px;line-height:1}
+  details.about[open] summary::before{content:"−"}
+  .about-body{
+    max-width:66ch;padding:6px 0 34px;
+    font-size:15.5px;color:var(--ink-80);
+  }
+  .about-body p{margin-bottom:14px}
+  .about-body strong{font-family:var(--sans);font-weight:500;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);display:block;margin-bottom:2px}
+
+  /* ————— header wall ————— */
+  header.wall{padding:clamp(90px,16vh,180px) 0 clamp(80px,14vh,150px);text-align:center}
+  header.wall .label{display:block;margin-bottom:34px}
+  h1{
+    font-weight:200;
+    font-size:clamp(46px,8.5vw,104px);
+    letter-spacing:.015em;
+    line-height:1.05;
+  }
+  .deck{
+    max-width:52ch;margin:38px auto 0;
+    font-size:clamp(16px,1.9vw,19px);
+    font-style:italic;font-weight:200;
+    color:var(--ink-80);
+  }
+  .attribution{margin-top:44px;color:var(--ink-45)}
+
+  hr.rule{border:0;border-top:1px solid var(--hairline-soft)}
+
+  /* ————— primer ————— */
+  section.primer{padding:clamp(70px,11vh,120px) 0}
+  .primer-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:clamp(32px,6vw,90px)}
+  @media (max-width:820px){.primer-grid{grid-template-columns:1fr}}
+  .primer h2{font-weight:200;font-size:clamp(28px,3.6vw,40px);line-height:1.2;letter-spacing:.01em}
+  .primer h2 em{font-style:italic;font-weight:200}
+  .primer-copy{font-size:16.5px;color:var(--ink-80);max-width:62ch}
+  .primer-copy p{margin-bottom:18px}
+  .primer-copy p:last-child{margin-bottom:0}
+
+  .spectrum{margin:46px 0 10px}
+  .spec-track{position:relative;height:64px;border-bottom:1px solid var(--hairline)}
+  .spec-band{position:absolute;bottom:0;height:26px}
+  .spec-band.eye{background:var(--ink)}
+  .spec-band.nircam{background:rgba(255,255,255,.42)}
+  .spec-band.miri{background:rgba(255,255,255,.16)}
+  .spec-ticks{position:relative;height:40px;font-family:var(--sans);font-size:10px;letter-spacing:.14em;color:var(--ink-45);text-transform:uppercase}
+  .spec-tick{position:absolute;top:0;transform:translateX(-50%);padding-top:8px;white-space:nowrap}
+  .spec-tick::before{content:"";position:absolute;left:50%;top:0;width:1px;height:6px;background:var(--hairline)}
+  .spec-legend{display:flex;gap:26px;flex-wrap:wrap;margin-top:26px;font-family:var(--sans);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-62)}
+  .spec-legend span{display:flex;align-items:center;gap:9px}
+  .spec-legend i{display:inline-block;width:18px;height:9px}
+  .spec-legend .k-eye{background:var(--ink)}
+  .spec-legend .k-nir{background:rgba(255,255,255,.42)}
+  .spec-legend .k-miri{background:rgba(255,255,255,.16)}
+
+  /* ————— floor plan / index ————— */
+  section.floorplan{padding:clamp(60px,10vh,110px) 0 clamp(80px,12vh,130px)}
+  .floorplan .label{display:block;margin-bottom:30px}
+  table.plan{width:100%;border-collapse:collapse}
+  table.plan tr{border-top:1px solid var(--hairline-soft)}
+  table.plan tr:last-child{border-bottom:1px solid var(--hairline-soft)}
+  table.plan td{padding:15px 18px 15px 0;vertical-align:baseline}
+  td.pl-no{font-family:var(--sans);font-size:11px;letter-spacing:.2em;color:var(--ink-45);white-space:nowrap;width:1%}
+  td.pl-title{font-size:17px;font-weight:300}
+  td.pl-title a{text-decoration:none}
+  td.pl-title a:hover{text-decoration:underline;text-decoration-color:var(--ink-30)}
+  td.pl-dist{font-family:var(--sans);font-size:12px;letter-spacing:.06em;color:var(--ink-62);white-space:nowrap}
+  td.pl-depart{font-size:14.5px;font-style:italic;color:var(--ink-45)}
+  @media (max-width:760px){
+    td.pl-depart{display:none}
+    td.pl-dist{white-space:normal}
+  }
+
+  /* ————— exhibits ————— */
+  main{padding-bottom:40px}
+  section.exhibit{
+    padding:clamp(90px,17vh,200px) 0;
+    opacity:0;transform:translateY(14px);
+    transition:opacity 1.1s ease,transform 1.1s ease;
+  }
+  section.exhibit.seen{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){
+    section.exhibit{opacity:1;transform:none;transition:none}
+  }
+  .plate-holder{display:flex;justify-content:center}
+  figure.plate{
+    border:1px solid var(--hairline);
+    padding:clamp(10px,1.6vw,18px);
+    cursor:zoom-in;
+    width:100%;
+  }
+  .plate--wide{max-width:1020px}
+  .plate--sq{max-width:780px}
+  .plate--tall{max-width:620px}
+  figure.plate img{display:block;width:100%;height:auto;background:#000}
+  .plate-hint{
+    text-align:center;margin-top:16px;
+    font-family:var(--sans);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-30);
+  }
+
+  .wall-label{max-width:640px;margin:clamp(44px,7vh,72px) auto 0}
+  .wl-no{font-family:var(--sans);font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--ink-45);margin-bottom:14px}
+  .wl-title{font-weight:200;font-size:clamp(27px,3.4vw,36px);line-height:1.22;margin-bottom:26px}
+  .wl-title em{font-style:italic}
+  dl.wl-facts{
+    display:grid;grid-template-columns:max-content 1fr;gap:7px 26px;
+    margin-bottom:30px;padding:20px 0;
+    border-top:1px solid var(--hairline-soft);border-bottom:1px solid var(--hairline-soft);
+  }
+  dl.wl-facts dt{font-family:var(--sans);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-45);padding-top:3px}
+  dl.wl-facts dd{font-size:15px;color:var(--ink-80)}
+  .wl-body{font-size:16.5px;color:var(--ink-80)}
+  .wl-body p{margin-bottom:16px}
+  .wl-look{
+    margin:26px 0 0;padding-left:22px;border-left:1px solid var(--hairline);
+  }
+  .wl-look .label{display:block;margin-bottom:8px;color:var(--ink-45)}
+  .wl-look p{font-style:italic;font-size:16px;color:var(--ink-80)}
+  .wl-credit{
+    margin-top:30px;
+    font-family:var(--sans);font-size:10.5px;letter-spacing:.08em;line-height:1.9;color:var(--ink-45);
+  }
+  .wl-credit a{color:var(--ink-62)}
+
+  /* ————— coda + footer ————— */
+  section.coda{padding:clamp(90px,16vh,180px) 0;text-align:center}
+  .coda p{
+    max-width:46ch;margin:0 auto;
+    font-size:clamp(19px,2.4vw,25px);font-weight:200;font-style:italic;line-height:1.6;color:var(--ink-80);
+  }
+  footer{border-top:1px solid var(--hairline-soft);padding:52px 0 72px}
+  .foot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:40px}
+  footer h3{font-family:var(--sans);font-weight:500;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-45);margin-bottom:14px}
+  footer ul{list-style:none}
+  footer li{font-family:var(--sans);font-size:12.5px;line-height:2.1;color:var(--ink-62)}
+  footer p.small{font-family:var(--sans);font-size:12.5px;line-height:1.9;color:var(--ink-62)}
+  .colophon{margin-top:48px;padding-top:22px;border-top:1px solid var(--hairline-soft);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .colophon span{font-family:var(--sans);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-30)}
+
+  /* ————— lightbox ————— */
+  #lightbox{
+    position:fixed;inset:0;z-index:60;background:#000;
+    display:none;flex-direction:column;
+  }
+  #lightbox.open{display:flex}
+  .lb-stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;padding:56px 76px 12px;position:relative}
+  @media (max-width:640px){.lb-stage{padding:56px 12px 8px}}
+  .lb-stage img{max-width:100%;max-height:100%;object-fit:contain;display:none}
+  .lb-stage img.on{display:block}
+  .lb-loading{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    font-family:var(--sans);font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-45);
+    display:none;
+  }
+  .lb-loading.on{display:block}
+  .lb-caption{
+    flex:none;text-align:center;padding:14px 20px 22px;
+  }
+  .lb-caption .lb-t{font-size:16px;font-weight:300}
+  .lb-caption .lb-t em{font-style:italic}
+  .lb-caption .lb-c{margin-top:5px;font-family:var(--sans);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-45)}
+  .lb-btn{
+    position:absolute;z-index:5;
+    width:46px;height:46px;border-radius:50%;
+    background:transparent;border:1px solid var(--hairline);
+    color:var(--ink);font-family:var(--serif);font-weight:200;font-size:20px;line-height:1;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:border-color .25s,background .25s;
+  }
+  .lb-btn:hover{border-color:var(--ink);background:rgba(255,255,255,.06)}
+  #lb-close{top:18px;right:18px}
+  #lb-prev{left:16px;top:50%;transform:translateY(-50%)}
+  #lb-next{right:16px;top:50%;transform:translateY(-50%)}
+  #lb-count{
+    position:absolute;top:34px;left:50%;transform:translateX(-50%);
+    font-family:var(--sans);font-size:10px;letter-spacing:.3em;color:var(--ink-45);
+  }
+  body.lb-lock{overflow:hidden}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <span class="label">Split Library — Ride, the Astronomer</span>
+    <span class="label">Assembled 3 July 2026</span>
+  </div>
+
+  <details class="about" open>
+    <summary>About this page</summary>
+    <div class="about-body">
+      <p><strong>Why</strong>A standing gallery of the James Webb Space Telescope's most recent released images — what each one actually shows, in plain language, without the press-release inflation.</p>
+      <p><strong>Context</strong>Ten official releases from 2025–2026, selected for range: one planet, two construction sites for planets and stars, two dying and carving stars, one feeding black hole, two colliding galaxy clusters, and one stare into the first billion years. All images are hotlinked from the ESA/Webb archive (cdn.esawebb.org) at their released resolution — the two heaviest originals are served at ESA's publication size so the viewer never stalls; every plate links to its original release page. Each URL was verified live on 3 July 2026.</p>
+      <p><strong>How to use it</strong>Walk down. The exhibits are hung in order of distance — the first is four light-hours from home, the last is most of the way back to the beginning. Click any plate for the full-size view; arrow keys move between plates.</p>
+      <p><strong>What was assumed</strong>An audience with curiosity and no astronomy background — nothing is dumbed down, everything is defined. Where a number is genuinely uncertain (the Red Spider's distance), the caption says so instead of inventing one. Distances for the far exhibits are light-travel distances as stated in each release.</p>
+    </div>
+  </details>
+
+  <header class="wall">
+    <span class="label">Ten photographs &middot; 2025–2026</span>
+    <h1>Recent Light</h1>
+    <p class="deck">Hung in order of distance: the first exhibit is four light-hours from home, the last is most of the way back to the beginning of time.</p>
+    <p class="attribution label">James Webb Space Telescope &middot; NASA / ESA / CSA / STScI</p>
+  </header>
+
+  <hr class="rule">
+
+  <section class="primer">
+    <div class="primer-grid">
+      <h2>How to read <em>infrared</em>, honestly</h2>
+      <div>
+        <div class="primer-copy">
+          <p>None of the colours in this gallery are what your eye would see. Webb records infrared — light with wavelengths stretched past red, invisible to us, but exactly where cool dust glows, where newborn stars leak through their cocoons, and where the expansion of the Universe delivers the light of the first galaxies. To make a picture, each infrared exposure is assigned a visible colour: the <strong>shortest</strong> wavelengths captured become <strong>blue</strong>, the <strong>longest</strong> become <strong>red</strong>. The order of the rainbow is preserved; it is a translation, not a fiction.</p>
+          <p>So a rough grammar for every plate below: <em>blue</em> tends to be starlight; <em>orange and red</em>, warm dust; <em>yellow-green</em>, in several images, a family of soot-like molecules (polycyclic aromatic hydrocarbons) that trace where clouds are being cooked by young stars. And the six sharp spikes on bright stars are not real — they are the signature of Webb's hexagonal mirrors, worn by any point of light bright enough.</p>
+          <p>Two cameras took these. <strong>NIRCam</strong> works in the near-infrared (0.6–5&nbsp;µm) — sharp, star-rich, good at peering through dust. <strong>MIRI</strong> works in the mid-infrared (5–28&nbsp;µm) — it sees the dust itself glowing, and the oldest, most redshifted light. The ruler below is to scale. The white sliver is everything your eye can do.</p>
+        </div>
+        <div class="spectrum" aria-label="Wavelength ruler, 0 to 28 microns, linear scale">
+          <div class="spec-track">
+            <div class="spec-band eye"    style="left:1.36%;width:1.4%"  title="Visible light 0.38–0.75 µm"></div>
+            <div class="spec-band nircam" style="left:2.8%;width:15.1%"  title="NIRCam 0.6–5 µm"></div>
+            <div class="spec-band miri"   style="left:17.9%;width:82.1%" title="MIRI 5–28 µm"></div>
+          </div>
+          <div class="spec-ticks">
+            <span class="spec-tick" style="left:0%">0 µm</span>
+            <span class="spec-tick" style="left:17.9%">5</span>
+            <span class="spec-tick" style="left:35.7%">10</span>
+            <span class="spec-tick" style="left:71.4%">20</span>
+            <span class="spec-tick" style="left:100%">28 µm</span>
+          </div>
+          <div class="spec-legend">
+            <span><i class="k-eye"></i>Your eye</span>
+            <span><i class="k-nir"></i>NIRCam 0.6–5 µm</span>
+            <span><i class="k-miri"></i>MIRI 5–28 µm</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="floorplan">
+    <span class="label">Floor plan — nearest first</span>
+    <table class="plan">
+      <tbody>
+        <tr><td class="pl-no">I</td><td class="pl-title"><a href="#plate-1">Neptune, wearing auroras</a></td><td class="pl-dist">4 light-hours</td><td class="pl-depart" data-note="left this morning, more or less"></td></tr>
+        <tr><td class="pl-no">II</td><td class="pl-title"><a href="#plate-2">Two planetary systems, edge-on</a></td><td class="pl-dist">≈450 light-years</td><td class="pl-depart" data-ly="450"></td></tr>
+        <tr><td class="pl-no">III</td><td class="pl-title"><a href="#plate-3">The Cosmic Tornado</a></td><td class="pl-dist">≈630 light-years</td><td class="pl-depart" data-ly="630"></td></tr>
+        <tr><td class="pl-no">IV</td><td class="pl-title"><a href="#plate-4">A nursery in Orion</a></td><td class="pl-dist">1,280 light-years</td><td class="pl-depart" data-ly="1280"></td></tr>
+        <tr><td class="pl-no">V</td><td class="pl-title"><a href="#plate-5">The Red Spider Nebula</a></td><td class="pl-dist">a few thousand light-years</td><td class="pl-depart" data-note="departure date honestly unknown"></td></tr>
+        <tr><td class="pl-no">VI</td><td class="pl-title"><a href="#plate-6">The Cat's Paw, one toe</a></td><td class="pl-dist">≈4,000 light-years</td><td class="pl-depart" data-ly="4000"></td></tr>
+        <tr><td class="pl-no">VII</td><td class="pl-title"><a href="#plate-7">Messier 77, feeding</a></td><td class="pl-dist">45 million light-years</td><td class="pl-depart" data-note="left before the human genus existed"></td></tr>
+        <tr><td class="pl-no">VIII</td><td class="pl-title"><a href="#plate-8">A collision of clusters</a></td><td class="pl-dist">≈4 billion light-years</td><td class="pl-depart" data-note="left while Earth's crust was new"></td></tr>
+        <tr><td class="pl-no">IX</td><td class="pl-title"><a href="#plate-9">The celebrity cluster</a></td><td class="pl-dist">≈5 billion light-years</td><td class="pl-depart" data-note="left before the Sun existed"></td></tr>
+        <tr><td class="pl-no">X</td><td class="pl-title"><a href="#plate-10">The deep field, deeper</a></td><td class="pl-dist">up to 13+ billion years of lookback</td><td class="pl-depart" data-note="some of it left in the first billion years"></td></tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<main>
+  <div class="wrap">
+
+    <!-- I — Neptune -->
+    <section class="exhibit" id="plate-1"
+      data-large="https://cdn.esawebb.org/archives/images/large/weic2507a.jpg"
+      data-title="Neptune, wearing auroras"
+      data-credit="NASA, ESA, CSA, STScI, H. Hammel (AURA), H. Melin (Northumbria Univ.), L. Fletcher (Univ. of Leicester), S. Milam (NASA-GSFC)">
+      <div class="plate-holder">
+        <figure class="plate plate--wide" style="aspect-ratio:auto">
+          <img src="https://cdn.esawebb.org/archives/images/screen/weic2507a.jpg" alt="Diptych of Neptune: Hubble's view alone on the left, and on the right the same view with cyan patches of auroral emission detected by Webb overlaid at mid-latitudes" style="aspect-ratio:1280/640" loading="eager">
+        </figure>
+      </div>
+      <p class="plate-hint">Click to view full size</p>
+      <div class="wall-label">
+        <p class="wl-no">Plate I</p>
+        <h3 class="wl-title">Neptune, <em>wearing auroras</em></h3>
+        <dl class="wl-facts">
+          <dt>Object</dt><dd>Neptune — auroral emission, imaged for the first time</dd>
+          <dt>Distance</dt><dd>About 4 light-hours (≈4.3 billion km)</dd>
+          <dt>Instrument</dt><dd>Webb NIRSpec (auroras), over Hubble WFC3 (planet)</dd>
+          <dt>Released</dt><dd>26 March 2025</dd>
+        </dl>
+        <div class="wl-body">
+          <p>Two portraits of the same planet. On the left, Hubble's view alone; on the right, the same view with Webb's detection laid over it. The cyan patches are auroras — charged particles caught by Neptune's magnetic field and driven into the upper atmosphere — and no one had ever photographed them before. Voyager 2 saw hints during its 1989 flyby. Confirmation took another thirty-six years.</p>
+          <p>What Webb's spectrograph actually detected is the glow of the trihydrogen cation, H<sub>3</sub><sup>+</sup> — the standard chemical fingerprint of an aurora on a giant planet. Neptune was the last of the four giants holding out. Note where the light sits: mid-latitudes, not the poles, because Neptune's magnetic field is tilted 47 degrees away from its spin axis. On Neptune, the compass and the globe barely speak.</p>
+        </div>
+        <div class="wl-look">
+          <span class="label">Look closer</span>
+          <p>The largest cyan patch sits at the latitude where Earth keeps its temperate zones — polar lights, nowhere near a pole.</p>
+        </div>
+        <p class="wl-credit">Credit: NASA, ESA, CSA, STScI, Heidi Hammel (AURA), Henrik Melin (Northumbria University), Leigh Fletcher (University of Leicester), Stefanie Milam (NASA-GSFC) &middot; <a href="https://esawebb.org/images/weic2507a/" target="_blank" rel="noopener">Original release ↗</a></p>
+      </div>
+    </section>
+
+    <!-- II — Edge-on discs -->
+    <section class="exhibit" id="plate-2"
+      data-large="https://cdn.esawebb.org/archives/images/large/potm2603a.jpg"
+      data-title="Two planetary systems, edge-on"
+      data-credit="ESA/Webb, NASA &amp; CSA, ESA/Hubble, ALMA (ESO/NAOJ/NRAO), G. Duchêne, M. Villenave">
+      <div class="plate-holder">
+        <figure class="plate plate--wide">
+          <img src="https://cdn.esawebb.org/archives/images/screen/potm2603a.jpg" alt="Two edge-on protoplanetary discs, Tau 042021 and Oph 163131, each a dark dust lane between two lobes of scattered starlight" style="aspect-ratio:1280/644" loading="lazy">
+        </figure>
+      </div>
+      <p class="plate-hint">Click to view full size</p>
+      <div class="wall-label">
+        <p class="wl-no">Plate II</p>
+        <h3 class="wl-title">Two planetary systems, <em>edge-on</em></h3>
+        <dl class="wl-facts">
+          <dt>Objects</dt><dd>Protoplanetary discs Tau 042021 and Oph 163131</dd>
+          <dt>Distance</dt><dd>≈450 and ≈480 light-years (Taurus; Ophiuchus)</dd>
+          <dt>Instruments</dt><dd>NIRCam + MIRI, with Hubble and ALMA context</dd>
+          <dt>Released</dt><dd>3 April 2026</dd>
+        </dl>
+        <div class="wl-body">
+          <p>Two planetary systems under construction, seen exactly edge-on — a lucky geometry. The disc itself is the dark lane across the middle of each figure; the newborn star is buried inside it, hidden by its own building material. What you see is starlight escaping above and below the dust, lighting the disc's surfaces like a road at night.</p>
+          <p>The geometry is the science: seen from the side, the disc reveals how its dust settles and layers — and where the dust settles decides where planets can form. In Oph 163131, radio observations with ALMA show a gap in the disc, the kind of lane a young planet clears along its orbit. To be precise: a gap is a hint, not a planet. No one has confirmed what's in there yet.</p>
+        </div>
+        <div class="wl-look">
+          <span class="label">Look closer</span>
+          <p>The thin dark midplane between the bright lobes. That line is a future planetary system in cross-section — ours likely looked just like it, 4.6 billion years ago.</p>
+        </div>
+        <p class="wl-credit">Credit: ESA/Webb, NASA &amp; CSA, ESA/Hubble, ALMA (ESO/NAOJ/NRAO), G. Duchêne, M. Villenave &middot; <a href="https://esawebb.org/images/potm2603a/" target="_blank" rel="noopener">Original release ↗</a></p>
+      </div>
+    </section>
+
+    <!-- III — HH 49/50 -->
+    <section class="exhibit" id="plate-3"
+      data-large="https://cdn.esawebb.org/archives/images/large/weic2506a.jpg"
+      data-title="Herbig-Haro 49/50, the Cosmic Tornado"
+      data-credit="NASA, ESA, CSA, STScI">
+      <div class="plate-holder">
+        <figure class="plate plate--tall">
+          <img src="https://cdn.esawebb.org/archives/images/screen/weic2506a.jpg" alt="Herbig-Haro 49/50, a glowing funnel-shaped outflow of shocked gas, with a face-on spiral galaxy coincidentally aligned at its tip" style="aspect-ratio:1280/1555" loading="lazy">
+        </figure>
+      </div>
+      <p class="plate-hint">Click to view full size</p>
+      <div class="wall-label">
+        <p class="wl-no">Plate III</p>
+        <h3 class="wl-title">Herbig-Haro 49/50, <em>the Cosmic Tornado</em></h3>
+        <dl class="wl-facts">
+          <dt>Object</dt><dd>A protostellar outflow — shocked gas lit by a newborn star's jet</dd>
+          <dt>Distance</dt><dd>≈630 light-years (Chamaeleon)</dd>
+          <dt>Instruments</dt><dd>NIRCam + MIRI</dd>
+          <dt>Released</dt><dd>24 March 2025</dd>
+        </dl>
+        <div class="wl-body">
+          <p>Not a tornado — a shockwave. A jet fired from a newborn star is ramming into slower gas, and these glowing arcs are the collision, drawn out over light-years. The likely culprit, a protostar called Cederblad 110 IRS4, sits about 1.5 light-years off the lower edge of the frame. Jets like this are how forming stars shed spin; without them, stars would struggle to finish forming at all.</p>
+          <p>The fuzzy object at the funnel's tip puzzled astronomers for nearly twenty years — Spitzer imaged it in 2006 and couldn't resolve it. Webb settled it: a face-on spiral galaxy, millions of light-years beyond, sitting on the same line of sight by pure chance. Astronomy's oldest trap, photographed: two things on one sightline, at absurdly different distances.</p>
+        </div>
+        <div class="wl-look">
+          <span class="label">Look closer</span>
+          <p>The very tip of the funnel — a whole spiral galaxy, photobombing from a distance millions of times greater than the tornado's.</p>
+        </div>
+        <p class="wl-credit">Credit: NASA, ESA, CSA, STScI &middot; <a href="https://esawebb.org/images/weic2506a/" target="_blank" rel="noopener">Original release ↗</a></p>
+      </div>
+    </section>
+
+    <!-- IV — OMC-2 -->
+    <section class="exhibit" id="plate-4"
+      data-large="https://cdn.esawebb.org/archives/images/publicationjpg/potm2605a.jpg"
+      data-title="OMC-2 — a nursery in Orion"
+      data-credit="ESA/Webb, NASA &amp; CSA, T. Megeath, M. Zamani (ESA/Webb)">
+      <div class="plate-holder">
+        <figure class="plate plate--wide">
+          <img src="https://cdn.esawebb.org/archives/images/screen/potm2605a.jpg" alt="Orion Molecular Cloud 2: a filament of gas and dust with protostars, jets and young stars at every stage of formation" style="aspect-ratio:1280/753" loading="lazy">
+        </figure>
+      </div>
+      <p class="plate-hint">Click to view full size</p>
+      <div class="wall-label">
+        <p class="wl-no">Plate IV</p>
+        <h3 class="wl-title">A nursery in Orion, <em>every stage at once</em></h3>
+        <dl class="wl-facts">
+          <dt>Object</dt><dd>Orion Molecular Cloud 2 (OMC-2), a star-forming filament</dd>
+          <dt>Distance</dt><dd>1,280 light-years (Orion)</dd>
+          <dt>Instrument</dt><dd>NIRCam</dd>
+          <dt>Released</dt><dd>5 June 2026</dd>
+        </dl>
+        <div class="wl-body">
+          <p>One filament of the Orion cloud, and on it, stars at every stage of being born: some still buried in the collapsing gas that feeds them, some already burning their surroundings clear. Newborn stars fire jets from their poles, and where a jet strikes the cloud, the gas lights up in bright ridges — shock fronts, the nursery's alarm bells.</p>
+          <p>Read it with the colour grammar from the entrance: orange-brown is warm dust; the yellow-green sheen is soot-like molecules fluorescing under young starlight; the blue-cyan haze is ordinary starlight scattering off fine grains. You rarely get the whole sequence — deeply embedded protostar to nearly finished star — in a single field this close. That is what makes this filament a textbook, not just a picture.</p>
+        </div>
+        <div class="wl-look">
+          <span class="label">Look closer</span>
+          <p>Pick a bright, sharp-edged ridge and trace it back. Every jet points to a protostar you cannot see directly — the outflows betray the hidden.</p>
+        </div>
+        <p class="wl-credit">Credit: ESA/Webb, NASA &amp; CSA, T. Megeath, M. Zamani (ESA/Webb); acknowledgement: M. H. Özsaraç &middot; <a href="https://esawebb.org/images/potm2605a/" target="_blank" rel="noopener">Original release ↗</a></p>
+      </div>
+    </section>
+
+    <!-- V — Red Spider -->
+    <section class="exhibit" id="plate-5"
+      data-large="https://cdn.esawebb.org/archives/images/large/potm2510a.jpg"
+      data-title="The Red Spider Nebula, NGC 6537"
+      data-credit="ESA/Webb, NASA &amp; CSA, J. H. Kastner (Rochester Institute of Technology)">
+      <div class="plate-holder">
+        <figure class="plate plate--sq">
+          <img src="https://cdn.esawebb.org/archives/images/screen/potm2510a.jpg" alt="The Red Spider Nebula: two blue-rimmed lobes around a red dust-shrouded central star, with an S-shaped purple jet threading the middle" style="aspect-ratio:1280/1283" loading="lazy">
+        </figure>
+      </div>
+      <p class="plate-hint">Click to view full size</p>
+      <div class="wall-label">
+        <p class="wl-no">Plate V</p>
+        <h3 class="wl-title">The Red Spider Nebula, <em>a star ending politely</em></h3>
+        <dl class="wl-facts">
+          <dt>Object</dt><dd>NGC 6537, a planetary nebula — a dying Sun-like star</dd>
+          <dt>Distance</dt><dd>A few thousand light-years (Sagittarius) — genuinely uncertain; the release declines to give a figure, and so will I</dd>
+          <dt>Instrument</dt><dd>NIRCam</dd>
+          <dt>Released</dt><dd>28 October 2025</dd>
+        </dl>
+        <div class="wl-body">
+          <p>A star roughly like the Sun, at the end. It has shed its outer layers into space; the exposed core — around 160,000 kelvin at the surface — now lights the wreckage from inside. The blue-rimmed lobes are molecular hydrogen, each stretching about three light-years. The red glow around the centre is a shroud of hot dust, and inside it Webb found something Hubble never saw: a disc around the dying star.</p>
+          <p>The purple S threading the waist is ionised iron, traced where a fast jet whips through shells thrown off earlier. An S like that, and an hourglass figure like this, usually mean a second star is stirring the pot — suspected here, not yet seen. Two humbling numbers: this phase lasts only tens of thousands of years, a blink in stellar time; and the Sun writes its own version in about five billion.</p>
+        </div>
+        <div class="wl-look">
+          <span class="label">Look closer</span>
+          <p>The purple S-curve through the middle — a precessing jet signing its name in iron.</p>
+        </div>
+        <p class="wl-credit">Credit: ESA/Webb, NASA &amp; CSA, J. H. Kastner (Rochester Institute of Technology) &middot; <a href="https://esawebb.org/images/potm2510a/" target="_blank" rel="noopener">Original release ↗</a></p>
+      </div>
+    </section>
+
+    <!-- VI — Cat's Paw -->
+    <section class="exhibit" id="plate-6"
+      data-large="https://cdn.esawebb.org/archives/images/publicationjpg/weic2513a.jpg"
+      data-title="The Cat's Paw Nebula, NGC 6334 — one toe"
+      data-credit="NASA, ESA, CSA, STScI">
+      <div class="plate-holder">
+        <figure class="plate plate--sq">
+          <img src="https://cdn.esawebb.org/archives/images/screen/weic2513a.jpg" alt="A section of the Cat's Paw Nebula: massive young stars carving glowing blue cavities in brown dust, with red-orange pockets of active star formation" style="aspect-ratio:1280/1405" loading="lazy">
+        </figure>
+      </div>
+      <p class="plate-hint">Click to view full size</p>
+      <div class="wall-label">
+        <p class="wl-no">Plate VI</p>
+        <h3 class="wl-title">The Cat's Paw, <em>one toe</em></h3>
+        <dl class="wl-facts">
+          <dt>Object</dt><dd>A single "toe bean" of NGC 6334, a massive star-forming region</dd>
+          <dt>Distance</dt><dd>≈4,000 light-years (Scorpius)</dd>
+          <dt>Instrument</dt><dd>NIRCam</dd>
+          <dt>Released</dt><dd>10 July 2025 — Webb's third-anniversary image</dd>
+        </dl>
+        <div class="wl-body">
+          <p>One toe of a much larger paw-print of star formation. The massive newborn stars — the yellowish ones wearing diffraction spikes — are carving this cavity from the inside; the blue glow is their light filling the hollow. Red-orange pockets mark where the next generation of massive stars is forming right now. The brown is dust so dense that even Webb cannot see through it.</p>
+          <p>Massive stars edit their own birthplaces. Their radiation and winds disperse the cloud that made them, which sets a timer on how many more stars that cloud can make — creation and eviction in the same gesture. This frame catches the eviction in progress, which is why NASA chose it to mark Webb's third year of science.</p>
+        </div>
+        <div class="wl-look">
+          <span class="label">Look closer</span>
+          <p>Top centre: a tiered, circular hollow the release nicknames the Opera House — each level carved by the stars seated below it.</p>
+        </div>
+        <p class="wl-credit">Credit: NASA, ESA, CSA, STScI &middot; <a href="https://esawebb.org/news/weic2513/" target="_blank" rel="noopener">Original release ↗</a></p>
+      </div>
+    </section>
+
+    <!-- VII — M77 -->
+    <section class="exhibit" id="plate-7"
+      data-large="https://cdn.esawebb.org/archives/images/large/potm2604a.jpg"
+      data-title="Messier 77, the Squid Galaxy"
+      data-credit="ESA/Webb, NASA &amp; CSA, A. Leroy">
+      <div class="plate-holder">
+        <figure class="plate plate--tall">
+          <img src="https://cdn.esawebb.org/archives/images/screen/potm2604a.jpg" alt="Messier 77 in the mid-infrared: swirling dust filaments, a ring of orange star-forming knots, and a piercing bright active nucleus with diffraction spikes" style="aspect-ratio:1280/1555" loading="lazy">
+        </figure>
+      </div>
+      <p class="plate-hint">Click to view full size</p>
+      <div class="wall-label">
+        <p class="wl-no">Plate VII</p>
+        <h3 class="wl-title">Messier 77, <em>feeding</em></h3>
+        <dl class="wl-facts">
+          <dt>Object</dt><dd>The Squid Galaxy — a barred spiral with an active nucleus</dd>
+          <dt>Distance</dt><dd>45 million light-years (Cetus)</dd>
+          <dt>Instrument</dt><dd>MIRI</dd>
+          <dt>Released</dt><dd>7 May 2026</dd>
+        </dl>
+        <div class="wl-body">
+          <p>A spiral galaxy with its lights switched to the mid-infrared — so what you are seeing is not its stars but its dust, drawn as a skeleton. The blinding point at the centre is the reason this galaxy is famous: an active nucleus, a black hole of about eight million solar masses, feeding. The matter falling toward it glows brighter than entire spiral arms.</p>
+          <p>Around it runs a starburst ring more than 6,000 light-years across, making stars at a furious rate; each orange bubble along it is a cluster of newborn stars wrapped in its own dust cocoon. M77 is one of the nearest galaxies with a feeding supermassive black hole — the reference specimen for how a nucleus and its host live together. The six-pointed star on the core is the telescope's own optics; a point that bright cannot help wearing it.</p>
+        </div>
+        <div class="wl-look">
+          <span class="label">Look closer</span>
+          <p>Any single orange bubble on the ring — each one is a whole star cluster, counted here as a dot.</p>
+        </div>
+        <p class="wl-credit">Credit: ESA/Webb, NASA &amp; CSA, A. Leroy &middot; <a href="https://esawebb.org/images/potm2604a/" target="_blank" rel="noopener">Original release ↗</a></p>
+      </div>
+    </section>
+
+    <!-- VIII — MACS J0553 -->
+    <section class="exhibit" id="plate-8"
+      data-large="https://cdn.esawebb.org/archives/images/large/potm2606a.jpg"
+      data-title="MACS J0553.4−3342 — a collision of clusters"
+      data-credit="ESA/Webb, NASA &amp; CSA, S. Fujimoto">
+      <div class="plate-holder">
+        <figure class="plate plate--wide">
+          <img src="https://cdn.esawebb.org/archives/images/screen/potm2606a.jpg" alt="Galaxy cluster MACS J0553.4-3342: two merging subclusters of galaxies with orange gravitationally lensed arcs of background galaxies" style="aspect-ratio:1280/633" loading="lazy">
+        </figure>
+      </div>
+      <p class="plate-hint">Click to view full size</p>
+      <div class="wall-label">
+        <p class="wl-no">Plate VIII</p>
+        <h3 class="wl-title">Two clusters, <em>mid-collision</em></h3>
+        <dl class="wl-facts">
+          <dt>Object</dt><dd>MACS J0553.4−3342, two merging galaxy clusters</dd>
+          <dt>Distance</dt><dd>≈4 billion light-years (Columba)</dd>
+          <dt>Instrument</dt><dd>NIRCam</dd>
+          <dt>Released</dt><dd>3 July 2026 — the day this gallery was hung</dd>
+        </dl>
+        <div class="wl-body">
+          <p>Two clusters of galaxies — each a swarm of hundreds, each anchored by a giant elliptical — that have already passed through each other. They are now more than a million light-years apart and slowing; gravity will pull them back for another pass. The space between them is filled with gas heated by the crash until it shines in X-rays — a part of the picture Webb cannot see, and says nothing about.</p>
+          <p>Collisions like this are the most energetic events since the Big Bang, and they are a laboratory for dark matter: in a crash, the galaxies, the hot gas, and the invisible mass separate, and their separation can be measured. Meanwhile the combined mass works as a lens — the orange arcs are galaxies far behind the wreck, their light bent and stretched on the way to us, some of it from less than a billion years after the beginning.</p>
+        </div>
+        <div class="wl-look">
+          <span class="label">Look closer</span>
+          <p>The left side of the frame: three separate orange smears that are the same background galaxy, delivered three times by the lens.</p>
+        </div>
+        <p class="wl-credit">Credit: ESA/Webb, NASA &amp; CSA, S. Fujimoto &middot; <a href="https://esawebb.org/images/potm2606a/" target="_blank" rel="noopener">Original release ↗</a></p>
+      </div>
+    </section>
+
+    <!-- IX — MACS J1149 -->
+    <section class="exhibit" id="plate-9"
+      data-large="https://cdn.esawebb.org/archives/images/large/potm2601a.jpg"
+      data-title="MACS J1149.5+2223 — the celebrity cluster"
+      data-credit="ESA/Webb, NASA &amp; CSA, C. Willott (NRC Canada), R. Tripodi (INAF)">
+      <div class="plate-holder">
+        <figure class="plate plate--sq">
+          <img src="https://cdn.esawebb.org/archives/images/screen/potm2601a.jpg" alt="Galaxy cluster MACS J1149.5+2223: hundreds of cluster galaxies with stretched, lensed arcs of background galaxies, including a pink jellyfish-shaped streak" style="aspect-ratio:1280/1286" loading="lazy">
+        </figure>
+      </div>
+      <p class="plate-hint">Click to view full size</p>
+      <div class="wall-label">
+        <p class="wl-no">Plate IX</p>
+        <h3 class="wl-title">The celebrity cluster, <em>used as a telescope</em></h3>
+        <dl class="wl-facts">
+          <dt>Object</dt><dd>MACS J1149.5+2223, over 300 confirmed galaxies in one cluster</dd>
+          <dt>Distance</dt><dd>≈5 billion light-years (Leo)</dd>
+          <dt>Instrument</dt><dd>NIRCam, 0.9–4.44 µm</dd>
+          <dt>Released</dt><dd>22 January 2026</dd>
+        </dl>
+        <div class="wl-body">
+          <p>More than three hundred galaxies bound in one cluster — and the cluster itself used as an instrument. Its mass curves spacetime; light from galaxies far behind bends around it and arrives magnified, smeared into arcs. Astronomy gets a free telescope upgrade, paid for in distortion.</p>
+          <p>The field has earned its nickname. This is where the lensed supernova Refsdal appeared as multiple images on the sky, and the pink, jellyfish-shaped streak is the warped galaxy where astronomers found a blue supergiant that was, at its discovery, the most distant single star ever seen. Webb's revisit — the CANUCS programme — pushes past what Hubble's Frontier Fields could reach: through this lens it finds galaxies from the Universe's first 600 million years, some already feeding supermassive black holes. That last part was not supposed to happen so early; it is one of Webb's standing puzzles.</p>
+        </div>
+        <div class="wl-look">
+          <span class="label">Look closer</span>
+          <p>The pink jellyfish. Its stretched shape is not the galaxy's own — it is the lens's signature, gravity redrawing the picture in transit.</p>
+        </div>
+        <p class="wl-credit">Credit: ESA/Webb, NASA &amp; CSA, C. Willott (National Research Council Canada), R. Tripodi (INAF — Astronomical Observatory of Rome) &middot; <a href="https://esawebb.org/images/potm2601a/" target="_blank" rel="noopener">Original release ↗</a></p>
+      </div>
+    </section>
+
+    <!-- X — MIDIS deep field -->
+    <section class="exhibit" id="plate-10"
+      data-large="https://cdn.esawebb.org/archives/images/large/potm2507a.jpg"
+      data-title="The Ultra Deep Field, gone deeper (MIDIS)"
+      data-credit="ESA/Webb, NASA &amp; CSA, G. Östlin, P. G. Pérez-González, J. Melinder, JADES &amp; MIDIS collaborations, M. Zamani (ESA/Webb)">
+      <div class="plate-holder">
+        <figure class="plate plate--sq">
+          <img src="https://cdn.esawebb.org/archives/images/screen/potm2507a.jpg" alt="The MIRI Deep Imaging Survey view of the Hubble Ultra Deep Field: thousands of galaxies of every colour on black, some among the earliest known" style="aspect-ratio:1280/1083" loading="lazy">
+        </figure>
+      </div>
+      <p class="plate-hint">Click to view full size</p>
+      <div class="wall-label">
+        <p class="wl-no">Plate X</p>
+        <h3 class="wl-title">The deep field, <em>deeper</em></h3>
+        <dl class="wl-facts">
+          <dt>Object</dt><dd>The Hubble Ultra Deep Field, re-photographed — the MIDIS survey</dd>
+          <dt>Distance</dt><dd>Up to 13+ billion years of lookback (Fornax)</dd>
+          <dt>Instruments</dt><dd>MIRI + NIRCam — nearly 100 hours, including Webb's longest single-filter extragalactic stare</dd>
+          <dt>Released</dt><dd>1 August 2025</dd>
+        </dl>
+        <div class="wl-body">
+          <p>The most famous patch of dark sky there is — Hubble's Ultra Deep Field — photographed again, this time in the mid-infrared, with nearly one hundred hours of exposure. Almost every mark in this frame is a galaxy: more than 2,500 sources in a patch of sky you could hide behind a grain of sand at arm's length. The white and green points carry light from the Universe's first billion years.</p>
+          <p>The red points are the finding. MIRI's long stare turned up hundreds of extremely red galaxies that earlier surveys could not classify — either choked with dust while forming stars furiously, or already full of old stars far earlier than galaxy-formation timelines comfortably allow. Both readings force a rewrite; deep fields are the census bureau of cosmology, and the census keeps coming back with surprises.</p>
+        </div>
+        <div class="wl-look">
+          <span class="label">Look closer</span>
+          <p>Choose any patch that looks empty. Open the full-size image and look again. It isn't.</p>
+        </div>
+        <p class="wl-credit">Credit: ESA/Webb, NASA &amp; CSA, G. Östlin, P. G. Pérez-González, J. Melinder, the JADES Collaboration, the MIDIS collaboration, M. Zamani (ESA/Webb) &middot; <a href="https://esawebb.org/images/potm2507a/" target="_blank" rel="noopener">Original release ↗</a></p>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<div class="wrap">
+  <section class="coda">
+    <p>Every colour on these walls arrived at a mirror a million miles from here as infrared light — some of it four hours old, some of it older than the Earth. The translation is honest. The distances are real. That is the whole exhibition.</p>
+  </section>
+
+  <footer>
+    <div class="foot-grid">
+      <div>
+        <h3>Provenance</h3>
+        <p class="small">All photographs are official releases of the James Webb Space Telescope — NASA / ESA / CSA / STScI and the credited science teams — hotlinked from the ESA/Webb archive at <a href="https://esawebb.org" target="_blank" rel="noopener">esawebb.org</a>. Each plate links to its original release page. Image URLs verified 3 July 2026.</p>
+      </div>
+      <div>
+        <h3>Sources</h3>
+        <ul>
+          <li><a href="https://esawebb.org/images/potm/archive/year/2026/" target="_blank" rel="noopener">ESA/Webb — Pictures of the Month, 2026</a></li>
+          <li><a href="https://esawebb.org/images/potm/archive/year/2025/" target="_blank" rel="noopener">ESA/Webb — Pictures of the Month, 2025</a></li>
+          <li><a href="https://esawebb.org/news/weic2507/" target="_blank" rel="noopener">Webb captures Neptune's auroras (weic2507)</a></li>
+          <li><a href="https://esawebb.org/news/weic2506/" target="_blank" rel="noopener">The Cosmic Tornado unmasked (weic2506)</a></li>
+          <li><a href="https://esawebb.org/news/weic2513/" target="_blank" rel="noopener">Cat's Paw, third anniversary (weic2513)</a></li>
+          <li><a href="https://webbtelescope.org" target="_blank" rel="noopener">webbtelescope.org — NASA/STScI</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>On uncertainty</h3>
+        <p class="small">Distances to nebulae and clusters carry real error bars; figures here are as stated in each release, rounded honestly. Where the source declines to commit — the Red Spider's distance — this gallery declines too. Detection is not confirmation; hints are labelled as hints.</p>
+      </div>
+    </div>
+    <div class="colophon">
+      <span>Ride — Split Library &middot; 3 July 2026</span>
+      <span>Set in Spectral &amp; Karla &middot; No colour but the telescope's</span>
+    </div>
+  </footer>
+</div>
+
+<!-- lightbox -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Full-size image viewer">
+  <div class="lb-stage">
+    <span id="lb-count"></span>
+    <button class="lb-btn" id="lb-close" aria-label="Close">×</button>
+    <button class="lb-btn" id="lb-prev" aria-label="Previous plate">‹</button>
+    <button class="lb-btn" id="lb-next" aria-label="Next plate">›</button>
+    <span class="lb-loading" id="lb-loading">Retrieving original</span>
+    <img id="lb-img" alt="">
+  </div>
+  <div class="lb-caption">
+    <div class="lb-t" id="lb-title"></div>
+    <div class="lb-c" id="lb-credit"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ——— light-departure years, computed ——— */
+  var nowYear = new Date().getFullYear();
+  document.querySelectorAll("td.pl-depart").forEach(function(td){
+    var ly = td.getAttribute("data-ly");
+    if (ly !== null) {
+      var y = nowYear - parseInt(ly, 10);
+      var label = y > 0 ? ("left c. " + y + " CE") : ("left c. " + (Math.abs(y) + 1) + " BCE");
+      td.textContent = label;
+    } else {
+      td.textContent = td.getAttribute("data-note") || "";
+    }
+  });
+
+  /* ——— fade-in on scroll ——— */
+  var exhibits = Array.prototype.slice.call(document.querySelectorAll("section.exhibit"));
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add("seen"); io.unobserve(e.target); }
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
+    exhibits.forEach(function(s){ io.observe(s); });
+  } else {
+    exhibits.forEach(function(s){ s.classList.add("seen"); });
+  }
+
+  /* ——— lightbox ——— */
+  var plates = exhibits.map(function(s, i){
+    return {
+      id: s.id,
+      large: s.getAttribute("data-large"),
+      title: s.getAttribute("data-title"),
+      credit: s.getAttribute("data-credit"),
+      no: ["I","II","III","IV","V","VI","VII","VIII","IX","X"][i] || String(i + 1)
+    };
+  });
+
+  var box = document.getElementById("lightbox");
+  var img = document.getElementById("lb-img");
+  var tEl = document.getElementById("lb-title");
+  var cEl = document.getElementById("lb-credit");
+  var nEl = document.getElementById("lb-count");
+  var loading = document.getElementById("lb-loading");
+  var current = -1;
+  var loaded = {};
+
+  function show(i){
+    if (i < 0) i = plates.length - 1;
+    if (i >= plates.length) i = 0;
+    current = i;
+    var p = plates[i];
+    tEl.innerHTML = "Plate " + p.no + " — <em>" + p.title + "</em>";
+    cEl.textContent = p.credit.replace(/&amp;/g, "&");
+    nEl.textContent = (i + 1) + " / " + plates.length;
+    img.classList.remove("on");
+    img.alt = p.title;
+    if (loaded[p.large]) {
+      img.src = p.large;
+      img.classList.add("on");
+      loading.classList.remove("on");
+    } else {
+      loading.classList.add("on");
+      img.onload = function(){
+        loaded[p.large] = true;
+        loading.classList.remove("on");
+        img.classList.add("on");
+      };
+      img.src = p.large;
+    }
+    box.classList.add("open");
+    document.body.classList.add("lb-lock");
+    if (history.replaceState) history.replaceState(null, "", "#" + p.id);
+  }
+
+  function hide(){
+    box.classList.remove("open");
+    document.body.classList.remove("lb-lock");
+    current = -1;
+    if (history.replaceState) history.replaceState(null, "", location.pathname + location.search);
+  }
+
+  exhibits.forEach(function(s, i){
+    s.querySelector("figure.plate").addEventListener("click", function(){ show(i); });
+  });
+  document.getElementById("lb-close").addEventListener("click", hide);
+  document.getElementById("lb-prev").addEventListener("click", function(){ show(current - 1); });
+  document.getElementById("lb-next").addEventListener("click", function(){ show(current + 1); });
+  box.addEventListener("click", function(e){ if (e.target === box || e.target.classList.contains("lb-stage")) hide(); });
+  document.addEventListener("keydown", function(e){
+    if (!box.classList.contains("open")) return;
+    if (e.key === "Escape") hide();
+    else if (e.key === "ArrowLeft") show(current - 1);
+    else if (e.key === "ArrowRight") show(current + 1);
+  });
+
+  /* deep link: #plate-N opens the lightbox on load */
+  var m = location.hash.match(/^#(plate-(\d+))$/);
+  if (m) {
+    var idx = plates.findIndex(function(p){ return p.id === m[1]; });
+    if (idx >= 0) {
+      var target = document.getElementById(m[1]);
+      if (target) target.classList.add("seen");
+      show(idx);
+    }
+  }
+})();
+</script>
+</body>
+</html>

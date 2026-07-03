@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>TRAPPIST-1 — Seven Worlds, One Red Star</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    /* red-dwarf palette: maroon-black lit warm by a cool red star */
+    --void-0:#0a0403;      /* deepest maroon-black */
+    --void-1:#140705;      /* near-black rust */
+    --rust:#e0632c;        /* THE warm rust accent (orbits / UI) */
+    --rust-dim:#a8471f;
+    --ember:#ff8a4c;       /* brighter ember for hover/active */
+    --starlight:#f4e9df;   /* warm off-white text */
+    --muted:#c9a998;       /* dusty terracotta for secondary text */
+    --faint:#7a5c50;       /* faint labels */
+    --hz:#4f9a7a;          /* muted temperate green for the habitable zone */
+    --panel:rgba(24,10,7,0.68);
+    --hair:rgba(224,99,44,0.22);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;width:100%;overflow:hidden;background:var(--void-0)}
+  body{
+    font-family:'Archivo',system-ui,sans-serif;
+    color:var(--starlight);
+    -webkit-font-smoothing:antialiased;
+    position:fixed;inset:0;
+    touch-action:none;
+  }
+  canvas{display:block;position:fixed;inset:0;z-index:0}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+
+  /* ---- Title block ---- */
+  #masthead{
+    position:fixed;top:0;left:0;z-index:10;
+    padding:22px 26px 34px;
+    max-width:min(46ch,66vw);
+    pointer-events:none;
+    background:linear-gradient(180deg, rgba(10,4,3,0.72) 0%, rgba(10,4,3,0.28) 60%, transparent 100%);
+  }
+  #masthead h1{
+    font-size:clamp(20px,3.1vw,34px);
+    font-weight:700;letter-spacing:.01em;line-height:1.02;
+    text-transform:uppercase;
+  }
+  #masthead h1 .sep{color:var(--rust);font-weight:500}
+  #masthead .sub{
+    margin-top:8px;font-size:12.5px;color:var(--muted);
+    letter-spacing:.14em;text-transform:uppercase;
+  }
+  #masthead .dist{
+    margin-top:11px;font-size:11px;color:var(--faint);letter-spacing:.05em;
+    line-height:1.55;max-width:40ch;
+  }
+  #masthead .dist b{color:var(--muted);font-weight:500}
+
+  /* ---- About (exec summary) ---- */
+  #about{
+    position:fixed;top:20px;right:22px;z-index:20;
+    width:min(370px,88vw);
+    pointer-events:auto;
+  }
+  #about summary{
+    list-style:none;cursor:pointer;
+    display:flex;align-items:center;gap:8px;justify-content:flex-end;
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);
+    padding:7px 12px;border-radius:999px;
+    background:var(--panel);border:1px solid var(--hair);
+    backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+    transition:color .2s,border-color .2s;
+    user-select:none;
+  }
+  #about summary::-webkit-details-marker{display:none}
+  #about summary:hover{color:var(--ember);border-color:rgba(224,99,44,0.4)}
+  #about summary .dot{width:6px;height:6px;border-radius:50%;background:var(--rust);box-shadow:0 0 8px var(--rust)}
+  #about[open] summary .chev{transform:rotate(180deg)}
+  #about .chev{transition:transform .25s;font-size:9px;opacity:.7}
+  #about .body{
+    margin-top:8px;padding:16px 18px;border-radius:14px;
+    background:var(--panel);border:1px solid var(--hair);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    box-shadow:0 20px 60px rgba(0,0,0,.5), 0 0 40px rgba(224,99,44,.06);
+    font-size:12.5px;line-height:1.62;color:var(--muted);
+    max-height:74vh;overflow:auto;
+  }
+  #about .body h3{
+    font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--rust);margin:13px 0 4px;font-weight:600;
+  }
+  #about .body h3:first-child{margin-top:0}
+  #about .body p{margin-bottom:2px}
+  #about .body strong{color:var(--starlight);font-weight:600}
+
+  /* ---- Bottom control dock ---- */
+  #dock{
+    position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
+    z-index:15;
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;
+    padding:10px 14px;border-radius:16px;
+    background:var(--panel);border:1px solid var(--hair);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    box-shadow:0 18px 50px rgba(0,0,0,.5);
+    max-width:calc(100vw - 32px);
+  }
+  .ctl{
+    display:flex;align-items:center;gap:9px;
+    padding:5px 9px;border-radius:10px;
+  }
+  .ctl + .ctl{border-left:1px solid rgba(224,99,44,0.14)}
+  .ctl label{
+    font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
+    white-space:nowrap;
+  }
+  button.chip{
+    font-family:'Archivo',sans-serif;
+    font-size:11.5px;font-weight:600;letter-spacing:.04em;
+    color:var(--starlight);
+    background:rgba(224,99,44,0.1);
+    border:1px solid var(--hair);
+    padding:7px 12px;border-radius:9px;cursor:pointer;
+    transition:background .18s,border-color .18s,color .18s,transform .08s;
+    white-space:nowrap;
+  }
+  button.chip:hover{background:rgba(224,99,44,0.2);border-color:rgba(224,99,44,0.45)}
+  button.chip:active{transform:translateY(1px)}
+  button.chip.on{
+    background:var(--rust);border-color:var(--ember);color:#180702;
+    box-shadow:0 0 18px rgba(224,99,44,.4);
+  }
+  #playBtn{min-width:42px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:14px}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;
+    width:118px;height:3px;border-radius:3px;
+    background:linear-gradient(90deg,var(--rust-dim),var(--rust));
+    outline:none;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:14px;height:14px;border-radius:50%;
+    background:var(--ember);border:2px solid var(--void-1);
+    box-shadow:0 0 10px rgba(255,138,76,.6);cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:14px;height:14px;border-radius:50%;
+    background:var(--ember);border:2px solid var(--void-1);
+    box-shadow:0 0 10px rgba(255,138,76,.6);cursor:pointer;
+  }
+  #speedVal{font-size:11px;color:var(--muted);min-width:44px;text-align:right}
+  #scaleNote{
+    font-size:10px;color:var(--faint);letter-spacing:.02em;max-width:15ch;line-height:1.35;
+  }
+  #scaleNote b{color:var(--muted)}
+
+  /* ---- Planet dossier ---- */
+  #dossier{
+    position:fixed;left:22px;bottom:20px;z-index:18;
+    width:min(340px,90vw);
+    padding:0;border-radius:16px;overflow:hidden;
+    background:var(--panel);border:1px solid var(--hair);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    box-shadow:0 22px 60px rgba(0,0,0,.55), 0 0 46px rgba(224,99,44,.08);
+    /* dossier uses a distinct clean sans: Archivo — but at wider tracking. font is shared;
+       distinctness in this piece is carried by palette + rust accent (per brief). */
+    transform:translateY(18px);opacity:0;pointer-events:none;
+    transition:transform .34s cubic-bezier(.2,.8,.2,1), opacity .28s;
+  }
+  #dossier.show{transform:translateY(0);opacity:1;pointer-events:auto}
+  #dossier .dhead{
+    position:relative;padding:15px 18px 13px;
+    border-bottom:1px solid rgba(224,99,44,0.16);
+  }
+  #dossier .swatch{
+    position:absolute;left:0;top:0;bottom:0;width:4px;
+  }
+  #dossier .kicker{
+    font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--rust);
+  }
+  #dossier .pname{
+    font-size:23px;font-weight:700;letter-spacing:.01em;margin-top:2px;
+    display:flex;align-items:baseline;gap:9px;
+  }
+  #dossier .pname .designation{font-size:13px;color:var(--faint);font-weight:400;letter-spacing:.08em}
+  #dossier .hzbadge{
+    display:inline-block;margin-top:9px;
+    font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+    padding:4px 9px;border-radius:999px;
+  }
+  #dossier .hzbadge.in{background:rgba(79,154,122,0.18);color:#7fd4ac;border:1px solid rgba(79,154,122,0.4)}
+  #dossier .hzbadge.out{background:rgba(122,92,80,0.16);color:var(--muted);border:1px solid rgba(122,92,80,0.35)}
+  #dossier .dgrid{
+    display:grid;grid-template-columns:1fr 1fr;gap:0;
+  }
+  #dossier .cell{
+    padding:12px 18px;border-top:1px solid rgba(224,99,44,0.09);
+  }
+  #dossier .cell:nth-child(odd){border-right:1px solid rgba(224,99,44,0.09)}
+  #dossier .cell .lab{
+    font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);margin-bottom:3px;
+  }
+  #dossier .cell .val{
+    font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:500;color:var(--starlight);
+    font-variant-numeric:tabular-nums;line-height:1.1;
+  }
+  #dossier .cell .val small{font-size:11px;color:var(--muted);font-weight:400;margin-left:3px}
+  #dossier .note{
+    padding:12px 18px 15px;font-size:11.5px;line-height:1.55;color:var(--muted);
+    border-top:1px solid rgba(224,99,44,0.09);
+  }
+  #dossier .note b{color:var(--starlight);font-weight:600}
+  #dossier .close{
+    position:absolute;top:12px;right:13px;
+    width:24px;height:24px;border-radius:7px;cursor:pointer;
+    background:rgba(224,99,44,0.1);border:1px solid var(--hair);
+    color:var(--muted);font-size:14px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .16s,color .16s;
+  }
+  #dossier .close:hover{background:rgba(224,99,44,0.25);color:var(--starlight)}
+
+  /* ---- hover tooltip (planet names in scene) ---- */
+  #hint{
+    position:fixed;z-index:16;pointer-events:none;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.03em;
+    color:var(--starlight);
+    padding:4px 8px;border-radius:7px;
+    background:rgba(20,7,5,0.85);border:1px solid var(--hair);
+    transform:translate(-50%,-140%);opacity:0;transition:opacity .12s;
+    white-space:nowrap;
+  }
+
+  /* ---- source credit ---- */
+  #credit{
+    position:fixed;right:14px;bottom:8px;z-index:12;
+    font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.04em;
+    color:var(--faint);text-align:right;line-height:1.5;pointer-events:none;
+    max-width:44ch;
+  }
+  #credit a{color:var(--faint)}
+
+  /* prompt to click */
+  #tapcue{
+    position:fixed;left:50%;top:calc(50% + 120px);transform:translateX(-50%);
+    z-index:11;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--faint);pointer-events:none;
+    animation:pulse 3.4s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:.9}}
+
+  /* loading */
+  #loader{
+    position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;
+    background:var(--void-0);transition:opacity .6s;
+  }
+  #loader .ring{
+    width:38px;height:38px;border-radius:50%;
+    border:2px solid rgba(224,99,44,0.2);border-top-color:var(--rust);
+    animation:spin 1s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  @media (max-width:720px){
+    #masthead{max-width:78vw;padding:16px 18px 28px}
+    #about{width:min(340px,92vw);top:14px;right:14px}
+    #dossier{left:12px;right:12px;bottom:96px;width:auto}
+    #dock{bottom:12px;gap:6px;padding:8px 10px}
+    .ctl{padding:4px 6px;gap:6px}
+    #scaleNote{display:none}
+    #credit{left:12px;right:12px;bottom:2px;max-width:none;text-align:center}
+    #tapcue{top:auto;bottom:170px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    #tapcue{animation:none;opacity:.6}
+    #loader .ring{animation:none;border-top-color:var(--rust);opacity:.6}
+  }
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<div id="loader"><div class="ring"></div></div>
+
+<header id="masthead">
+  <h1>TRAPPIST&#8209;1<span class="sep"> · </span>Seven Worlds</h1>
+  <div class="sub">A red&#8209;dwarf orrery, to scale</div>
+  <div class="dist">
+    An ultracool dwarf star <b>40.7 light&#8209;years</b> away, in Aquarius —
+    seven roughly Earth&#8209;sized planets in tight, resonant orbits.
+    All seven would fit inside Mercury's orbit of our Sun.
+  </div>
+</header>
+
+<details id="about">
+  <summary><span class="dot"></span> About this view <span class="chev">&#9660;</span></summary>
+  <div class="body">
+    <h3>Why</h3>
+    <p>To <strong>see</strong> the TRAPPIST&#8209;1 system as it actually is — a
+    cool red star lit in its true colour, and seven small worlds moving at their
+    real orbital periods, rendered to real relative scale.</p>
+    <h3>Context</h3>
+    <p>Every number here is the <strong>measured</strong> value from the NASA
+    Exoplanet Archive (default parameter set) and Gaia — planet radii, periods,
+    orbital distances, equilibrium temperatures, and the star's radius, temperature
+    and mass. Nothing is invented. The equilibrium temperatures assume no atmosphere;
+    real surfaces could differ.</p>
+    <h3>How to use it</h3>
+    <p><strong>Drag</strong> to orbit the camera, <strong>scroll</strong> to zoom.
+    <strong>Click a planet</strong> for its dossier. Use the dock to
+    <strong>pause / speed up</strong> the orbits and to toggle
+    <strong>to&#8209;scale spacing</strong> (real orbits are so tight the outer
+    planets crowd the star — the legible mode spreads them so you can read them).</p>
+    <h3>What I assumed</h3>
+    <p>Planet sizes are true relative to each other and to the star. Orbit
+    <em>spacing</em> defaults to <strong>legible</strong> (labelled in the dock);
+    flip to <strong>real</strong> to feel how cramped the true system is. Time is
+    compressed so a full inner orbit takes a couple of seconds. Colours are
+    naturalistic by equilibrium temperature — hot rock, temperate, and icy — not
+    photographs. — <em>Ride</em></p>
+  </div>
+</details>
+
+<div id="tapcue">Click a world</div>
+
+<div id="dossier">
+  <button class="close" id="dClose" aria-label="close">&times;</button>
+  <div class="dhead">
+    <div class="swatch" id="dSwatch"></div>
+    <div class="kicker">TRAPPIST&#8209;1 · planet dossier</div>
+    <div class="pname"><span id="dName">—</span><span class="designation" id="dDesig"></span></div>
+    <span class="hzbadge" id="dHZ"></span>
+  </div>
+  <div class="dgrid">
+    <div class="cell"><div class="lab">Radius</div><div class="val" id="dRad">—<small>R⊕</small></div></div>
+    <div class="cell"><div class="lab">Mass</div><div class="val" id="dMass">—<small>M⊕</small></div></div>
+    <div class="cell"><div class="lab">Orbital period</div><div class="val" id="dPer">—<small>days</small></div></div>
+    <div class="cell"><div class="lab">Distance to star</div><div class="val" id="dSma">—<small>AU</small></div></div>
+    <div class="cell"><div class="lab">Equilib. temp</div><div class="val" id="dTeq">—<small>K</small></div></div>
+    <div class="cell"><div class="lab">Starlight vs Earth</div><div class="val" id="dInsol">—<small>×</small></div></div>
+  </div>
+  <div class="note" id="dNote"></div>
+</div>
+
+<div id="hint"></div>
+
+<div id="dock">
+  <div class="ctl">
+    <button class="chip" id="playBtn" title="Pause / resume orbits">❚❚</button>
+  </div>
+  <div class="ctl">
+    <label for="speed">Time</label>
+    <input type="range" id="speed" min="0" max="100" value="42" />
+    <span id="speedVal" class="mono">1×</span>
+  </div>
+  <div class="ctl">
+    <label>Scale</label>
+    <button class="chip on" id="scaleBtn">Legible</button>
+    <span id="scaleNote"><b>Legible</b> spacing — orbits spread to read</span>
+  </div>
+  <div class="ctl">
+    <button class="chip" id="hzBtn">Habitable zone</button>
+  </div>
+</div>
+
+<div id="credit">
+  Data: NASA Exoplanet Archive (default parameter set, epoch 2026&#8209;07&#8209;03) ·
+  Gaia DR3 parallax 80.21 mas → 12.47 pc · JWST DREAMS 2025–26 (atmosphere of e, open) ·
+  Drawn with Three.js — this is a rendering, not a photograph
+</div>
+
+<!-- Baked-in real data. Sources cited in #credit and the About panel. -->
+<script id="trappist-data" type="application/json">
+{
+  "source": "NASA Exoplanet Archive TAP (Planetary Systems, default_flag=1) + Gaia DR3; equilibrium temperatures from Gillon+2017 / Grimm+2018 as tabulated in the Archive.",
+  "epoch": "2026-07-03",
+  "star": {
+    "name": "TRAPPIST-1",
+    "spectype": "M8.0 V (ultracool red dwarf)",
+    "radius_rsun": 0.1192,
+    "teff_k": 2566,
+    "mass_msun": 0.0898,
+    "log_lum_lsun": -3.257,
+    "feh": 0.052,
+    "age_gyr": 7.6,
+    "dist_ly": 40.66,
+    "dist_pc": 12.47,
+    "ra_deg": 346.6264,
+    "dec_deg": -5.0435
+  },
+  "hz": { "inner_au": 0.024, "outer_au": 0.049,
+    "note": "Conservative habitable zone (runaway-greenhouse to maximum-greenhouse, Kopparapu 2013 scaled to L,Teff). e, f and g fall inside; e is best placed." },
+  "planets": [
+    { "letter":"b","radius_re":1.116,"mass_me":1.374,"period_d":1.510826,"sma_au":0.01154,"teq_k":400,"insol_se":4.153,"density":5.44,
+      "note":"Innermost and hottest. JWST thermal measurements find no thick atmosphere — likely a bare, sun-scorched rock." },
+    { "letter":"c","radius_re":1.097,"mass_me":1.308,"period_d":2.421937,"sma_au":0.01580,"teq_k":342,"insol_se":2.214,"density":5.46,
+      "note":"Venus-like insolation. JWST/MIRI rules out a thick CO₂ atmosphere; if any air remains, it is thin." },
+    { "letter":"d","radius_re":0.788,"mass_me":0.388,"period_d":4.049219,"sma_au":0.02227,"teq_k":288,"insol_se":1.115,"density":4.37,
+      "note":"Smallest of the inner group and the least dense — a volatile-rich world just inside the warm edge of the habitable zone." },
+    { "letter":"e","radius_re":0.920,"mass_me":0.692,"period_d":6.101013,"sma_au":0.02925,"teq_k":251,"insol_se":0.646,"density":4.90,
+      "note":"The prize. Rocky, Earth-density, squarely in the habitable zone — the most likely to hold surface liquid water if it has an atmosphere. JWST is probing it now; the result is still open." },
+    { "letter":"f","radius_re":1.045,"mass_me":1.039,"period_d":9.207540,"sma_au":0.03849,"teq_k":219,"insol_se":0.373,"density":5.02,
+      "note":"In the outer habitable zone. Lower density hints at ice or a deep volatile layer — a cool ocean or ice world, atmosphere permitting." },
+    { "letter":"g","radius_re":1.129,"mass_me":1.321,"period_d":12.352446,"sma_au":0.04683,"teq_k":199,"insol_se":0.252,"density":5.06,
+      "note":"Largest planet, at the cold outer edge of the habitable zone. Habitable only with a strong greenhouse blanket." },
+    { "letter":"h","radius_re":0.755,"mass_me":0.326,"period_d":18.772866,"sma_au":0.06189,"teq_k":173,"insol_se":0.144,"density":4.16,
+      "note":"Outermost and coldest, beyond the habitable zone — a small, frozen world receiving about a seventh of Earth's sunlight." }
+  ],
+  "resonance": "The orbital periods form a near-perfect chain of resonances (8:5:3:2 and 3:2 links), locking the seven worlds into a slow gravitational dance."
+}
+</script>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const DATA = JSON.parse(document.getElementById('trappist-data').textContent);
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------------------------------------------------------------------------
+   Scale strategy
+   - Star radius in scene units = fixed STAR_R.
+   - Planet radii are TRUE relative to the star:
+       planetSceneR = STAR_R * (planet.radius_re * R_EARTH_RSUN) / star.radius_rsun
+     (Earth radius = 0.009168 R_sun.) They come out tiny & real — as they should.
+   - Orbits: two modes.
+       REAL   — semi-major axis mapped linearly from AU (true spacing; very tight).
+       LEGIBLE— axis index spread on a gentle curve so all 7 are readable.
+--------------------------------------------------------------------------- */
+const R_EARTH_RSUN = 0.009168;
+const STAR_R = 1.6;
+const star = DATA.star;
+const planets = DATA.planets;
+
+// true planet scene radius (relative to star) — then a mild visual boost so the
+// smallest worlds are still clickable, applied EQUALLY so relative sizes stay honest.
+const VIS_BOOST = 3.4;
+planets.forEach(p=>{
+  p.trueR = STAR_R * (p.radius_re * R_EARTH_RSUN) / star.radius_rsun;
+  p.sceneR = p.trueR * VIS_BOOST;
+});
+
+// REAL spacing: map AU → scene. Star surface at STAR_R; keep innermost just clear of it.
+const auMin = planets[0].sma_au, auMax = planets[planets.length-1].sma_au;
+const REAL_INNER = STAR_R + 0.9, REAL_OUTER = 15.5;
+planets.forEach(p=>{
+  const t = (p.sma_au - auMin)/(auMax - auMin);
+  p.rReal = REAL_INNER + t*(REAL_OUTER - REAL_INNER);
+});
+// LEGIBLE spacing: spread by index on a soft power curve.
+const LEG_INNER = STAR_R + 1.7, LEG_OUTER = 15.5;
+planets.forEach((p,i)=>{
+  const t = i/(planets.length-1);
+  p.rLeg = LEG_INNER + Math.pow(t,0.82)*(LEG_OUTER - LEG_INNER);
+});
+
+// HZ shell radii in each mode (map the AU bounds through the same transform).
+function auToReal(au){ const t=(au-auMin)/(auMax-auMin); return REAL_INNER + t*(REAL_OUTER-REAL_INNER); }
+const hzRealInner = auToReal(DATA.hz.inner_au), hzRealOuter = auToReal(DATA.hz.outer_au);
+// in legible mode, place HZ between the e/f/g band using their leg radii
+const idxE = planets.findIndex(p=>p.letter==='e');
+const idxG = planets.findIndex(p=>p.letter==='g');
+const hzLegInner = (planets[idxE-1].rLeg + planets[idxE].rLeg)/2;
+const hzLegOuter = (planets[idxG].rLeg + planets[idxG+1].rLeg)/2;
+
+/* ---- naturalistic colour by equilibrium temperature ----
+   hot -> scorched terracotta/basalt; temperate -> slate/olive; cold -> ice.  */
+function planetColor(p){
+  const t = p.teq_k;
+  // anchor stops (K -> rgb)
+  const stops = [
+    [173, [0.62,0.70,0.80]],  // icy blue-white (h)
+    [199, [0.55,0.62,0.68]],  // cold slate
+    [251, [0.42,0.50,0.52]],  // temperate slate-teal (e)
+    [288, [0.55,0.48,0.44]],  // warm rock (d)
+    [342, [0.70,0.45,0.33]],  // terracotta (c)
+    [400, [0.72,0.38,0.28]]   // scorched rust (b)
+  ];
+  let a=stops[0], b=stops[stops.length-1];
+  for(let i=0;i<stops.length-1;i++){ if(t>=stops[i][0] && t<=stops[i+1][0]){ a=stops[i]; b=stops[i+1]; break; } }
+  const f = (t-a[0])/((b[0]-a[0])||1);
+  const c = a[1].map((v,i)=>v + (b[1][i]-v)*Math.min(1,Math.max(0,f)));
+  return new THREE.Color(c[0],c[1],c[2]);
+}
+planets.forEach(p=> p.color = planetColor(p));
+
+/* =========================== THREE SETUP =============================== */
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false, powerPreference:'high-performance'});
+renderer.setClearColor(0x0a0403, 1);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x0a0403, 0.010);
+
+const camera = new THREE.PerspectiveCamera(46, window.innerWidth/window.innerHeight, 0.1, 4000);
+camera.position.set(0, 9.5, 21);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.minDistance = 4.2;
+controls.maxDistance = 90;
+controls.maxPolarAngle = Math.PI*0.92;
+controls.autoRotate = !REDUCED;
+controls.autoRotateSpeed = 0.28;
+controls.target.set(0,0,0);
+
+/* ---------- deep-space backdrop: warm-lit starfield + maroon nebula --------- */
+// (1) star field — thousands of points, warm-biased tint, subtle size variance.
+function makeStarfield(count, rMin, rMax){
+  const g = new THREE.BufferGeometry();
+  const pos = new Float32Array(count*3);
+  const col = new Float32Array(count*3);
+  const siz = new Float32Array(count);
+  const c = new THREE.Color();
+  for(let i=0;i<count;i++){
+    // shell distribution
+    const r = rMin + Math.random()*(rMax-rMin);
+    const th = Math.random()*Math.PI*2;
+    const ph = Math.acos(2*Math.random()-1);
+    pos[i*3]   = r*Math.sin(ph)*Math.cos(th);
+    pos[i*3+1] = r*Math.sin(ph)*Math.sin(th);
+    pos[i*3+2] = r*Math.cos(ph);
+    // colour: mostly warm-white, a few cool, occasional deep red (red-dwarf field)
+    const roll = Math.random();
+    let h, s, l;
+    if(roll<0.12){ h=0.02; s=0.55; l=0.55; }        // red
+    else if(roll<0.22){ h=0.58; s=0.25; l=0.72; }   // faint blue
+    else { h=0.07; s=0.18+Math.random()*0.15; l=0.72+Math.random()*0.2; } // warm white
+    c.setHSL(h,s,l);
+    col[i*3]=c.r; col[i*3+1]=c.g; col[i*3+2]=c.b;
+    siz[i] = (Math.random()<0.04? 2.6:1) * (0.6+Math.random()*0.9);
+  }
+  g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  g.setAttribute('color', new THREE.BufferAttribute(col,3));
+  g.setAttribute('asize', new THREE.BufferAttribute(siz,1));
+  const m = new THREE.ShaderMaterial({
+    uniforms:{ uPix:{value: renderer.getPixelRatio()} },
+    vertexColors:true, transparent:true, depthWrite:false,
+    blending:THREE.AdditiveBlending,
+    vertexShader:`
+      attribute float asize; varying vec3 vC;
+      uniform float uPix;
+      void main(){
+        vC=color;
+        vec4 mv=modelViewMatrix*vec4(position,1.0);
+        gl_PointSize = asize * uPix * (300.0/ -mv.z);
+        gl_Position = projectionMatrix*mv;
+      }`,
+    fragmentShader:`
+      varying vec3 vC;
+      void main(){
+        vec2 d=gl_PointCoord-0.5; float r=length(d);
+        float a=smoothstep(0.5,0.0,r);
+        a*=a;
+        gl_FragColor=vec4(vC,a);
+      }`
+  });
+  return new THREE.Points(g,m);
+}
+const starfield = makeStarfield(3800, 60, 900);
+scene.add(starfield);
+const starfieldFar = makeStarfield(1400, 900, 1900);
+scene.add(starfieldFar);
+
+// (2) maroon nebula haze — a few big additive sprites, very low opacity, behind everything.
+function radialSprite(inner, outer){
+  const s=256, cv=document.createElement('canvas'); cv.width=cv.height=s;
+  const ctx=cv.getContext('2d');
+  const g=ctx.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
+  g.addColorStop(0,inner); g.addColorStop(0.5, outer); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,s,s);
+  const tex=new THREE.CanvasTexture(cv); tex.colorSpace=THREE.SRGBColorSpace;
+  return tex;
+}
+const nebTex = radialSprite('rgba(150,44,24,0.5)','rgba(70,18,12,0.18)');
+const nebGroup = new THREE.Group();
+[[ -180,40,-360, 520],[240,-90,-420,600],[-60,160,-520,700],[300,120,-300,420]].forEach(([x,y,z,sc])=>{
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:nebTex,transparent:true,opacity:0.16,blending:THREE.AdditiveBlending,depthWrite:false}));
+  sp.position.set(x,y,z); sp.scale.set(sc,sc,1);
+  nebGroup.add(sp);
+});
+scene.add(nebGroup);
+
+/* ============================ THE STAR ================================= */
+// True colour of a 2566 K blackbody: deep orange-red. Compute a warm tint.
+function blackbodyColor(kelvin){
+  // approximation (Tanner Helland), clamped; good enough for ~2500K deep orange-red
+  const t=kelvin/100; let r,g,b;
+  r=255;
+  g = 99.47 * Math.log(t) - 161.12; g=Math.min(255,Math.max(0,g));
+  if(t<=19){ b=0; } else { b = 138.5*Math.log(t-10)-305.04; b=Math.min(255,Math.max(0,b)); }
+  return new THREE.Color(r/255, g/255, b/255);
+}
+const starColor = blackbodyColor(star.teff_k); // ~ (1, 0.55, 0.13) warm orange-red
+
+// star core — emissive sphere with a shader for limb-darkening + granulation shimmer
+const starUniforms = {
+  uTime:{value:0}, uColor:{value:starColor.clone()},
+  uColorHot:{value: new THREE.Color(1.0,0.78,0.42)}
+};
+const starMat = new THREE.ShaderMaterial({
+  uniforms:starUniforms,
+  vertexShader:`
+    varying vec3 vN; varying vec3 vP;
+    void main(){ vN=normalize(normalMatrix*normal); vP=position;
+      gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+  fragmentShader:`
+    uniform float uTime; uniform vec3 uColor; uniform vec3 uColorHot;
+    varying vec3 vN; varying vec3 vP;
+    // cheap value noise
+    float hash(vec3 p){ p=fract(p*0.3183099+0.1); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+    float noise(vec3 x){ vec3 i=floor(x),f=fract(x); f=f*f*(3.0-2.0*f);
+      return mix(mix(mix(hash(i+vec3(0,0,0)),hash(i+vec3(1,0,0)),f.x),
+                     mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
+                 mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),
+                     mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}
+    void main(){
+      vec3 vd = normalize(cameraPosition - vec3(0.0)); // approx
+      float limb = pow(max(dot(normalize(vN), normalize(cameraPosition)),0.0),0.55);
+      float n = noise(vP*3.2 + vec3(0.0,0.0,uTime*0.25));
+      n += 0.5*noise(vP*7.0 - vec3(uTime*0.15));
+      n = n/1.5;
+      // granulation: mottle between deep red and hotter cell centres
+      vec3 col = mix(uColor*0.75, uColorHot, smoothstep(0.45,0.85,n));
+      col = mix(uColor*0.5, col, 0.35+0.65*limb); // limb darkening
+      gl_FragColor=vec4(col, 1.0);
+    }`
+});
+const starMesh = new THREE.Mesh(new THREE.SphereGeometry(STAR_R, 96, 96), starMat);
+scene.add(starMesh);
+
+// corona / glow — layered additive sprites, deep red -> orange
+const glowTex = radialSprite('rgba(255,150,80,0.9)','rgba(200,60,25,0.35)');
+function glowSprite(scale, opacity, tint){
+  const m=new THREE.SpriteMaterial({map:glowTex, transparent:true, opacity, blending:THREE.AdditiveBlending, depthWrite:false, color:tint});
+  const s=new THREE.Sprite(m); s.scale.set(scale,scale,1); return s;
+}
+const glowInner = glowSprite(STAR_R*7.0, 0.55, new THREE.Color(1.0,0.6,0.3));
+const glowOuter = glowSprite(STAR_R*15.0, 0.28, new THREE.Color(0.9,0.35,0.18));
+const glowFar   = glowSprite(STAR_R*30.0, 0.13, new THREE.Color(0.7,0.22,0.12));
+scene.add(glowInner, glowOuter, glowFar);
+
+// the star lights the planets (warm point light) + a very dim ambient so night sides aren't pure black
+const starLight = new THREE.PointLight(starColor.clone().lerp(new THREE.Color(1,1,1),0.25), 3.4, 0, 1.4);
+starLight.position.set(0,0,0);
+scene.add(starLight);
+scene.add(new THREE.AmbientLight(0x2a0f08, 0.55));
+// faint warm rim from "galaxy" opposite side
+const rim = new THREE.DirectionalLight(0x552017, 0.35); rim.position.set(-1,0.4,-1); scene.add(rim);
+
+/* ============================ PLANETS ================================= */
+const TWO_PI=Math.PI*2;
+const planetGroup = new THREE.Group();
+scene.add(planetGroup);
+const orbitGroup = new THREE.Group();
+scene.add(orbitGroup);
+const hzGroup = new THREE.Group();
+scene.add(hzGroup);
+
+const HZ_LETTERS = new Set(['e','f','g']); // inside habitable zone (verified)
+
+// procedural rocky bump via a normal-ish noise texture generated per planet tone
+function rockTexture(baseColor, seed){
+  const s=256, cv=document.createElement('canvas'); cv.width=cv.height=s;
+  const ctx=cv.getContext('2d'); const img=ctx.createImageData(s,s);
+  const base=baseColor;
+  // simple fbm on CPU
+  function rnd(x,y){ let n=Math.sin((x*127.1+y*311.7)+seed*13.7)*43758.5453; return n-Math.floor(n); }
+  function vnoise(x,y){ const xi=Math.floor(x),yi=Math.floor(y); const xf=x-xi,yf=y-yi;
+    const u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
+    const a=rnd(xi,yi),b=rnd(xi+1,yi),c=rnd(xi,yi+1),d=rnd(xi+1,yi+1);
+    return a+(b-a)*u+(c-a)*v+(a-b+d-c)*u*v; }
+  function fbm(x,y){ let f=0,amp=0.5,fr=1; for(let o=0;o<5;o++){ f+=amp*vnoise(x*fr,y*fr); fr*=2; amp*=0.5;} return f; }
+  for(let y=0;y<s;y++)for(let x=0;x<s;x++){
+    const n=fbm(x/24,y/24);
+    const shade=0.72+n*0.5;
+    const i=(y*s+x)*4;
+    img.data[i]  =Math.min(255,base.r*255*shade);
+    img.data[i+1]=Math.min(255,base.g*255*shade);
+    img.data[i+2]=Math.min(255,base.b*255*shade);
+    img.data[i+3]=255;
+  }
+  ctx.putImageData(img,0,0);
+  const tex=new THREE.CanvasTexture(cv); tex.colorSpace=THREE.SRGBColorSpace;
+  tex.anisotropy=4;
+  return tex;
+}
+
+const pickables=[];
+planets.forEach((p,i)=>{
+  const geo=new THREE.SphereGeometry(p.sceneR, 40, 40);
+  const tex=rockTexture(p.color, i*7+3);
+  const mat=new THREE.MeshStandardMaterial({
+    map:tex, color:0xffffff,
+    roughness: p.teq_k<230? 0.55:0.92,   // icy worlds a touch shinier
+    metalness:0.0,
+    emissive:p.color.clone().multiplyScalar(0.06) // faint self-tint so night side reads
+  });
+  const mesh=new THREE.Mesh(geo,mat);
+  mesh.userData={planet:p, index:i};
+  // slight axial tilt & spin phase
+  mesh.rotation.z=(Math.random()-0.5)*0.5;
+  p.mesh=mesh; p.angle=Math.random()*TWO_PI; p.spin=0.3+Math.random()*0.5;
+  planetGroup.add(mesh);
+  pickables.push(mesh);
+
+  // a subtle atmosphere/limb halo on the temperate worlds (e,f,g) — very faint, cool
+  if(HZ_LETTERS.has(p.letter)){
+    const halo=new THREE.Mesh(new THREE.SphereGeometry(p.sceneR*1.16,32,32),
+      new THREE.ShaderMaterial({
+        transparent:true, side:THREE.BackSide, depthWrite:false, blending:THREE.AdditiveBlending,
+        uniforms:{uColor:{value:new THREE.Color(0.35,0.6,0.55)}},
+        vertexShader:`varying vec3 vN;void main(){vN=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+        fragmentShader:`varying vec3 vN;uniform vec3 uColor;void main(){float r=pow(1.0-abs(dot(vN,vec3(0.0,0.0,1.0))),2.2);gl_FragColor=vec4(uColor, r*0.5);}`
+      }));
+    mesh.add(halo);
+  }
+});
+
+/* ---- orbit rings (thin, rust) ---- */
+const orbitMats=[];
+function buildOrbits(mode){
+  orbitGroup.clear(); orbitMats.length=0;
+  planets.forEach((p,i)=>{
+    const r = mode==='real'? p.rReal : p.rLeg;
+    p.orbitR=r;
+    const seg=256; const pts=[];
+    for(let s=0;s<=seg;s++){ const a=s/seg*TWO_PI; pts.push(new THREE.Vector3(Math.cos(a)*r,0,Math.sin(a)*r)); }
+    const g=new THREE.BufferGeometry().setFromPoints(pts);
+    const inHZ=HZ_LETTERS.has(p.letter);
+    const m=new THREE.LineBasicMaterial({
+      color: inHZ? new THREE.Color(0x6fb894): new THREE.Color(0xe0632c),
+      transparent:true, opacity: inHZ? 0.5:0.32
+    });
+    const line=new THREE.LineLoop(g,m);
+    orbitGroup.add(line); orbitMats.push({m,base:m.opacity});
+  });
+}
+
+/* ---- habitable-zone shell (annulus disc, translucent green) ---- */
+let hzInnerMesh, hzOuterMesh;
+function buildHZ(mode){
+  hzGroup.clear();
+  const ri = mode==='real'? hzRealInner : hzLegInner;
+  const ro = mode==='real'? hzRealOuter : hzLegOuter;
+  const ring=new THREE.RingGeometry(ri, ro, 128, 1);
+  const mat=new THREE.MeshBasicMaterial({
+    color:0x4f9a7a, transparent:true, opacity:0.10, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending
+  });
+  const disc=new THREE.Mesh(ring,mat); disc.rotation.x=-Math.PI/2;
+  hzGroup.add(disc);
+  // inner + outer edge glow rings
+  [ri,ro].forEach(rr=>{
+    const seg=200,pts=[];
+    for(let s=0;s<=seg;s++){const a=s/seg*TWO_PI;pts.push(new THREE.Vector3(Math.cos(a)*rr,0,Math.sin(a)*rr));}
+    const g=new THREE.BufferGeometry().setFromPoints(pts);
+    const line=new THREE.LineLoop(g,new THREE.LineBasicMaterial({color:0x7fd4ac,transparent:true,opacity:0.55}));
+    hzGroup.add(line);
+  });
+  hzGroup.visible=false;
+}
+
+let scaleMode='legible';
+buildOrbits(scaleMode); buildHZ(scaleMode);
+
+/* ============================ INTERACTION ============================= */
+const raycaster=new THREE.Raycaster();
+raycaster.params.Points={threshold:0.5};
+const pointer=new THREE.Vector2();
+const hintEl=document.getElementById('hint');
+let hovered=null, selected=null;
+
+function updatePointer(e){
+  const x = e.touches? e.touches[0].clientX : e.clientX;
+  const y = e.touches? e.touches[0].clientY : e.clientY;
+  pointer.x=(x/window.innerWidth)*2-1;
+  pointer.y=-(y/window.innerHeight)*2+1;
+  return {x,y};
+}
+
+let lastPointer={x:0,y:0};
+function onMove(e){
+  const c=updatePointer(e); lastPointer=c;
+  raycaster.setFromCamera(pointer,camera);
+  const hits=raycaster.intersectObjects(pickables,false);
+  if(hits.length){
+    const p=hits[0].object.userData.planet;
+    if(hovered!==p){ hovered=p; }
+    hintEl.textContent='TRAPPIST-1'+p.letter;
+    hintEl.style.left=c.x+'px'; hintEl.style.top=c.y+'px'; hintEl.style.opacity='1';
+    canvas.style.cursor='pointer';
+  } else {
+    hovered=null; hintEl.style.opacity='0'; canvas.style.cursor='grab';
+  }
+}
+// pointer position tracking for touch dossier
+let downPos=null;
+function onDown(e){ const c=updatePointer(e); downPos={x:c.x,y:c.y}; }
+function onUp(e){
+  if(!downPos) return;
+  const c = e.changedTouches? {x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY} : {x:e.clientX,y:e.clientY};
+  const moved=Math.hypot(c.x-downPos.x, c.y-downPos.y);
+  downPos=null;
+  if(moved>8) return; // was a drag, not a click
+  pointer.x=(c.x/window.innerWidth)*2-1;
+  pointer.y=-(c.y/window.innerHeight)*2+1;
+  raycaster.setFromCamera(pointer,camera);
+  const hits=raycaster.intersectObjects(pickables,false);
+  if(hits.length){ selectPlanet(hits[0].object.userData.planet); }
+}
+canvas.addEventListener('pointermove', onMove);
+canvas.addEventListener('pointerdown', onDown);
+canvas.addEventListener('pointerup', onUp);
+
+/* ---- dossier population ---- */
+const dossier=document.getElementById('dossier');
+const dEls={
+  name:document.getElementById('dName'), desig:document.getElementById('dDesig'),
+  swatch:document.getElementById('dSwatch'), hz:document.getElementById('dHZ'),
+  rad:document.getElementById('dRad'), mass:document.getElementById('dMass'),
+  per:document.getElementById('dPer'), sma:document.getElementById('dSma'),
+  teq:document.getElementById('dTeq'), insol:document.getElementById('dInsol'),
+  note:document.getElementById('dNote')
+};
+const ORDINAL={b:'2nd',c:'3rd',d:'4th',e:'5th',f:'6th',g:'7th',h:'8th'};
+function selectPlanet(p){
+  selected=p;
+  document.getElementById('tapcue').style.display='none';
+  const hex='#'+p.color.clone().convertLinearToSRGB().getHexString();
+  dEls.name.textContent='TRAPPIST-1'+p.letter;
+  dEls.desig.textContent='· '+ (Object.keys(ORDINAL).indexOf(p.letter)+1) +' of 7';
+  dEls.swatch.style.background=`linear-gradient(180deg, ${hex}, ${'#'+p.color.clone().multiplyScalar(0.5).convertLinearToSRGB().getHexString()})`;
+  dEls.swatch.style.boxShadow=`0 0 20px ${hex}`;
+  const inHZ=HZ_LETTERS.has(p.letter);
+  dEls.hz.textContent = inHZ? 'In the habitable zone':'Outside the habitable zone';
+  dEls.hz.className='hzbadge '+(inHZ?'in':'out');
+  dEls.rad.innerHTML=p.radius_re.toFixed(2)+'<small>R⊕</small>';
+  dEls.mass.innerHTML=p.mass_me.toFixed(2)+'<small>M⊕</small>';
+  dEls.per.innerHTML=p.period_d.toFixed(2)+'<small>days</small>';
+  dEls.sma.innerHTML=p.sma_au.toFixed(4)+'<small>AU</small>';
+  dEls.teq.innerHTML=p.teq_k+'<small>K</small>';
+  dEls.insol.innerHTML=p.insol_se.toFixed(2)+'<small>×</small>';
+  dEls.note.innerHTML='<b>'+p.note.split('.')[0]+'.</b>'+p.note.slice(p.note.indexOf('.')+1);
+  dossier.classList.add('show');
+  // gently frame the planet: nudge controls target a touch toward it (no hard cut)
+  flashOrbit(p);
+}
+function flashOrbit(p){ /* pulse the selected orbit */ p._flash=1.0; }
+document.getElementById('dClose').addEventListener('click',()=>{ dossier.classList.remove('show'); selected=null; });
+
+/* ============================ CONTROLS UI ============================= */
+let playing=true;
+// speed slider: 0..100 -> multiplier 0.1 .. 20 (log), 42 ~ 1×  ... actually map so mid = ~1×
+const speedEl=document.getElementById('speed'), speedVal=document.getElementById('speedVal');
+function sliderToMult(v){
+  // v in [0,100]; exponential from 0.15× to 40×; base pace already compresses real periods.
+  const t=v/100;
+  return 0.15 * Math.pow(40/0.15, t);
+}
+let speedMult=sliderToMult(+speedEl.value);
+function fmtMult(m){ return m>=10? m.toFixed(0)+'×' : m>=1? m.toFixed(1)+'×' : m.toFixed(2)+'×'; }
+speedVal.textContent=fmtMult(speedMult);
+speedEl.addEventListener('input',()=>{ speedMult=sliderToMult(+speedEl.value); speedVal.textContent=fmtMult(speedMult); });
+
+const playBtn=document.getElementById('playBtn');
+playBtn.addEventListener('click',()=>{
+  playing=!playing;
+  playBtn.textContent=playing?'❚❚':'►';
+  playBtn.classList.toggle('on',!playing);
+});
+
+const scaleBtn=document.getElementById('scaleBtn'), scaleNote=document.getElementById('scaleNote');
+scaleBtn.addEventListener('click',()=>{
+  scaleMode = scaleMode==='legible'?'real':'legible';
+  buildOrbits(scaleMode); buildHZ(scaleMode);
+  hzGroup.visible = hzOn;
+  if(scaleMode==='real'){
+    scaleBtn.textContent='Real'; scaleBtn.classList.remove('on');
+    scaleNote.innerHTML='<b>Real</b> spacing — the true, cramped system';
+  } else {
+    scaleBtn.textContent='Legible'; scaleBtn.classList.add('on');
+    scaleNote.innerHTML='<b>Legible</b> spacing — orbits spread to read';
+  }
+});
+
+let hzOn=false;
+const hzBtn=document.getElementById('hzBtn');
+hzBtn.addEventListener('click',()=>{
+  hzOn=!hzOn; hzGroup.visible=hzOn; hzBtn.classList.toggle('on',hzOn);
+});
+
+/* ============================ ANIMATION =============================== */
+// base angular speed: scale so innermost (1.51 d) sweeps a full orbit in ~ROOT_SECONDS at 1×.
+// omega_letter ∝ 1/period; normalize to inner.
+const P0=planets[0].period_d;
+const BASE_INNER_PERIOD_SEC = 7.0; // seconds for planet b at 1× (comfortable to watch)
+planets.forEach(p=>{ p.omega = (TWO_PI/BASE_INNER_PERIOD_SEC) * (P0/p.period_d); });
+
+const clock=new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),0.05);
+  const t=clock.elapsedTime;
+
+  starUniforms.uTime.value=t;
+
+  // gentle glow pulse (skip if reduced motion)
+  const pulse = REDUCED?1: 1+0.03*Math.sin(t*0.8);
+  glowInner.scale.setScalar(STAR_R*7.0*pulse);
+
+  // planets orbit + spin
+  if(playing){
+    planets.forEach(p=>{
+      p.angle += p.omega*speedMult*dt;
+    });
+  }
+  planets.forEach(p=>{
+    const r=p.orbitR;
+    p.mesh.position.set(Math.cos(p.angle)*r, 0, Math.sin(p.angle)*r);
+    if(!REDUCED) p.mesh.rotation.y += p.spin*dt*(playing?1:0.15);
+  });
+
+  // orbit flash decay + hover highlight
+  orbitMats.forEach((o,i)=>{
+    const p=planets[i];
+    let op=o.base;
+    if(p===hovered || p===selected) op=Math.min(1,o.base+0.35);
+    if(p._flash){ op=Math.min(1,op+p._flash*0.5); p._flash*=0.94; if(p._flash<0.02)p._flash=0; }
+    o.m.opacity=op;
+  });
+
+  // subtle starfield drift
+  if(!REDUCED){ starfield.rotation.y += dt*0.004; starfieldFar.rotation.y -= dt*0.002; }
+
+  controls.update();
+  renderer.render(scene,camera);
+}
+
+/* ---- resize ---- */
+function resize(){
+  const w=window.innerWidth,h=window.innerHeight;
+  camera.aspect=w/h; camera.updateProjectionMatrix();
+  renderer.setSize(w,h,false);
+  starfield.material.uniforms.uPix.value=renderer.getPixelRatio();
+  starfieldFar.material.uniforms.uPix.value=renderer.getPixelRatio();
+}
+window.addEventListener('resize',resize);
+resize();
+
+/* ---- kick off ---- */
+animate();
+// pre-select nothing; fade the loader once first frame is drawn
+requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const l=document.getElementById('loader');
+  l.style.opacity='0'; setTimeout(()=>l.remove(),650);
+}));
+
+// expose a tiny console breadcrumb (honest provenance)
+console.log('%cTRAPPIST-1 orrery','color:#e0632c;font-weight:700',
+  '\nData: NASA Exoplanet Archive default parameter set + Gaia DR3, epoch',DATA.epoch,
+  '\nThis is a drawn rendering to real relative scale — not a photograph.');
+</script>
+</body>
+</html>

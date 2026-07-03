@@ -1,0 +1,10 @@
+{
+  "expert": "engineer",
+  "key": "fairway",
+  "type": "app",
+  "title": "Fairway",
+  "desc": "Physics mini-golf",
+  "brief": "A complete, genuinely playable top-down mini-golf game in one self-contained file (Canvas2D + vanilla JS): pull back from the ball like a slingshot and release to putt, with a real 2D physics loop — rolling friction, wall and hedge bounces, water hazards that reset the ball for a penalty stroke, high-friction sand traps, slope zones that curve the roll, and a capture cup that lips out fast shots. Nine hand-designed, fair, distinct holes (straight opener, dogleg, water carry, S-curve, island green, funnel, sidehill drift, chicane maze, championship finale) with per-hole par, a live strokes/total-vs-par HUD, hole-complete transitions, and a final scorecard with restart. Pointer-first (mouse/touch drag to aim and load power) with keyboard nudge, escalating par as holes get harder, juice (easing, particles, confetti, subtle shake), WebAudio blips muted by default with a toggle, and prefers-reduced-motion respected.",
+  "da": "Playful flat sunday course — two-tone mown grass stripes, flat-vector blue water and tan sand, hedge walls, soft drop shadows, a warm cream scorecard panel, rounded Fredoka/Nunito type and one sunny orange accent. Cheerful mobile-golf feel, deliberately distinct from the other engineer pieces.",
+  "generated": "2026-07-03"
+}

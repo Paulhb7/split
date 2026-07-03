@@ -1,190 +1,146 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { H } from "../shared/harnesses";
-import { Tile, League, vars } from "../shared/ui";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { H, HARNESSES } from "../shared/harnesses";
+import { League, vars } from "../shared/ui";
 import { useHarnessStates } from "../shared/useHarnessStates";
-import { useHarnessScan, rankHarnesses, healthOf, type Health } from "../shared/useHarnessScan";
+import { useHarnessScan, rankHarnesses, healthOf } from "../shared/useHarnessScan";
 import { useExperts } from "../shared/util";
-import { isActiveExpert, type Expert, type ExpertKind, type ExpertMap } from "../shared/experts";
+import { isActiveExpert } from "../shared/experts";
 import { SKINS, type Skin } from "../shared/skins";
-import { DetailPane } from "../cabinet/Cabinet";
-import { Crest } from "../shared/Crest";
-import SplitMark from "../shared/SplitMark";
-import majordomeUrl from "../shared/majordome.svg";
-import "../cabinet/cabinet.css";
+import { RollCall } from "./RollCall";
+import { CastSpread } from "./CastSpread";
+import { Cinema } from "./Cinema";
 import "./onboarding.css";
+import "./finalstretch.css";
 
-// Inline Lucide-style SVG glyphs per expert kind. Single-stroke, currentColor,
-// 24×24 viewBox — pairs with the Bright skin's SaaS register. Sized in CSS
-// (see `.ob2-hire-ic .kind-glyph`); the previous emoji set (🔬⚖️📊…) clashed
-// with the lighter, line-art aesthetic. Today only the recruiter glyph renders
-// (the "Hire @Socrates" CTA); the rest are kept for the recruiter/teams reuse.
-const KIND_GLYPH: Record<ExpertKind, ReactNode> = {
-  researcher: (
-    <>
-      <path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2" />
-      <path d="M6.453 15h11.094" />
-      <path d="M8.5 2h7" />
-    </>
-  ),
-  analyst: (
-    <>
-      <path d="M3 3v18h18" />
-      <path d="M18 17V9" />
-      <path d="M13 17V5" />
-      <path d="M8 17v-3" />
-    </>
-  ),
-  advisor: (
-    <>
-      <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
-      <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
-      <path d="M7 21h10" />
-      <path d="M12 3v18" />
-      <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
-    </>
-  ),
-  builder: (
-    <>
-      <path d="m15 12-8.5 8.5c-.83.83-2.17.83-3 0a2.12 2.12 0 0 1 0-3L12 9" />
-      <path d="M17.64 15 22 10.64" />
-      <path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91" />
-    </>
-  ),
-  operator: (
-    <>
-      <path d="M12 8V4H8" />
-      <rect width="16" height="12" x="4" y="8" rx="2" />
-      <path d="M2 14h2" />
-      <path d="M20 14h2" />
-      <path d="M15 13v2" />
-      <path d="M9 13v2" />
-    </>
-  ),
-  organizer: (
-    <>
-      <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
-      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-      <path d="M12 11h4" />
-      <path d="M12 16h4" />
-      <path d="M8 11h.01" />
-      <path d="M8 16h.01" />
-    </>
-  ),
-  finder: (
-    <>
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.3-4.3" />
-    </>
-  ),
-  creator: (
-    <>
-      <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
-      <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
-      <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
-      <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
-      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.83-.44-1.13-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h1.99c3.05 0 5.55-2.5 5.55-5.55C21.97 6.01 17.46 2 12 2Z" />
-    </>
-  ),
-  recruiter: (
-    <>
-      <path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0Z" />
-      <path d="M22 10v6" />
-      <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
-    </>
-  ),
-  coach: (
-    <>
-      <path d="M7 20h10" />
-      <path d="M10 20c5.5-2.5.8-6.4 3-10" />
-      <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" />
-      <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" />
-    </>
-  ),
-};
+// "open_gallery" → finish onboarding and land on the in-app work Gallery
+// (the cast page's "See the complete gallery" button).
+export type EnterIntent = "start_recruiter" | "open_gallery" | undefined;
 
-function KindIcon({ kind }: { kind: ExpertKind }) {
+type SkinDef = (typeof SKINS)[number];
+
+// The mocked Split window each skin paints itself into (page 1 miniatures +
+// the enlarged preview). Entirely self-contained: four inline custom props
+// (--m0 base, --m1 panel, --ma accent, --mt text ink) drive every surface.
+function SkinMini({ s }: { s: SkinDef }) {
+  const mt = s.dark ? "#efeee9" : "#171922";
   return (
-    <svg
-      className="kind-glyph"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {KIND_GLYPH[kind]}
-    </svg>
+    <div className="mini" style={vars({ "--m0": s.sw[0], "--m1": s.sw[1], "--ma": s.sw[2], "--mt": mt })} aria-hidden="true">
+      <div className="mtb">
+        <i className="tl r" /><i className="tl y" /><i className="tl g" />
+        <span className="mwm">Split</span>
+        <span className="mpin" />
+      </div>
+      <div className="mbody">
+        <div className="mrail"><b className="on" /><b /><b /><b className="dm" /></div>
+        <div className="mthread">
+          <span className="mline" style={{ width: "54%" }} />
+          <span className="mline" style={{ width: "80%" }} />
+          <span className="mline acc" style={{ width: "34%" }} />
+          <div className="mcard">
+            <span className="mline" style={{ width: "62%" }} />
+            <span className="mline" style={{ width: "40%" }} />
+          </div>
+          <div className="mcomposer"><span className="mline" style={{ width: "40%" }} /><i className="msend" /></div>
+        </div>
+      </div>
+    </div>
   );
 }
 
-// Cabinet display order: think → process → advise → build → operate → find →
-// create → coach. Recruiter handled separately via the "hire" CTA.
-const KIND_ORDER: ExpertKind[] = [
-  "researcher",
-  "analyst",
-  "advisor",
-  "builder",
-  "organizer",
-  "operator",
-  "finder",
-  "creator",
-  "coach",
-  "recruiter",
-];
+// Page-3 tree glyphs (hairline strokes, currentColor).
+const FolderIc = () => (
+  <svg className="tico" viewBox="0 0 16 16"><path d="M1.9 5.1c0-.8.65-1.45 1.45-1.45h2.9l1.5 1.7h4.9c.8 0 1.45.65 1.45 1.45v4.9c0 .8-.65 1.45-1.45 1.45H3.35c-.8 0-1.45-.65-1.45-1.45z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /></svg>
+);
+const FileIc = () => (
+  <svg className="tico" viewBox="0 0 16 16"><path d="M3.9 1.9h5.2l3 3.1v9.1H3.9z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /><path d="M9.1 1.9v3.1h3" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /></svg>
+);
+const IndexIc = () => (
+  <svg className="tico" viewBox="0 0 16 16"><path d="M3.9 1.9h5.2l3 3.1v9.1H3.9z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /><path d="M9.1 1.9v3.1h3" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /><path d="M6 8.2h4M6 10.7h4" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /></svg>
+);
+const VaultIc = () => (
+  <svg viewBox="0 0 20 20"><rect x="2.7" y="3" width="14.6" height="4.4" rx="1.2" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="M4.1 7.4v7.4c0 1 .8 1.8 1.8 1.8h8.2c1 0 1.8-.8 1.8-1.8V7.4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M8 10.8h4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+);
 
-// Page-3 Spotlight strip — the three cabinet wings, in hanging order.
-const STRIP_GROUPS: { cat: "genius" | "super" | "coach"; label: string }[] = [
-  { cat: "genius", label: "the geniuses" },
-  { cat: "super", label: "the working hands" },
-  { cat: "coach", label: "the coaches" },
-];
+// A tree row: <TR d={n} kind="file" name="brief" ext an="…" />
+function TR({ d, kind, name, ext, an }: { d: number; kind: "dir" | "file" | "idx"; name: string; ext?: boolean; an?: string }) {
+  return (
+    <div className={"trow " + (kind === "dir" ? "dir" : kind === "idx" ? "file idx" : "file")} style={vars({ "--d": d })}>
+      {kind === "dir" ? <FolderIc /> : kind === "idx" ? <IndexIc /> : <FileIc />}
+      <span className="tnm">{name}{ext !== false && kind !== "dir" && <span className="ext">.md</span>}</span>
+      {an && <span className="tan">{an}</span>}
+    </div>
+  );
+}
 
-// Per-kind example brief, used as the Spotlight input placeholder so the prompt
-// the user mirrors fits the expert they picked (Curie ≠ Wolfgang). Pure UI
-// flavour — the wire prompt is whatever the user actually types.
-const KIND_PLACEHOLDER: Record<ExpertKind, string> = {
-  researcher: "the EV market outlook for 2026",
-  analyst: "the trends hiding in this quarter's numbers",
-  advisor: "the risk in this NDA before I sign",
-  builder: "a landing page for my new app",
-  operator: "rebook my 9am to Thursday afternoon",
-  organizer: "a launch plan with owners and dates",
-  finder: "first editions of Borges' Ficciones",
-  creator: "a 90-second cinematic main theme",
-  recruiter: "an expert who plans my trips",
-  coach: "a 12-week plan to run my first 10k",
-};
-
-export type EnterIntent = "brief_expert" | "start_recruiter" | undefined;
+// Shorten the home prefix and bold the vault folder name for the tree header.
+function prettyVaultPath(p: string) {
+  const short = p.replace(/^\/Users\/[^/]+/, "~");
+  const cut = Math.max(short.lastIndexOf("/"), short.lastIndexOf("\\"));
+  if (cut < 0) return <b>{short}</b>;
+  return <>{short.slice(0, cut + 1)}<b>{short.slice(cut + 1)}</b></>;
+}
 
 export default function Onboarding({
   onEnter,
   skin,
   onPickSkin,
+  team,
+  onToggleHire,
 }: {
-  onEnter: (ids: string[], intent?: EnterIntent, expertSlug?: string, prompt?: string) => void;
+  onEnter: (ids: string[], intent?: EnterIntent, expertSlug?: string) => void;
   skin: Skin;
   onPickSkin: (s: Skin) => void;
+  /** The hired team (shared/team.ts) — favourited experts pinned to the rail. */
+  team: string[];
+  onToggleHire: (slug: string) => void;
 }) {
   const [page, setPage] = useState(0);
   const [picks, setPicks] = useState<string[]>([]);
-  // Selected expert whose fiche is open as an overlay over the cabinet on
-  // page 3. null = no overlay; clicking a card sets it; the back button
-  // and the launch CTA clear it. Letting users browse fiches in onboarding
-  // — see the real artifact before committing — is a Big Sell moment.
-  const [ficheSlug, setFicheSlug] = useState<string | null>(null);
+  // The boss's vault location (page 3). Seeded from the Rust default
+  // (`~/Documents/SplitVault`), overridable via a native folder picker.
+  const [vaultPath, setVaultPath] = useState<string>("");
+  const defaultVaultRef = useRef<string>("");
+  useEffect(() => {
+    invoke<string>("get_vault_root").then((p) => {
+      setVaultPath(p);
+      if (!defaultVaultRef.current) defaultVaultRef.current = p;
+    }).catch(() => {});
+  }, []);
+  const chooseVault = async () => {
+    const parentHint = vaultPath.slice(0, vaultPath.lastIndexOf("/")) || undefined;
+    const picked = await openDialog({ directory: true, multiple: false, defaultPath: parentHint });
+    if (!picked || Array.isArray(picked)) return;
+    try {
+      setVaultPath(await invoke<string>("set_vault_root", { parent: picked }));
+    } catch {
+      /* keep the previous path on failure */
+    }
+  };
+  const useDefaultVault = async () => {
+    const def = defaultVaultRef.current;
+    if (!def || def === vaultPath) return;
+    const cut = Math.max(def.lastIndexOf("/"), def.lastIndexOf("\\"));
+    const parent = cut > 0 ? def.slice(0, cut) : "";
+    if (!parent) return;
+    try {
+      setVaultPath(await invoke<string>("set_vault_root", { parent }));
+    } catch {
+      /* keep the previous path on failure */
+    }
+  };
   const lifecycle = useHarnessStates();
-  const { states, progress } = lifecycle;
   const scan = useHarnessScan();
   const experts = useExperts();
+  // Socrates is the recruiter, not a hireable expert — excluded so the p0
+  // count matches page 5's "N experts. Hire your team." roster total.
+  const expertCount = useMemo(
+    () => Object.keys(experts).filter((s) => s !== "genius_socrates" && isActiveExpert(experts, s)).length,
+    [experts],
+  );
 
-  // Ranked best-first by machine-scan health (installed+signed-in wins). Drives
-  // the "Recommended" featured card and the post-scan auto-seed.
+  // Ranked best-first by machine-scan health (installed+signed-in wins).
   const ranked = useMemo(
     () => rankHarnesses(scan.byId, scan.scanning),
     [scan.byId, scan.scanning],
@@ -192,8 +148,8 @@ export default function Onboarding({
   const recommended = ranked[0] ?? "claude";
 
   // Auto-select the best detected agent(s) once the scan settles — but never
-  // overwrite an explicit choice (the anti-race lesson: an App-level autoselect
-  // guard). `touched` flips on the first manual toggle.
+  // overwrite an explicit choice (the anti-race guard). `touched` flips on the
+  // first manual toggle.
   const [touched, setTouched] = useState(false);
   const seededRef = useRef(false);
   useEffect(() => {
@@ -204,22 +160,13 @@ export default function Onboarding({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scan.scanning]);
 
-  // "primary" = the user's first explicit pick, else the recommended best.
+  // The active engine = the user's first explicit pick, else best-detected. It
+  // tints engine-specific surfaces via `--engine` (never `--brand`, which stays
+  // owned by the skin so CTAs keep tracking the skin choice).
   const engineId = picks[0] ?? recommended;
-  const primarySt = states[engineId];
   const accent = H[engineId].brand;
-  // Only override `--brand` once the user has actually picked an agent. Before
-  // that (welcome, skin picker, cabinet intro), the skin's `--brand` from the
-  // .theme-<id> class on .app flows naturally — so switching skins on the
-  // picker page visibly retints the "Next" button, the eyebrow, the heading
-  // accent, etc. Forcing the harness brand here would lock everything to the
-  // default agent's color (claude → orange) regardless of skin.
-  // `--engine` carries the active harness brand to engine-specific surfaces
-  // (chrome SplitMark, session-row glow, running dot) without ever touching
-  // `--brand` — which stays owned by the skin's .theme-<id> class so every
-  // CTA / em / link / focus ring keeps tracking the user's skin choice.
   const engineStyle = vars({ "--engine": accent });
-  // 4 pages: welcome (0) · theme (1) · pick (2) · brief (3).
+  // 6 pages: welcome (0) · skin (1) · pick (2) · second brain (3) · demo (4) · hire team (5).
   // Page 2 = picker; can't advance until at least one agent is selected.
   const canNext = page !== 2 || picks.length > 0;
   const toggle = (id: string) => {
@@ -227,82 +174,94 @@ export default function Onboarding({
     setPicks((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   };
 
-  // Featured-card health + how many CLIs the scan actually found on this machine.
-  const primaryHealth: Health = healthOf(scan.byId[engineId], scan.scanning);
-  const primaryVersion = scan.byId[engineId]?.version;
+  // How many CLIs the scan actually found on this machine (scanline copy).
   const foundCount = Object.values(scan.byId).filter((d) => d.available).length;
-  const isRecommended = !touched && engineId === recommended;
+  // The skeleton only covers the FIRST scan — rescan() empties byId on every
+  // pass (incl. focus-triggered ones), so latch on the first completion
+  // instead of inferring "first" from an empty byId.
+  const [scanSettled, setScanSettled] = useState(false);
+  const sawScanRef = useRef(false);
+  useEffect(() => {
+    if (scan.scanning) sawScanRef.current = true;
+    else if (sawScanRef.current) setScanSettled(true);
+  }, [scan.scanning]);
+  const firstScan = scan.scanning && !scanSettled;
+
+  const visibleSkins = SKINS.filter((s) => !s.hidden && !s.night);
+  const selSkin = SKINS.find((s) => s.id === skin) ?? visibleSkins[0];
 
   return (
     <div className="ob2" style={engineStyle}>
       <div className="ob2-page" key={page}>
         {page === 0 && (
-          // The threshold: the majordome watches over in filigree (planche-2
-          // "l'écran vide"). Large, crisp (a mask — not the padded badge that
-          // muddied the first try), bleeding off the bottom-right corner so the
-          // copy never lands on his wig/face, and inked in `--text` at low
-          // opacity so it reads as an engraving on both dark and light skins.
-          <div className="ob2-welcome">
-            <svg className="ob2-welcome-fil" viewBox="388 110 249 348" aria-hidden="true">
-              <defs>
-                <mask id="welcomeMask">
-                  <image href={majordomeUrl} x="0" y="0" width="1024" height="544" />
-                </mask>
-              </defs>
-              <rect className="ob2-welcome-fil-ink" x="388" y="110" width="249" height="348" mask="url(#welcomeMask)" />
-            </svg>
-            <div className="ob2-welcome-text stagger">
-              <h1 className="ob2-welcome-h1">Welcome to <em>Split</em>.</h1>
-              <p className="ob2-welcome-sub">I am your <b>Majordome</b>.</p>
-              <p className="ob2-welcome-seed">A roster of experts, each in its own session — briefed by you, run on the brain of your choice.</p>
+          // The threshold — the Roll Call: the whole roster streams up in two
+          // mono columns while the welcome holds centre stage behind an ink
+          // scrim. Counts come from the live registries, not copy.
+          <div className="ob2-p0">
+            <RollCall experts={experts} />
+            <div className="p0-mid">
+              <div className="p0-stage stagger">
+                <div className="ob-eyebrow">now in residence</div>
+                <h1 className="p0-h1">Welcome to <em>Split</em>.</h1>
+                <p className="p0-lede">
+                  One runtime. A roster of experts —<br />
+                  each running on the <b>agent you already have</b>.
+                </p>
+                <div className="p0-count">
+                  <b>{expertCount}</b> experts <i /> <b>{HARNESSES.length}</b> engines <i /> one window
+                </div>
+              </div>
             </div>
           </div>
         )}
 
         {page === 1 && (
-          <div className="ob2-hero">
-            <div className="ob2-hero-text stagger">
+          // The Miniatures: nine tiny mocked Split windows, each painted in its
+          // skin; the selection enlarges on the left. Picking applies the skin
+          // live — the whole app repaints as you click.
+          <div className="ob2-p1">
+            <div className="p1-left stagger">
               <div className="ob-eyebrow">first, the room · 01</div>
-              <h1 className="ob2-h1">Pick your <em>skin</em>.</h1>
+              <h1 className="p1-h">Pick your <em>skin</em>.</h1>
               <p className="ob2-lede">
                 Split is a place you'll come back to often. Choose how it should feel —
                 you can switch any time from the chrome bar.
               </p>
-              <p className="ob2-seed">Live preview — it applies as you click.</p>
-              {/* The floating majordome — a "live assistant" presence that
-                  retints with every skin click. Tucked under the lede on the
-                  left so the user sees the brand silhouette breathe under
-                  each candidate theme before committing. */}
-              <div className="ob2-skin-stage">
-                <div className="split-levitate">
-                  <SplitMark size={180} />
+              <p className="p1-seed">live preview — it applies as you click</p>
+              <div className="p1-big" key={selSkin.id || "classic"}>
+                <div className="bb-prevwrap"><SkinMini s={selSkin} /></div>
+                <div className="bb-meta">
+                  <div className="bb-name">{selSkin.label} <span className="ptag">{selSkin.dark ? "dark" : "light"} room</span></div>
+                  <div className="bb-hint">{selSkin.hint}</div>
                 </div>
-                <div className="split-shadow" aria-hidden="true" />
               </div>
             </div>
-            <div className="ob2-hero-visual">
-              <div className="ob2-skins">
-                {/* Special skins stay out of the tour: Noir is an easter egg,
-                    Minuit only exists after dark (see App.tsx night logic). */}
-                {SKINS.filter((s) => !s.hidden && !s.night).map((s) => (
+            <div className="p1-right">
+              <div className="p1-grid" role="listbox" aria-label="skins">
+                {visibleSkins.map((s) => (
                   <button
                     key={s.id || "classic"}
-                    className={"ob2-skin" + (skin === s.id ? " on" : "")}
-                    onClick={() => onPickSkin(s.id)}
                     type="button"
+                    role="option"
+                    aria-selected={skin === s.id}
+                    className={"thumb" + (skin === s.id ? " on" : "")}
+                    onClick={() => onPickSkin(s.id)}
                   >
-                    <span
-                      className="ob2-skin-sw"
-                      style={{
-                        background: `linear-gradient(135deg, ${s.sw[0]} 0%, ${s.sw[0]} 50%, ${s.sw[1]} 50%, ${s.sw[1]} 100%)`,
-                        boxShadow: `inset 0 0 0 2px ${s.sw[2]}`,
-                      }}
-                    />
-                    <span className="ob2-skin-meta">
-                      <b>{s.label}</b>
-                      <small>{s.hint}</small>
+                    <SkinMini s={s} />
+                    <span className="tick">
+                      <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </span>
-                    {skin === s.id && <span className="ob2-skin-tick">●</span>}
+                    <span className="tlbl">
+                      <span
+                        className="tsw"
+                        style={{
+                          background: `linear-gradient(135deg, ${s.sw[0]} 50%, ${s.sw[1]} 50%)`,
+                          boxShadow: `inset 0 0 0 1px ${s.sw[2]}`,
+                        }}
+                      />
+                      <b>{s.label}</b>
+                      <small>{s.dark ? "dark" : "light"}</small>
+                    </span>
                   </button>
                 ))}
               </div>
@@ -311,9 +270,9 @@ export default function Onboarding({
         )}
 
         {page === 2 && (
-          <div className="stagger">
+          <div className="ob2-p2 stagger">
             <div className="ob-eyebrow">pick your agents · 02</div>
-            <h2 className="ob2-h2">Pick your <em>agents</em></h2>
+            <h2 className="ob2-h2">Pick your <em>agents</em>.</h2>
             <div className="ob2-scanline">
               {scan.scanning ? (
                 <span className="ob2-scanstat scanning">
@@ -332,281 +291,138 @@ export default function Onboarding({
               </button>
             </div>
 
-            {/* Recommended featured card — the best detected agent, auto-picked,
-                with its install + sign-in steps inline (a featured Connect card,
-                minus the cloud-runtime upsell). */}
-            {primarySt && (
-              <div className={"ob2-primary" + (isRecommended ? " recommended" : "")} style={vars({ "--brand": H[engineId].brand })}>
-                <div className="ob2-primary-head">
-                  <Tile id={engineId} size={32} />
-                  <div className="ob2-primary-id">
-                    <b>{H[engineId].label}</b>
-                    <span className="ob2-primary-tag">
-                      {isRecommended
-                        ? "recommended — best detected on your machine; install & sign in now, others stay lazy"
-                        : "primary — install & sign in this one now; others stay lazy"}
-                    </span>
-                  </div>
-                  <span className={"ob2-primary-health sb-" + primaryHealth}>
-                    {primaryHealth === "ready"
-                      ? (primaryVersion ? `✓ ${primaryVersion}` : "✓ ready")
-                      : primaryHealth === "needs-auth"
-                        ? "needs sign-in"
-                        : primaryHealth === "needs-install"
-                          ? "needs install"
-                          : "scanning…"}
-                  </span>
-                </div>
-                <div className="ob2-primary-steps">
-                  <PrimaryStep
-                    label="install"
-                    state={primarySt.install.state}
-                    kind={primarySt.install.kind}
-                    progress={progress[engineId]}
-                    onAction={() => invoke("install_harness", { id: engineId }).catch(() => {})}
-                    actionLabel={primarySt.install.kind === "external" ? "Get the app" : "Install"}
-                  />
-                  <PrimaryStep
-                    label="sign-in"
-                    state={primarySt.configure.state}
-                    kind={primarySt.configure.kind}
-                    progress={primarySt.configure.kind === "oauth" ? progress[engineId] : undefined}
-                    onAction={() => invoke("configure_harness", { id: engineId }).catch(() => {})}
-                    actionLabel="Sign in"
-                    disabled={primarySt.install.state !== "ready"}
-                  />
-                </div>
-              </div>
+            <div className="ob2-pickhint">
+              Split will only show the agents you pick — add more anytime.
+              {picks.length > 0 && <b>{picks.length} selected</b>}
+            </div>
+            {firstScan ? (
+              <div className="ob2-skel" aria-hidden="true"><i /><i /><i /></div>
+            ) : (
+              <League isSelected={(id) => picks.includes(id)} onPick={toggle} lifecycle={lifecycle} scan={scan} recommendedId={recommended} />
             )}
-
-            <div className="ob2-pickhint">The ones you have access to. Split shows only these; add more anytime. {picks.length > 0 && <b>{picks.length} selected</b>}</div>
-            <League isSelected={(id) => picks.includes(id)} onPick={toggle} lifecycle={lifecycle} scan={scan} />
           </div>
         )}
 
         {page === 3 && (
-          <div className="stagger">
-            <div className="ob-eyebrow">meet your cabinet · 03</div>
-            <h2 className="ob2-h2">Brief your first <em>expert</em></h2>
-            <p className="ob2-lede" style={{ marginBottom: 18 }}>
-              Pick a face. Type a topic. Get a real deliverable back —
-              on whichever brain you just signed in.
-            </p>
-            <Spotlight
-              experts={experts}
-              engineId={engineId}
-              onBrief={(slug, topic) => onEnter(picks, "brief_expert", slug, topic)}
-              onOpenFiche={setFicheSlug}
-            />
-            {experts.genius_socrates && (
-              <button className="ob2-hire" onClick={() => onEnter(picks, "start_recruiter")}>
-                <span className="ob2-hire-ic"><KindIcon kind="recruiter" /></span>
-                <span className="ob2-hire-body">
-                  <span className="ob2-hire-title">Don't see what you need? Hire @{experts.genius_socrates.label}.</span>
-                  <span className="ob2-hire-text">
-                    He runs a Socratic interview and drafts a brand-new expert from your answers — no menus, no
-                    code. Custom experts live in your private data folder, alongside the shipped ones.
-                  </span>
-                </span>
-                <span className="ob2-hire-cta">Hire him →</span>
-              </button>
-            )}
-            {/* Fiche overlay — opens over the cabinet when a card is clicked.
-                Same DetailPane the Cabinet route uses, so use cases / tabs /
-                preview / deliverables stay defined in one place. Launching
-                from here calls `onEnter` to leave onboarding with the picked
-                expert + prompt the user clicked. */}
-            {ficheSlug && (
-              <div className="ob2-fiche-overlay" role="dialog" aria-modal="true">
-                <div className="ob2-fiche-shell">
-                  <button
-                    className="ob2-fiche-back"
-                    onClick={() => setFicheSlug(null)}
-                    aria-label="Back to cabinet"
-                    title="Back to cabinet"
-                  >
-                    ← all experts
-                  </button>
-                  <DetailPane
-                    slug={ficheSlug}
-                    experts={experts}
-                    onLaunch={(slug, prompt) => {
-                      setFicheSlug(null);
-                      onEnter(picks, undefined, slug, prompt || undefined);
-                    }}
-                  />
+          // The Drawer, rebranded: "Your second brain" — the copy + location
+          // picker on the left, a live-looking SplitVault file tree on the
+          // right whose rows slide open one by one.
+          <div className="ob2-p3 ob2-tex">
+            <div className="p3-grid">
+              <div className="stagger">
+                <div className="ob-eyebrow">where your experts remember · 03</div>
+                <h2 className="ob2-h2">Your <em>second brain</em>.</h2>
+                <p className="ob2-lede p3-lede">
+                  A plain folder of Markdown your experts keep for you — notes, briefs,
+                  projects, and what they learn along the way. Split creates a{" "}
+                  <b>SplitVault</b> folder; choose where it lives. Plain files — any
+                  editor opens them, iCloud syncs them.
+                </p>
+                <div className="loc-card">
+                  <span className="loc-ic" aria-hidden="true"><VaultIc /></span>
+                  <div className="loc-meta">
+                    <div className="loc-cap">Vault location</div>
+                    <div className="loc-path" title={vaultPath}>{vaultPath || "…"}</div>
+                  </div>
+                  <button type="button" className="btn ghost sm" onClick={chooseVault}>Choose location…</button>
+                </div>
+                <div className="loc-alt">
+                  <button type="button" className="linkbtn" onClick={useDefaultVault}>Use default</button>
+                  <span>— Split creates the folder on your first session; move it later from the vault view.</span>
                 </div>
               </div>
-            )}
+              <div>
+                <div className="tree-panel">
+                  <div className="tree-head">
+                    <span className="tree-path" title={vaultPath}>{prettyVaultPath(vaultPath || "~/Documents/SplitVault")}</span>
+                    <span className="tree-tag">plain markdown</span>
+                  </div>
+                  <div className="tree">
+                    <TR d={0} kind="idx" name="INDEX" an="the scope list" />
+                    <TR d={1} kind="dir" name="_meta/" />
+                    <div className="branch">
+                      <TR d={2} kind="file" name="boss-profile" an="facts about you" />
+                    </div>
+                    <TR d={3} kind="dir" name="notes/" an="default bucket" />
+                    <div className="branch">
+                      <TR d={4} kind="file" name="2026-06-30 — gtm-readout" />
+                    </div>
+                    <TR d={5} kind="dir" name="projects/" />
+                    <div className="branch">
+                      <TR d={6} kind="dir" name="acme-gtm/" />
+                      <div className="branch">
+                        <TR d={7} kind="file" name="MEMORY" an="project index" />
+                        <TR d={8} kind="file" name="brief" />
+                        <TR d={9} kind="file" name="pricing-model" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="tree-foot">Real files on disk — <b>no database, no lock-in</b>.</div>
+                </div>
+              </div>
+            </div>
           </div>
+        )}
+
+        {page === 4 && (
+          // The Cinema: a spotlit miniature atelier, a scripted cursor, a beat
+          // rail — the whole loop (pick → brief → watch → deliver) plays out
+          // before anything is configured.
+          <div className="ob2-p4 ob2-tex">
+            <div className="p4-head stagger">
+              <div className="ob-eyebrow">how it works · 04</div>
+              <h2 className="ob2-h2">See it <em className="it">in action</em>.</h2>
+              <p className="ob2-lede">
+                Pick an expert from the rail, brief them in plain words, and they get
+                to work — filing the deliverable in your vault.
+              </p>
+            </div>
+            <div className="p4-stagewrap stagger">
+              <Cinema />
+            </div>
+          </div>
+        )}
+
+        {page === 5 && (
+          // The activation: hire your team. Two candidate faces — the Spread
+          // (framed editorial board) and the Cast (the chromeless app page) —
+          // switchable top-right while the choice settles.
+          <CastSpread
+            experts={experts}
+            team={team}
+            onToggleHire={onToggleHire}
+            onHireRecruiter={() => onEnter(picks, "start_recruiter")}
+          />
         )}
       </div>
 
       <div className="ob2-foot">
         <div className="dots">
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1, 2, 3, 4, 5].map((i) => (
             <button key={i} className={"dot2" + (i === page ? " on" : "")} onClick={() => setPage(i)} aria-label={`page ${i + 1}`} />
           ))}
         </div>
         <div className="ob2-actions">
           {page > 0 && <button className="btn ghost" onClick={() => setPage((p) => p - 1)}>← back</button>}
-          {page < 3 ? (
+          {page < 5 ? (
             <button
               className="btn"
               disabled={!canNext}
               title={!canNext ? "Pick at least one agent to continue" : undefined}
               onClick={() => setPage((p) => p + 1)}
             >
-              {page === 2 ? "Continue →" : "Next →"}
+              {page === 0 ? "Begin →" : page === 2 ? "Continue →" : page === 4 ? "Next — hire your team →" : "Next →"}
             </button>
           ) : (
-            <button className="btn" onClick={() => onEnter(picks)}>Enter Split →</button>
+            <>
+              <button className="btn ghost" onClick={() => onEnter(picks, "open_gallery")}>See the complete gallery</button>
+              <button className="btn" onClick={() => onEnter(picks)}>
+                Enter Split → {team.length > 0 && <span className="ob2-team-ct">{team.length} hired</span>}
+              </button>
+            </>
           )}
         </div>
       </div>
     </div>
   );
 }
-
-function PrimaryStep({
-  label,
-  state,
-  kind,
-  progress,
-  onAction,
-  actionLabel,
-  disabled,
-}: {
-  label: string;
-  state: "ready" | "missing" | "external";
-  kind: string;
-  progress?: string;
-  onAction: () => void;
-  actionLabel: string;
-  disabled?: boolean;
-}) {
-  const ready = state === "ready";
-  const noOp = !kind || (label === "sign-in" && kind === "api-key");
-  return (
-    <div className={"ob2-step" + (ready ? " ready" : "")}>
-      <span className="ob2-step-label">{label}</span>
-      {ready ? (
-        <span className="ob2-step-ok">✓ ready</span>
-      ) : noOp ? (
-        <span className="ob2-step-hint">{kind === "api-key" ? "needs an API key — set it later" : "—"}</span>
-      ) : (
-        <button className="btn ghost" disabled={disabled} onClick={onAction}>
-          {actionLabel}
-        </button>
-      )}
-      {progress && !ready && <span className="ob2-step-progress">{progress}</span>}
-    </div>
-  );
-}
-
-// ---- page 3: the Spotlight ----
-// One featured expert in a gilded frame, the brief box docked under their name,
-// and a grouped filmstrip of the whole cabinet. Clicking any face promotes it
-// to the spotlight AND retargets the brief — the thing you're looking at is the
-// thing you put to work, so the page has exactly one hero and one CTA.
-function Spotlight({
-  experts,
-  engineId,
-  onBrief,
-  onOpenFiche,
-}: {
-  experts: ExpertMap;
-  engineId: string;
-  onBrief: (slug: string, topic: string) => void;
-  onOpenFiche: (slug: string) => void;
-}) {
-  const groups = useMemo(() => {
-    const active = Object.entries(experts)
-      .filter(([slug]) => slug !== "genius_socrates" && isActiveExpert(experts, slug))
-      .sort(([, a], [, b]) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
-    return STRIP_GROUPS.map((g) => ({
-      ...g,
-      entries: active.filter(([, e]) => (e.category ?? "super") === g.cat),
-    })).filter((g) => g.entries.length > 0);
-  }, [experts]);
-
-  const defaultSlug = useMemo(() => {
-    const all = groups.flatMap((g) => g.entries.map(([slug]) => slug));
-    if (all.includes("genius_curie")) return "genius_curie";
-    if (all.includes("consultant")) return "consultant";
-    return groups.find((g) => g.cat === "genius")?.entries[0]?.[0] ?? all[0];
-  }, [groups]);
-
-  const [sel, setSel] = useState<string>(defaultSlug);
-  const [topic, setTopic] = useState("");
-  const slug = experts[sel] ? sel : defaultSlug;
-  const e: Expert | undefined = experts[slug];
-  if (!e) return null;
-  const placeholder = KIND_PLACEHOLDER[e.kind] ?? "your first task";
-
-  return (
-    <div className="ob2-sl">
-      <div className="ob2-sl-main">
-        <div className="ob2-sl-hero">
-          <span className="ob2-sl-gild" aria-hidden="true" />
-          <Crest kind={e.kind} seed={slug} size={128} mint={e.label[0]} className="ob2-sl-crest" />
-          <div className="ob2-sl-name">{e.label}</div>
-          <div className="ob2-sl-role">{e.role ?? e.kind}</div>
-          <p className="ob2-sl-craft">{e.blurb}</p>
-          <button type="button" className="ob2-sl-more" onClick={() => onOpenFiche(slug)}>
-            see full brief →
-          </button>
-        </div>
-
-        <div className="ob2-sl-right">
-          <form
-            className="ob2-sl-briefcard"
-            style={vars({ "--brand": H[engineId].brand })}
-            onSubmit={(ev) => {
-              ev.preventDefault();
-              const t = topic.trim();
-              if (t) onBrief(slug, t);
-            }}
-          >
-            <div className="ob2-sl-brief-head">brief <b>@{e.label}</b> on</div>
-            <div className="ob2-sl-brief-row">
-              <input
-                className="ob2-sl-input"
-                placeholder={placeholder}
-                value={topic}
-                onChange={(ev) => setTopic(ev.target.value)}
-                autoFocus
-              />
-              <button className="btn" type="submit" disabled={!topic.trim()}>Run →</button>
-            </div>
-            <p className="ob2-sl-runson">runs on <b>{H[engineId].label}</b> · a real deliverable back</p>
-          </form>
-        </div>
-      </div>
-
-      <div className="ob2-sl-strips">
-        {groups.map((g) => (
-          <div key={g.cat} className={"ob2-sl-group ob2-sl-group-" + g.cat}>
-            <div className="ob2-sl-group-label">{g.label}</div>
-            <div className="ob2-sl-strip">
-              {g.entries.map(([s, ex]) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={"ob2-sl-thumb" + (s === slug ? " on" : "")}
-                  onClick={() => setSel(s)}
-                  title={`@${ex.label} — ${ex.blurb}`}
-                >
-                  <Crest kind={ex.kind} seed={s} size={56} mint={ex.label[0]} />
-                  <span className="ob2-sl-thumb-nm">{ex.label}</span>
-                  <span className="ob2-sl-thumb-rl">{ex.kind}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-

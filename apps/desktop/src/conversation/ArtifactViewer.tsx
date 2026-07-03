@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import type { Editor } from "@tiptap/react";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { SpectrePlayer } from "./SpectrePlayer";
+import { Icon } from "../shared/ui";
 import type { Artifact } from "../shared/events";
 
 // Tagline carried by the Share intent when the artifact has no public URL yet.
@@ -136,25 +137,24 @@ function CsvTable({ text }: { text: string }) {
   );
 }
 
-function renderText(rel: string, content: string) {
+function renderText(rel: string, content: string, htmlSrc?: string) {
   const ext = extOf(rel);
   if (ext === "md" || ext === "markdown") {
     return <div className="art-md"><ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown></div>;
   }
   if (ext === "csv" || ext === "tsv") return <CsvTable text={content} />;
   if (ext === "html" || ext === "htm") {
-    // Render inside a sandboxed srcdoc iframe. `allow-same-origin` gives the
-    // page a real origin (the app's) so the browser APIs games rely on — chiefly
-    // localStorage/sessionStorage for scores and save state — work instead of
-    // throwing SecurityError in an opaque origin. Without it a generated game
-    // plays for a few seconds, then the first storage write (e.g. saving a new
-    // high score) throws inside the game loop and the whole thing freezes —
-    // even though it runs fine in a real browser. Trade-off: same-origin content
-    // shares the app's storage and can reach `window.parent`; acceptable for the
-    // user's own agent-generated deliverables, and consistent with the Cabinet preview.
-    // `allow-pointer-lock` lets first-person games capture the mouse — without
-    // it requestPointerLock() is silently denied and "click to play" no-ops.
-    return <iframe className="art-iframe" sandbox="allow-scripts allow-same-origin allow-pointer-lock" srcDoc={content} title={rel} />;
+    // Render the agent's HTML off disk via the asset protocol (`htmlSrc`), NOT
+    // inline. That hands it a real-but-FOREIGN origin (`asset://…`), so the
+    // browser APIs games rely on — localStorage/sessionStorage for scores and
+    // save state — keep working (no SecurityError, no mid-game freeze), WHILE
+    // the same-origin policy isolates it from Split: its JS can't reach
+    // `window.parent`, the app's localStorage, or the Tauri `invoke` bridge, so
+    // a prompt-injected deliverable can't read your files or drive the app.
+    // (This previously used a same-origin `srcdoc`, which handed agent HTML the
+    // keys to the app.) `?v=<mtime>` in `htmlSrc` busts the webview cache when a
+    // turn overwrites the file; `allow-pointer-lock` keeps FPS mouse-capture.
+    return <iframe className="art-iframe" sandbox="allow-scripts allow-pointer-lock" src={htmlSrc} title={rel} />;
   }
   // Everything else: monospaced. The .art-pre class also wraps long lines.
   return <pre className="art-pre">{content}</pre>;
@@ -196,7 +196,17 @@ function htmlLooksInteractive(html: string): boolean {
     || /\bnew\s+(?:webkit)?AudioContext\b/.test(html);
 }
 
-export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
+export function ArtifactViewer({ artifact, tabs, activeRel, onPickTab, onClose }: {
+  artifact: Artifact;
+  /** Sibling deliverables → the file tabs rendered inside the viewer bar. When
+      omitted (single-file callers) one non-interactive tab shows for `artifact`. */
+  tabs?: Artifact[];
+  activeRel?: string;
+  onPickTab?: (rel: string) => void;
+  /** When supplied, a single close ✕ appears at the end of the bar (after a
+      hairline). Omitted → no close (the caller owns dismissal). */
+  onClose?: () => void;
+}) {
   const [payload, setPayload] = useState<Payload | null>(null);
   const [err, setErr] = useState<string | null>(null);
   // Edit mode (only meaningful when payload.kind === "text"). `editBuffer`
@@ -457,42 +467,79 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
 
   return (
     <div className="art-pane">
-      <div className="art-head">
-        <div className="art-title" title={artifact.path}>
-          <span className="art-rel">{artifact.rel}</span>
-          <span className="art-meta">{humanSize(artifact.size)}</span>
+      {/* One viewer bar: file tabs are the file identity (active tab carries the
+          size as a secondary detail; the full path lives in the tooltip), and
+          every action is anchored right — nothing floats over the document. */}
+      <div className="viewer-bar">
+        <div className="art-tabs">
+          {(tabs && tabs.length ? tabs : [artifact]).map((a) => {
+            const on = a.rel === (activeRel ?? artifact.rel);
+            return (
+              <button
+                key={a.rel}
+                className={"art-tab" + (on ? " on" : "")}
+                onClick={() => onPickTab?.(a.rel)}
+                disabled={!onPickTab}
+                title={a.path}
+              >
+                <span className="art-tab-name">{a.rel.split("/").pop()}</span>
+                {on && <span className="art-tab-meta">{humanSize(a.size)}</span>}
+              </button>
+            );
+          })}
         </div>
-        {directEdit && isText ? (
-          <>
-            <button className="iconbtn on" style={{ width: "auto", padding: "4px 10px" }}
-                    onClick={saveEdit} disabled={saving} title="Save (⌘S)">{saving ? "Saving…" : "Save"}</button>
-            {canExport && <button className="iconbtn" onClick={exportPdf} title="Export as PDF">⎙</button>}
-            {canSaveAs && <button className="iconbtn" onClick={saveAs} title="Save a copy…">⤓</button>}
-            {canShare && <ShareControl shareRef={shareRef} open={shareOpen} setOpen={setShareOpen} onPick={shareTo} />}
-            <KeepControl artifact={artifact} onSaved={setKept} onErr={setErr} />
-            <button className="iconbtn" onClick={reveal} title="Open in default app">↗</button>
-          </>
-        ) : editing ? (
-          <>
-            <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }}
-                    onClick={cancelEdit} disabled={saving} title="Discard changes (Esc)">Cancel</button>
-            <button className="iconbtn on" style={{ width: "auto", padding: "4px 10px" }}
-                    onClick={saveEdit} disabled={saving} title="Save (⌘S)">{saving ? "Saving…" : "Save"}</button>
-          </>
-        ) : htmlBar ? (
-          // HTML preview: actions live in the floating bottom bar, header is
-          // title-only.
-          null
-        ) : (
-          <>
-            {canEdit && !isHtml && <button className="iconbtn" onClick={startEdit} title="Edit">✎</button>}
-            {canExport && <button className="iconbtn" onClick={exportPdf} title="Export as PDF">⎙</button>}
-            {canSaveAs && <button className="iconbtn" onClick={saveAs} title="Save a copy…">⤓</button>}
-            {canShare && <ShareControl shareRef={shareRef} open={shareOpen} setOpen={setShareOpen} onPick={shareTo} />}
-            <KeepControl artifact={artifact} onSaved={setKept} onErr={setErr} />
-            <button className="iconbtn" onClick={reveal} title="Open in default app">↗</button>
-          </>
-        )}
+        <div className="art-acts">
+          {directEdit && isText ? (
+            <>
+              <button className="iconbtn on" style={{ width: "auto", padding: "4px 10px" }}
+                      onClick={saveEdit} disabled={saving} title="Save (⌘S)">{saving ? "Saving…" : "Save"}</button>
+              {canExport && <button className="iconbtn" onClick={exportPdf} title="Export as PDF">⎙</button>}
+              {canSaveAs && <button className="iconbtn" onClick={saveAs} title="Save a copy…">⤓</button>}
+              {canShare && <ShareControl shareRef={shareRef} open={shareOpen} setOpen={setShareOpen} onPick={shareTo} />}
+              <KeepControl artifact={artifact} onSaved={setKept} onErr={setErr} />
+              <button className="iconbtn" onClick={reveal} title="Open in default app">↗</button>
+            </>
+          ) : editing ? (
+            <>
+              <button className="iconbtn" style={{ width: "auto", padding: "4px 10px" }}
+                      onClick={cancelEdit} disabled={saving} title="Discard changes (Esc)">Cancel</button>
+              <button className="iconbtn on" style={{ width: "auto", padding: "4px 10px" }}
+                      onClick={saveEdit} disabled={saving} title="Save (⌘S)">{saving ? "Saving…" : "Save"}</button>
+            </>
+          ) : htmlBar ? (
+            // HTML preview: same anchored bar as every other type — the actions
+            // that used to live in a floating pill over the artwork.
+            <>
+              <button className="art-edit-btn" onClick={startEdit} title="Edit this page" aria-label="Edit this page">
+                <span className="art-edit-btn-ico" aria-hidden="true">✎</span><span>Edit</span>
+              </button>
+              <button className="iconbtn" onClick={reveal} title="Open in browser">⤢</button>
+              {canExport && <button className="iconbtn" onClick={exportPdf} title="Export as PDF">⎙</button>}
+              {canSaveAs && <button className="iconbtn" onClick={saveAs} title="Save a copy…">⤓</button>}
+              {canShare && <ShareControl shareRef={shareRef} open={shareOpen} setOpen={setShareOpen} onPick={shareTo} />}
+              <KeepControl artifact={artifact} onSaved={setKept} onErr={setErr} />
+            </>
+          ) : (
+            <>
+              {canEdit && !isHtml && (
+                <button className="art-edit-btn" onClick={startEdit} title="Edit">
+                  <span className="art-edit-btn-ico" aria-hidden="true">✎</span><span>Edit</span>
+                </button>
+              )}
+              {canExport && <button className="iconbtn" onClick={exportPdf} title="Export as PDF">⎙</button>}
+              {canSaveAs && <button className="iconbtn" onClick={saveAs} title="Save a copy…">⤓</button>}
+              {canShare && <ShareControl shareRef={shareRef} open={shareOpen} setOpen={setShareOpen} onPick={shareTo} />}
+              <KeepControl artifact={artifact} onSaved={setKept} onErr={setErr} />
+              <button className="iconbtn" onClick={reveal} title="Open in default app">↗</button>
+            </>
+          )}
+          {onClose && (
+            <>
+              <span className="art-vsep" />
+              <button className="iconbtn" onClick={onClose} title="Close deliverable — back to the project">✕</button>
+            </>
+          )}
+        </div>
       </div>
       <div className="art-body">
         {err && <div className="art-fallback">⚠ {err}</div>}
@@ -544,7 +591,7 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
               />
             )
           ) : (
-            renderText(artifact.rel, payload.content)
+            renderText(artifact.rel, payload.content, `${convertFileSrc(artifact.path)}?v=${artifact.mtime}`)
           )
         )}
         {payload && payload.kind === "image" && (
@@ -584,36 +631,15 @@ export function ArtifactViewer({ artifact }: { artifact: Artifact }) {
           </div>
         )}
       </div>
-      {/* Floating action bar for HTML — the page stays in interactive
-          preview/play mode, so every action it could need (edit, open in
-          browser, export, save, share, keep) lives in one pill parked
-          bottom-left over the preview, clear of the agent's own UI in the top
-          corners. Popovers (share/keep) open upward via the `up` flag. */}
-      {htmlBar && (
-        <div className="art-actionbar">
-          <button
-            className="art-edit-fab"
-            onClick={startEdit}
-            title="Edit this page"
-            aria-label="Edit this page"
-          >
-            <span className="art-edit-fab-ico" aria-hidden="true">✎</span>
-            <span>Edit</span>
-          </button>
-          <button className="iconbtn" onClick={reveal} title="Ouvrir dans le navigateur">⤢</button>
-          {canExport && <button className="iconbtn" onClick={exportPdf} title="Export as PDF">⎙</button>}
-          {canSaveAs && <button className="iconbtn" onClick={saveAs} title="Save a copy…">⤓</button>}
-          {canShare && <ShareControl up shareRef={shareRef} open={shareOpen} setOpen={setShareOpen} onPick={shareTo} />}
-          <KeepControl up artifact={artifact} onSaved={setKept} onErr={setErr} />
-        </div>
-      )}
+      {/* HTML actions now live in the viewer bar above — no floating pill over
+          the artwork. The document renders full-frame. */}
       {kept && (
         <button
           className="art-kept-toast"
           onClick={() => { invoke("reveal_artifact", { path: kept }); setKept(null); }}
           title={kept}
         >
-          ✓ Gardé dans le vault — révéler
+          ✓ Kept in vault — reveal
         </button>
       )}
     </div>
@@ -658,7 +684,7 @@ function ShareControl({
   );
 }
 
-// "Keep in vault" control: a 🗃️ button + a popover that files the open
+// "Keep in vault" control: a vault button + a popover that files the open
 // artifact into the boss's curated vault. `notes/` is the one-click default;
 // the popover also lists existing `projects/<slug>/` (read live from
 // `vault_tree`) and offers an inline "new project" field. The heavy lifting
@@ -742,18 +768,18 @@ function KeepControl({
         title="Keep in vault"
         aria-haspopup="menu"
         aria-expanded={open}
-      >🗃️</button>
+      ><Icon name="vault" size={15} /></button>
       {open && (
         <div className="art-share-menu art-keep-menu" role="menu">
-          <div className="art-keep-head">Garder dans le vault</div>
+          <div className="art-keep-head">Keep in vault</div>
           <button role="menuitem" className="art-share-item" disabled={busy} onClick={() => keep(null)}>
-            <span className="art-share-mark" aria-hidden="true">📝</span>
-            <span>Notes <span className="art-keep-def">· défaut</span></span>
+            <span className="art-share-mark" aria-hidden="true"><Icon name="file-text" size={13} /></span>
+            <span>Notes <span className="art-keep-def">· default</span></span>
           </button>
-          {projects.length > 0 && <div className="art-keep-sep">Projets</div>}
+          {projects.length > 0 && <div className="art-keep-sep">Projects</div>}
           {projects.map((p) => (
             <button key={p} role="menuitem" className="art-share-item" disabled={busy} onClick={() => keep(p)}>
-              <span className="art-share-mark" aria-hidden="true">📁</span>
+              <span className="art-share-mark" aria-hidden="true"><Icon name="folder" size={13} /></span>
               <span>{p}</span>
             </button>
           ))}
@@ -765,17 +791,17 @@ function KeepControl({
               <input
                 autoFocus
                 className="art-keep-input"
-                placeholder="nom du projet…"
+                placeholder="project name…"
                 value={newSlug}
                 onChange={(e) => setNewSlug(e.target.value)}
                 disabled={busy}
               />
-              <button type="submit" className="iconbtn on" disabled={busy || !newSlug.trim()} title="Créer + garder">↵</button>
+              <button type="submit" className="iconbtn on" disabled={busy || !newSlug.trim()} title="Create + keep">↵</button>
             </form>
           ) : (
             <button role="menuitem" className="art-share-item" disabled={busy} onClick={() => setShowNew(true)}>
               <span className="art-share-mark" aria-hidden="true">＋</span>
-              <span>Nouveau projet…</span>
+              <span>New project…</span>
             </button>
           )}
         </div>
@@ -787,29 +813,3 @@ function KeepControl({
 // Minimal shape of the vault tree nodes returned by `vault_tree` — only the
 // fields KeepControl reads (the Vault overlay owns the full type).
 interface VaultNode { name: string; dir: boolean; children: VaultNode[]; }
-
-export function ArtifactStrip({
-  artifacts, activeArtifact, onPick,
-}: {
-  artifacts: Artifact[];
-  activeArtifact: string | null;
-  onPick: (rel: string) => void;
-}) {
-  if (!artifacts.length) return null;
-  return (
-    <div className="art-strip" role="tablist" aria-label="Deliverables">
-      {artifacts.map((a) => (
-        <button
-          key={a.rel}
-          role="tab"
-          aria-selected={a.rel === activeArtifact}
-          className={"art-chip" + (a.rel === activeArtifact ? " active" : "")}
-          onClick={() => onPick(a.rel)}
-          title={a.path}
-        >
-          📦 {a.rel}
-        </button>
-      ))}
-    </div>
-  );
-}

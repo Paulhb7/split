@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Casa Trencadís — Gaudí in 3D</title>
+<!--
+  Casa Trencadís — an explorable interior in Gaudí's own language.
+  Fully procedural: catenary arches, undulating walls, a sculpted vault,
+  a trencadís (broken-mosaic) column, wrought-iron curves, honeyed daylight.
+  No external assets — every texture is drawn on a <canvas> at runtime.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ochre:#C98A4B;      /* honeyed sandstone      */
+    --ochre-deep:#8A5A2B; /* burnt terracotta shade */
+    --teal:#1F8C82;       /* trencadís teal         */
+    --gold:#D9A536;       /* trencadís gold         */
+    --rose:#C86B7A;       /* trencadís rose         */
+    --iron:#20191A;       /* wrought-iron near-black*/
+    --sand:#F3E7D2;       /* warm paper / plaster   */
+    --ink:#2C2118;        /* text on light          */
+    --panel:rgba(38,28,20,.82);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;width:100%;overflow:hidden;background:#1a1512;color:var(--sand);
+    font-family:'Jost',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  canvas{display:block}
+  #app{position:fixed;inset:0}
+
+  /* ---- top-left: title + About this ------------------------------------ */
+  #brand{position:fixed;top:22px;left:24px;z-index:20;max-width:min(380px,44vw);pointer-events:none}
+  #brand .eyebrow{font-size:11px;letter-spacing:.34em;text-transform:uppercase;
+    color:var(--gold);opacity:.9}
+  #brand h1{font-family:'Marcellus',serif;font-weight:400;font-size:clamp(26px,3.4vw,40px);
+    line-height:1;margin-top:6px;text-shadow:0 2px 14px rgba(0,0,0,.55);letter-spacing:.01em}
+  #brand .sub{font-size:12.5px;letter-spacing:.05em;opacity:.72;margin-top:7px}
+
+  #about{position:fixed;top:22px;left:24px;z-index:30;max-width:min(430px,86vw);
+    pointer-events:auto}
+  #aboutToggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+    background:var(--panel);border:1px solid rgba(217,165,54,.3);border-radius:999px;
+    padding:8px 15px 8px 12px;color:var(--sand);font-family:'Jost',sans-serif;font-size:12px;
+    letter-spacing:.06em;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+    box-shadow:0 6px 22px rgba(0,0,0,.4);transition:border-color .25s,transform .25s}
+  #aboutToggle:hover{border-color:rgba(217,165,54,.65);transform:translateY(-1px)}
+  #aboutToggle .dot{width:9px;height:9px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,var(--gold),var(--ochre-deep));flex:none}
+  #aboutToggle .chev{transition:transform .3s;opacity:.7;font-size:10px}
+  #about.open #aboutToggle .chev{transform:rotate(180deg)}
+  #aboutBody{margin-top:10px;background:var(--panel);border:1px solid rgba(217,165,54,.26);
+    border-radius:16px;padding:18px 20px 20px;backdrop-filter:blur(11px);
+    -webkit-backdrop-filter:blur(11px);box-shadow:0 14px 40px rgba(0,0,0,.5);
+    max-height:0;opacity:0;overflow:hidden;transform:translateY(-6px);
+    transition:max-height .42s ease,opacity .3s,transform .35s}
+  #about.open #aboutBody{max-height:min(70vh,560px);opacity:1;transform:translateY(0);
+    overflow-y:auto}
+  #aboutBody h2{font-family:'Marcellus',serif;font-size:16px;font-weight:400;
+    color:var(--gold);letter-spacing:.02em;margin-bottom:2px}
+  #aboutBody .lead{font-size:12.5px;line-height:1.55;opacity:.82;margin:8px 0 14px}
+  #aboutBody dl{display:grid;gap:11px}
+  #aboutBody dt{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--teal);margin-bottom:2px}
+  #aboutBody dd{font-size:12.5px;line-height:1.5;opacity:.9}
+  #aboutBody .rule{height:1px;background:linear-gradient(90deg,transparent,rgba(217,165,54,.4),transparent);
+    margin:14px 0}
+  #aboutBody .sig{font-family:'Marcellus',serif;font-size:12px;opacity:.6;text-align:right;
+    letter-spacing:.04em}
+
+  /* ---- bottom: viewpoint dock ------------------------------------------ */
+  #dock{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:20;
+    display:flex;gap:9px;padding:8px;background:var(--panel);border-radius:18px;
+    border:1px solid rgba(217,165,54,.24);backdrop-filter:blur(11px);
+    -webkit-backdrop-filter:blur(11px);box-shadow:0 12px 34px rgba(0,0,0,.5);
+    max-width:calc(100vw - 40px);flex-wrap:wrap;justify-content:center}
+  .vp{cursor:pointer;border:1px solid transparent;background:transparent;color:var(--sand);
+    font-family:'Jost',sans-serif;border-radius:12px;padding:9px 13px;text-align:left;
+    transition:background .22s,border-color .22s,transform .18s;min-width:112px}
+  .vp:hover{background:rgba(217,165,54,.12);transform:translateY(-2px)}
+  .vp.active{background:rgba(217,165,54,.18);border-color:rgba(217,165,54,.55)}
+  .vp .n{display:block;font-size:9px;letter-spacing:.22em;color:var(--gold);opacity:.85}
+  .vp .t{display:block;font-family:'Marcellus',serif;font-size:14px;line-height:1.05;margin-top:3px}
+
+  /* ---- top-right: controls --------------------------------------------- */
+  #tools{position:fixed;top:22px;right:24px;z-index:20;display:flex;flex-direction:column;
+    gap:9px;align-items:flex-end}
+  .tbtn{cursor:pointer;background:var(--panel);border:1px solid rgba(217,165,54,.28);
+    border-radius:999px;color:var(--sand);font-family:'Jost',sans-serif;font-size:11.5px;
+    letter-spacing:.05em;padding:9px 15px;backdrop-filter:blur(9px);
+    -webkit-backdrop-filter:blur(9px);box-shadow:0 6px 20px rgba(0,0,0,.4);
+    transition:border-color .22s,background .22s,transform .18s;display:inline-flex;
+    align-items:center;gap:8px;white-space:nowrap}
+  .tbtn:hover{border-color:rgba(217,165,54,.6);transform:translateY(-1px)}
+  .tbtn.on{background:rgba(31,140,130,.32);border-color:rgba(31,140,130,.7)}
+  .tbtn .k{font-size:9.5px;opacity:.6;border:1px solid rgba(255,255,255,.22);border-radius:5px;
+    padding:1px 5px;letter-spacing:.1em}
+
+  /* ---- feature callout -------------------------------------------------- */
+  #callout{position:fixed;z-index:25;pointer-events:none;max-width:290px;
+    background:linear-gradient(180deg,rgba(44,33,24,.94),rgba(30,22,16,.94));
+    border:1px solid rgba(217,165,54,.5);border-radius:14px;padding:14px 16px;
+    box-shadow:0 16px 44px rgba(0,0,0,.6);opacity:0;transform:translateY(6px) scale(.97);
+    transition:opacity .25s,transform .25s;backdrop-filter:blur(6px)}
+  #callout.show{opacity:1;transform:translateY(0) scale(1)}
+  #callout .pill{display:inline-block;font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+    padding:3px 9px;border-radius:999px;margin-bottom:8px;font-weight:500}
+  #callout h3{font-family:'Marcellus',serif;font-weight:400;font-size:17px;line-height:1.1;
+    margin-bottom:4px}
+  #callout .mat{font-size:10.5px;letter-spacing:.08em;color:var(--gold);opacity:.85;
+    text-transform:uppercase;margin-bottom:8px}
+  #callout p{font-size:12.5px;line-height:1.5;opacity:.9}
+  #callout .prin{margin-top:9px;padding-top:9px;border-top:1px solid rgba(217,165,54,.22);
+    font-size:11px;font-style:italic;line-height:1.45;opacity:.78}
+
+  /* ---- hint / walk overlay --------------------------------------------- */
+  #hint{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);z-index:15;
+    font-size:11.5px;letter-spacing:.06em;opacity:.55;text-align:center;pointer-events:none;
+    text-shadow:0 1px 8px rgba(0,0,0,.7);transition:opacity .5s}
+  #walkveil{position:fixed;inset:0;z-index:18;display:none;align-items:center;
+    justify-content:center;pointer-events:none}
+  #walkveil .crosshair{width:20px;height:20px;position:relative;opacity:.5}
+  #walkveil .crosshair::before,#walkveil .crosshair::after{content:'';position:absolute;
+    background:var(--sand)}
+  #walkveil .crosshair::before{left:9px;top:0;width:2px;height:20px}
+  #walkveil .crosshair::after{top:9px;left:0;height:2px;width:20px}
+  #walkveil.on{display:flex}
+
+  /* ---- loader ---------------------------------------------------------- */
+  #loader{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:18px;
+    background:radial-gradient(120% 120% at 50% 30%,#3a2a1c,#160f0a);transition:opacity .8s}
+  #loader.hide{opacity:0;pointer-events:none}
+  #loader .ring{width:52px;height:52px;border-radius:50%;border:2px solid rgba(217,165,54,.18);
+    border-top-color:var(--gold);animation:spin 1s linear infinite}
+  #loader .txt{font-family:'Marcellus',serif;font-size:15px;letter-spacing:.22em;
+    color:var(--gold);opacity:.85}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  @media (max-width:620px){
+    #brand{max-width:60vw}
+    .vp{min-width:88px;padding:7px 9px}
+    .vp .t{font-size:12px}
+    #tools .tbtn .lbl{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition-duration:.001s!important}
+    #loader .ring{animation:none;border-top-color:var(--gold)}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- Title -->
+<div id="brand">
+  <div class="eyebrow">Casa Trencadís</div>
+  <h1>Beauty out of<br>broken things</h1>
+  <div class="sub">An interior in Gaudí's own language — walk it.</div>
+</div>
+
+<!-- About this (collapsible, exec-summary) -->
+<div id="about">
+  <div id="aboutToggle" role="button" tabindex="0" aria-expanded="false">
+    <span class="dot"></span><span>About this</span><span class="chev">▾</span>
+  </div>
+  <div id="aboutBody" role="region" aria-label="About this scene">
+    <h2>Casa Trencadís</h2>
+    <div class="lead">A single room built entirely in the register of the visionary
+      organic architect — the curve that carries its load, light as a building material,
+      beauty pulled from what was thrown away.</div>
+    <dl>
+      <div><dt>Why</dt><dd>To let you <em>stand inside</em> Gaudí's language rather than
+        read about it — catenary arches, undulating walls, a sculpted vault, and a
+        trencadís mosaic that turns broken tile into a jewel.</dd></div>
+      <div><dt>Context</dt><dd>One salon, roughly 9 × 7 m, opening south onto a garden
+        through an organic window. Warm Mediterranean daylight. Furnished sparely — a
+        curved bench, a low organic table, a reading nook.</dd></div>
+      <div><dt>How to use</dt><dd>Drag to orbit, scroll to zoom. Tap a <b>viewpoint</b>
+        below to glide the camera. Press <b>Walk</b> for first-person (WASD + mouse).
+        <b>Click a feature</b> — the arch, the column, the vault — for the principle at play.</dd></div>
+      <div><dt>Assumed</dt><dd>Fully procedural geometry &amp; materials (no photos, no
+        textures); a warm ochre / sandstone palette with a teal-gold-rose mosaic accent;
+        a Day / Dusk light you can swing. Intent and look — not a stamped construction plan.</dd></div>
+    </dl>
+    <div class="rule"></div>
+    <div class="sig">— Gaudí, in Split</div>
+  </div>
+</div>
+
+<!-- Tools -->
+<div id="tools">
+  <button class="tbtn" id="walkBtn"><span class="lbl">Walk</span><span class="k">W A S D</span></button>
+  <button class="tbtn" id="dayBtn"><span class="lbl">Dusk</span><span class="k">L</span></button>
+</div>
+
+<!-- Viewpoint dock -->
+<div id="dock"></div>
+
+<!-- Feature callout -->
+<div id="callout">
+  <span class="pill"></span>
+  <h3></h3>
+  <div class="mat"></div>
+  <p></p>
+  <div class="prin"></div>
+</div>
+
+<!-- hints -->
+<div id="hint">Drag to look · scroll to zoom · click a feature · pick a viewpoint below</div>
+<div id="walkveil"><div class="crosshair"></div></div>
+
+<!-- loader -->
+<div id="loader"><div class="ring"></div><div class="txt">RAISING THE VAULT</div></div>
+
+<script type="importmap">
+{
+  "imports":{
+    "three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ============================================================= palette === */
+const COL = {
+  sand:   0xE9D3AA, sandDeep: 0xC98A4B, ochre: 0xB4763B, ochreDeep: 0x8A5A2B,
+  plaster:0xEAD9BC, floor: 0xB98C5A, floorDark: 0x9A6E42,
+  teal:   0x1F8C82, tealDk: 0x0E5F58, gold: 0xD9A536, rose: 0xC86B7A,
+  cream:  0xF3E7D2, iron: 0x241C1B, wood: 0x6E4A2C, woodLt: 0x8A5E36,
+  glass:  0xBFE0D8, olive: 0x7C7A46,
+};
+
+/* ================================================ procedural textures ===  */
+// each returns a THREE.CanvasTexture, drawn once, cached — no external files.
+
+function tex(draw, size=512, repeat=[1,1], srgb=true){
+  const c=document.createElement('canvas'); c.width=c.height=size;
+  const g=c.getContext('2d'); draw(g,size);
+  const t=new THREE.CanvasTexture(c);
+  t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(repeat[0],repeat[1]);
+  t.anisotropy=8; if(srgb) t.colorSpace=THREE.SRGBColorSpace;
+  return t;
+}
+// small seeded rng so the look is stable across reloads
+function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+
+// warm hand-troweled plaster
+const plasterTex = tex((g,s)=>{
+  g.fillStyle='#EAD9BC'; g.fillRect(0,0,s,s);
+  const r=rng(7);
+  for(let i=0;i<2600;i++){
+    const x=r()*s,y=r()*s,rad=r()*3.2+.5;
+    const shade=r()<.5?0:1;
+    g.fillStyle=shade?`rgba(120,86,48,${r()*.05+.01})`:`rgba(255,244,224,${r()*.06+.01})`;
+    g.beginPath();g.arc(x,y,rad,0,7);g.fill();
+  }
+  // long trowel sweeps
+  for(let i=0;i<60;i++){
+    g.strokeStyle=`rgba(150,110,66,${r()*.03+.01})`;g.lineWidth=r()*7+2;
+    g.beginPath();const y=r()*s;g.moveTo(0,y+Math.sin(0)*8);
+    for(let x=0;x<=s;x+=24)g.lineTo(x,y+Math.sin(x*.02+i)*10);g.stroke();
+  }
+}, 512, [3,3]);
+
+// bump for plaster (grayscale of the same idea)
+const plasterBump = tex((g,s)=>{
+  g.fillStyle='#808080'; g.fillRect(0,0,s,s);
+  const r=rng(7);
+  for(let i=0;i<2600;i++){const x=r()*s,y=r()*s,rad=r()*3.2+.5;
+    g.fillStyle=`rgba(${r()<.5?40:220},${r()<.5?40:220},128,.25)`;
+    g.beginPath();g.arc(x,y,rad,0,7);g.fill();}
+}, 512, [3,3], false);
+
+// honey sandstone / travertine floor — soft banded stone
+const stoneTex = tex((g,s)=>{
+  const grd=g.createLinearGradient(0,0,s,s);
+  grd.addColorStop(0,'#C89A63');grd.addColorStop(.5,'#B98C5A');grd.addColorStop(1,'#A97C4C');
+  g.fillStyle=grd;g.fillRect(0,0,s,s);
+  const r=rng(21);
+  for(let i=0;i<40;i++){
+    g.strokeStyle=`rgba(120,86,50,${r()*.10+.03})`;g.lineWidth=r()*2+.5;
+    g.beginPath();const y=r()*s;g.moveTo(0,y);
+    for(let x=0;x<=s;x+=16)g.lineTo(x,y+Math.sin(x*.03+i*.7)*(r()*10+2));g.stroke();
+  }
+  for(let i=0;i<900;i++){const x=r()*s,y=r()*s;
+    g.fillStyle=`rgba(90,64,38,${r()*.06})`;g.beginPath();g.arc(x,y,r()*2,0,7);g.fill();}
+}, 512, [4,4]);
+
+// THE TRENCADÍS — broken-tile mosaic. Grow irregular shards over a grouted ground,
+// color them teal / gold / rose / cream, leave dark grout gaps.
+function makeTrencadis(size, cell, seed, pal){
+  return tex((g,s)=>{
+    g.fillStyle='#20191A'; g.fillRect(0,0,s,s);          // dark grout ground
+    const r=rng(seed);
+    const cols=Math.ceil(s/cell);
+    // jittered seed points on a grid → shard centers
+    const pts=[];
+    for(let gx=0;gx<cols+1;gx++)for(let gy=0;gy<cols+1;gy++){
+      pts.push({x:(gx+ (r()-.5)*.85)*cell, y:(gy+(r()-.5)*.85)*cell,
+                c:pal[(r()*pal.length)|0]});
+    }
+    // draw each shard as an irregular polygon around its point, slightly shrunk (grout)
+    for(const p of pts){
+      const sides=4+((r()*3)|0);
+      const rad=cell*(.42+r()*.20);
+      g.beginPath();
+      for(let k=0;k<sides;k++){
+        const a=(k/sides)*Math.PI*2 + r()*.5;
+        const rr=rad*(.72+r()*.5);
+        const x=p.x+Math.cos(a)*rr, y=p.y+Math.sin(a)*rr;
+        k?g.lineTo(x,y):g.moveTo(x,y);
+      }
+      g.closePath();
+      // subtle glaze gradient inside the shard
+      const gr=g.createLinearGradient(p.x-rad,p.y-rad,p.x+rad,p.y+rad);
+      const base=p.c;
+      gr.addColorStop(0,shade(base,1.28));
+      gr.addColorStop(.55,base);
+      gr.addColorStop(1,shade(base,.72));
+      g.fillStyle=gr; g.fill();
+      // glossy highlight fleck
+      g.fillStyle='rgba(255,255,255,'+(r()*.28+.08)+')';
+      g.beginPath();g.ellipse(p.x-rad*.28,p.y-rad*.30,rad*.22,rad*.11,r()*3,0,7);g.fill();
+    }
+    // a few gilt (gold) accents scattered for sparkle
+    for(let i=0;i<pts.length*.06;i++){const p=pts[(r()*pts.length)|0];
+      g.fillStyle='rgba(217,165,54,.5)';g.beginPath();
+      g.arc(p.x,p.y,cell*.10,0,7);g.fill();}
+  }, size, [1,1]);
+}
+function shade(hex,f){
+  const r=Math.min(255,((hex>>16)&255)*f),g=Math.min(255,((hex>>8)&255)*f),
+        b=Math.min(255,(hex&255)*f);
+  return `rgb(${r|0},${g|0},${b|0})`;
+}
+const trencPal=['#1F8C82','#2FA79B','#D9A536','#E9C15A','#C86B7A','#E5D9C2','#0E5F58'];
+const trencTex = makeTrencadis(1024, 46, 99, trencPal);
+const trencTexFine = makeTrencadis(768, 30, 131, trencPal);
+
+/* ================================================================ scene === */
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x2a1d12);
+scene.fog=new THREE.FogExp2(0x2a1d12, 0.012);
+
+const camera=new THREE.PerspectiveCamera(52, innerWidth/innerHeight, 0.05, 200);
+
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.06;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+document.getElementById('app').appendChild(renderer.domElement);
+
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=0.07;
+controls.minDistance=1.2; controls.maxDistance=22;
+controls.maxPolarAngle=Math.PI*0.495;   // don't go under the floor
+controls.target.set(0,1.5,0);
+
+/* ---- room dimensions ---- */
+const RW=9, RD=7, RH=4.6;        // width (x), depth (z), wall height
+const HALF_W=RW/2, HALF_D=RD/2;
+
+/* ================================================================ lights == */
+const hemi=new THREE.HemisphereLight(0xfff0d8, 0x4a3420, 0.55);
+scene.add(hemi);
+
+const ambient=new THREE.AmbientLight(0xffe9c8, 0.28);
+scene.add(ambient);
+
+// warm key — the Mediterranean sun through the south window
+const sun=new THREE.DirectionalLight(0xffd9a0, 2.35);
+sun.position.set(6.5, 7.5, 8.5);
+sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.near=1; sun.shadow.camera.far=40;
+const sc=9.5; Object.assign(sun.shadow.camera,{left:-sc,right:sc,top:sc,bottom:-sc});
+sun.shadow.bias=-0.0004; sun.shadow.normalBias=0.03; sun.shadow.radius=4;
+scene.add(sun);
+
+// soft bounce fill from the ochre floor
+const bounce=new THREE.PointLight(0xffb46a, 0.6, 22, 2);
+bounce.position.set(0, 0.6, 0);
+scene.add(bounce);
+
+// warm interior glow (lamp), lifts at dusk
+const lamp=new THREE.PointLight(0xffb15a, 0.0, 9, 2);
+lamp.position.set(-2.9, 1.5, -1.4);
+lamp.castShadow=false;
+scene.add(lamp);
+
+/* ================================================= material factories ===  */
+function plasterMat(tint=0xEAD9BC){
+  return new THREE.MeshStandardMaterial({
+    map:plasterTex, bumpMap:plasterBump, bumpScale:0.5,
+    color:tint, roughness:0.94, metalness:0.0 });
+}
+const floorMat=new THREE.MeshStandardMaterial({map:stoneTex, color:0xC79A62,
+  roughness:0.78, metalness:0.0});
+const ironMat=new THREE.MeshStandardMaterial({color:COL.iron, roughness:0.42,
+  metalness:0.72});
+const woodMat=new THREE.MeshStandardMaterial({color:COL.wood, roughness:0.6, metalness:0.05});
+const woodLtMat=new THREE.MeshStandardMaterial({color:COL.woodLt, roughness:0.55, metalness:0.04});
+const trencMat=new THREE.MeshStandardMaterial({map:trencTex, roughness:0.30, metalness:0.12,
+  bumpMap:trencTex, bumpScale:0.10});
+const trencMatFine=new THREE.MeshStandardMaterial({map:trencTexFine, roughness:0.28,
+  metalness:0.14, bumpMap:trencTexFine, bumpScale:0.08});
+const glassMat=new THREE.MeshPhysicalMaterial({color:COL.glass, roughness:0.06,
+  metalness:0, transmission:0.9, transparent:true, opacity:0.32, thickness:0.4,
+  ior:1.3, side:THREE.DoubleSide});
+const cushionTeal=new THREE.MeshStandardMaterial({color:0x2E7F78, roughness:0.9});
+const cushionRose=new THREE.MeshStandardMaterial({color:0xB86273, roughness:0.9});
+const rugMat=new THREE.MeshStandardMaterial({color:0x9C5A3C, roughness:0.98});
+
+/* ============================================ CLICKABLE FEATURE REGISTRY == */
+const features=[];  // {mesh, data}
+function tag(obj, data){ obj.userData.feat=data; features.push(obj); return obj; }
+
+/* ================================================================= FLOOR == */
+{
+  const geo=new THREE.PlaneGeometry(RW+3, RD+3, 1,1);
+  geo.rotateX(-Math.PI/2);
+  const floor=new THREE.Mesh(geo, floorMat);
+  floor.receiveShadow=true; floor.position.y=0;
+  scene.add(floor);
+  // inset trencadís roundel medallion in the floor centre
+  const medGeo=new THREE.CircleGeometry(1.5, 64); medGeo.rotateX(-Math.PI/2);
+  const med=new THREE.Mesh(medGeo, new THREE.MeshStandardMaterial({
+    map:trencTexFine, roughness:0.34, metalness:0.14, bumpMap:trencTexFine, bumpScale:0.06}));
+  med.position.y=0.012; med.receiveShadow=true; scene.add(med);
+  tag(med, {name:'Floor medallion', mat:'Trencadís roundel — glazed shards on stone',
+    pill:'Trencadís', pc:COL.teal,
+    body:'A sunburst of broken tile set flush into the sandstone floor — the room’s heart marked in salvaged colour.',
+    prin:'“Beauty out of broken things.” The trencadís is mosaic made from what was thrown away — Gaudí’s ecology of ornament.'});
+  // thin iron ring framing it
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.52,0.03,12,72), ironMat);
+  ring.rotateX(-Math.PI/2); ring.position.y=0.02; scene.add(ring);
+}
+
+/* ============================================ UNDULATING WALLS (procedural) */
+// A wall as a lofted, sine-rippled plane so it *waves* — the wall that breathes.
+function undulatingWall({along, at, height=RH, waves=3.2, amp=0.22, seg=90, mat, tag:doTag}){
+  // along: 'x' wall runs along X at fixed z=at ; 'z' runs along Z at fixed x=at
+  const len = along==='x' ? RW : RD;
+  const geo=new THREE.PlaneGeometry(len, height, seg, 24);
+  const pos=geo.attributes.position;
+  const v=new THREE.Vector3();
+  for(let i=0;i<pos.count;i++){
+    v.fromBufferAttribute(pos,i);
+    const u=(v.x/len)+0.5;          // 0..1 across the wall
+    const h=(v.y/height)+0.5;       // 0..1 up the wall
+    // ripple stronger at mid-height, easing to 0 at floor & ceiling (so it seats cleanly)
+    const ease=Math.sin(h*Math.PI);
+    const push=Math.sin(u*Math.PI*waves)*amp*ease
+             + Math.sin(u*Math.PI*waves*2.3+1.7)*amp*0.35*ease;
+    pos.setZ(i, push);
+  }
+  geo.computeVertexNormals();
+  const wall=new THREE.Mesh(geo, mat);
+  wall.castShadow=true; wall.receiveShadow=true;
+  if(along==='x'){ wall.position.set(0, height/2, at); if(at>0) wall.rotation.y=Math.PI; }
+  else { wall.rotation.y=Math.PI/2; wall.position.set(at, height/2, 0); if(at>0) wall.rotation.y=-Math.PI/2; }
+  scene.add(wall);
+  if(doTag) tag(wall, doTag);
+  return wall;
+}
+// back wall (north, z=-HALF_D) — the big undulating plaster field
+undulatingWall({along:'x', at:-HALF_D, waves:3.4, amp:0.24,
+  mat:plasterMat(0xE7D3B0),
+  tag:{name:'Undulating wall', mat:'Hand-troweled lime plaster, ochre',
+    pill:'Nature geometry', pc:COL.ochre,
+    body:'The plaster field is not flat — it swells and recedes like a dune or a drawn breath, so the light never lies still on it.',
+    prin:'“The straight line belongs to men; the curve belongs to God.” A wall that waves catches raking light the way a still one never can.'}});
+// left wall (west, x=-HALF_W) plaster, gentler
+undulatingWall({along:'z', at:-HALF_W, waves:2.6, amp:0.18, mat:plasterMat(0xE3CDA6)});
+// right wall (east) — where the trencadís column and the arch spring; keep flatter
+undulatingWall({along:'z', at:HALF_W, waves:2.2, amp:0.12, mat:plasterMat(0xE7D3B0)});
+
+/* ==================================== SCULPTED VAULT / ORGANIC CEILING ===  */
+// A shallow groin-ish vault built by displacing a subdivided plane upward with a
+// bulged catenary-ish profile in both axes + soft ribs — the ceiling that grows.
+{
+  const geo=new THREE.PlaneGeometry(RW, RD, 80, 64);
+  geo.rotateX(Math.PI/2);            // face down
+  const pos=geo.attributes.position;
+  const v=new THREE.Vector3();
+  const rise=1.15;                   // how high the vault domes above wall-top
+  for(let i=0;i<pos.count;i++){
+    v.fromBufferAttribute(pos,i);
+    const nx=v.x/HALF_W, nz=v.z/HALF_D;    // -1..1
+    // dome: cosine bulge in both directions (0 at walls → 1 at centre)
+    const dome=Math.cos(nx*Math.PI/2)*Math.cos(nz*Math.PI/2);
+    // soft ribs running along z
+    const ribs=Math.cos(nx*Math.PI*3)*0.12*Math.cos(nz*Math.PI/2);
+    pos.setY(i, RH + dome*rise + ribs*dome);
+  }
+  geo.computeVertexNormals();
+  const vault=new THREE.Mesh(geo, plasterMat(0xF0E0C4));
+  vault.receiveShadow=true; vault.castShadow=false;
+  scene.add(vault);
+  tag(vault, {name:'Sculpted vault', mat:'Domed lime plaster, honey-cream',
+    pill:'Catenary structure', pc:COL.gold,
+    body:'The ceiling is not a lid but a shallow dome, ribbed and swelling toward its crown — the room looks up into something grown, not nailed.',
+    prin:'A vault carries by its curve, not by beams. Follow the line a hanging chain makes and invert it — the stone stands in pure compression.'});
+
+  // a warm glazed oculus at the crown — organic light-well
+  const ocGeo=new THREE.CircleGeometry(0.9,48); ocGeo.rotateX(Math.PI/2);
+  const oc=new THREE.Mesh(ocGeo, new THREE.MeshStandardMaterial({
+    color:0xFFE6B0, emissive:0xFFCB78, emissiveIntensity:0.9, roughness:0.5}));
+  oc.position.y=RH+rise+0.01; scene.add(oc);
+  const ocRing=new THREE.Mesh(new THREE.TorusGeometry(0.92,0.05,12,48), ironMat);
+  ocRing.rotateX(Math.PI/2); ocRing.position.y=RH+rise+0.02; scene.add(ocRing);
+  // gentle shaft of light from the oculus
+  const shaftGeo=new THREE.ConeGeometry(1.5, RH+rise, 40, 1, true);
+  const shaft=new THREE.Mesh(shaftGeo, new THREE.MeshBasicMaterial({
+    color:0xFFE0A6, transparent:true, opacity:0.05, side:THREE.DoubleSide,
+    depthWrite:false, blending:THREE.AdditiveBlending}));
+  shaft.position.set(0,(RH+rise)/2,0); scene.add(shaft);
+}
+
+/* ==================================== CATENARY / PARABOLIC ARCH COLONNADE = */
+// Real catenary: y = a·cosh(x/a). We build a solid arch by sweeping a rectangular
+// section along the inverted catenary, giving the load-bearing curve as a 3D pier+arch.
+function catenaryPoints(span, height, n=60){
+  // solve loosely: pick a so the arch reaches `height` at x=0 with feet at ±span/2
+  const a=span/2.4;                        // shape param (fatter = more parabolic)
+  const c=Math.cosh((span/2)/a);           // cosh at the foot
+  const scale=height/(c-1);                // so apex height == height
+  const pts=[];
+  for(let i=0;i<=n;i++){
+    const x=-span/2 + (span)*(i/n);
+    const y=height - scale*(Math.cosh(x/a)-1); // invert: high in middle, 0 at feet
+    pts.push(new THREE.Vector2(x,y));
+  }
+  return pts;
+}
+function buildArch({cx, cz, span, height, depth=0.55, thick=0.42, mat, first}){
+  const g=new THREE.Group();
+  const profile=catenaryPoints(span, height, 54);
+  // Build the arch band as a swept quad strip (extruded along z by `depth`)
+  const shape=new THREE.Shape();
+  // outer edge (the catenary), then inner edge offset inward by `thick`
+  shape.moveTo(profile[0].x, profile[0].y);
+  for(let i=1;i<profile.length;i++) shape.lineTo(profile[i].x, profile[i].y);
+  // walk back along an inner (lower) catenary
+  const inner=catenaryPoints(span-thick*1.9, Math.max(0.1,height-thick), 54);
+  for(let i=inner.length-1;i>=0;i--) shape.lineTo(inner[i].x, inner[i].y+ (0));
+  shape.closePath();
+  const geo=new THREE.ExtrudeGeometry(shape, {depth, bevelEnabled:true,
+    bevelThickness:0.04, bevelSize:0.04, bevelSegments:2, steps:1});
+  geo.translate(0,0,-depth/2);
+  const arch=new THREE.Mesh(geo, mat);
+  arch.castShadow=true; arch.receiveShadow=true;
+  g.add(arch);
+  // two feet / piers grounding the arch
+  for(const sx of [-1,1]){
+    const pierGeo=new THREE.CylinderGeometry(thick*0.62, thick*0.78, height*0.34, 20);
+    const pier=new THREE.Mesh(pierGeo, mat);
+    pier.position.set(sx*span/2, height*0.17, 0);
+    pier.castShadow=true; pier.receiveShadow=true; g.add(pier);
+  }
+  g.position.set(cx, 0, cz);
+  scene.add(g);
+  if(first) tag(arch, {name:'Catenary arch', mat:'Sandstone, load-bearing curve',
+    pill:'Catenary structure', pc:COL.sandDeep,
+    body:'Two piers rise and lean into one another until they meet in a pointed arch — the exact curve a hanging chain draws, turned upside down.',
+    prin:'y = a·cosh(x/a). Invert the chain and every stone sits in pure compression — no beam, no thrust, no lie. The curve IS the structure.'});
+  return g;
+}
+// a short colonnade of three catenary arches marching along the room (the arch hall)
+const archMat=new THREE.MeshStandardMaterial({map:plasterTex, bumpMap:plasterBump,
+  bumpScale:0.4, color:0xD9B681, roughness:0.9, metalness:0.02});
+const archSpan=2.6, archH=3.5, archGapZ=2.2;
+buildArch({cx:-1.4, cz:-1.9, span:archSpan, height:archH, mat:archMat, first:true});
+buildArch({cx:-1.4, cz: 0.3, span:archSpan, height:archH, mat:archMat});
+buildArch({cx:-1.4, cz: 2.5, span:archSpan, height:archH, mat:archMat});
+
+/* ==================================== THE TRENCADÍS COLUMN (feature) ======= */
+// A twisting, organic column skinned in broken mosaic — the jewel of the room.
+{
+  const g=new THREE.Group();
+  // a slightly tapered, gently twisted column via LatheGeometry + rotation ripple
+  const prof=[];
+  const H=RH; const N=40;
+  for(let i=0;i<=N;i++){
+    const t=i/N;
+    const r=0.42 + Math.sin(t*Math.PI*3)*0.05 + (1-t)*0.06; // organic bulges
+    prof.push(new THREE.Vector2(r, t*H));
+  }
+  const colGeo=new THREE.LatheGeometry(prof, 64);
+  // twist the mosaic UVs by rotating vertices slightly with height for a spiral read
+  const col=new THREE.Mesh(colGeo, trencMat);
+  col.castShadow=true; col.receiveShadow=true;
+  g.add(col);
+  // flared organic capital
+  const capGeo=new THREE.CylinderGeometry(0.72,0.44,0.5,48);
+  const cap=new THREE.Mesh(capGeo, trencMatFine);
+  cap.position.y=H-0.02; cap.castShadow=true; g.add(cap);
+  // base
+  const baseGeo=new THREE.CylinderGeometry(0.6,0.72,0.35,48);
+  const base=new THREE.Mesh(baseGeo, trencMatFine);
+  base.position.y=0.17; base.castShadow=true; g.add(base);
+  g.position.set(2.7, 0, -1.6);
+  scene.add(g);
+  tag(col, {name:'Trencadís column', mat:'Broken-tile mosaic — teal · gold · rose',
+    pill:'Trencadís', pc:COL.teal,
+    body:'A living pier sheathed head to foot in shattered glazed tile, each shard set by hand into dark grout so the whole column glitters as you move.',
+    prin:'“Beauty out of broken things.” Whole tiles cannot wrap a curve — so Gaudí broke them, and the fracture became the ornament.'});
+  tag(cap, col.userData.feat);
+}
+
+/* ==================================== ORGANIC WINDOW (south wall, garden) == */
+// The south wall is a light screen: a plaster frame pierced by a big organic opening
+// filled with a lobed, leaded glass — the honey light pours through here.
+{
+  const g=new THREE.Group();
+  // build the south wall as a plane with a hole via ShapeGeometry
+  const wShape=new THREE.Shape();
+  wShape.moveTo(-HALF_W,0); wShape.lineTo(HALF_W,0);
+  wShape.lineTo(HALF_W,RH); wShape.lineTo(-HALF_W,RH); wShape.closePath();
+  // organic opening: a tall lobed arch (parabolic top, flared base)
+  const hole=new THREE.Path();
+  const ow=3.4, oy0=0.9, oy1=3.9, oc=0; // opening bounds
+  const steps=48;
+  // left side up
+  for(let i=0;i<=steps;i++){const t=i/steps;
+    const y=oy0+(oy1-oy0)*t;
+    const bulge=Math.sin(t*Math.PI)*0.28;
+    const x=oc - (ow/2)*(0.5+0.5*Math.sin(t*Math.PI)) - bulge;
+    i?hole.lineTo(x,y):hole.moveTo(x,y);}
+  // right side down
+  for(let i=steps;i>=0;i--){const t=i/steps;
+    const y=oy0+(oy1-oy0)*t;
+    const bulge=Math.sin(t*Math.PI)*0.28;
+    const x=oc + (ow/2)*(0.5+0.5*Math.sin(t*Math.PI)) + bulge;
+    hole.lineTo(x,y);}
+  hole.closePath();
+  wShape.holes.push(hole);
+  const wallGeo=new THREE.ShapeGeometry(wShape);
+  const southWall=new THREE.Mesh(wallGeo, plasterMat(0xE9D5B0));
+  southWall.castShadow=true; southWall.receiveShadow=true;
+  g.add(southWall);
+  // give it thickness (a back copy pushed out)
+  const back=southWall.clone(); back.position.z=-0.25; g.add(back);
+  const rim=new THREE.Mesh(new THREE.ShapeGeometry(wShape),
+    plasterMat(0xDFC79E)); rim.position.z=-0.125; g.add(rim);
+
+  // the glass fill (a plane behind the opening) + warm garden glow beyond
+  const glass=new THREE.Mesh(new THREE.PlaneGeometry(ow+0.5, oy1-oy0+0.4), glassMat);
+  glass.position.set(oc,(oy0+oy1)/2, -0.14); g.add(glass);
+  // leaded muntins — wrought-iron curves dividing the light
+  const muntMat=ironMat;
+  for(let i=0;i<3;i++){
+    const yy=oy0+ (oy1-oy0)*(i+1)/4;
+    const bar=new THREE.Mesh(new THREE.BoxGeometry(ow*0.9,0.045,0.05), muntMat);
+    bar.position.set(oc,yy,-0.1); g.add(bar);
+  }
+  // a central serpentine iron mullion
+  const mull=makeIronCurve([
+    new THREE.Vector3(oc,oy0,-0.09),
+    new THREE.Vector3(oc+0.35,oy0+1.0,-0.09),
+    new THREE.Vector3(oc-0.35,oy0+2.0,-0.09),
+    new THREE.Vector3(oc,oy1,-0.09)], 0.028, muntMat);
+  g.add(mull);
+  // colored glass roundels in the top lobe (mini-trencadís of light)
+  for(const [rx,ry,rc] of [[-0.6,3.2,0x2FA79B],[0.5,3.35,0xD9A536],[0,3.0,0xC86B7A]]){
+    const rd=new THREE.Mesh(new THREE.CircleGeometry(0.28,24),
+      new THREE.MeshStandardMaterial({color:rc, emissive:rc, emissiveIntensity:0.35,
+        roughness:0.2, transparent:true, opacity:0.8}));
+    rd.position.set(rx,ry,-0.12); g.add(rd);
+  }
+
+  g.position.set(0,0,HALF_D);   // south wall at +z
+  g.rotation.y=Math.PI;
+  scene.add(g);
+  tag(glass, {name:'Organic window', mat:'Leaded glass in a lobed plaster arch',
+    pill:'Light as material', pc:COL.gold,
+    body:'The whole south wall gives way to one great lobed opening — the garden’s warm light is invited in as if through a leaf, not a rectangle.',
+    prin:'Gaudí built with light the way another man builds with stone. Shape the opening organically and the daylight arrives already sculpted.'});
+
+  // warm garden backdrop just outside, so the window glows honey-gold
+  const gardenGeo=new THREE.PlaneGeometry(RW+6, RH+4);
+  const garden=new THREE.Mesh(gardenGeo, new THREE.MeshBasicMaterial({
+    color:0xFFDFA0}));
+  garden.position.set(0, RH/2, HALF_D+1.4); scene.add(garden);
+  // faint foliage silhouettes
+  for(let i=0;i<7;i++){
+    const s=0.8+Math.random()*1.4;
+    const leaf=new THREE.Mesh(new THREE.SphereGeometry(s,10,8),
+      new THREE.MeshBasicMaterial({color:0xE8C982, transparent:true, opacity:0.55}));
+    leaf.position.set((Math.random()-0.5)*8, 0.6+Math.random()*2.4, HALF_D+1.2);
+    leaf.scale.y=1.3; scene.add(leaf);
+  }
+}
+
+/* ==================================== SCULPTED STAIR (feature) ============= */
+// A curved, cantilevered organic stair sweeping up the east corner with an
+// undulating wrought-iron balustrade — the stair that flows.
+{
+  const g=new THREE.Group();
+  const steps=9, riser=0.20, tread=0.34;
+  const stoneStep=new THREE.MeshStandardMaterial({map:stoneTex, color:0xCFA36B,
+    roughness:0.7});
+  const pts=[];
+  for(let i=0;i<steps;i++){
+    const t=i/(steps-1);
+    // sweep along a gentle arc as it climbs
+    const ang=t*Math.PI*0.55;
+    const rad=2.2;
+    const x= -rad*Math.cos(ang)+rad;
+    const z= -rad*Math.sin(ang);
+    const y= i*riser + riser/2;
+    // wedge-shaped organic tread (a rounded box, slightly fanned)
+    const w=1.5 - t*0.4;
+    const stepGeo=new THREE.BoxGeometry(w, riser, tread);
+    // round front edge by scaling a small bevel look via a second thin box
+    const st=new THREE.Mesh(stepGeo, stoneStep);
+    st.position.set(x, y, z);
+    st.rotation.y=ang;
+    st.castShadow=true; st.receiveShadow=true;
+    g.add(st);
+    // riser face
+    const rf=new THREE.Mesh(new THREE.BoxGeometry(w, i*riser+riser, 0.05), stoneStep);
+    rf.position.set(x, (i*riser+riser)/2, z+tread/2);
+    rf.rotation.y=ang; rf.castShadow=true; g.add(rf);
+    pts.push(new THREE.Vector3(x - w/2 + 0.1, y+0.02, z));
+  }
+  // flowing wrought-iron balustrade following the outer edge
+  const railTop=pts.map(p=>new THREE.Vector3(p.x, p.y+0.92, p.z));
+  const rail=makeIronCurve(railTop, 0.035, ironMat);
+  g.add(rail);
+  // sinuous iron balusters between tread and rail
+  for(let i=0;i<pts.length;i++){
+    const b=makeIronCurve([
+      pts[i],
+      new THREE.Vector3(pts[i].x+0.08*Math.sin(i), pts[i].y+0.46, pts[i].z),
+      railTop[i]], 0.018, ironMat);
+    g.add(b);
+  }
+  // curl at the newel post
+  const newel=makeIronCurve([
+    new THREE.Vector3(pts[0].x,0,pts[0].z),
+    new THREE.Vector3(pts[0].x,0.6,pts[0].z),
+    new THREE.Vector3(pts[0].x+0.25,1.0,pts[0].z-0.15),
+    new THREE.Vector3(pts[0].x-0.1,1.15,pts[0].z-0.05)], 0.045, ironMat);
+  g.add(newel);
+
+  g.position.set(HALF_W-2.9, 0, HALF_D-2.2);
+  g.rotation.y=-Math.PI*0.62;
+  scene.add(g);
+  // tag the whole group via its first step & rail — use an invisible catcher box
+  const catcher=new THREE.Mesh(new THREE.BoxGeometry(2.4, steps*riser, 2.4),
+    new THREE.MeshBasicMaterial({visible:false}));
+  catcher.position.set(HALF_W-2.4, steps*riser/2, HALF_D-2.4);
+  scene.add(catcher);
+  tag(catcher, {name:'Sculpted stair', mat:'Cantilevered sandstone + wrought iron',
+    pill:'Nature geometry', pc:COL.ochreDeep,
+    body:'The steps fan and turn as they climb, each one thinner than the last, laced by an iron rail that curls like a tendril at the newel.',
+    prin:'Wrought iron under Gaudí forgot it was metal and remembered it was a vine. Structure and growth become the same gesture.'});
+}
+
+/* ==================================== WROUGHT-IRON HELPER ================== */
+function makeIronCurve(points, radius, mat){
+  const curve=new THREE.CatmullRomCurve3(points, false, 'catmullrom', 0.5);
+  const geo=new THREE.TubeGeometry(curve, Math.max(24, points.length*8), radius, 10, false);
+  const m=new THREE.Mesh(geo, mat); m.castShadow=true; return m;
+}
+
+/* ==================================== A FLOOR-STANDING IRON CANDELABRA ===== */
+{
+  const g=new THREE.Group();
+  const stem=makeIronCurve([
+    new THREE.Vector3(0,0,0), new THREE.Vector3(0.15,0.8,0.1),
+    new THREE.Vector3(-0.1,1.5,-0.05), new THREE.Vector3(0.05,2.1,0)], 0.04, ironMat);
+  g.add(stem);
+  // three curling arms with little glowing bulbs
+  for(let k=0;k<3;k++){
+    const a=(k/3)*Math.PI*2;
+    const arm=makeIronCurve([
+      new THREE.Vector3(0.05,2.0,0),
+      new THREE.Vector3(Math.cos(a)*0.35,2.15,Math.sin(a)*0.35),
+      new THREE.Vector3(Math.cos(a)*0.5,2.05,Math.sin(a)*0.5)], 0.022, ironMat);
+    g.add(arm);
+    const bulb=new THREE.Mesh(new THREE.SphereGeometry(0.07,16,12),
+      new THREE.MeshStandardMaterial({color:0xFFE7B4, emissive:0xFFC878,
+        emissiveIntensity:1.1, roughness:0.4}));
+    bulb.position.set(Math.cos(a)*0.5,2.08,Math.sin(a)*0.5); g.add(bulb);
+  }
+  g.position.set(-2.9,0,-1.4); scene.add(g);
+  tag(g.children[0], {name:'Iron candelabra', mat:'Hand-forged wrought iron',
+    pill:'Wrought iron', pc:COL.iron,
+    body:'A forged stem branches into three curling arms, each cradling a warm globe — ironwork that grew rather than was cut.',
+    prin:'“A ruler is a confession of laziness.” Even the metal bends toward the organic — nothing in the room admits a straight edge willingly.'});
+}
+
+/* ==================================== FURNITURE (sparse, organic) ========= */
+// curved bench under the window
+{
+  const g=new THREE.Group();
+  // seat as a curved slab (extruded arc)
+  const arc=new THREE.Shape();
+  const R=1.9, w=0.55;
+  arc.absarc(0,0,R,-0.7,0.7,false);
+  arc.absarc(0,0,R-w,0.7,-0.7,true);
+  arc.closePath();
+  const seatGeo=new THREE.ExtrudeGeometry(arc,{depth:0.12,bevelEnabled:true,
+    bevelThickness:0.03,bevelSize:0.03,bevelSegments:2});
+  seatGeo.rotateX(-Math.PI/2);
+  const seat=new THREE.Mesh(seatGeo, woodLtMat);
+  seat.position.y=0.46; seat.castShadow=true; seat.receiveShadow=true; g.add(seat);
+  // low curved back
+  const backGeo=new THREE.ExtrudeGeometry(arc,{depth:0.5,bevelEnabled:false});
+  // cushions along the arc
+  for(let i=-2;i<=2;i++){
+    const a=i*0.28;
+    const cush=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.14,0.5),
+      i%2? cushionRose:cushionTeal);
+    cush.position.set(Math.cos(a)*(R-w/2), 0.6, Math.sin(a)*(R-w/2));
+    cush.rotation.y=-a; cush.castShadow=true; g.add(cush);
+  }
+  // three splayed legs
+  for(const aa of [-0.55,0,0.55]){
+    const leg=makeIronCurve([
+      new THREE.Vector3(Math.cos(aa)*(R-w/2),0,Math.sin(aa)*(R-w/2)),
+      new THREE.Vector3(Math.cos(aa)*(R-w/2+0.1),0.24,Math.sin(aa)*(R-w/2)),
+      new THREE.Vector3(Math.cos(aa)*(R-w/2),0.46,Math.sin(aa)*(R-w/2))],0.025,ironMat);
+    g.add(leg);
+  }
+  g.position.set(0,0,HALF_D-1.4);
+  g.rotation.y=Math.PI;
+  scene.add(g);
+  tag(seat, {name:'Window bench', mat:'Steam-bent oak, iron legs, wool cushions',
+    pill:'Nature geometry', pc:COL.wood,
+    body:'A bench curved to the arc of the window, seating you into the light. Steam-bent oak on three splayed iron legs.',
+    prin:'The furniture obeys the same law as the walls: it curves to hold a body the way a shell curves to hold the sea.'});
+}
+// low organic coffee table on the rug (living zone)
+{
+  const g=new THREE.Group();
+  const rug=new THREE.Mesh(new THREE.CircleGeometry(2.0,48), rugMat);
+  rug.rotateX(-Math.PI/2); rug.position.set(0,0.01,-0.2); rug.receiveShadow=true;
+  scene.add(rug);
+  // amoeba tabletop via a scaled, dented sphere cap
+  const topGeo=new THREE.SphereGeometry(0.75,40,24,0,Math.PI*2,0,Math.PI/2);
+  const p=topGeo.attributes.position, v=new THREE.Vector3();
+  for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);
+    const r=1+Math.sin(Math.atan2(v.z,v.x)*3)*0.08; v.x*=r; v.z*=r; p.setXYZ(i,v.x,v.y*0.35,v.z);}
+  topGeo.computeVertexNormals();
+  const top=new THREE.Mesh(topGeo, new THREE.MeshStandardMaterial({
+    color:0x4A6A64, roughness:0.35, metalness:0.1}));
+  top.position.y=0.44; top.castShadow=true; top.receiveShadow=true; g.add(top);
+  const pedestal=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.22,0.44,20), ironMat);
+  pedestal.position.y=0.22; pedestal.castShadow=true; g.add(pedestal);
+  g.position.set(0,0,-0.2); scene.add(g);
+  tag(top, {name:'Organic table', mat:'Cast resin top (sea-glass green), iron foot',
+    pill:'Nature geometry', pc:COL.teal,
+    body:'A low table whose top has no straight edge — an amoeba, a leaf, a pebble worn smooth. It sits at the room’s hearth on the wool rug.',
+    prin:'Nature never draws the same edge twice. The table’s outline is a curve the sea might have made.'});
+}
+// a couple of organic pots with sculptural plants
+function pot(x,z,scale=1){
+  const g=new THREE.Group();
+  const potGeo=new THREE.LatheGeometry([
+    new THREE.Vector2(0.0,0),new THREE.Vector2(0.22,0),new THREE.Vector2(0.3,0.12),
+    new THREE.Vector2(0.24,0.34),new THREE.Vector2(0.3,0.42)],32);
+  const p=new THREE.Mesh(potGeo, new THREE.MeshStandardMaterial({
+    map:trencTexFine, roughness:0.3, metalness:0.1}));
+  p.castShadow=true; p.receiveShadow=true; g.add(p);
+  // a few blade leaves
+  for(let i=0;i<6;i++){
+    const a=(i/6)*Math.PI*2;
+    const leaf=makeIronCurve([
+      new THREE.Vector3(0,0.4,0),
+      new THREE.Vector3(Math.cos(a)*0.15,0.8,Math.sin(a)*0.15),
+      new THREE.Vector3(Math.cos(a)*0.3,1.2+Math.random()*0.3,Math.sin(a)*0.3)],0.02,
+      new THREE.MeshStandardMaterial({color:0x5C7A3C, roughness:0.7}));
+    g.add(leaf);
+  }
+  g.position.set(x,0,z); g.scale.setScalar(scale); scene.add(g);
+}
+pot(-3.6, 2.6, 1.1);
+pot(3.4, 2.4, 0.9);
+
+/* ==================================== BASEBOARD / skirting trencadís band == */
+{
+  // a thin band of trencadís running the base of the back wall
+  const band=new THREE.Mesh(new THREE.BoxGeometry(RW,0.28,0.06), trencMatFine);
+  band.position.set(0,0.16,-HALF_D+0.05); band.receiveShadow=true; scene.add(band);
+}
+
+/* ================================================================ VIEWPOINTS */
+const VIEWS=[
+  {n:'01', t:'Arch Hall',    pos:[-4.6,1.7,3.6],  look:[-1.4,1.9,-0.4]},
+  {n:'02', t:'Mosaic Column',pos:[0.4,1.7,0.6],   look:[2.7,1.9,-1.6]},
+  {n:'03', t:'Window Seat',  pos:[0,1.6,-1.4],    look:[0,2.3,HALF_D]},
+  {n:'04', t:'Sculpted Stair',pos:[1.2,1.9,1.4],  look:[HALF_W-2.4,1.6,HALF_D-2.4]},
+];
+const dock=document.getElementById('dock');
+VIEWS.forEach((v,i)=>{
+  const b=document.createElement('button');
+  b.className='vp'; b.innerHTML=`<span class="n">VIEW ${v.n}</span><span class="t">${v.t}</span>`;
+  b.onclick=()=>gotoView(i);
+  dock.appendChild(b); v.el=b;
+});
+function setActive(i){VIEWS.forEach((v,k)=>v.el.classList.toggle('active',k===i));}
+
+/* ------- camera glide (eased) ------- */
+let gliding=false, gT=0, gDur=1.5, gFrom={p:new THREE.Vector3(),t:new THREE.Vector3()},
+    gTo={p:new THREE.Vector3(),t:new THREE.Vector3()};
+function gotoView(i){
+  if(walking) toggleWalk(false);
+  const v=VIEWS[i]; setActive(i);
+  if(REDUCED){
+    camera.position.set(...v.pos); controls.target.set(...v.look); controls.update();
+    return;
+  }
+  gFrom.p.copy(camera.position); gFrom.t.copy(controls.target);
+  gTo.p.set(...v.pos); gTo.t.set(...v.look);
+  gT=0; gliding=true;
+  hideCallout();
+}
+const easeInOut=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+
+/* ================================================================ RAYCAST == */
+const ray=new THREE.Raycaster();
+const pointer=new THREE.Vector2();
+let downXY=null;
+renderer.domElement.addEventListener('pointerdown',e=>{downXY=[e.clientX,e.clientY];});
+renderer.domElement.addEventListener('pointerup',e=>{
+  if(!downXY) return;
+  const moved=Math.hypot(e.clientX-downXY[0], e.clientY-downXY[1]);
+  downXY=null;
+  if(moved>6 || walking) return;   // it was a drag, not a click
+  pointer.x=(e.clientX/innerWidth)*2-1;
+  pointer.y=-(e.clientY/innerHeight)*2+1;
+  ray.setFromCamera(pointer,camera);
+  const hits=ray.intersectObjects(features,true);
+  if(hits.length){
+    let o=hits[0].object;
+    while(o && !o.userData.feat) o=o.parent;
+    if(o&&o.userData.feat) showCallout(o.userData.feat, e.clientX, e.clientY);
+  } else hideCallout();
+});
+
+const callout=document.getElementById('callout');
+function showCallout(d, x, y){
+  callout.querySelector('.pill').textContent=d.pill;
+  callout.querySelector('.pill').style.background='#'+d.pc.toString(16).padStart(6,'0');
+  callout.querySelector('.pill').style.color='#160f0a';
+  callout.querySelector('h3').textContent=d.name;
+  callout.querySelector('.mat').textContent=d.mat;
+  callout.querySelector('p').textContent=d.body;
+  callout.querySelector('.prin').textContent=d.prin;
+  // position, clamped to viewport
+  const cw=Math.min(290, innerWidth-24), ch=callout.offsetHeight||210;
+  let px=x+16, py=y+16;
+  if(px+cw>innerWidth-12) px=x-cw-16;
+  if(py+ch>innerHeight-12) py=innerHeight-ch-12;
+  callout.style.left=Math.max(12,px)+'px';
+  callout.style.top=Math.max(12,py)+'px';
+  callout.classList.add('show');
+  document.getElementById('hint').style.opacity='0';
+}
+function hideCallout(){callout.classList.remove('show');}
+
+/* ================================================================ WALK ===== */
+let walking=false;
+const keys={};
+const walkBtn=document.getElementById('walkBtn');
+const veil=document.getElementById('walkveil');
+addEventListener('keydown',e=>{
+  keys[e.code]=true;
+  if(e.code==='KeyL'){toggleDay();}
+});
+addEventListener('keyup',e=>{keys[e.code]=false;});
+walkBtn.onclick=()=>toggleWalk(!walking);
+function toggleWalk(on){
+  walking=on;
+  walkBtn.classList.toggle('on',on);
+  walkBtn.querySelector('.lbl') && (walkBtn.querySelector('.lbl').textContent = on?'Exit walk':'Walk');
+  veil.classList.toggle('on',on);
+  controls.enabled=!on;
+  if(on){
+    hideCallout(); setActive(-1);
+    // drop to eye height where we are
+    camera.position.y=1.62;
+    yaw=Math.atan2(camera.position.x-controls.target.x, camera.position.z-controls.target.z)+Math.PI;
+    pitch=0;
+    renderer.domElement.requestPointerLock&&renderer.domElement.requestPointerLock();
+    document.getElementById('hint').textContent='W A S D to move · mouse to look · Esc or Walk to exit';
+    document.getElementById('hint').style.opacity='.55';
+  } else {
+    document.exitPointerLock&&document.exitPointerLock();
+    document.getElementById('hint').textContent='Drag to look · scroll to zoom · click a feature · pick a viewpoint below';
+  }
+}
+let yaw=0,pitch=0;
+addEventListener('mousemove',e=>{
+  if(!walking||document.pointerLockElement!==renderer.domElement) return;
+  yaw-=e.movementX*0.0022; pitch-=e.movementY*0.0022;
+  pitch=Math.max(-1.2,Math.min(1.2,pitch));
+});
+document.addEventListener('pointerlockchange',()=>{
+  if(walking && document.pointerLockElement!==renderer.domElement){
+    // user pressed Esc → leave walk
+    toggleWalk(false);
+  }
+});
+function stepWalk(dt){
+  if(!walking) return;
+  const dir=new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  // recompute look from yaw/pitch
+  const fwd=new THREE.Vector3(Math.sin(yaw)*Math.cos(pitch), Math.sin(pitch), Math.cos(yaw)*Math.cos(pitch));
+  const right=new THREE.Vector3().crossVectors(fwd,new THREE.Vector3(0,1,0)).normalize();
+  const speed=2.6*dt;
+  const move=new THREE.Vector3();
+  if(keys['KeyW']||keys['ArrowUp']) move.add(fwd);
+  if(keys['KeyS']||keys['ArrowDown']) move.sub(fwd);
+  if(keys['KeyD']||keys['ArrowRight']) move.add(right);
+  if(keys['KeyA']||keys['ArrowLeft']) move.sub(right);
+  move.y=0;
+  if(move.lengthSq()>0){ move.normalize().multiplyScalar(speed); camera.position.add(move); }
+  // clamp inside the room (soft margins)
+  const m=0.6;
+  camera.position.x=Math.max(-HALF_W+m,Math.min(HALF_W-m,camera.position.x));
+  camera.position.z=Math.max(-HALF_D+m,Math.min(HALF_D-m,camera.position.z));
+  camera.position.y=1.62;
+  camera.lookAt(camera.position.x+fwd.x, camera.position.y+fwd.y, camera.position.z+fwd.z);
+}
+
+/* ================================================================ DAY/DUSK = */
+let dusk=false;
+const dayBtn=document.getElementById('dayBtn');
+dayBtn.onclick=()=>toggleDay();
+function toggleDay(){
+  dusk=!dusk;
+  dayBtn.classList.toggle('on',dusk);
+  dayBtn.querySelector('.lbl') && (dayBtn.querySelector('.lbl').textContent = dusk?'Day':'Dusk');
+}
+// smoothed light state
+const DAY={sun:2.35, sunCol:new THREE.Color(0xffd9a0), hemi:0.55, amb:0.28,
+  bg:new THREE.Color(0x2a1d12), lamp:0.0, exp:1.06, sunY:7.5, sunX:6.5};
+const DUSK={sun:0.9, sunCol:new THREE.Color(0xff9a52), hemi:0.22, amb:0.16,
+  bg:new THREE.Color(0x1a0f0a), lamp:1.5, exp:1.15, sunY:2.4, sunX:9.5};
+const _c=new THREE.Color();
+function updateLights(dt){
+  const tgt=dusk?DUSK:DAY;
+  const k=REDUCED?1:1-Math.pow(0.001,dt); // exponential smoothing
+  sun.intensity+= (tgt.sun-sun.intensity)*k;
+  sun.color.lerp(tgt.sunCol,k);
+  hemi.intensity+= (tgt.hemi-hemi.intensity)*k;
+  ambient.intensity+= (tgt.amb-ambient.intensity)*k;
+  lamp.intensity+= (tgt.lamp-lamp.intensity)*k;
+  renderer.toneMappingExposure+= (tgt.exp-renderer.toneMappingExposure)*k;
+  sun.position.y+= (tgt.sunY-sun.position.y)*k;
+  sun.position.x+= (tgt.sunX-sun.position.x)*k;
+  scene.background.lerp(tgt.bg,k);
+  scene.fog.color.copy(scene.background);
+}
+
+/* ================================================================ RESIZE === */
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+  if(callout.classList.contains('show')) hideCallout();
+});
+
+/* ============================================== ABOUT toggle + hint fade === */
+const about=document.getElementById('about');
+const at=document.getElementById('aboutToggle');
+function toggleAbout(){const o=about.classList.toggle('open');at.setAttribute('aria-expanded',o);}
+at.onclick=toggleAbout;
+at.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleAbout();}};
+setTimeout(()=>{const h=document.getElementById('hint');if(h&&!walking)h.style.opacity='0';}, 8000);
+
+/* ================================================================ LOOP ===== */
+let last=performance.now();
+const clock={dt:0};
+function animate(now){
+  requestAnimationFrame(animate);
+  const dt=Math.min(0.05,(now-last)/1000); last=now; clock.dt=dt;
+
+  if(gliding){
+    gT+=dt/gDur;
+    const t=easeInOut(Math.min(1,gT));
+    camera.position.lerpVectors(gFrom.p,gTo.p,t);
+    controls.target.lerpVectors(gFrom.t,gTo.t,t);
+    if(gT>=1) gliding=false;
+  }
+  stepWalk(dt);
+  updateLights(dt);
+  if(!walking) controls.update();
+
+  // gentle candelabra flicker (skip if reduced)
+  if(!REDUCED){
+    const f=0.9+Math.sin(now*0.008)*0.08+Math.sin(now*0.021)*0.05;
+    lamp.intensity*= dusk?1:1;   // (lamp handled in updateLights) keep flicker subtle:
+    bounce.intensity=0.55+Math.sin(now*0.001)*0.04;
+  }
+  renderer.render(scene,camera);
+}
+
+/* ================================================================ START ==== */
+// open on the arch hall
+camera.position.set(...VIEWS[0].pos);
+controls.target.set(...VIEWS[0].look);
+setActive(0);
+renderer.render(scene,camera);
+requestAnimationFrame(animate);
+
+// hide loader once first frame is up
+requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const l=document.getElementById('loader'); l.classList.add('hide');
+  setTimeout(()=>l.remove(),900);
+}));
+
+// expose for headless sanity
+window.__scene=scene; window.__ready=true;
+</script>
+</body>
+</html>

@@ -67,9 +67,6 @@ export interface StartArgs {
   display: string;
   wire: string;
   files?: string[];
-  // Teams channelId — non-empty marks this session as Teams-owned, so the
-  // classic home filters it out (Teams UI owns its rendering).
-  teamId?: string;
   // Vault project pinned on this session (composer `#project` chip) — the
   // persona's write target becomes projects/<slug>/ instead of notes/.
   project?: string;
@@ -83,6 +80,11 @@ export function useSessions(experts: ExpertMap) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const expertsRef = useRef(experts);
   expertsRef.current = experts;
+  // Latest sessions snapshot, read by callbacks that must decide a side effect
+  // BEFORE updating state — so the side effect lives outside the (pure) state
+  // updater rather than firing twice under StrictMode's double-invoke.
+  const sessionsRef = useRef<Session[]>([]);
+  sessionsRef.current = sessions;
 
   const update = useCallback(
     (id: string, fn: (s: Session) => Session) =>
@@ -156,40 +158,56 @@ export function useSessions(experts: ExpertMap) {
       status: "running",
       turnStartedAt: Date.now(),
       queued: null,
+      questionForm: null,
       thread: [...x.thread, { role: "user", text: q.display, files: q.files.length ? q.files : undefined }],
     }));
-    invoke("send_turn", { id: s.id, text: q.wire });
+    invoke("send_turn", { id: s.id, text: q.wire }).catch(() =>
+      update(s.id, (x) => ({ ...x, status: "error", summary: "send failed" }))
+    );
   }, [sessions, update]);
 
   const start = useCallback(async (a: StartArgs) => {
     const id = uid();
     const files = a.files ?? [];
-    const s = newSession(id, a.harness, a.expertSlug, labelFor(expertsRef.current, a.expertSlug), a.display, files, a.teamId);
+    const s = newSession(id, a.harness, a.expertSlug, labelFor(expertsRef.current, a.expertSlug), a.display, files);
     setSessions((prev) => [...prev, s]);
     const workspace = localStorage.getItem("split.workspace") || ""; // empty → default root
-    await invoke("start_session", { id, harness: a.harness, expert: a.expertSlug, workspace, project: a.project ?? null });
-    await invoke("send_turn", { id, text: a.wire });
+    try {
+      await invoke("start_session", { id, harness: a.harness, expert: a.expertSlug, workspace, project: a.project ?? null });
+      await invoke("send_turn", { id, text: a.wire });
+    } catch {
+      // Spawn/first-turn failed before any runner event — surface it instead of
+      // leaving an optimistic session stuck on "running" forever.
+      update(id, (x) => ({ ...x, status: "error", summary: "couldn't start" }));
+    }
     return id;
-  }, []);
+  }, [update]);
 
-  // send a follow-up turn; queues it if the session is still working
+  // send a follow-up turn; queues it if the session is still working.
+  // The send_turn invoke is a SIDE EFFECT, so it runs here — outside any
+  // setSessions updater (which must stay pure; an updater fires twice under
+  // StrictMode and would double-dispatch the turn). We read the current status
+  // from the ref, decide, then fire the effect once and update state.
   const send = useCallback(
     (id: string, t: QueuedTurn) => {
-      setSessions((prev) =>
-        prev.map((s) => {
-          if (s.id !== id) return s;
-          if (s.status === "running" || s.status === "auth") return { ...s, queued: t };
-          invoke("send_turn", { id, text: t.wire });
-          return {
-            ...s,
-            status: "running",
-            turnStartedAt: Date.now(),
-            thread: [...s.thread, { role: "user", text: t.display, files: t.files.length ? t.files : undefined }],
-          };
-        })
+      const s = sessionsRef.current.find((x) => x.id === id);
+      if (!s) return;
+      if (s.status === "running" || s.status === "auth") {
+        update(id, (x) => ({ ...x, queued: t }));
+        return;
+      }
+      invoke("send_turn", { id, text: t.wire }).catch(() =>
+        update(id, (x) => ({ ...x, status: "error", summary: "send failed" }))
       );
+      update(id, (x) => ({
+        ...x,
+        status: "running",
+        turnStartedAt: Date.now(),
+        questionForm: null,
+        thread: [...x.thread, { role: "user", text: t.display, files: t.files.length ? t.files : undefined }],
+      }));
     },
-    []
+    [update]
   );
 
   const sendAuth = useCallback((id: string, methodId: string) => {
@@ -205,7 +223,8 @@ export function useSessions(experts: ExpertMap) {
 
   // Answer a pending permission_request. `optionId = null` denies. `scope`:
   //   "once"          — this call only
-  //   "session"       — runner adds tool_id to the in-memory session allowlist
+  //   "session"       — runner adds tool_id to the in-memory session allow
+  //                     (or, with a null optionId, deny) set
   //   "always-allow"  — runner persists "<expert>:<tool_id>" to var/permissions.json (allow)
   //   "always-deny"   — same, deny
   // We optimistically clear pendingPermission here — the runner has no echo event.

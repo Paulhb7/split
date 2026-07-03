@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Material &amp; Furniture Board — Warm Paris apartment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Figtree:wght@400;500;600;700&family=Martian+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* ============================================================
+     A designer's physical sample board — warm Paris apartment.
+     Ground: lime-plaster ecru. Heroes: tactile material swatches
+     (all CSS/SVG). Names in Fraunces (editorial serif), specs &
+     prices in Figtree, ledger numerals in Martian Mono. Brass
+     hairlines. No external images, no build step.
+     ============================================================ */
+
+  :root {
+    /* Plaster-neutral ground + warm earths */
+    --plaster:      #f2ebe0;   /* the board's paper */
+    --plaster-deep: #e9dfd0;   /* recessed panels */
+    --plaster-warm: #efe6d8;
+    --ink:          #2a231c;   /* warm near-black, never #000 */
+    --ink-soft:     #5b5044;
+    --ink-faint:    #8a7d6c;
+    --line:         #d8ccb8;   /* soft plaster hairline */
+    --brass:        #a6813f;   /* brushed brass hairline */
+    --brass-bright: #c69a4d;
+    --brass-pale:   #d9c194;
+    --terracotta:   #b5623f;   /* the accent — one, warm, < 80% sat */
+    --terracotta-d: #9c5236;
+    --card:         #fbf6ec;   /* raised swatch card */
+    --card-edge:    #e4d8c4;
+    --shadow: 0 1px 2px rgba(74,58,38,.08), 0 12px 34px -18px rgba(74,58,38,.28);
+    --shadow-lift: 0 2px 6px rgba(74,58,38,.10), 0 22px 50px -22px rgba(74,58,38,.36);
+    --r: 3px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: "Figtree", system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(120% 90% at 15% -10%, #f7f1e7 0%, rgba(247,241,231,0) 55%),
+      radial-gradient(140% 120% at 100% 0%, #efe4d3 0%, rgba(239,228,211,0) 50%),
+      var(--plaster);
+    /* faint fibrous plaster tooth */
+    background-attachment: fixed;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body::before {
+    /* woven-linen paper tooth over the whole board */
+    content: "";
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    opacity: .5;
+    background-image:
+      repeating-linear-gradient(0deg,  rgba(120,100,70,.035) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(120,100,70,.035) 0 1px, transparent 1px 3px);
+    mix-blend-mode: multiply;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 0 28px 90px; }
+
+  /* ---- Masthead ---------------------------------------------- */
+  .masthead { padding: 46px 0 20px; }
+  .kicker {
+    font-family: "Martian Mono", monospace;
+    font-size: 10.5px; letter-spacing: .34em; text-transform: uppercase;
+    color: var(--brass); font-weight: 500;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .kicker::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--brass), transparent); }
+  h1.title {
+    font-family: "Fraunces", serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-size: clamp(34px, 6.2vw, 64px);
+    line-height: 1.02; letter-spacing: -.015em;
+    margin: 16px 0 10px;
+    color: var(--ink);
+  }
+  h1.title em { font-style: italic; color: var(--terracotta-d); font-weight: 400; }
+  .dek {
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 300;
+    font-size: clamp(15px, 2vw, 19px); color: var(--ink-soft);
+    max-width: 60ch; line-height: 1.5;
+  }
+  .stamp-row { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 22px; align-items: baseline; }
+  .stamp {
+    font-family: "Martian Mono", monospace; font-size: 10.5px; letter-spacing: .06em;
+    color: var(--ink-faint); text-transform: uppercase;
+  }
+  .stamp b { color: var(--ink); font-weight: 500; }
+
+  /* ---- About banner (exec summary) --------------------------- */
+  .about {
+    margin: 24px 0 6px;
+    border: 1px solid var(--card-edge);
+    border-left: 2px solid var(--brass);
+    background: linear-gradient(180deg, var(--card), #f8f1e5);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+  }
+  .about > summary {
+    cursor: pointer; list-style: none;
+    padding: 15px 20px; display: flex; align-items: center; gap: 12px;
+    font-family: "Figtree", sans-serif; font-weight: 600; font-size: 13.5px;
+    color: var(--ink); user-select: none;
+  }
+  .about > summary::-webkit-details-marker { display: none; }
+  .about > summary .tag {
+    font-family: "Martian Mono", monospace; font-size: 9.5px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--brass); border: 1px solid var(--brass-pale);
+    padding: 3px 8px; border-radius: 2px;
+  }
+  .about > summary .chev { margin-left: auto; color: var(--ink-faint); transition: transform .25s ease; font-size: 12px; }
+  .about[open] > summary .chev { transform: rotate(90deg); }
+  .about .body { padding: 4px 22px 22px; border-top: 1px solid var(--line); margin-top: -2px; }
+  .about .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 16px 30px; margin-top: 16px; }
+  .about h4 {
+    font-family: "Martian Mono", monospace; font-size: 10px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--terracotta-d); margin: 0 0 5px; font-weight: 600;
+  }
+  .about p { margin: 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.62; }
+
+  /* ---- Section furniture ------------------------------------- */
+  section { margin-top: 64px; scroll-margin-top: 20px; }
+  .sec-head { display: flex; align-items: flex-end; gap: 18px; margin-bottom: 26px; }
+  .sec-num {
+    font-family: "Martian Mono", monospace; font-size: 12px; color: var(--brass);
+    font-weight: 500; padding-bottom: 6px; letter-spacing: .05em;
+  }
+  .sec-title { font-family: "Fraunces", serif; font-weight: 400; font-size: clamp(22px, 3.4vw, 32px); letter-spacing: -.01em; color: var(--ink); line-height: 1; }
+  .sec-note { font-family: "Fraunces", serif; font-style: italic; font-weight: 300; color: var(--ink-faint); font-size: 14px; margin-left: auto; padding-bottom: 4px; max-width: 34ch; text-align: right; }
+  .hair { height: 1px; background: linear-gradient(90deg, var(--brass) 0%, var(--brass-pale) 30%, transparent 100%); margin-bottom: 26px; }
+
+  /* ============================================================
+     MATERIAL PALETTE — swatch cards, the heroes
+     ============================================================ */
+  .mat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 20px; }
+  .swatch-card {
+    background: var(--card);
+    border: 1px solid var(--card-edge);
+    border-radius: var(--r);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s ease;
+  }
+  .swatch-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lift); }
+  .swatch {
+    height: 168px; position: relative;
+    border-bottom: 1px solid rgba(120,95,55,.18);
+  }
+  /* brass corner tack, like a pinned sample */
+  .swatch::after {
+    content: ""; position: absolute; top: 10px; right: 10px; width: 9px; height: 9px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #f2dfa6, var(--brass) 70%, #7c5f26);
+    box-shadow: 0 1px 2px rgba(60,40,10,.4), inset 0 0 2px rgba(255,255,255,.5);
+  }
+  .swatch-meta { padding: 14px 16px 16px; }
+  .swatch-name { font-family: "Fraunces", serif; font-weight: 400; font-size: 19px; letter-spacing: -.01em; color: var(--ink); line-height: 1.1; }
+  .swatch-where {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+    font-family: "Martian Mono", monospace; font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--brass); font-weight: 500;
+  }
+  .swatch-where::before { content: "▸"; color: var(--terracotta); }
+  .swatch-why { margin-top: 11px; font-family: "Fraunces", serif; font-style: italic; font-weight: 300; font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; }
+
+  /* --- Individual material textures (pure CSS/SVG grounds) --- */
+  .m-oak {
+    background:
+      repeating-linear-gradient(91deg,
+        rgba(120,78,38,.00) 0 6px, rgba(120,78,38,.10) 7px, rgba(120,78,38,.00) 9px 22px),
+      repeating-linear-gradient(89deg,
+        rgba(90,55,24,.00) 0 30px, rgba(90,55,24,.09) 31px 33px, rgba(90,55,24,.00) 34px 70px),
+      linear-gradient(100deg, #d8b483 0%, #cba672 45%, #d3b07d 70%, #c39a63 100%);
+  }
+  .m-travertine {
+    background:
+      radial-gradient(2px 5px at 20% 30%, rgba(150,120,80,.22), transparent 60%),
+      radial-gradient(3px 2px at 62% 55%, rgba(150,120,80,.20), transparent 60%),
+      radial-gradient(2px 4px at 80% 22%, rgba(150,120,80,.18), transparent 60%),
+      repeating-linear-gradient(4deg, rgba(140,112,72,.00) 0 14px, rgba(140,112,72,.06) 15px 17px, rgba(140,112,72,.00) 18px 34px),
+      linear-gradient(160deg, #e7dcc4 0%, #ddceb0 55%, #e3d8bf 100%);
+  }
+  .m-brass {
+    background:
+      repeating-linear-gradient(122deg, rgba(255,255,255,.00) 0 2px, rgba(255,255,255,.14) 3px, rgba(255,255,255,.00) 4px 7px),
+      repeating-linear-gradient(122deg, rgba(90,64,18,.00) 0 5px, rgba(90,64,18,.10) 6px, rgba(90,64,18,.00) 7px 13px),
+      linear-gradient(122deg, #8a6a2c 0%, #d7b163 24%, #a67d34 50%, #e6c884 66%, #96702c 100%);
+  }
+  .m-boucle {
+    background-color: #e4dccb;
+    background-image:
+      radial-gradient(circle at 3px 3px, #efe8d9 1.6px, rgba(200,188,165,.55) 2.4px, transparent 3px),
+      radial-gradient(circle at 9px 9px, #efe8d9 1.6px, rgba(200,188,165,.55) 2.4px, transparent 3px);
+    background-size: 12px 12px, 12px 12px;
+    background-position: 0 0, 6px 6px;
+  }
+  .m-plaster {
+    background:
+      radial-gradient(70% 60% at 30% 25%, rgba(255,252,244,.8), transparent 70%),
+      radial-gradient(50% 50% at 78% 70%, rgba(214,196,168,.5), transparent 70%),
+      radial-gradient(40% 40% at 60% 40%, rgba(255,255,255,.35), transparent 60%),
+      linear-gradient(140deg, #ece2d0, #e2d6c0);
+  }
+  /* mosaic = trencadís, Gaudí's broken-tile signature, drawn in SVG */
+  .m-mosaic { background:#efe7d6; }
+
+  /* ============================================================
+     COLOUR STORY
+     ============================================================ */
+  .story {
+    display: grid; grid-template-columns: 1.15fr .85fr; gap: 30px; align-items: stretch;
+    background: linear-gradient(180deg, var(--card), #f7efe2);
+    border: 1px solid var(--card-edge); border-radius: var(--r);
+    box-shadow: var(--shadow); padding: 30px 32px;
+  }
+  .story-lead { font-family: "Fraunces", serif; font-weight: 300; font-size: clamp(17px, 2.3vw, 22px); line-height: 1.45; color: var(--ink); }
+  .story-lead b { font-weight: 500; color: var(--terracotta-d); font-style: normal; }
+  .story-body { font-size: 14px; color: var(--ink-soft); margin-top: 16px; line-height: 1.65; max-width: 52ch; }
+  .story-strip { display: flex; flex-direction: column; gap: 0; border-radius: var(--r); overflow: hidden; border: 1px solid var(--card-edge); min-height: 200px; }
+  .story-band { flex: 1; display: flex; align-items: center; padding: 0 18px; position: relative; }
+  .story-band span {
+    font-family: "Martian Mono", monospace; font-size: 10px; letter-spacing: .08em;
+    text-transform: uppercase; font-weight: 500;
+  }
+  .story-band .hex { margin-left: auto; opacity: .8; }
+
+  /* ============================================================
+     SHOPPING LIST — controls + cards + ledger
+     ============================================================ */
+  .toolbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px;
+    padding: 14px 18px; margin-bottom: 24px;
+    background: rgba(248,242,232,.86);
+    backdrop-filter: blur(10px) saturate(1.1);
+    border: 1px solid var(--card-edge); border-top: 2px solid var(--brass);
+    border-radius: var(--r); box-shadow: var(--shadow);
+  }
+  .tb-label { font-family: "Martian Mono", monospace; font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint); }
+  .rooms { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip {
+    font-family: "Figtree", sans-serif; font-size: 12.5px; font-weight: 500;
+    padding: 6px 13px; border-radius: 40px; cursor: pointer;
+    border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+    transition: all .18s ease; min-height: 30px;
+  }
+  .chip:hover { border-color: var(--brass-pale); color: var(--ink); }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--plaster); border-color: var(--ink); }
+
+  .tier-toggle { display: flex; align-items: center; gap: 11px; margin-left: auto; }
+  .tier-toggle .lab { font-family: "Figtree", sans-serif; font-size: 12.5px; font-weight: 600; color: var(--ink-faint); transition: color .2s; }
+  .tier-toggle .lab.on { color: var(--ink); }
+  .tier-toggle .lab.value.on { color: var(--ink); }
+  .tier-toggle .lab.premium.on { color: var(--terracotta-d); }
+  .switch {
+    width: 50px; height: 27px; border-radius: 40px; border: 1px solid var(--card-edge);
+    background: var(--plaster-deep); position: relative; cursor: pointer; padding: 0;
+    transition: background .25s ease;
+  }
+  .switch[aria-checked="true"] { background: linear-gradient(90deg, var(--brass), var(--brass-bright)); border-color: var(--brass); }
+  .switch .knob {
+    position: absolute; top: 2px; left: 2px; width: 21px; height: 21px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fffaf0, #efe6d5);
+    box-shadow: 0 1px 3px rgba(60,40,10,.35);
+    transition: transform .25s cubic-bezier(.3,.8,.3,1.2);
+  }
+  .switch[aria-checked="true"] .knob { transform: translateX(23px); }
+
+  .shop-layout { display: grid; grid-template-columns: 1fr 288px; gap: 28px; align-items: start; }
+  @media (max-width: 940px) { .shop-layout { grid-template-columns: 1fr; } }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); gap: 18px; }
+  .item {
+    background: var(--card); border: 1px solid var(--card-edge); border-radius: var(--r);
+    box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column;
+    transition: transform .3s ease, box-shadow .3s ease, opacity .3s ease;
+  }
+  .item:hover { transform: translateY(-3px); box-shadow: var(--shadow-lift); }
+  .item.hide { display: none; }
+  .item-fig {
+    height: 132px; background:
+      linear-gradient(180deg, #fbf6ec, #f4ecdc);
+    display: flex; align-items: center; justify-content: center;
+    border-bottom: 1px solid var(--line);
+  }
+  .item-fig svg { width: 100%; height: 100%; }
+  .item-body { padding: 14px 16px 16px; display: flex; flex-direction: column; flex: 1; }
+  .item-room {
+    font-family: "Martian Mono", monospace; font-size: 8.5px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--brass); font-weight: 500;
+  }
+  .item-name { font-family: "Fraunces", serif; font-weight: 400; font-size: 17.5px; line-height: 1.12; margin: 5px 0 0; color: var(--ink); }
+  .item-mat { font-size: 12px; color: var(--ink-faint); margin-top: 5px; }
+  .item-why {
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 300; font-size: 12.5px;
+    color: var(--ink-soft); line-height: 1.48; margin: 11px 0 0;
+    padding-top: 11px; border-top: 1px dashed var(--line);
+  }
+  .item-foot { margin-top: auto; padding-top: 13px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .price { font-family: "Martian Mono", monospace; font-weight: 600; font-size: 17px; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .price.flash { animation: flash .5s ease; }
+  @keyframes flash { 0%{ color: var(--terracotta); transform: translateY(-1px);} 100%{ color: var(--ink); transform: none;} }
+  .tier-tag {
+    font-family: "Martian Mono", monospace; font-size: 8px; letter-spacing: .12em; text-transform: uppercase;
+    padding: 3px 7px; border-radius: 2px; font-weight: 500;
+    border: 1px solid var(--line); color: var(--ink-faint);
+  }
+  .tier-tag.premium { color: var(--terracotta-d); border-color: color-mix(in srgb, var(--terracotta) 45%, transparent); background: color-mix(in srgb, var(--terracotta) 8%, transparent); }
+
+  /* ---- Ledger (rolling budget) ---- */
+  .ledger {
+    position: sticky; top: 78px;
+    background: linear-gradient(180deg, #fbf6ec, #f4ecdc);
+    border: 1px solid var(--card-edge); border-top: 2px solid var(--brass);
+    border-radius: var(--r); box-shadow: var(--shadow-lift); overflow: hidden;
+  }
+  .ledger-head { padding: 18px 20px 14px; border-bottom: 1px solid var(--line); }
+  .ledger-head .lh-k { font-family: "Martian Mono", monospace; font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--brass); }
+  .ledger-total { font-family: "Fraunces", serif; font-weight: 400; font-size: 40px; letter-spacing: -.02em; color: var(--ink); margin-top: 6px; font-variant-numeric: tabular-nums; line-height: 1; }
+  .ledger-total .cur { font-size: 24px; color: var(--brass); vertical-align: baseline; margin-right: 2px; }
+  .ledger-sub { font-family: "Figtree", sans-serif; font-size: 11.5px; color: var(--ink-faint); margin-top: 8px; display:flex; gap:6px; align-items:center; }
+  .ledger-sub b { color: var(--ink); font-weight: 600; }
+  .ledger-lines { padding: 8px 0; max-height: 340px; overflow-y: auto; }
+  .lline { display: flex; align-items: baseline; gap: 10px; padding: 6px 20px; font-size: 12px; }
+  .lline .n { flex: 1; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lline .v { font-family: "Martian Mono", monospace; font-size: 11.5px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .lline .dots { flex: 0 0 auto; }
+  .ledger-foot { padding: 14px 20px 18px; border-top: 1px dashed var(--line); background: color-mix(in srgb, var(--brass) 5%, transparent); }
+  .lfrow { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--ink-faint); margin-top: 4px; }
+  .lfrow b { color: var(--ink); font-family: "Martian Mono", monospace; font-variant-numeric: tabular-nums; }
+  .lfrow.grand { font-size: 13px; color: var(--ink); margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+  .lfrow.grand b { font-size: 15px; color: var(--terracotta-d); }
+  .bar { height: 6px; border-radius: 4px; background: var(--plaster-deep); overflow: hidden; margin-top: 12px; }
+  .bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--brass), var(--terracotta)); transition: width .5s cubic-bezier(.2,.7,.2,1); }
+
+  /* ---- footer ---- */
+  footer { margin-top: 66px; padding-top: 22px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 12px 26px; align-items: center; }
+  footer .sig { font-family: "Fraunces", serif; font-style: italic; font-weight: 300; font-size: 15px; color: var(--ink-soft); }
+  footer .meta { font-family: "Martian Mono", monospace; font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint); margin-left: auto; }
+  .wm { display:inline-flex; align-items:center; gap:7px; font-family:"Martian Mono",monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint); }
+  .wm .dot { width:6px; height:6px; border-radius:50%; background: var(--brass); }
+
+  /* ---- responsive tightening ---- */
+  @media (max-width: 720px) {
+    .wrap { padding: 0 18px 70px; }
+    .story { grid-template-columns: 1fr; }
+    .sec-note { display: none; }
+    .toolbar { position: static; }
+    .ledger { position: static; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+
+  /* entrance */
+  .rise { opacity: 0; transform: translateY(14px); }
+  .rise.in { opacity: 1; transform: none; transition: opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= MASTHEAD ================= -->
+  <header class="masthead">
+    <div class="kicker">Atelier · Interior study № 03 · Materials &amp; furnishing</div>
+    <h1 class="title">A warm apartment,<br />rendered in <em>matter</em>.</h1>
+    <p class="dek">The sample board for a light-filled Paris flat — Haussmann bones, oak floors, a north window that wants to be held, not fought. Six materials pinned to the paper, the pieces that fill the room sourced and costed, and a colour that carries them all.</p>
+    <div class="stamp-row">
+      <div class="stamp"><b>~72&nbsp;m²</b> · 2 bed · 3rd arrondissement</div>
+      <div class="stamp">Light: <b>north / soft</b></div>
+      <div class="stamp">Register: <b>organic warm-modern</b></div>
+      <div class="stamp">Currency: <b>EUR</b> · retail incl. VAT</div>
+    </div>
+  </header>
+
+  <!-- ================= ABOUT (exec summary) ================= -->
+  <details class="about" open>
+    <summary><span class="tag">About this</span> Read me first — why this board exists <span class="chev">▸</span></summary>
+    <div class="body">
+      <div class="grid">
+        <div>
+          <h4>Why</h4>
+          <p>You have a warm Paris apartment and a feeling about it. This is the shoppable half of the design package — not "warm woods and soft textiles" in the abstract, but the actual materials and the actual pieces, priced, so you can buy the room.</p>
+        </div>
+        <div>
+          <h4>Context</h4>
+          <p>A ~72 m² Haussmann flat, north light, existing oak floors kept. Register is organic warm-modern — curve over rule, light as a material, beauty pulled from honest stone and salvaged tile. The budget is a real retail estimate at Paris prices (incl. VAT), not a quote.</p>
+        </div>
+        <div>
+          <h4>How to use it</h4>
+          <p>Read the six material swatches first — they set the language. Then the shopping list: <b>filter by room</b> to plan one space at a time, and flip the <b>Value ⇄ Premium</b> switch to re-total the whole board against a spend. The ledger on the right always sums the visible pieces.</p>
+        </div>
+        <div>
+          <h4>What I assumed</h4>
+          <p>A mid-to-upper retail tier, floors and walls already sound (surfaces &amp; finishes only — no structure, no joinery labour), two people living here, and that you'd rather own a few honest things than many thin ones. Change any of it and I re-cost in place.</p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ================= 1 · MATERIAL PALETTE ================= -->
+  <section id="materials">
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <span class="sec-title">The material palette</span>
+      <span class="sec-note">Six samples, pinned. Each earns its place by touch and by light.</span>
+    </div>
+    <div class="hair"></div>
+
+    <div class="mat-grid" id="matGrid"><!-- swatches injected --></div>
+  </section>
+
+  <!-- ================= 2 · COLOUR STORY ================= -->
+  <section id="colour">
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <span class="sec-title">The colour story</span>
+      <span class="sec-note">Warm neutrals hold the light; one earth carries the eye.</span>
+    </div>
+    <div class="hair"></div>
+
+    <div class="story rise">
+      <div>
+        <p class="story-lead">The room is built of <b>plaster and honey</b> — an ecru so warm it reads as light itself, oak the colour of afternoon, travertine's pale sand. Against that quiet, a single <b>burnt terracotta</b> does all the speaking: a sofa, a cushion, a glazed edge of tile. Brass threads through it like a drawn line — thin, warm, never gold-loud.</p>
+        <p class="story-body">This is the discipline: let the neutrals be the walls of the composition and spend all your colour on one earth. The terracotta is the fire; everything else is the hearth around it. Nothing here fights the north light — it gathers it, holds it, and gives it back the colour of clay.</p>
+      </div>
+      <div class="story-strip" id="storyStrip"><!-- bands injected --></div>
+    </div>
+  </section>
+
+  <!-- ================= 3 · SHOPPING LIST ================= -->
+  <section id="shop">
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <span class="sec-title">Furniture &amp; lighting</span>
+      <span class="sec-note">Sourced pieces, real Paris retail. The ledger sums what you see.</span>
+    </div>
+    <div class="hair"></div>
+
+    <div class="toolbar">
+      <span class="tb-label">Room</span>
+      <div class="rooms" id="rooms"><!-- room chips injected --></div>
+      <div class="tier-toggle">
+        <span class="lab value on" id="labValue">Value</span>
+        <button class="switch" id="tierSwitch" role="switch" aria-checked="false" aria-label="Toggle value versus premium sourcing">
+          <span class="knob"></span>
+        </button>
+        <span class="lab premium" id="labPremium">Premium</span>
+      </div>
+    </div>
+
+    <div class="shop-layout">
+      <div class="cards" id="cards"><!-- item cards injected --></div>
+
+      <!-- rolling budget -->
+      <aside class="ledger" aria-live="polite">
+        <div class="ledger-head">
+          <div class="lh-k" id="ledgerScope">Whole apartment · Value tier</div>
+          <div class="ledger-total"><span class="cur">€</span><span id="ledgerTotal">0</span></div>
+          <div class="ledger-sub"><b id="ledgerCount">0</b> pieces on the board · incl. VAT</div>
+        </div>
+        <div class="ledger-lines" id="ledgerLines"><!-- line items injected --></div>
+        <div class="ledger-foot">
+          <div class="lfrow"><span>Furniture</span><b id="sumFurn">€0</b></div>
+          <div class="lfrow"><span>Lighting</span><b id="sumLight">€0</b></div>
+          <div class="lfrow"><span>Textiles &amp; rugs</span><b id="sumTex">€0</b></div>
+          <div class="lfrow grand"><span>Board total</span><b id="grandTotal">€0</b></div>
+          <div class="bar" title="Against a €30k furnishing envelope"><i id="bar" style="width:0%"></i></div>
+          <div class="lfrow" style="margin-top:8px"><span id="barNote">of a €30,000 furnishing envelope</span><b id="barPct">0%</b></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <footer>
+    <span class="sig">Curve over rule; light as a material; beauty out of honest, humble things.</span>
+    <span class="meta">Estimates, not quotes · retail Paris · 2026-07</span>
+  </footer>
+
+  <div style="margin-top:26px;display:flex;justify-content:flex-end">
+    <span class="wm"><span class="dot"></span>Made with Split · Gaudí</span>
+  </div>
+
+</div>
+
+<script>
+/* =====================================================================
+   DATA MODEL — materials, colour, and a real shopping list where every
+   piece carries a value price AND a premium price. The budget is
+   computed from this, live, so it actually sums.
+   ===================================================================== */
+
+const MATERIALS = [
+  { cls:"m-oak",        name:"Rift-sawn oak",     where:"Floors · shelving",
+    why:"The floor already here — kept, re-oiled. Warm grain that runs with the light." },
+  { cls:"m-travertine", name:"Roman travertine",  where:"Kitchen · bath surfaces",
+    why:"Open, honest stone. Its little voids are not flaws — they are where the light rests." },
+  { cls:"m-brass",      name:"Brushed brass",     where:"Hardware · lighting · lines",
+    why:"A drawn line made metal. Thin and warm, it threads the room without shouting gold.", svg:"brass" },
+  { cls:"m-boucle",     name:"Ivory bouclé",      where:"Seating · the reading chair",
+    why:"A looped, sheep-soft wool. You want to touch it — so it belongs where the body rests." },
+  { cls:"m-plaster",    name:"Lime plaster",      where:"Walls · the whole shell",
+    why:"Walls that breathe and hold light in a soft mineral bloom — never flat, never dead." },
+  { cls:"m-mosaic",     name:"Trencadís mosaic",  where:"Splashback · bath niche",
+    why:"Broken glazed tile set new — beauty pulled from what was thrown away.", svg:"mosaic" },
+];
+
+const COLOURS = [
+  { name:"Lime ecru",       hex:"#EFE6D8", ink:"#5b5044", role:"Walls · ground" },
+  { name:"Honey oak",       hex:"#CBA672", ink:"#3a2b18", role:"Floor · wood" },
+  { name:"Travertine sand", hex:"#DDCEB0", ink:"#4a3d24", role:"Stone" },
+  { name:"Brushed brass",   hex:"#A6813F", ink:"#fff7ea", role:"Line · metal" },
+  { name:"Burnt terracotta",hex:"#B5623F", ink:"#fdeee6", role:"The accent" },
+  { name:"Warm ink",        hex:"#2A231C", ink:"#efe6d8", role:"Text · depth" },
+];
+
+/* group ∈ furn | light | tex — drives the ledger sub-totals */
+const ITEMS = [
+  { id:"sofa",  room:"living", group:"furn",  svg:"sofa",
+    name:"Curved 3-seat sofa", why:"A catenary in upholstery — the seat that curves toward the window and holds the room.",
+    value:{ mat:"Bouclé, ivory",           price:1890 },
+    prem: { mat:"Bouclé over hardwood frame", price:4200 } },
+
+  { id:"chair", room:"living", group:"furn",  svg:"chair",
+    name:"Shell reading chair", why:"A single moulded curve you fall into — the body's own geometry, not a box.",
+    value:{ mat:"Bent oak + bouclé",  price:640 },
+    prem: { mat:"Solid oak + shearling", price:1450 } },
+
+  { id:"rug",   room:"living", group:"tex",   svg:"rug",
+    name:"Hand-knotted wool rug", why:"The floor's warm answer — undyed wool the colour of sand, tying the seating into one island.",
+    value:{ mat:"Wool blend, 200×300", price:520 },
+    prem: { mat:"Pure wool, hand-knotted", price:1980 } },
+
+  { id:"table", room:"living", group:"furn",  svg:"table",
+    name:"Travertine coffee table", why:"One block of open stone. Its voids catch the low light and hold it like water.",
+    value:{ mat:"Travertine veneer", price:480 },
+    prem: { mat:"Solid Roman travertine", price:1350 } },
+
+  { id:"pend",  room:"living", group:"light", svg:"pendant",
+    name:"Brass dome pendant", why:"Light poured, not sprayed — a warm brass bowl that pools the glow over the low table.",
+    value:{ mat:"Brushed brass-plate", price:240 },
+    prem: { mat:"Solid spun brass", price:690 } },
+
+  { id:"bed",   room:"bedroom", group:"furn", svg:"bed",
+    name:"Oak platform bed", why:"Low, grounded, honest oak — the room settles around it the way earth settles.",
+    value:{ mat:"Oak veneer, queen",  price:780 },
+    prem: { mat:"Solid rift oak, queen", price:2100 } },
+
+  { id:"nstnd", room:"bedroom", group:"furn", svg:"nightstand",
+    name:"Rounded nightstand (pair)", why:"No sharp corner near where you sleep — softened oak, a small drawer, a warm edge.",
+    value:{ mat:"Oak + brass pull", price:360 },
+    prem: { mat:"Solid oak, dovetailed", price:940 } },
+
+  { id:"sconce",room:"bedroom", group:"light",svg:"sconce",
+    name:"Bedside brass sconce (pair)", why:"Reading light on a thin brass arm — a drawn line that swings to the page.",
+    value:{ mat:"Brass-finish steel", price:190 },
+    prem: { mat:"Solid brass, dimmable", price:520 } },
+
+  { id:"linen", room:"bedroom", group:"tex",  svg:"bedding",
+    name:"Washed linen bedding set", why:"Stonewashed flax in warm clay — the textile that softens the whole light of the room.",
+    value:{ mat:"Washed linen, king",  price:220 },
+    prem: { mat:"Belgian flax linen", price:480 } },
+
+  { id:"stool", room:"kitchen", group:"furn", svg:"stool",
+    name:"Counter stools (pair)", why:"A curved oak seat on a slim brass leg — the perch where the day starts.",
+    value:{ mat:"Bent oak + brass leg", price:340 },
+    prem: { mat:"Solid oak, leather seat", price:820 } },
+
+  { id:"klight",room:"kitchen", group:"light",svg:"linear",
+    name:"Linear brass island light", why:"One warm bar of light along the stone — the horizon the counter is read against.",
+    value:{ mat:"Brushed brass extrusion", price:280 },
+    prem: { mat:"Solid brass, LED warm-dim", price:760 } },
+
+  { id:"runner",room:"kitchen", group:"tex",  svg:"runner",
+    name:"Kitchen runner", why:"A flat-woven strip in oat and clay that carries the floor's warmth to the working end.",
+    value:{ mat:"Cotton flatweave", price:120 },
+    prem: { mat:"Hand-loomed wool", price:340 } },
+
+  { id:"mirror",room:"bath",   group:"furn", svg:"mirror",
+    name:"Arched brass mirror", why:"An arch, not a rectangle — the curve returns the light and lifts the low bath ceiling.",
+    value:{ mat:"Brass-finish frame", price:210 },
+    prem: { mat:"Solid brass, backlit", price:560 } },
+
+  { id:"vanity",room:"bath",   group:"furn", svg:"vanity",
+    name:"Travertine vanity top", why:"Stone that takes water and years gracefully — the honest surface you touch every morning.",
+    value:{ mat:"Travertine-look sintered", price:640 },
+    prem: { mat:"Solid honed travertine", price:1580 } },
+];
+
+const ROOMS = [
+  { id:"all",     label:"Whole apartment" },
+  { id:"living",  label:"Living" },
+  { id:"bedroom", label:"Bedroom" },
+  { id:"kitchen", label:"Kitchen" },
+  { id:"bath",    label:"Bathroom" },
+];
+const ROOM_LABEL = Object.fromEntries(ROOMS.map(r=>[r.id, r.label]));
+const BUDGET_ENVELOPE = 30000;
+
+/* ---------- tiny line-drawing SVGs (stroke, brass ink) ---------- */
+const S = 'stroke="#8a6a2c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+const SVGS = {
+  sofa:`<svg viewBox="0 0 120 80"><path d="M18 56 Q18 32 34 32 L86 32 Q102 32 102 56" ${S}/><path d="M14 56 Q14 44 24 44 L96 44 Q106 44 106 56 L106 64 Q106 66 104 66 L16 66 Q14 66 14 64 Z" ${S}/><path d="M28 44 Q28 38 34 38 L86 38 Q92 38 92 44" ${S}/><line x1="22" y1="66" x2="22" y2="72" ${S}/><line x1="98" y1="66" x2="98" y2="72" ${S}/></svg>`,
+  chair:`<svg viewBox="0 0 120 80"><path d="M40 60 Q34 30 60 26 Q86 30 80 60" ${S}/><path d="M40 60 L80 60 L84 68 L36 68 Z" ${S}/><line x1="42" y1="68" x2="40" y2="74" ${S}/><line x1="78" y1="68" x2="80" y2="74" ${S}/></svg>`,
+  rug:`<svg viewBox="0 0 120 80"><rect x="20" y="24" width="80" height="46" rx="2" ${S}/><rect x="27" y="31" width="66" height="32" rx="1" ${S} stroke-dasharray="3 4"/><path d="M20 24 L14 20 M100 24 L106 20 M20 70 L14 74 M100 70 L106 74" ${S}/></svg>`,
+  table:`<svg viewBox="0 0 120 80"><rect x="26" y="34" width="68" height="14" rx="3" ${S}/><path d="M34 48 L34 62 M86 48 L86 62" ${S}/><path d="M34 62 Q34 66 40 66 M86 62 Q86 66 80 66" ${S}/><circle cx="48" cy="41" r="1.4" fill="#8a6a2c"/><circle cx="68" cy="41" r="1" fill="#8a6a2c"/></svg>`,
+  pendant:`<svg viewBox="0 0 120 80"><line x1="60" y1="12" x2="60" y2="34" ${S}/><path d="M38 34 Q60 30 82 34 Q78 52 60 54 Q42 52 38 34 Z" ${S}/><path d="M50 54 Q60 58 70 54" ${S} stroke-dasharray="2 3"/></svg>`,
+  bed:`<svg viewBox="0 0 120 80"><path d="M18 40 L18 60 L102 60 L102 40" ${S}/><path d="M18 60 L102 60 L102 66 L18 66 Z" ${S}/><path d="M26 40 Q26 34 60 34 Q94 34 94 40 L94 52 L26 52 Z" ${S}/><line x1="22" y1="66" x2="22" y2="72" ${S}/><line x1="98" y1="66" x2="98" y2="72" ${S}/></svg>`,
+  nightstand:`<svg viewBox="0 0 120 80"><rect x="40" y="30" width="40" height="34" rx="6" ${S}/><line x1="44" y1="47" x2="76" y2="47" ${S}/><circle cx="60" cy="40" r="1.6" fill="#8a6a2c"/><line x1="46" y1="64" x2="44" y2="72" ${S}/><line x1="74" y1="64" x2="76" y2="72" ${S}/></svg>`,
+  sconce:`<svg viewBox="0 0 120 80"><line x1="44" y1="20" x2="44" y2="60" ${S}/><path d="M44 34 Q58 34 66 40" ${S}/><path d="M62 36 L74 36 L70 48 L58 48 Z" ${S}/><circle cx="44" cy="20" r="3" ${S}/></svg>`,
+  bedding:`<svg viewBox="0 0 120 80"><path d="M24 42 Q24 34 60 34 Q96 34 96 42 L96 62 L24 62 Z" ${S}/><path d="M24 48 Q42 44 60 48 Q78 52 96 48" ${S} stroke-dasharray="3 4"/><path d="M40 34 L40 62 M80 34 L80 62" ${S} stroke-dasharray="2 5"/></svg>`,
+  stool:`<svg viewBox="0 0 120 80"><path d="M42 40 Q42 34 60 34 Q78 34 78 40 L76 46 L44 46 Z" ${S}/><path d="M48 46 L44 68 M72 46 L76 68 M52 55 L68 55" ${S}/></svg>`,
+  linear:`<svg viewBox="0 0 120 80"><line x1="60" y1="14" x2="60" y2="26" ${S}/><rect x="30" y="26" width="60" height="10" rx="3" ${S}/><path d="M36 36 L36 42 M60 36 L60 42 M84 36 L84 42" ${S} stroke-dasharray="1 3"/></svg>`,
+  runner:`<svg viewBox="0 0 120 80"><rect x="30" y="30" width="60" height="34" rx="2" ${S}/><path d="M30 40 L90 40 M30 54 L90 54" ${S} stroke-dasharray="4 3"/><path d="M30 30 L26 26 M90 30 L94 26 M30 64 L26 68 M90 64 L94 68" ${S}/></svg>`,
+  mirror:`<svg viewBox="0 0 120 80"><path d="M44 62 L44 40 Q44 22 60 22 Q76 22 76 40 L76 62 Z" ${S}/><path d="M50 40 Q52 32 60 30" ${S} stroke-dasharray="2 3"/><line x1="40" y1="62" x2="80" y2="62" ${S}/></svg>`,
+  vanity:`<svg viewBox="0 0 120 80"><rect x="26" y="36" width="68" height="10" rx="2" ${S}/><path d="M32 46 L32 64 M88 46 L88 64" ${S}/><ellipse cx="60" cy="41" rx="9" ry="2.4" ${S}/><path d="M32 64 L88 64" ${S}/></svg>`,
+};
+
+/* ===================================================================== */
+
+let tier = "value";          // value | premium
+let room = "all";            // all | living | bedroom | kitchen | bath
+const $ = (s,r=document)=>r.querySelector(s);
+const eur = n => "€" + n.toLocaleString("en-US");
+
+/* ---------- MATERIAL SWATCHES ---------- */
+function svgBrass(){
+  return `<svg viewBox="0 0 232 168" preserveAspectRatio="none" width="100%" height="100%" style="position:absolute;inset:0">
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#8a6a2c"/><stop offset=".25" stop-color="#d7b163"/>
+        <stop offset=".5" stop-color="#a67d34"/><stop offset=".72" stop-color="#e6c884"/>
+        <stop offset="1" stop-color="#96702c"/>
+      </linearGradient>
+    </defs>
+    <rect width="232" height="168" fill="url(#bg)"/>
+    ${Array.from({length:26},(_,i)=>{const x=i*10-6;return `<line x1="${x}" y1="0" x2="${x+70}" y2="168" stroke="rgba(255,255,255,.16)" stroke-width="1"/><line x1="${x+4}" y1="0" x2="${x+74}" y2="168" stroke="rgba(70,48,12,.14)" stroke-width="1"/>`}).join("")}
+  </svg>`;
+}
+function svgMosaic(){
+  // trencadís — irregular broken tiles in the warm palette + one terracotta glint
+  const pal = ["#cba672","#ddceb0","#b5623f","#a6813f","#e7dcc4","#c99a6a","#8a6a2c","#e0cdb0"];
+  const cells=[]; const cols=8, rows=6, cw=232/cols, ch=168/rows;
+  for(let r=0;r<rows;r++){for(let c=0;c<cols;c++){
+    const jx=(Math.sin(r*3.1+c*1.7)*0.5+0.5), jy=(Math.cos(c*2.3+r*1.1)*0.5+0.5);
+    const x=c*cw, y=r*ch;
+    const p1=`${x+2+jx*3},${y+2}`, p2=`${x+cw-2},${y+3+jy*3}`,
+          p3=`${x+cw-3-jx*2},${y+ch-2}`, p4=`${x+3},${y+ch-3-jy*2}`;
+    const fill = pal[(r*cols+c+ (c%3))%pal.length];
+    cells.push(`<polygon points="${p1} ${p2} ${p3} ${p4}" fill="${fill}" stroke="#efe7d6" stroke-width="1.4"/>`);
+  }}
+  return `<svg viewBox="0 0 232 168" preserveAspectRatio="none" width="100%" height="100%" style="position:absolute;inset:0">
+    <rect width="232" height="168" fill="#efe7d6"/>${cells.join("")}</svg>`;
+}
+function renderMaterials(){
+  $("#matGrid").innerHTML = MATERIALS.map((m,i)=>{
+    let inner = "";
+    if(m.svg==="brass")  inner = svgBrass();
+    if(m.svg==="mosaic") inner = svgMosaic();
+    return `<article class="swatch-card rise" style="transition-delay:${i*55}ms">
+      <div class="swatch ${m.cls}">${inner}</div>
+      <div class="swatch-meta">
+        <div class="swatch-name">${m.name}</div>
+        <div class="swatch-where">${m.where}</div>
+        <div class="swatch-why">${m.why}</div>
+      </div>
+    </article>`;
+  }).join("");
+}
+
+/* ---------- COLOUR STORY ---------- */
+function renderColours(){
+  $("#storyStrip").innerHTML = COLOURS.map(c=>
+    `<div class="story-band" style="background:${c.hex}">
+       <span style="color:${c.ink}">${c.name}</span>
+       <span class="hex" style="color:${c.ink}">${c.hex}</span>
+     </div>`).join("");
+}
+
+/* ---------- ROOM CHIPS ---------- */
+function renderRooms(){
+  $("#rooms").innerHTML = ROOMS.map(r=>
+    `<button class="chip" role="button" data-room="${r.id}" aria-pressed="${r.id===room}">${r.label}</button>`).join("");
+  $("#rooms").querySelectorAll(".chip").forEach(b=>{
+    b.addEventListener("click",()=>{ room=b.dataset.room; syncRooms(); renderCards(); renderLedger(); });
+  });
+}
+function syncRooms(){
+  $("#rooms").querySelectorAll(".chip").forEach(b=> b.setAttribute("aria-pressed", String(b.dataset.room===room)));
+}
+
+/* ---------- SHOPPING CARDS ---------- */
+function visibleItems(){ return ITEMS.filter(it => room==="all" || it.room===room); }
+function priceOf(it){ return it[tier].price; }
+function matOf(it){ return it[tier].mat; }
+
+function renderCards(){
+  $("#cards").innerHTML = visibleItems().map((it,i)=>`
+    <article class="item rise" data-id="${it.id}" style="transition-delay:${Math.min(i,10)*40}ms">
+      <div class="item-fig">${SVGS[it.svg]||""}</div>
+      <div class="item-body">
+        <div class="item-room">${ROOM_LABEL[it.room]}</div>
+        <h3 class="item-name">${it.name}</h3>
+        <div class="item-mat" data-mat>${matOf(it)}</div>
+        <p class="item-why">${it.why}</p>
+        <div class="item-foot">
+          <span class="tier-tag ${tier==="premium"?"premium":""}" data-tag>${tier==="premium"?"Premium":"Value"}</span>
+          <span class="price" data-price>${eur(priceOf(it))}</span>
+        </div>
+      </div>
+    </article>`).join("");
+  requestAnimationFrame(()=> $("#cards").querySelectorAll(".rise").forEach(el=>el.classList.add("in")));
+}
+
+/* re-price cards in place (used on tier flip, keeps DOM, flashes prices) */
+function repriceCards(){
+  $("#cards").querySelectorAll(".item").forEach(el=>{
+    const it = ITEMS.find(x=>x.id===el.dataset.id); if(!it) return;
+    el.querySelector("[data-mat]").textContent = matOf(it);
+    const pEl = el.querySelector("[data-price]");
+    pEl.textContent = eur(priceOf(it));
+    pEl.classList.remove("flash"); void pEl.offsetWidth; pEl.classList.add("flash");
+    const tag = el.querySelector("[data-tag]");
+    tag.textContent = tier==="premium"?"Premium":"Value";
+    tag.classList.toggle("premium", tier==="premium");
+  });
+}
+
+/* ---------- LEDGER (rolling budget) ---------- */
+function renderLedger(){
+  const items = visibleItems();
+  let total=0, furn=0, light=0, tex=0;
+  const lines = items.map(it=>{
+    const p = priceOf(it); total+=p;
+    if(it.group==="furn") furn+=p; else if(it.group==="light") light+=p; else tex+=p;
+    return `<div class="lline"><span class="n">${it.name}</span><span class="v">${eur(p)}</span></div>`;
+  }).join("");
+
+  $("#ledgerScope").textContent = `${ROOM_LABEL[room==="all"?"all":room]} · ${tier==="premium"?"Premium":"Value"} tier`;
+  $("#ledgerLines").innerHTML = lines;
+  $("#ledgerCount").textContent = items.length;
+  $("#sumFurn").textContent  = eur(furn);
+  $("#sumLight").textContent = eur(light);
+  $("#sumTex").textContent   = eur(tex);
+  $("#grandTotal").textContent = eur(total);
+
+  // animate the headline number
+  animateNumber($("#ledgerTotal"), total);
+
+  const pct = Math.min(100, Math.round(total/BUDGET_ENVELOPE*100));
+  $("#bar").style.width = pct + "%";
+  $("#barPct").textContent = pct + "%";
+  $("#barNote").textContent = room==="all"
+    ? `of a ${eur(BUDGET_ENVELOPE)} furnishing envelope`
+    : `${ROOM_LABEL[room]} share of ${eur(BUDGET_ENVELOPE)}`;
+}
+function animateNumber(el, to){
+  const from = parseInt((el.textContent||"0").replace(/[^\d]/g,""),10)||0;
+  if(from===to){ el.textContent = to.toLocaleString("en-US"); return; }
+  const t0 = performance.now(), dur=480;
+  function step(now){
+    const k = Math.min(1,(now-t0)/dur);
+    const e = 1-Math.pow(1-k,3);
+    el.textContent = Math.round(from+(to-from)*e).toLocaleString("en-US");
+    if(k<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ---------- TIER SWITCH ---------- */
+function setTier(next){
+  tier = next;
+  const sw = $("#tierSwitch");
+  sw.setAttribute("aria-checked", String(tier==="premium"));
+  $("#labValue").classList.toggle("on", tier==="value");
+  $("#labPremium").classList.toggle("on", tier==="premium");
+  repriceCards();
+  renderLedger();
+}
+$("#tierSwitch").addEventListener("click", ()=> setTier(tier==="value"?"premium":"value"));
+$("#tierSwitch").addEventListener("keydown", e=>{
+  if(e.key===" "||e.key==="Enter"){ e.preventDefault(); setTier(tier==="value"?"premium":"value"); }
+});
+$("#labValue").addEventListener("click", ()=> setTier("value"));
+$("#labPremium").addEventListener("click", ()=> setTier("premium"));
+
+/* ---------- INIT + reveal ---------- */
+renderMaterials();
+renderColours();
+renderRooms();
+renderCards();
+renderLedger();
+
+// staged entrance via IntersectionObserver (transform/opacity only)
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add("in"); io.unobserve(en.target); } });
+},{ threshold:.12 });
+document.querySelectorAll(".rise").forEach(el=>io.observe(el));
+// ensure above-the-fold swatches animate immediately
+requestAnimationFrame(()=> document.querySelectorAll("#matGrid .rise").forEach(el=>el.classList.add("in")));
+</script>
+</body>
+</html>

@@ -20,7 +20,7 @@
 //!   * authenticate                          — auth_required → Auth retry
 //!   * logout                                — Logout input
 //!   * request_permission                    — emits VEVT, awaits via oneshot
-//!   * fs/read_text_file + fs/write_text_file — served from the real FS
+//!   * fs/read_text_file + fs/write_text_file — confined to workspace + vault
 //!   * MCP servers (stdio)                   — passed from tools.json
 //!   * Persona projection + first-turn inject
 //!   * Per-session archive (events.ndjson + meta.json with acp_sid)
@@ -31,7 +31,7 @@
 //! permission UI is only surfaced when `SPLIT_PERMISSION_MODE=prompt`.
 //! The Rust runner uses `prompt` mode by default (matching Tauri spawn).
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, LazyLock, Mutex};
@@ -157,6 +157,93 @@ fn emit_exit(app: &EventSink, id: &str) {
     });
 }
 
+/// Newest image in `dir` by mtime → (path, file_name, size, mtime_secs).
+/// `None` if the directory is missing/empty or holds no png/jpeg.
+fn newest_frame(dir: &Path) -> Option<(PathBuf, String, u64, u64)> {
+    let mut best: Option<(PathBuf, String, u64, u64)> = None;
+    for entry in std::fs::read_dir(dir).ok()?.flatten() {
+        let path = entry.path();
+        let name = match path.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n.to_ascii_lowercase(),
+            None => continue,
+        };
+        if !(name.ends_with(".png") || name.ends_with(".jpg") || name.ends_with(".jpeg")) {
+            continue;
+        }
+        let meta = match entry.metadata() {
+            Ok(m) => m,
+            Err(_) => continue,
+        };
+        let size = meta.len();
+        let mtime = meta
+            .modified()
+            .ok()
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+        if best.as_ref().map(|b| mtime > b.3).unwrap_or(true) {
+            best = Some((path, name, size, mtime));
+        }
+    }
+    best
+}
+
+/// Stream the operator's live browser view into the atelier. Alfred (and any
+/// browser-using expert) drops one screenshot per step into `<cwd>/.frames/`;
+/// this background task polls that directory and emits the NEWEST image as a
+/// `frame` VEVT whenever it changes. Deliberately decoupled from ACP — it needs
+/// no cooperation from the harness, works for headless Chromium (no OS window to
+/// embed), and reuses the same `app.emit` broadcast as every other event.
+/// Frames are NOT archived (base64 PNGs would bloat events.ndjson) — they are a
+/// live-only surface. Polling (no `notify` dep) at 300 ms is plenty for a
+/// human-watchable view; a file is only emitted once its (size, mtime) settle,
+/// so a screenshot caught mid-write is skipped until the next tick.
+fn spawn_frame_watcher(
+    app: EventSink,
+    id: String,
+    frames_dir: PathBuf,
+) -> tokio::task::JoinHandle<()> {
+    use base64::Engine as _;
+    tokio::spawn(async move {
+        // (name, size, mtime) of the last frame we emitted, to skip duplicates.
+        let mut last: Option<(String, u64, u64)> = None;
+        let mut seq: u64 = 0;
+        loop {
+            tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+            let Some((path, name, size, mtime)) = newest_frame(&frames_dir) else {
+                continue;
+            };
+            let key = (name.clone(), size, mtime);
+            if last.as_ref() == Some(&key) {
+                continue; // unchanged since last tick
+            }
+            let bytes = match std::fs::read(&path) {
+                Ok(b) if !b.is_empty() => b,
+                _ => continue, // missing or caught mid-write (0 bytes)
+            };
+            // Guard against a torn read: re-stat and bail if the file changed
+            // size between our metadata scan and the read (still being written).
+            if std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0) != size {
+                continue;
+            }
+            let mime = if name.ends_with(".png") {
+                "image/png"
+            } else {
+                "image/jpeg"
+            };
+            let data = base64::engine::general_purpose::STANDARD.encode(&bytes);
+            seq += 1;
+            last = Some(key);
+            emit_vevt(
+                &app,
+                &id,
+                json!({ "type": "frame", "seq": seq, "mime": mime, "data": data, "ts": mtime }),
+                None,
+            );
+        }
+    })
+}
+
 /// Translate one ACP `SessionUpdate` into the VEVT payload Split's reducer
 /// consumes — byte-for-byte identical to what the Python runner emits.
 fn update_to_vevt(update: &SessionUpdate) -> Option<Value> {
@@ -226,10 +313,11 @@ fn update_to_vevt(update: &SessionUpdate) -> Option<Value> {
     }
 }
 
-/// Best-effort tool id for permission rule matching — same convention as
-/// `_extract_tool_id` on the Python side: `Bash(<cmd>)`, `Read(<path>)`,
-/// `mcp__server__tool`, falling back to the title or kind.
-fn extract_tool_id(req: &RequestPermissionRequest) -> String {
+/// Best-effort tool id for permission rule matching: `Bash(<cmd>)`,
+/// `Read(<path>)`, `mcp__server__tool`, falling back to the title or kind.
+/// `mcp_servers` are the configured MCP server names, used to reconstruct
+/// MCP tool ids (see [`tool_id_from_parts`]).
+fn extract_tool_id(req: &RequestPermissionRequest, mcp_servers: &[String]) -> String {
     let fields = &req.tool_call.fields;
     let title = fields.title.clone().unwrap_or_default();
     let kind_dbg = fields
@@ -237,11 +325,32 @@ fn extract_tool_id(req: &RequestPermissionRequest) -> String {
         .as_ref()
         .map(|k| format!("{:?}", k).to_lowercase())
         .unwrap_or_default();
-    if let Some(raw) = fields.raw_input.as_ref().and_then(|v| v.as_object()) {
-        if let Some(cmd) = raw.get("command").and_then(|v| v.as_str()) {
-            return format!("Bash({cmd})");
-        }
-        if let Some(cmd) = raw.get("cmd").and_then(|v| v.as_str()) {
+    tool_id_from_parts(&title, &kind_dbg, fields.raw_input.as_ref(), mcp_servers)
+}
+
+/// Pure core of [`extract_tool_id`] — split out so it is unit-testable
+/// without constructing ACP wire structs.
+///
+/// Order matters: built-in tools (resolved by argument shape) before MCP
+/// (resolved by name), so a real `Read`/`Bash` is never misread as an MCP
+/// tool. The MCP step is what makes rules like `mcp__cua_driver` actually
+/// fire — previously a cua-driver call surfaced as the bare title `click`
+/// and matched nothing.
+fn tool_id_from_parts(
+    title: &str,
+    kind: &str, // lowercased ToolKind debug ("read" / "edit" / "write" / …)
+    raw_input: Option<&Value>,
+    mcp_servers: &[String],
+) -> String {
+    let raw_obj = raw_input.and_then(|v| v.as_object());
+
+    // 1. Built-in tools, by argument shape.
+    if let Some(raw) = raw_obj {
+        if let Some(cmd) = raw
+            .get("command")
+            .or_else(|| raw.get("cmd"))
+            .and_then(|v| v.as_str())
+        {
             return format!("Bash({cmd})");
         }
         if let Some(path) = raw
@@ -249,8 +358,8 @@ fn extract_tool_id(req: &RequestPermissionRequest) -> String {
             .or_else(|| raw.get("file_path"))
             .and_then(|v| v.as_str())
         {
-            if matches!(kind_dbg.as_str(), "read" | "edit" | "write") {
-                let mut k = kind_dbg.clone();
+            if matches!(kind, "read" | "edit" | "write") {
+                let mut k = kind.to_string();
                 if let Some(c) = k.get_mut(0..1) {
                     c.make_ascii_uppercase();
                 }
@@ -258,13 +367,30 @@ fn extract_tool_id(req: &RequestPermissionRequest) -> String {
             }
         }
     }
-    if !title.is_empty() {
-        return title;
+
+    // 2. MCP tools — normalize to `mcp__server__tool`. Candidate names: an
+    //    explicit name field in raw_input, then the human title.
+    if let Some(raw) = raw_obj {
+        for key in ["name", "tool", "toolName", "tool_name"] {
+            if let Some(s) = raw.get(key).and_then(|v| v.as_str()) {
+                if let Some(id) = permissions::mcp_tool_id(s, mcp_servers) {
+                    return id;
+                }
+            }
+        }
     }
-    if kind_dbg.is_empty() {
+    if let Some(id) = permissions::mcp_tool_id(title, mcp_servers) {
+        return id;
+    }
+
+    // 3. Fallback — the bare title, else the kind, else "tool".
+    if !title.is_empty() {
+        return title.to_string();
+    }
+    if kind.is_empty() {
         "tool".to_string()
     } else {
-        kind_dbg
+        kind.to_string()
     }
 }
 
@@ -525,6 +651,7 @@ fn emit_referenced_artifact(
     workspace: &Path,
     path: &Path,
     snapshot: &mut BTreeMap<String, FileStamp>,
+    min_mtime: u64,
 ) {
     let meta = match std::fs::metadata(path) {
         Ok(m) => m,
@@ -537,6 +664,12 @@ fn emit_referenced_artifact(
         .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
         .map(|d| d.as_secs())
         .unwrap_or(0);
+    // Only surface files written/modified during this turn. A path the agent
+    // merely read (tool `locations` includes reads) keeps its old mtime and is
+    // skipped, so it can't masquerade as a fresh deliverable.
+    if mtime < min_mtime {
+        return;
+    }
     let rel = match path.strip_prefix(workspace) {
         Ok(r) => r.to_string_lossy().replace('\\', "/"),
         Err(_) => path
@@ -661,6 +794,54 @@ pub fn start(
     RunnerHandle { tx }
 }
 
+/// Confine an agent-supplied path to one of `roots` (the session workspace +
+/// the vault). Defeats `..` traversal AND symlink escape by canonicalizing the
+/// longest existing ancestor (which resolves symlinks) and rejecting any
+/// `..`/`.` in the not-yet-existing tail. Returns the safe absolute path, or
+/// `None` if it escapes every root.
+///
+/// The agent's own file IO over ACP (`fs/read_text_file` / `fs/write_text_file`)
+/// otherwise hits the real filesystem on a raw path, bypassing the Bash/MCP
+/// permission engine — so a prompt-injected agent could read `~/.ssh/id_rsa` or
+/// overwrite `~/.zshrc`. The fs handlers turn `None` into a refusal to close
+/// that back door.
+fn confine_path(requested: &Path, roots: &[PathBuf]) -> Option<PathBuf> {
+    // Resolve relative paths against the primary root (the workspace cwd).
+    let abs = if requested.is_absolute() {
+        requested.to_path_buf()
+    } else {
+        roots.first()?.join(requested)
+    };
+    // Peel the non-existing tail until an existing ancestor canonicalizes
+    // (resolving symlinks). `/` always exists, so the loop terminates.
+    let mut existing = abs.as_path();
+    let mut tail: Vec<std::ffi::OsString> = Vec::new();
+    let resolved = loop {
+        match existing.canonicalize() {
+            Ok(c) => break c,
+            Err(_) => {
+                tail.push(existing.file_name()?.to_os_string());
+                existing = existing.parent()?;
+            }
+        }
+    };
+    // Re-attach the tail, refusing `..`/`.` so it can't climb back out after
+    // the canonicalized prefix.
+    let mut full = resolved;
+    for comp in tail.iter().rev() {
+        if comp == ".." || comp == "." {
+            return None;
+        }
+        full.push(comp);
+    }
+    // Must live under a canonicalized allowed root.
+    let allowed: Vec<PathBuf> = roots.iter().filter_map(|r| r.canonicalize().ok()).collect();
+    allowed
+        .iter()
+        .any(|root| full.starts_with(root))
+        .then_some(full)
+}
+
 /// The per-session task body. Public so integration tests can run it on
 /// their own tokio runtime against a fake ACP agent, capturing events via
 /// `EventSink::Channel` — production goes through `start` above.
@@ -726,6 +907,11 @@ pub async fn run_session(
             PathBuf::from(&workspace)
         };
 
+        // Live browser view: stream `<cwd>/.frames/*.png` to the atelier for the
+        // session's lifetime (aborted at teardown below). Cheap when idle —
+        // a missing `.frames/` dir just yields no frames.
+        let frame_watcher = spawn_frame_watcher(app.clone(), id.clone(), cwd.join(".frames"));
+
         // Per-turn buffer of the agent's `say` text — drained at idle so
         // we can scan for file paths the agent referenced (markdown links,
         // bare absolute paths) and surface them as synthetic artifacts even
@@ -733,6 +919,41 @@ pub async fn run_session(
         // notification handler.
         let say_buf: Arc<Mutex<String>> = Arc::new(Mutex::new(String::new()));
         let say_buf_for_notif = say_buf.clone();
+
+        // Per-turn buffer of file paths the agent's TOOLS touched — harvested
+        // from ACP `fs/write_text_file` requests and from tool-call
+        // `locations`. This is the AUTHORITATIVE source of "what file did the
+        // agent write": it carries the real absolute path regardless of what
+        // the prose says, so we surface deliverables the agent wrote outside
+        // the workspace (e.g. `~/Documents/split-apps/foo/index.html`) even
+        // when the final answer only names them by a relative shorthand or
+        // mentions them solely in the plan. Drained at idle, mtime-gated so a
+        // merely-read file can't masquerade as a fresh artifact.
+        let touched_paths: Arc<Mutex<Vec<PathBuf>>> = Arc::new(Mutex::new(Vec::new()));
+        let touched_for_notif = touched_paths.clone();
+        let touched_for_write = touched_paths.clone();
+
+        // Roots the agent's own ACP file IO is confined to: its workspace + the
+        // boss's vault. Anything else (`~/.ssh`, `/etc`, a `..` escape, a symlink
+        // out) is refused by the fs handlers below — see `confine_path`.
+        let fs_roots: Vec<PathBuf> = vec![cwd.clone(), split_core::persona::vault_root()];
+        let fs_roots_for_read = fs_roots.clone();
+        let fs_roots_for_write = fs_roots;
+
+        // Configured MCP server names — the permission handler uses these to
+        // reconstruct `mcp__server__tool` ids from harness tool calls (so
+        // rules like `mcp__cua_driver` can actually match). Captured here
+        // while `mcp_servers` is still in scope; it's moved into the session
+        // loop later.
+        let mcp_server_names: Vec<String> = mcp_servers
+            .iter()
+            .filter_map(|s| match s {
+                McpServer::Stdio(c) => Some(c.name.clone()),
+                McpServer::Http(c) => Some(c.name.clone()),
+                McpServer::Sse(c) => Some(c.name.clone()),
+                _ => None,
+            })
+            .collect();
 
         // Captured by handler closures.
         let app_for_notif = app.clone();
@@ -747,9 +968,9 @@ pub async fn run_session(
         let archive_for_loop = archive.clone();
         let harness_for_loop = harness.clone();
 
-        // Permissions: persisted rules path + in-memory session allowlist.
-        // The set is Arc<Mutex<>> so the per-request closure can mutate it
-        // when the user picks "allow for this session".
+        // Permissions: persisted rules path + in-memory session allow/deny
+        // sets. Arc<Mutex<>> so the per-request closure can mutate them when
+        // the user picks "allow/deny for this session".
         let perms_path = sessions_dir
             .parent()
             .unwrap_or(&sessions_dir)
@@ -757,7 +978,11 @@ pub async fn run_session(
         let session_allow: Arc<Mutex<std::collections::HashSet<String>>> =
             Arc::new(Mutex::new(std::collections::HashSet::new()));
         let session_allow_for_perm = session_allow.clone();
+        let session_deny: Arc<Mutex<std::collections::HashSet<String>>> =
+            Arc::new(Mutex::new(std::collections::HashSet::new()));
+        let session_deny_for_perm = session_deny.clone();
         let perms_path_for_perm = perms_path.clone();
+        let mcp_names_for_perm = mcp_server_names.clone();
 
         let result = Client
             .builder()
@@ -770,6 +995,23 @@ pub async fn run_session(
                         if let ContentBlock::Text(t) = &chunk.content {
                             say_buf_for_notif.lock().unwrap().push_str(&t.text);
                         }
+                    }
+                    // Harvest tool-call file locations — the authoritative
+                    // record of paths the agent's tools wrote to, used at idle
+                    // to surface out-of-workspace deliverables (mtime-gated so
+                    // a plain read can't masquerade as a fresh artifact).
+                    match &notification.update {
+                        SessionUpdate::ToolCall(t) => {
+                            let mut buf = touched_for_notif.lock().unwrap();
+                            buf.extend(t.locations.iter().map(|l| l.path.clone()));
+                        }
+                        SessionUpdate::ToolCallUpdate(t) => {
+                            if let Some(locs) = &t.fields.locations {
+                                let mut buf = touched_for_notif.lock().unwrap();
+                                buf.extend(locs.iter().map(|l| l.path.clone()));
+                            }
+                        }
+                        _ => {}
                     }
                     if let Some(payload) = update_to_vevt(&notification.update) {
                         emit_vevt(
@@ -784,12 +1026,17 @@ pub async fn run_session(
                 agent_client_protocol::on_receive_notification!(),
             )
             // fs/read_text_file — agent reads files via ACP (e.g. Codex
-            // before edits). Served from the real filesystem, with optional
-            // line/limit windowing (1-based, matching the spec).
+            // before edits). Confined to the workspace + vault so it can't be
+            // turned into an arbitrary-file read (e.g. `~/.ssh/id_rsa`); with
+            // optional line/limit windowing (1-based, matching the spec).
             .on_receive_request(
                 async move |request: ReadTextFileRequest, responder, _conn| {
-                    let path = &request.path;
-                    let result: Result<String, std::io::Error> = std::fs::read_to_string(path);
+                    let Some(path) = confine_path(&request.path, &fs_roots_for_read) else {
+                        return responder.respond_with_internal_error(
+                            "permission denied: path is outside the session workspace and vault",
+                        );
+                    };
+                    let result: Result<String, std::io::Error> = std::fs::read_to_string(&path);
                     match result {
                         Ok(mut content) => {
                             if request.line.is_some() || request.limit.is_some() {
@@ -813,16 +1060,26 @@ pub async fn run_session(
                 },
                 agent_client_protocol::on_receive_request!(),
             )
-            // fs/write_text_file — agent writes files via ACP. Creates the
-            // parent dir if missing (matches Python behaviour).
+            // fs/write_text_file — agent writes files via ACP. Confined to the
+            // workspace + vault (so it can't overwrite e.g. `~/.zshrc`); creates
+            // the parent dir if missing (matches Python behaviour).
             .on_receive_request(
                 async move |request: WriteTextFileRequest, responder, _conn| {
-                    let path = &request.path;
+                    let Some(path) = confine_path(&request.path, &fs_roots_for_write) else {
+                        return responder.respond_with_internal_error(
+                            "permission denied: path is outside the session workspace and vault",
+                        );
+                    };
                     if let Some(parent) = path.parent() {
                         let _ = std::fs::create_dir_all(parent);
                     }
-                    match std::fs::write(path, &request.content) {
-                        Ok(()) => responder.respond(WriteTextFileResponse::new()),
+                    match std::fs::write(&path, &request.content) {
+                        Ok(()) => {
+                            // Authoritative write — record the path so the
+                            // end-of-turn scan surfaces it as a deliverable.
+                            touched_for_write.lock().unwrap().push(path.clone());
+                            responder.respond(WriteTextFileResponse::new())
+                        }
                         Err(e) => responder.respond_with_internal_error(e.to_string()),
                     }
                 },
@@ -830,9 +1087,15 @@ pub async fn run_session(
             )
             .on_receive_request(
                 async move |request: RequestPermissionRequest, responder, _conn| {
-                    let tool_id = extract_tool_id(&request);
+                    let tool_id = extract_tool_id(&request, &mcp_names_for_perm);
 
-                    // Fast path 1: in-memory "allow for this session" set.
+                    // Fast path 1: in-memory session-scoped decisions
+                    // (deny checked first — deny > allow, like the rules).
+                    if session_deny_for_perm.lock().unwrap().contains(&tool_id) {
+                        return responder.respond(RequestPermissionResponse::new(
+                            RequestPermissionOutcome::Cancelled,
+                        ));
+                    }
                     if session_allow_for_perm.lock().unwrap().contains(&tool_id) {
                         if let Some(opt) = pick_option(&request.options, "allow") {
                             return responder.respond(RequestPermissionResponse::new(
@@ -906,7 +1169,8 @@ pub async fn run_session(
 
                     // Persistence per scope (matches the Python flow):
                     //   once          — nothing extra
-                    //   session       — add tool_id to the per-runner set
+                    //   session       — add tool_id to the per-runner allow
+                    //                   or deny set (which one = the verb)
                     //   always-allow  — append "<expert>:<generalized>" to allow
                     //   always-deny   — append to deny
                     if picked.is_some() && scope == "session" {
@@ -914,13 +1178,24 @@ pub async fn run_session(
                             .lock()
                             .unwrap()
                             .insert(tool_id.clone());
+                    } else if picked.is_none() && scope == "session" {
+                        session_deny_for_perm
+                            .lock()
+                            .unwrap()
+                            .insert(tool_id.clone());
                     } else if picked.is_some() && scope == "always-allow" {
-                        let rule =
-                            format!("{}:{}", expert_for_perm, permissions::generalize(&tool_id));
+                        let rule = format!(
+                            "{}:{}",
+                            expert_for_perm,
+                            permissions::rule_for_persist(&tool_id)
+                        );
                         permissions::add_rule(&perms_path_for_perm, Decision::Allow, &rule);
                     } else if picked.is_none() && scope == "always-deny" {
-                        let rule =
-                            format!("{}:{}", expert_for_perm, permissions::generalize(&tool_id));
+                        let rule = format!(
+                            "{}:{}",
+                            expert_for_perm,
+                            permissions::rule_for_persist(&tool_id)
+                        );
                         permissions::add_rule(&perms_path_for_perm, Decision::Deny, &rule);
                     }
 
@@ -1001,28 +1276,30 @@ pub async fn run_session(
                 let mut artifact_snapshot = snapshot_workspace(&cwd);
 
                 // ── main control loop ────────────────────────────────────
-                // If a turn was stashed during the auth flow, replay it now.
+                // Turns run one at a time. A `RunnerInput::Stop` (the stop
+                // button) must interrupt even a long, in-flight turn, so
+                // `run_one_turn` races the prompt against this same control
+                // channel and asks the agent to `session/cancel` on Stop.
+                // Non-Stop inputs that land mid-turn are buffered in `deferred`
+                // and drained before the next blocking `recv`, so a stray
+                // follow-up is neither lost nor reordered.
+                let mut deferred: VecDeque<RunnerInput> = VecDeque::new();
+                // A turn stashed during the auth flow replays first.
                 if let Some(text) = pending_turn.take() {
-                    persona_injected = run_one_turn(
-                        &connection,
-                        &session_id,
-                        text,
-                        &persona_body,
-                        persona_injected,
-                        &app_for_loop,
-                        &id_for_loop,
-                        &archive_for_loop,
-                        &cwd,
-                        &mut artifact_snapshot,
-                        &say_buf,
-                    )
-                    .await;
+                    deferred.push_back(RunnerInput::Turn(text));
                 }
 
-                while let Some(input) = rx.recv().await {
+                'control: loop {
+                    let input = match deferred.pop_front() {
+                        Some(buffered) => buffered,
+                        None => match rx.recv().await {
+                            Some(input) => input,
+                            None => break 'control,
+                        },
+                    };
                     match input {
                         RunnerInput::Turn(text) => {
-                            persona_injected = run_one_turn(
+                            let outcome = run_one_turn(
                                 &connection,
                                 &session_id,
                                 text,
@@ -1034,8 +1311,15 @@ pub async fn run_session(
                                 &cwd,
                                 &mut artifact_snapshot,
                                 &say_buf,
+                                &touched_paths,
+                                &mut rx,
+                                &mut deferred,
                             )
                             .await;
+                            persona_injected = outcome.persona_injected;
+                            if outcome.stopped {
+                                break 'control;
+                            }
                         }
                         RunnerInput::Auth { method_id } => {
                             authenticate_and_emit(
@@ -1060,7 +1344,7 @@ pub async fn run_session(
                             )
                             .await;
                         }
-                        RunnerInput::Stop => break,
+                        RunnerInput::Stop => break 'control,
                     }
                 }
 
@@ -1086,6 +1370,7 @@ pub async fn run_session(
             );
         }
 
+        frame_watcher.abort();
         archive.close();
         emit_exit(&app, &id);
     }
@@ -1161,10 +1446,9 @@ async fn open_session(
                 // ask/architect/code state. Tells us which harnesses expose
                 // native model selection (`category: "model"`) vs. need the
                 // spawn-time fallback in core-rs/src/harness_config.rs.
-                let opts = serde_json::to_string(&s.config_options)
-                    .unwrap_or_else(|_| "null".to_string());
-                let modes =
-                    serde_json::to_string(&s.modes).unwrap_or_else(|_| "null".to_string());
+                let opts =
+                    serde_json::to_string(&s.config_options).unwrap_or_else(|_| "null".to_string());
+                let modes = serde_json::to_string(&s.modes).unwrap_or_else(|_| "null".to_string());
                 let probe =
                     format!("[config-probe] harness={harness} configOptions={opts} modes={modes}");
                 eprintln!("{probe}"); // terminal visibility in `tauri dev`
@@ -1264,6 +1548,14 @@ async fn open_session(
 }
 
 #[allow(clippy::too_many_arguments)]
+/// Outcome of one turn. `stopped` tells the control loop to break into graceful
+/// teardown — the boss hit Stop (or the control channel closed) mid-turn.
+struct TurnOutcome {
+    persona_injected: bool,
+    stopped: bool,
+}
+
+#[allow(clippy::too_many_arguments)]
 async fn run_one_turn(
     connection: &ConnectionTo<Agent>,
     session_id: &SessionId,
@@ -1276,11 +1568,22 @@ async fn run_one_turn(
     workspace: &Path,
     snapshot: &mut BTreeMap<String, FileStamp>,
     say_buf: &Arc<Mutex<String>>,
-) -> bool {
+    touched_paths: &Arc<Mutex<Vec<PathBuf>>>,
+    rx: &mut mpsc::UnboundedReceiver<RunnerInput>,
+    deferred: &mut VecDeque<RunnerInput>,
+) -> TurnOutcome {
     archive.write_turn(&text);
-    // Fresh buffer for this turn — anything left over from a cancelled or
+    // Fresh buffers for this turn — anything left over from a cancelled or
     // errored previous turn is irrelevant to what's being said now.
     say_buf.lock().unwrap().clear();
+    touched_paths.lock().unwrap().clear();
+    // Floor (whole seconds) of the turn's start. Any deliverable the agent
+    // writes happens after this, so we use it to gate out merely-read files
+    // (whose mtime predates the turn) from the end-of-turn artifact scan.
+    let turn_start = std::time::SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
     emit_vevt(
         app,
         id,
@@ -1294,13 +1597,45 @@ async fn run_one_turn(
     } else {
         text
     };
-    let resp = connection
+    // Race the prompt against the control channel so a mid-turn Stop actually
+    // interrupts a long-running turn instead of being seen only after it
+    // finishes. Non-Stop inputs that arrive while the turn runs are buffered
+    // for the control loop to process next.
+    let prompt_fut = connection
         .send_request(PromptRequest::new(
             session_id.clone(),
             vec![ContentBlock::Text(TextContent::new(wire))],
         ))
-        .block_task()
-        .await;
+        .block_task();
+    tokio::pin!(prompt_fut);
+    let resp = loop {
+        tokio::select! {
+            r = &mut prompt_fut => break r,
+            input = rx.recv() => match input {
+                Some(RunnerInput::Stop) | None => {
+                    // Ask the agent to cancel, then briefly drain the
+                    // now-cancelling prompt so the ACP session is left clean.
+                    // Whatever streamed so far is committed by the idle below,
+                    // so the boss sees the partial answer rather than a hang.
+                    let _ = connection
+                        .send_notification(CancelNotification::new(session_id.clone()));
+                    let _ = tokio::time::timeout(
+                        std::time::Duration::from_millis(400),
+                        &mut prompt_fut,
+                    )
+                    .await;
+                    emit_vevt(
+                        app,
+                        id,
+                        json!({ "type": "status", "status": "idle", "stop": "Cancelled" }),
+                        Some(archive),
+                    );
+                    return TurnOutcome { persona_injected, stopped: true };
+                }
+                Some(other) => deferred.push_back(other),
+            },
+        }
+    };
     match resp {
         Ok(r) => {
             // Diff the workspace just before flipping the session to idle so
@@ -1310,12 +1645,28 @@ async fn run_one_turn(
             emit_artifact_diff(app, id, archive, workspace, snapshot, &next);
             *snapshot = next;
             // Safety net: agents sometimes write outside cwd despite the
-            // persona rule ("I saved it to ~/Desktop/foo.docx"). Scan the
-            // turn's final answer for referenced paths and surface any that
-            // exist as synthetic artifacts.
+            // persona rule. Surface those deliverables from two sources,
+            // mtime-gated to this turn so a merely-read file can't masquerade
+            // as a fresh artifact:
+            //   1. Paths the agent's TOOLS touched (ACP fs/write_text_file +
+            //      tool-call locations) — authoritative, carries the real
+            //      absolute path even when the prose only names a shorthand.
+            //   2. Paths referenced in the turn's final answer (markdown
+            //      links, bare absolute paths) — covers tools that report no
+            //      locations ("I saved it to ~/Desktop/foo.docx").
             let say_text = std::mem::take(&mut *say_buf.lock().unwrap());
-            for path in scan_referenced_paths(&say_text, workspace) {
-                emit_referenced_artifact(app, id, archive, workspace, &path, snapshot);
+            let mut seen: std::collections::HashSet<PathBuf> = std::collections::HashSet::new();
+            let touched = std::mem::take(&mut *touched_paths.lock().unwrap());
+            for path in touched
+                .into_iter()
+                .filter(|p| p.is_file())
+                .map(|p| p.canonicalize().unwrap_or(p))
+                .chain(scan_referenced_paths(&say_text, workspace))
+            {
+                if !seen.insert(path.clone()) {
+                    continue;
+                }
+                emit_referenced_artifact(app, id, archive, workspace, &path, snapshot, turn_start);
             }
             emit_vevt(
                 app,
@@ -1327,7 +1678,10 @@ async fn run_one_turn(
                 }),
                 Some(archive),
             );
-            true
+            TurnOutcome {
+                persona_injected: true,
+                stopped: false,
+            }
         }
         Err(e) => {
             emit_vevt(
@@ -1341,7 +1695,10 @@ async fn run_one_turn(
                 Some(archive),
             );
             // Keep persona_injected at its previous value (caller maintains).
-            persona_injected
+            TurnOutcome {
+                persona_injected,
+                stopped: false,
+            }
         }
     }
 }
@@ -1444,4 +1801,117 @@ fn has_browser_login(harness: &str) -> bool {
         harness,
         "claude" | "codex" | "gemini" | "cursor" | "copilot"
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn servers() -> Vec<String> {
+        vec!["cua-driver".to_string(), "everything".to_string()]
+    }
+
+    #[test]
+    fn confine_path_blocks_traversal_and_symlink_escape() {
+        use std::fs;
+        let tmp = std::env::temp_dir().join(format!("split-confine-{}", std::process::id()));
+        let ws = tmp.join("workspace");
+        let outside = tmp.join("outside");
+        fs::create_dir_all(&ws).unwrap();
+        fs::create_dir_all(&outside).unwrap();
+        fs::write(ws.join("ok.txt"), "hi").unwrap();
+        fs::write(outside.join("secret.txt"), "sshhh").unwrap();
+        let roots = vec![ws.clone()];
+
+        // Inside the workspace → allowed (existing file, and a not-yet-existing
+        // file in a new subdir).
+        assert!(confine_path(&ws.join("ok.txt"), &roots).is_some());
+        assert!(confine_path(&ws.join("sub/new.txt"), &roots).is_some());
+        // `..` traversal and absolute paths out of the workspace → refused.
+        assert!(confine_path(&ws.join("../outside/secret.txt"), &roots).is_none());
+        assert!(confine_path(&outside.join("secret.txt"), &roots).is_none());
+
+        // A symlink INSIDE the workspace pointing out → refused: canonicalizing
+        // the existing ancestor follows the link out of the root.
+        #[cfg(unix)]
+        {
+            let link = ws.join("escape");
+            std::os::unix::fs::symlink(&outside, &link).unwrap();
+            assert!(
+                confine_path(&link.join("secret.txt"), &roots).is_none(),
+                "symlink escape must be refused"
+            );
+        }
+
+        let _ = fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn tool_id_built_in_tools_by_shape() {
+        // Bash from command / cmd.
+        assert_eq!(
+            tool_id_from_parts("run", "execute", Some(&json!({"command": "npm test"})), &[]),
+            "Bash(npm test)"
+        );
+        assert_eq!(
+            tool_id_from_parts("run", "execute", Some(&json!({"cmd": "ls -la"})), &[]),
+            "Bash(ls -la)"
+        );
+        // Read/Edit/Write from path + kind.
+        assert_eq!(
+            tool_id_from_parts("read", "read", Some(&json!({"path": "/a/b.txt"})), &[]),
+            "Read(/a/b.txt)"
+        );
+        assert_eq!(
+            tool_id_from_parts(
+                "write",
+                "write",
+                Some(&json!({"file_path": "/a/c.txt"})),
+                &[]
+            ),
+            "Write(/a/c.txt)"
+        );
+    }
+
+    #[test]
+    fn tool_id_reconstructs_mcp_from_name_and_title() {
+        // Already-canonical name in raw_input (Claude Code convention).
+        assert_eq!(
+            tool_id_from_parts(
+                "Clicking",
+                "other",
+                Some(&json!({"name": "mcp__cua-driver__click"})),
+                &servers()
+            ),
+            "mcp__cua_driver__click"
+        );
+        // `<server>__<tool>` in the title for a known server.
+        assert_eq!(
+            tool_id_from_parts("cua-driver__type_text", "other", None, &servers()),
+            "mcp__cua_driver__type_text"
+        );
+        // Built-in shape still wins over an MCP-looking title.
+        assert_eq!(
+            tool_id_from_parts(
+                "cua-driver__x",
+                "execute",
+                Some(&json!({"command": "echo hi"})),
+                &servers()
+            ),
+            "Bash(echo hi)"
+        );
+    }
+
+    #[test]
+    fn tool_id_falls_back_to_title_then_kind() {
+        // Bare tool name with no resolvable server → title (today's behavior;
+        // the server is genuinely unknown so we don't guess).
+        assert_eq!(
+            tool_id_from_parts("WebSearch", "fetch", None, &servers()),
+            "WebSearch"
+        );
+        // No title → kind, then the literal "tool".
+        assert_eq!(tool_id_from_parts("", "search", None, &servers()), "search");
+        assert_eq!(tool_id_from_parts("", "", None, &servers()), "tool");
+    }
 }

@@ -1,0 +1,10 @@
+{
+  "expert": "lawyer",
+  "key": "gdpr-brief",
+  "type": "doc",
+  "title": "GDPR obligations brief",
+  "desc": "Plain-English",
+  "brief": "A plain-English brief on what the GDPR requires of a fictional French startup (Brume, SAS, Paris) shipping a companion mobile app for a connected air-quality device — user accounts, usage analytics, BLE device data, EU customers. Covers lawful bases, what counts as personal data in this stack, privacy-by-design duties, processor agreements and transfers, retention, handling user rights, cookies and trackers under ePrivacy/Art. 82 LIL, when a DPIA is needed, CNIL specifics, and a prioritized 10-item compliance checklist, with GDPR articles cited inline and a demo disclaimer.",
+  "da": "Cool regulatory explainer: pure-white ground with cool gray hairlines, Libre Franklin headings over Inter body, indigo and teal accents, article pills in indigo tint, thin indigo left-rule callouts and disclaimer, crystal-clear numbered hierarchy, sticky 'what this means for you' side callouts, and an interactive prioritized checklist table.",
+  "generated": "2026-07-03"
+}

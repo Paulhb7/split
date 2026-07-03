@@ -1,21 +1,24 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Crest } from "../shared/Crest";
+import { Avatar } from "../shared/Avatar";
 import { vars } from "../shared/ui";
+import { brandOf } from "../shared/harnesses";
 import { isActiveExpert } from "../shared/experts";
 import type { useExperts } from "../shared/util";
 import type { Session } from "../shared/models";
 import type { ArchivedSessionMeta } from "../shared/events";
 
-// The atelier's left column — a two-tab command surface:
-//   · Agents  — live sessions FIRST (Active: status dot + "needs you" badge,
-//     click focuses one), then the launchable roster grouped by category
-//     (super / genius / coach) in collapsible sections.
-//   · Récents — resumable archives (var/sessions/). Each row: a hue node per
+// The atelier's left column — a three-tab command surface:
+//   · Agents   — the launchable roster grouped by category (super / genius /
+//     coach) in collapsible sections. Where you START work.
+//   · Sessions — the live team: every running session (status dot + "needs you"
+//     badge, click focuses one). Where you SWITCH between what's running.
+//   · History  — resumable archives (var/sessions/). Each row: a hue node per
 //     expert (mirrors the History timeline), the brief, expert · time-ago, and
-//     resume-on-click. "Tout l'historique →" opens the full timeline overlay.
-// Tabs (not stacked sections) so each gets the rail's full height — the roster
-// never gets pushed below the fold by the history list.
+//     resume-on-click. "Tout l'historique →" opens the full timeline overlay —
+//     the rail is the only entry to history now (no chrome button).
+// Tabs (not stacked sections) so each gets the rail's full height — start / run
+// / past are three distinct jobs that no longer crowd each other.
 const CATS: { key: "super" | "genius" | "coach"; label: string; open: boolean }[] = [
   { key: "super", label: "Super", open: true },
   { key: "genius", label: "Genius", open: false },
@@ -46,11 +49,15 @@ const timeAgo = (iso: string, now: number): string => {
   return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 };
 
-export function AtelierLeft({ experts, sessions, focusedId, armedSlug, onArm, onFocus, onResume, onOpenHistory, collapsed, onToggleCollapsed }: {
+export function AtelierLeft({ experts, sessions, focusedId, armedSlug, team, onToggleTeam, onArm, onFocus, onResume, onOpenHistory, collapsed, onToggleCollapsed }: {
   experts: ReturnType<typeof useExperts>;
   sessions: Session[];
   focusedId: string | null;
   armedSlug: string;
+  /** The hired team — slugs pinned to the rail (shared/team.ts). */
+  team: string[];
+  /** Hire / drop an expert from the team (the "+ Add experts…" browse view). */
+  onToggleTeam: (slug: string) => void;
   onArm: (slug: string) => void;
   onFocus: (id: string) => void;
   onResume: (meta: ArchivedSessionMeta) => void;
@@ -59,13 +66,18 @@ export function AtelierLeft({ experts, sessions, focusedId, armedSlug, onArm, on
   onToggleCollapsed?: () => void;
 }) {
   const roster = Object.keys(experts).filter((slug) => isActiveExpert(experts, slug));
-  const [tab, setTab] = useState<"agents" | "recents">("agents");
+  // The Agents tab has two faces: the hired team (default) and a "Browse all"
+  // roster where every expert is a ★ hire toggle. Empty team → start in browse.
+  const [browseAll, setBrowseAll] = useState(false);
+  const teamList = team.filter((slug) => isActiveExpert(experts, slug));
+  // Open on the live team when something's running, else on the roster to launch.
+  const [tab, setTab] = useState<"agents" | "sessions" | "history">(() => (sessions.length > 0 ? "sessions" : "agents"));
 
-  // Archives load lazily — fetched each time the Récents tab is opened, so a
+  // Archives load lazily — fetched each time the History tab is opened, so a
   // session you just ended shows up without an app restart. null = loading.
   const [recents, setRecents] = useState<ArchivedSessionMeta[] | null>(null);
   useEffect(() => {
-    if (tab !== "recents") return;
+    if (tab !== "history") return;
     let alive = true;
     invoke<string>("list_archived_sessions")
       .then((raw) => {
@@ -77,19 +89,37 @@ export function AtelierLeft({ experts, sessions, focusedId, armedSlug, onArm, on
     return () => { alive = false; };
   }, [tab]);
 
-  // Collapsed → a thin strip with a chevron, a vertical label, and a glance of
-  // live sessions (so you still see who's running even folded).
+  // Collapsed → a thin strip of mini-crests: each session as its own identifiable
+  // tile (per-expert crest + live status dot, active ringed in the engine's
+  // colour, click to focus), a chevron to expand, and a + to start a new one.
   if (collapsed) {
     return (
-      <button className="rail-stub left" onClick={onToggleCollapsed} title="Expand the roster">
-        <span className="rail-stub-x">›</span>
-        <span className="rail-stub-label">Agents</span>
-        <span className="rail-stub-dots">
-          {sessions.slice(0, 4).map((s) => (
-            <span key={s.id} className={"rail-stub-dot" + (s.status === "running" ? " run" : "")} />
-          ))}
-        </span>
-      </button>
+      <div className="mini-rail left">
+        <button className="mini-expand" onClick={() => onToggleCollapsed?.()} title="Expand the rail" aria-label="Expand the rail">›</button>
+        {sessions.map((s) => {
+          const needs = s.status === "auth" ? "auth" : s.pendingPermission ? "perm" : null;
+          const live =
+            s.status === "running" ? "run"
+            : s.status === "error" ? "err"
+            : needs ? "warn"
+            : s.status === "ended" ? "end"
+            : "idle";
+          return (
+            <button
+              key={s.id}
+              className={"mini-crest" + (focusedId === s.id ? " active" : "")}
+              style={vars({ "--engine": brandOf(s.harness) })}
+              onClick={() => onFocus(s.id)}
+              title={`@${s.expertLabel} — ${s.status}`}
+            >
+              <Avatar slug={s.expertSlug} size={34} />
+              <span className={"mini-st " + live} />
+              {needs && <span className="mini-badge">!</span>}
+            </button>
+          );
+        })}
+        <button className="mini-add" onClick={() => onToggleCollapsed?.()} title="New session — expand the rail" aria-label="New session">+</button>
+      </div>
     );
   }
 
@@ -102,81 +132,116 @@ export function AtelierLeft({ experts, sessions, focusedId, armedSlug, onArm, on
       <div className="atelier-left-top">
         <div className="atelier-tabs" role="tablist">
           <button role="tab" aria-selected={tab === "agents"} className={"atelier-tab" + (tab === "agents" ? " on" : "")} onClick={() => setTab("agents")}>Agents</button>
-          <button role="tab" aria-selected={tab === "recents"} className={"atelier-tab" + (tab === "recents" ? " on" : "")} onClick={() => setTab("recents")}>Récents</button>
+          <button role="tab" aria-selected={tab === "sessions"} className={"atelier-tab" + (tab === "sessions" ? " on" : "")} onClick={() => setTab("sessions")}>
+            Sessions{sessions.length > 0 && <span className="atelier-tab-ct">{sessions.length}</span>}
+          </button>
+          <button role="tab" aria-selected={tab === "history"} className={"atelier-tab" + (tab === "history" ? " on" : "")} onClick={() => setTab("history")}>History</button>
         </div>
         {onToggleCollapsed && (
-          <button className="rail-collapse left" onClick={onToggleCollapsed} title="Collapse the roster">‹</button>
+          <button className="rail-collapse left" onClick={onToggleCollapsed} title="Collapse the rail">‹</button>
         )}
       </div>
 
       <div className="atelier-left-scroll">
         {tab === "agents" ? (
-          <>
-            {sessions.length > 0 && (
-              <div className="atelier-left-sec">
-                <div className="atelier-left-h">Active · {sessions.length}</div>
-                {sessions.map((s) => {
-                  const needs = s.status === "auth" ? "auth" : s.pendingPermission ? "perm" : null;
-                  const live =
-                    s.status === "running" ? "run"
-                    : s.status === "error" ? "err"
-                    : needs ? "warn"
-                    : s.status === "ended" ? "end"
-                    : "idle";
+          browseAll ? (
+            <div className="atelier-browse">
+              <div className="atelier-browse-head">
+                <span>All experts — ★ to hire</span>
+                <button className="atelier-browse-done" onClick={() => setBrowseAll(false)}>Done</button>
+              </div>
+              {CATS.map((c) => {
+                const list = roster.filter((slug) => (experts[slug]?.category ?? "super") === c.key);
+                if (list.length === 0) return null;
+                return (
+                  <details key={c.key} className="atelier-grp" open={c.open}>
+                    <summary>
+                      <span className="atelier-grp-chev">▸</span>
+                      {c.label}
+                      <span className="atelier-grp-cnt">{list.length}</span>
+                    </summary>
+                    {list.map((slug) => {
+                      const e = experts[slug];
+                      const hired = team.includes(slug);
+                      return (
+                        <button
+                          key={slug}
+                          className={"atelier-agent hire" + (hired ? " hired" : "")}
+                          onClick={() => onToggleTeam(slug)}
+                          title={hired ? `Drop ${e?.label} from your team` : `Hire ${e?.label}`}
+                        >
+                          <span className="atelier-agent-crest"><Avatar slug={slug} size={40} /></span>
+                          <span className="atelier-agent-id">
+                            <span className="atelier-agent-nm">{e?.label}</span>
+                            <span className="atelier-agent-kind">{e?.kind}</span>
+                          </span>
+                          <span className="atelier-hire-star" aria-hidden="true">{hired ? "★" : "☆"}</span>
+                        </button>
+                      );
+                    })}
+                  </details>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="atelier-team">
+              {teamList.length === 0 ? (
+                <div className="atelier-recs-empty">No experts hired yet — add the makers you'll actually use.</div>
+              ) : (
+                teamList.map((slug) => {
+                  const e = experts[slug];
+                  const on = !focusedId && armedSlug === slug;
                   return (
                     <button
-                      key={s.id}
-                      className={"atelier-agent" + (focusedId === s.id ? " on" : "")}
-                      onClick={() => onFocus(s.id)}
-                      title={`@${s.expertLabel}${needs === "auth" ? " · needs sign-in" : needs === "perm" ? " · needs your approval" : ""}`}
+                      key={slug}
+                      className={"atelier-agent" + (on ? " on" : "")}
+                      onClick={() => onArm(slug)}
+                      title={e?.blurb}
                     >
-                      <span className="atelier-agent-crest">
-                        <Crest kind={experts[s.expertSlug]?.kind} seed={s.expertSlug} size={40} />
-                        <span className={"att-live " + live} />
-                        {needs && <span className="att-badge">!</span>}
-                      </span>
+                      <span className="atelier-agent-crest"><Avatar slug={slug} size={40} /></span>
                       <span className="atelier-agent-id">
-                        <span className="atelier-agent-nm">{s.expertLabel}</span>
-                        <span className="atelier-agent-kind">{experts[s.expertSlug]?.kind}</span>
+                        <span className="atelier-agent-nm">{e?.label}</span>
+                        <span className="atelier-agent-kind">{e?.kind}</span>
                       </span>
                     </button>
                   );
-                })}
-              </div>
-            )}
-
-            {CATS.map((c) => {
-              const list = roster.filter((slug) => (experts[slug]?.category ?? "super") === c.key);
-              if (list.length === 0) return null;
+                })
+              )}
+              <button className="atelier-add" onClick={() => setBrowseAll(true)}>+ Add experts…</button>
+            </div>
+          )
+        ) : tab === "sessions" ? (
+          sessions.length === 0 ? (
+            <div className="atelier-recs-empty">No live session yet — pick an agent to start one.</div>
+          ) : (
+            sessions.map((s) => {
+              const needs = s.status === "auth" ? "auth" : s.pendingPermission ? "perm" : null;
+              const live =
+                s.status === "running" ? "run"
+                : s.status === "error" ? "err"
+                : needs ? "warn"
+                : s.status === "ended" ? "end"
+                : "idle";
               return (
-                <details key={c.key} className="atelier-grp" open={c.open}>
-                  <summary>
-                    <span className="atelier-grp-chev">▸</span>
-                    {c.label}
-                    <span className="atelier-grp-cnt">{list.length}</span>
-                  </summary>
-                  {list.map((slug) => {
-                    const e = experts[slug];
-                    const on = !focusedId && armedSlug === slug;
-                    return (
-                      <button
-                        key={slug}
-                        className={"atelier-agent" + (on ? " on" : "")}
-                        onClick={() => onArm(slug)}
-                        title={e?.blurb}
-                      >
-                        <span className="atelier-agent-crest"><Crest kind={e?.kind} seed={slug} size={40} /></span>
-                        <span className="atelier-agent-id">
-                          <span className="atelier-agent-nm">{e?.label}</span>
-                          <span className="atelier-agent-kind">{e?.kind}</span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </details>
+                <button
+                  key={s.id}
+                  className={"atelier-agent" + (focusedId === s.id ? " on" : "")}
+                  onClick={() => onFocus(s.id)}
+                  title={`@${s.expertLabel}${needs === "auth" ? " · needs sign-in" : needs === "perm" ? " · needs your approval" : ""}`}
+                >
+                  <span className="atelier-agent-crest">
+                    <Avatar slug={s.expertSlug} size={40} />
+                    <span className={"att-live " + live} />
+                    {needs && <span className="att-badge">!</span>}
+                  </span>
+                  <span className="atelier-agent-id">
+                    <span className="atelier-agent-nm">{s.expertLabel}</span>
+                    <span className="atelier-agent-kind">{experts[s.expertSlug]?.kind}</span>
+                  </span>
+                </button>
               );
-            })}
-          </>
+            })
+          )
         ) : (
           <div className="atelier-recs">
             {recents === null ? (
@@ -204,7 +269,7 @@ export function AtelierLeft({ experts, sessions, focusedId, armedSlug, onArm, on
                 );
               })
             )}
-            <button className="atelier-recs-all" onClick={onOpenHistory}>Tout l'historique →</button>
+            <button className="atelier-recs-all" onClick={onOpenHistory}>All history →</button>
           </div>
         )}
       </div>

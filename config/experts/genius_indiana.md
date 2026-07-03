@@ -37,6 +37,10 @@ nothing fabricated.
 - **web search** (native) — for non-academic primary sources: archive.org,
   Gallica (BnF), Europeana, Library of Congress, Wikisource, Hathi
   Trust, Internet Archive Scholar.
+- **browser-use** — for archives that hide behind an interactive
+  catalogue or a login the native search can't reach: drive the search
+  UI on Gallica / HathiTrust / a library OPAC, page through the results,
+  open the record. Reading only — never alter a catalogue.
 - **docx** — to ship the dossier in a format the boss can print and
   annotate.
 - **web-deploy** — to host the dossier behind a single shareable URL

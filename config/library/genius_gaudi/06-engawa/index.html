@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engawa — a Japanese retreat, in 3D</title>
+<meta name="description" content="An explorable three.js retreat: a tatami room with shoji screens, a low chabudai table and floor cushions, a tokonoma alcove with a single branch, and an engawa veranda opening onto a raked-gravel zen garden. Orbit, glide between four viewpoints, click elements for a one-line note, or walk with WASD. Soft diffuse daylight, deep calm shadows.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ======================================================================
+   ENGAWA — a Japanese retreat, walkable in 3D
+   Gaudí, in Split. Architectural visualization, meditative — not a game.
+
+   Art direction — "wabi-sabi calm" (a DIFFERENT designer entirely):
+     · pale hinoki wood (#D8C7A6), off-white washi paper screens (#F1ECE0)
+     · tatami green-beige (#B7B584 / #A7A776), charcoal stone (#4A4A47),
+       moss (#6E7A4C), ONE deep indigo textile accent (#2C3A5C)
+     · soft DIFFUSE northern daylight — cool sky dome, one gentle warm key,
+       deep calm shadows; still air. Nothing warm-Mediterranean, no mosaic,
+       no catenary, no terracotta — a quiet, natural, tatami-order room.
+   Type: Shippori Mincho (serif display) + Zen Kaku Gothic New (UI).
+   Everything procedural: no textures, no images, no build step.
+   Motion honours prefers-reduced-motion (no auto-drift, instant cuts).
+   ====================================================================== */
+:root{
+  --washi:#F2EDE2;      /* off-white washi paper */
+  --paper2:#E7DFD0;     /* panel / card sand */
+  --ink:#2B2A26;        /* warm near-black text */
+  --ink2:#585449;       /* secondary */
+  --dim:#8B8474;        /* tertiary / hairlines */
+  --line:rgba(43,42,38,.13);
+  --line2:rgba(43,42,38,.26);
+  --indigo:#2C3A5C;     /* the single deep textile accent */
+  --indigo-d:#1E2A46;
+  --moss:#6E7A4C;       /* garden green partner */
+  --stone:#4A4A47;      /* charcoal */
+  --hinoki:#D8C7A6;     /* pale wood */
+  --glass:rgba(242,237,226,.86);
+  --disp:'Shippori Mincho',Georgia,serif;
+  --ui:'Zen Kaku Gothic New',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--ui);
+  background:#DED6C7;
+  color:var(--ink);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+#scene{position:fixed;inset:0;display:block;touch-action:none}
+
+/* ---------- loading veil ---------- */
+#veil{
+  position:fixed;inset:0;z-index:60;
+  background:radial-gradient(120% 120% at 50% 38%,#EDE6D8 0%,#DAD1C0 60%,#CBC1AE 100%);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;
+  transition:opacity .9s ease;color:var(--ink2);
+}
+#veil.gone{opacity:0;pointer-events:none}
+#veil .mk{width:58px;height:58px;opacity:.9}
+#veil .mk .ring{fill:none;stroke:var(--stone);stroke-width:1.4;opacity:.5}
+#veil .mk .br{fill:none;stroke:var(--moss);stroke-width:1.6;stroke-linecap:round}
+#veil .cap{font-family:var(--disp);letter-spacing:.5em;font-size:13px;text-transform:uppercase;padding-left:.5em}
+#veil .sub{font-size:11.5px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+@keyframes breathe{0%,100%{opacity:.35;transform:scale(.98)}50%{opacity:.85;transform:scale(1.02)}}
+#veil .mk{animation:breathe 3.2s ease-in-out infinite}
+
+/* ---------- top identity ---------- */
+#brand{
+  position:fixed;top:20px;left:22px;z-index:20;pointer-events:none;
+  display:flex;align-items:center;gap:12px;
+}
+#brand .glyph{width:30px;height:30px;opacity:.9}
+#brand .glyph .ring{fill:none;stroke:var(--stone);stroke-width:1.3;opacity:.45}
+#brand .glyph .br{fill:none;stroke:var(--moss);stroke-width:1.5;stroke-linecap:round}
+#brand .t{line-height:1}
+#brand .t b{font-family:var(--disp);font-weight:500;font-size:19px;letter-spacing:.16em;color:var(--ink);display:block}
+#brand .t span{font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--dim);display:block;margin-top:4px}
+
+/* ---------- About (collapsible) ---------- */
+#about{
+  position:fixed;top:18px;right:18px;z-index:30;width:min(384px,calc(100vw - 36px));
+  font-family:var(--ui);
+}
+#about .bar{
+  display:flex;align-items:center;gap:10px;justify-content:flex-end;
+}
+#about button.tog{
+  pointer-events:auto;cursor:pointer;border:1px solid var(--line2);
+  background:var(--glass);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+  color:var(--ink);font-family:var(--ui);font-size:12px;letter-spacing:.06em;
+  padding:8px 13px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;
+  transition:background .2s,border-color .2s;
+}
+#about button.tog:hover{background:#fff;border-color:var(--dim)}
+#about button.tog .dot{width:6px;height:6px;border-radius:50%;background:var(--moss)}
+#about .panel{
+  margin-top:10px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--line2);border-radius:16px;padding:17px 18px 16px;
+  box-shadow:0 22px 60px -30px rgba(43,42,38,.55);
+  max-height:76vh;overflow:auto;
+}
+#about .panel h1{font-family:var(--disp);font-weight:500;font-size:17px;letter-spacing:.02em;margin-bottom:2px}
+#about .panel .lede{font-size:12px;color:var(--ink2);line-height:1.55;margin:6px 0 13px}
+#about .panel .row{padding:9px 0;border-top:1px solid var(--line)}
+#about .panel .row:first-of-type{border-top:none}
+#about .panel .row .k{font-family:var(--disp);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--moss);margin-bottom:3px}
+#about .panel .row .v{font-size:12.5px;line-height:1.56;color:var(--ink)}
+#about .panel .row .v b{color:var(--indigo);font-weight:600}
+#about[data-open="false"] .panel{display:none}
+
+/* ---------- viewpoint dock ---------- */
+#dock{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:20;
+  display:flex;gap:8px;padding:8px;border-radius:18px;
+  background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--line2);box-shadow:0 20px 50px -28px rgba(43,42,38,.55);
+  max-width:calc(100vw - 28px);flex-wrap:wrap;justify-content:center;
+}
+#dock button{
+  cursor:pointer;border:1px solid transparent;background:transparent;color:var(--ink2);
+  font-family:var(--ui);font-size:12px;letter-spacing:.03em;padding:8px 13px;border-radius:12px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;min-width:70px;
+  transition:background .2s,color .2s,border-color .2s;
+}
+#dock button .num{font-family:var(--disp);font-size:10px;letter-spacing:.2em;color:var(--dim)}
+#dock button:hover{background:rgba(255,255,255,.6);color:var(--ink)}
+#dock button.on{background:var(--ink);color:var(--washi);border-color:var(--ink)}
+#dock button.on .num{color:rgba(242,237,226,.7)}
+#dock .sep{width:1px;align-self:stretch;background:var(--line2);margin:4px 3px}
+#dock button.walk{min-width:auto}
+#dock button.walk.armed{background:var(--indigo);color:#EDE9F2;border-color:var(--indigo)}
+#dock button.walk.armed .num{color:rgba(237,233,242,.72)}
+
+/* ---------- hint / walk help ---------- */
+#hint{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:15;
+  font-size:11.5px;letter-spacing:.05em;color:var(--ink2);
+  background:var(--glass);border:1px solid var(--line);border-radius:999px;
+  padding:6px 14px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+  opacity:0;transition:opacity .4s ease;pointer-events:none;text-align:center;white-space:nowrap;
+}
+#hint.show{opacity:1}
+#hint kbd{font-family:var(--ui);font-size:10.5px;background:var(--ink);color:var(--washi);
+  padding:1px 6px;border-radius:5px;letter-spacing:.08em;margin:0 1px}
+
+/* ---------- element note (floating callout) ---------- */
+#note{
+  position:fixed;z-index:25;pointer-events:none;max-width:280px;
+  background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--line2);border-radius:13px;padding:13px 15px;
+  box-shadow:0 20px 50px -26px rgba(43,42,38,.6);
+  opacity:0;transform:translateY(6px) scale(.98);
+  transition:opacity .28s ease,transform .28s ease;
+}
+#note.show{opacity:1;transform:translateY(0) scale(1)}
+#note .jp{font-family:var(--disp);font-size:12px;letter-spacing:.2em;color:var(--moss);margin-bottom:3px}
+#note .nm{font-family:var(--disp);font-size:16px;font-weight:600;letter-spacing:.02em;color:var(--ink);margin-bottom:5px}
+#note .ds{font-size:12px;line-height:1.5;color:var(--ink2)}
+#note .mt{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:10.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+#note .mt b{color:var(--indigo);font-weight:600;letter-spacing:.06em;text-transform:none;font-size:11.5px}
+
+/* ---------- corner credit ---------- */
+#credit{
+  position:fixed;bottom:20px;right:20px;z-index:12;pointer-events:none;
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);
+  text-align:right;line-height:1.7;
+}
+#credit b{color:var(--ink2);font-weight:500}
+
+@media (max-width:640px){
+  #brand .t span{display:none}
+  #dock button{min-width:58px;padding:7px 9px;font-size:11px}
+  #credit{display:none}
+  #note{max-width:220px}
+}
+@media (prefers-reduced-motion:reduce){
+  #veil .mk{animation:none;opacity:.7}
+}
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<!-- loading veil -->
+<div id="veil" role="status" aria-label="Loading the retreat">
+  <svg class="mk" viewBox="0 0 40 40" aria-hidden="true">
+    <circle class="ring" cx="20" cy="20" r="16"/>
+    <path class="br" d="M12 30 C 18 22, 22 16, 28 11 M22 15 L24.5 13 M20 19 L17.5 17.5"/>
+  </svg>
+  <div class="cap">Engawa</div>
+  <div class="sub">Preparing the room</div>
+</div>
+
+<!-- brand -->
+<div id="brand" aria-hidden="true">
+  <svg class="glyph" viewBox="0 0 40 40">
+    <circle class="ring" cx="20" cy="20" r="16"/>
+    <path class="br" d="M12 30 C 18 22, 22 16, 28 11 M22 15 L24.5 13 M20 19 L17.5 17.5"/>
+  </svg>
+  <div class="t"><b>ENGAWA</b><span>Gaudí · Split — a retreat in 3D</span></div>
+</div>
+
+<!-- About this (collapsible, open by default) -->
+<div id="about" data-open="true">
+  <div class="bar">
+    <button class="tog" id="aboutTog" aria-expanded="true"><span class="dot"></span><span id="aboutLabel">About this</span></button>
+  </div>
+  <div class="panel">
+    <h1>縁側 · Engawa</h1>
+    <p class="lede">A serene tatami retreat you can move through — the veranda that mediates between the paper room and the raked-gravel garden. Drag to look, glide to a viewpoint, click a surface to hear what it is.</p>
+    <div class="row"><div class="k">Why</div><div class="v">A showcase for Split's library: proof an interior can be delivered as a <b>calm, explorable space</b>, not a flat render. The room breathes when you can walk toward the light instead of imagining it.</div></div>
+    <div class="row"><div class="k">Context</div><div class="v">One meditative sequence — tatami room · shoji screens · <b>tokonoma</b> alcove · <b>engawa</b> veranda · <b>karesansui</b> garden. Fully procedural geometry &amp; materials; no textures, no images, no build step. Diffuse northern light, deep still shadows.</div></div>
+    <div class="row"><div class="k">How to use it</div><div class="v"><b>Drag</b> to orbit, <b>scroll</b> to zoom. Tap a numbered <b>viewpoint</b> below to glide there. Press <b>Walk</b> for WASD movement at eye height. <b>Click</b> any element — tatami, shoji, tokonoma, stone — for a one-line note.</div></div>
+    <div class="row"><div class="k">What I assumed</div><div class="v">A modest ~4.5 tatami room (traditional 4.5-jō order), north-facing so the light stays soft and even; <b>hinoki</b> post-and-beam, washi screens, one deep-indigo cushion as the only saturated note. Design intent and feel — not stamped construction dimensions.</div></div>
+  </div>
+</div>
+
+<!-- viewpoint dock -->
+<nav id="dock" aria-label="Saved viewpoints">
+  <button data-vp="0" class="on"><span class="num">壱</span>Tatami room</button>
+  <button data-vp="1"><span class="num">弐</span>Tokonoma</button>
+  <button data-vp="2"><span class="num">参</span>Veranda</button>
+  <button data-vp="3"><span class="num">肆</span>Garden</button>
+  <div class="sep"></div>
+  <button class="walk" id="walkBtn"><span class="num">歩</span>Walk</button>
+</nav>
+
+<div id="hint"></div>
+
+<!-- element note -->
+<div id="note" aria-live="polite">
+  <div class="jp" id="noteJp"></div>
+  <div class="nm" id="noteNm"></div>
+  <div class="ds" id="noteDs"></div>
+  <div class="mt">Material · <b id="noteMt"></b></div>
+</div>
+
+<div id="credit"><b>Engawa</b><br>Procedural · three.js · Split library</div>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const REDUCED = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+/* ============================ helpers ============================ */
+function mat(color,{rough=0.9,metal=0.0,flat=false,emissive=null,ei=0,side=THREE.FrontSide,transparent=false,opacity=1}={}){
+  const m = flat
+    ? new THREE.MeshBasicMaterial({color,side,transparent,opacity})
+    : new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal,side,transparent,opacity});
+  if(emissive && !flat){ m.emissive=new THREE.Color(emissive); m.emissiveIntensity=ei; }
+  return m;
+}
+function box(w,h,d,material){ const g=new THREE.BoxGeometry(w,h,d); const m=new THREE.Mesh(g,material); m.castShadow=true; m.receiveShadow=true; return m; }
+function cyl(rt,rb,h,material,seg=20){ const g=new THREE.CylinderGeometry(rt,rb,h,seg); const m=new THREE.Mesh(g,material); m.castShadow=true; m.receiveShadow=true; return m; }
+
+// Small deterministic PRNG so the garden/gravel looks the same every load.
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const rnd = mulberry32(20260703);
+
+/* Procedural CanvasTexture: subtle woven tatami weave, soft & matte. */
+function tatamiTexture(){
+  const c=document.createElement('canvas'); c.width=c.height=256; const x=c.getContext('2d');
+  x.fillStyle='#B4B27E'; x.fillRect(0,0,256,256);
+  // fine warp/weft
+  for(let i=0;i<256;i+=4){
+    x.strokeStyle = (i/4)%2 ? 'rgba(150,150,104,0.30)' : 'rgba(196,196,150,0.30)';
+    x.lineWidth=2; x.beginPath(); x.moveTo(i,0); x.lineTo(i,256); x.stroke();
+  }
+  // faint horizontal slub for depth
+  for(let j=0;j<256;j+=8){ x.strokeStyle='rgba(120,120,84,0.10)'; x.lineWidth=1; x.beginPath(); x.moveTo(0,j); x.lineTo(256,j); x.stroke(); }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.anisotropy=4; return t;
+}
+/* Procedural washi paper: warm off-white with faint fibre flecks. */
+function washiTexture(){
+  const c=document.createElement('canvas'); c.width=c.height=256; const x=c.getContext('2d');
+  x.fillStyle='#F2EDE2'; x.fillRect(0,0,256,256);
+  for(let i=0;i<900;i++){ const a=0.03+rnd()*0.05; x.strokeStyle=`rgba(206,196,176,${a})`; x.lineWidth=0.6+rnd()*0.7;
+    const px=rnd()*256, py=rnd()*256, len=3+rnd()*10, ang=rnd()*Math.PI; x.beginPath(); x.moveTo(px,py); x.lineTo(px+Math.cos(ang)*len,py+Math.sin(ang)*len); x.stroke(); }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
+}
+/* Procedural pale hinoki grain: warm wood, soft vertical figure. */
+function hinokiTexture(){
+  const c=document.createElement('canvas'); c.width=64; c.height=256; const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,64,0); g.addColorStop(0,'#D3C09C'); g.addColorStop(.5,'#DDCBA9'); g.addColorStop(1,'#D0BC96'); x.fillStyle=g; x.fillRect(0,0,64,256);
+  for(let i=0;i<28;i++){ x.strokeStyle=`rgba(158,133,92,${0.05+rnd()*0.10})`; x.lineWidth=0.6+rnd()*1.1;
+    const px=rnd()*64; x.beginPath(); x.moveTo(px,0); for(let y=0;y<=256;y+=16){ x.lineTo(px+Math.sin(y*0.05+i)*1.6,y);} x.stroke(); }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
+}
+
+/* ============================ scene ============================ */
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.06;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color('#DFD8C9');
+scene.fog=new THREE.Fog('#DDD5C4',26,52);
+
+const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,0.1,200);
+camera.position.set(4.6,3.0,6.4);
+
+/* -------- lighting: soft diffuse daylight, deep calm shadows -------- */
+// cool sky / warm ground bounce hemisphere = the even northern fill
+const hemi=new THREE.HemisphereLight(0xE9EEF2,0xB7A987,0.95);
+scene.add(hemi);
+// one gentle warm key = low sun coming across the garden through the veranda
+const sun=new THREE.DirectionalLight(0xFBEFD6,1.15);
+sun.position.set(-9,8.5,10);
+sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.near=1; sun.shadow.camera.far=44;
+sun.shadow.camera.left=-14; sun.shadow.camera.right=14;
+sun.shadow.camera.top=14; sun.shadow.camera.bottom=-14;
+sun.shadow.bias=-0.0004; sun.shadow.normalBias=0.02;
+sun.shadow.radius=6;
+scene.add(sun);
+// faint cool fill from the room's shadowed side so nothing goes muddy
+const fill=new THREE.DirectionalLight(0xDDE6EC,0.28); fill.position.set(7,5,-6); scene.add(fill);
+// a soft interior lift under the deep eave so the tatami reads in shade
+const lift=new THREE.PointLight(0xF4E9D2,0.35,14,2.0); lift.position.set(0,2.4,-1.4); scene.add(lift);
+scene.add(new THREE.AmbientLight(0xF0EBDF,0.16));
+
+/* -------- shared procedural textures / materials -------- */
+const texTatami=tatamiTexture();
+const texWashi=washiTexture();
+const texHinoki=hinokiTexture();
+
+const M = {
+  hinoki:      ()=>{ const m=mat('#D8C7A6',{rough:0.82}); m.map=texHinoki; return m; },
+  hinokiDark:  mat('#B79E76',{rough:0.8}),
+  beam:        ()=>{ const m=mat('#C9B58E',{rough:0.8}); m.map=texHinoki; return m; },
+  washi:       ()=>{ const m=mat('#F2EDE2',{rough:0.96}); m.map=texWashi; m.emissive=new THREE.Color('#F4EEDD'); m.emissiveIntensity=0.18; return m; },
+  tatami:      ()=>{ const m=mat('#B4B27E',{rough:0.98}); m.map=texTatami; m.map.repeat.set(1,2); return m; },
+  tatamiAlt:   ()=>{ const m=mat('#A9A873',{rough:0.98}); m.map=texTatami.clone(); m.map.needsUpdate=true; m.map.wrapS=m.map.wrapT=THREE.RepeatWrapping; m.map.repeat.set(2,1); return m; },
+  tatamiEdge:  mat('#2C3A5C',{rough:0.7}),            // heri — the cloth border (indigo family, muted)
+  plank:       ()=>{ const m=mat('#CBB78F',{rough:0.72}); m.map=texHinoki.clone(); m.map.needsUpdate=true; m.map.wrapS=m.map.wrapT=THREE.RepeatWrapping; return m; },
+  plaster:     mat('#E9E2D2',{rough:0.98}),           // earthen wall
+  stone:       mat('#4A4A47',{rough:0.85}),           // charcoal garden stone
+  stoneStep:   mat('#5A5A55',{rough:0.9}),
+  gravel:      mat('#E3DDCB',{rough:1.0}),             // raked karesansui field
+  moss:        mat('#6E7A4C',{rough:1.0}),
+  indigo:      mat('#2C3A5C',{rough:0.85}),            // the one deep textile accent
+  indigoHi:    mat('#38487020'.slice(0,7),{rough:0.8}),
+  bark:        mat('#6B5A46',{rough:0.95}),
+  leaf:        mat('#8A9A55',{rough:0.9}),
+  leafRed:     mat('#B4613A',{rough:0.9}),             // a few autumn maple leaves — restrained
+  iron:        mat('#3A3A38',{rough:0.55,metal:0.5}),
+  ceramic:     mat('#6F6A5E',{rough:0.5}),
+  branch:      mat('#7A6A54',{rough:0.9}),
+};
+
+/* -------- interaction registry -------- */
+const clickable=[];  // {mesh, note}
+function tag(obj,note){ obj.userData.note=note; obj.traverse(o=>{ if(o.isMesh) clickable.push(o); }); if(!obj.isMesh){/*group*/} else clickable.push(obj); return obj; }
+function group(...kids){ const g=new THREE.Group(); kids.forEach(k=>g.add(k)); return g; }
+
+/* Room metrics (metres). A ~4.5-jō room: mat = 0.9 x 1.8.
+   Room interior ~ 2.73 x 2.73 (3x3 half-mats laid in the 4.5 pattern). */
+const R = { w:2.73, d:2.73, wall:2.35, floorY:0.02, matT:0.055 };
+
+/* ======================================================================
+   1) GROUND — the site: interior tatami platform, veranda deck, garden
+   ====================================================================== */
+// earthen base under everything (garden ground)
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(60,60), mat('#C9BFA6',{rough:1.0}));
+ground.rotation.x=-Math.PI/2; ground.position.y=-0.02; ground.receiveShadow=true; scene.add(ground);
+
+/* ---- Raised timber floor platform (the room + veranda sit ~0.35 up) ---- */
+const PLATT=0.36;
+const platGrp=new THREE.Group();
+// room subfloor
+const subfloor=box(R.w+0.3,PLATT,R.d+0.3,M.hinokiDark);
+subfloor.position.set(0,PLATT/2,0); platGrp.add(subfloor);
+scene.add(platGrp);
+
+/* ======================================================================
+   2) TATAMI FLOOR — 4.5-jō layout, cloth (heri) borders
+   ====================================================================== */
+const tatamiGrp=new THREE.Group();
+tatamiGrp.position.y=PLATT;
+function makeMat(w,d,alt){
+  const g=new THREE.Group();
+  const surf=box(w-0.02,R.matT,d-0.02, alt?M.tatamiAlt():M.tatami());
+  surf.position.y=R.matT/2; g.add(surf);
+  // heri border — thin indigo cloth on the two long edges
+  const bT=0.03;
+  const b1=box(w,R.matT*0.6,bT,M.tatamiEdge); b1.position.set(0,R.matT*0.55, d/2-bT/2); g.add(b1);
+  const b2=b1.clone(); b2.position.z=-(d/2-bT/2); g.add(b2);
+  return g;
+}
+// 4.5-jō pinwheel: four full mats around a central half-mat
+const hw=R.w/2, hd=R.d/2, mHalf=R.w/2; // each full mat ~ (w/2) x (d) but we approximate to fit 2.73 square
+// We lay it as a clean pinwheel of 0.91 modules for readability.
+const u=R.w/3;               // 0.91 module
+const layout=[
+  // [cx, cz, w, d, alt]
+  [-u/2,      -u,     u*2, u, false],   // top mat (horizontal)
+  [ u,      -u/2,     u,   u*2, true],  // right mat (vertical)
+  [ u/2,      u,      u*2, u, false],   // bottom mat (horizontal)
+  [-u,       u/2,     u,   u*2, true],  // left mat (vertical)
+  [ 0,        0,      u,   u,   false], // centre half-mat
+];
+for(const [cx,cz,w,d,alt] of layout){
+  const m=makeMat(w,d,alt); m.position.set(cx,0,cz);
+  tag(m,{jp:'畳',nm:'Tatami',ds:'Woven rush mats laid in the 4.5-jō pinwheel — a room measured in mats, not metres. Soft, cool, faintly grassy underfoot.',mt:'Igusa rush · indigo heri border'});
+  tatamiGrp.add(m);
+}
+scene.add(tatamiGrp);
+
+/* ======================================================================
+   3) POST & BEAM FRAME — hinoki structure, open to the veranda
+   ====================================================================== */
+const frame=new THREE.Group(); frame.position.y=PLATT;
+const postR=0.055;
+function post(x,z){ const p=cyl(postR,postR,R.wall,M.hinoki(),12); p.position.set(x,R.wall/2,z); return p; }
+// corner posts
+const corners=[[-hw,-hd],[hw,-hd],[hw,hd],[-hw,hd]];
+for(const [x,z] of corners){ const p=post(x,z); tag(p,{jp:'柱',nm:'Hinoki post',ds:'A pale cypress post, planed not painted — the wood is the finish. Warm, straight-grained, quietly fragrant.',mt:'Hinoki (Japanese cypress)'}); frame.add(p); }
+// header beams (nageshi) around the top
+function beamX(z){ const b=box(R.w+0.16,0.10,0.09,M.beam()); b.position.set(0,R.wall-0.06,z); return b; }
+function beamZ(x){ const b=box(0.09,0.10,R.d+0.16,M.beam()); b.position.set(x,R.wall-0.06,0); return b; }
+frame.add(beamX(-hd),beamX(hd),beamZ(-hw),beamZ(hw));
+// low sill beam on the three closed sides (kamachi)
+frame.add((()=>{const b=box(R.w+0.16,0.08,0.06,M.beam()); b.position.set(0,0.05,-hd); return b;})());
+frame.add((()=>{const b=box(0.06,0.08,R.d+0.16,M.beam()); b.position.set(-hw,0.05,0); return b;})());
+frame.add((()=>{const b=box(0.06,0.08,R.d+0.16,M.beam()); b.position.set(hw,0.05,0); return b;})());
+scene.add(frame);
+
+/* -- ceiling: light board slats (sao-buchi tenjō) -- */
+const ceil=new THREE.Group(); ceil.position.y=PLATT;
+const ceilBoard=box(R.w+0.14,0.03,R.d+0.14, mat('#CBBB95',{rough:0.9}));
+ceilBoard.position.y=R.wall-0.02; ceilBoard.castShadow=false; ceil.add(ceilBoard);
+for(let i=-3;i<=3;i++){ const s=box(R.w+0.14,0.02,0.02,M.hinokiDark); s.position.set(0,R.wall-0.05,i*0.4); s.castShadow=false; ceil.add(s); }
+scene.add(ceil);
+
+/* ======================================================================
+   4) SHOJI & WALLS — washi screens on a lattice frame + earthen back wall
+   ====================================================================== */
+// Back (north) earthen wall — solid, holds the tokonoma
+const backWall=box(R.w+0.12,R.wall,0.06,M.plaster);
+backWall.position.set(0,PLATT+R.wall/2,-hd-0.03); scene.add(backWall);
+tag(backWall,{jp:'壁',nm:'Earthen wall',ds:'A troweled clay-and-straw wall (tsuchikabe) in warm greige — matte, imperfect, the calm backdrop the room is built around.',mt:'Clay plaster + straw'});
+
+/* --- a shoji panel: washi paper on a kumiko lattice --- */
+function shojiPanel(w,h){
+  const g=new THREE.Group();
+  const fr=0.028;
+  const frameMat=M.hinoki();
+  // outer stiles/rails
+  g.add((()=>{const b=box(fr,h,fr,frameMat); b.position.x=-w/2+fr/2; return b;})());
+  g.add((()=>{const b=box(fr,h,fr,frameMat); b.position.x= w/2-fr/2; return b;})());
+  g.add((()=>{const b=box(w,fr,fr,frameMat); b.position.y= h/2-fr/2; return b;})());
+  g.add((()=>{const b=box(w,fr,fr,frameMat); b.position.y=-h/2+fr/2; return b;})());
+  // a mid rail
+  g.add((()=>{const b=box(w,fr*0.8,fr*0.8,frameMat); b.position.y=-h*0.14; return b;})());
+  // kumiko lattice (thin) — on the front face
+  const lat=0.010;
+  for(let i=1;i<5;i++){ const x=-w/2+ (w)*(i/5); const b=box(lat,h-fr*2,lat,M.hinokiDark); b.position.set(x,0,fr*0.28); b.castShadow=false; g.add(b); }
+  for(let j=1;j<7;j++){ const y=-h/2+ (h)*(j/7); const b=box(w-fr*2,lat,lat,M.hinokiDark); b.position.set(0,y,fr*0.28); b.castShadow=false; g.add(b); }
+  // washi paper — a thin translucent-looking panel that glows softly
+  const paper=box(w-fr*1.4,h-fr*1.4,0.006, M.washi());
+  paper.position.z=-fr*0.2; paper.castShadow=false; g.add(paper);
+  return g;
+}
+/* place the shoji: a run on the LEFT (west) wall (closed, glows with light)
+   and the FRONT (south) is OPEN to the veranda but has a sliding shoji track;
+   we put two shoji partly open on the front so the garden shows through. */
+
+// LEFT wall — two shoji panels (closed screen)
+const leftShoji=new THREE.Group(); leftShoji.position.y=PLATT;
+{
+  const pw=R.d/2, ph=R.wall-0.14;
+  for(let k=0;k<2;k++){
+    const p=shojiPanel(pw-0.02,ph);
+    p.rotation.y=Math.PI/2;
+    p.position.set(-hw+0.02, 0.07+ph/2, -hd + pw/2 + k*pw);
+    tag(p,{jp:'障子',nm:'Shoji',ds:'Sliding screens of translucent washi on a fine kumiko lattice. They do not block the light — they soften it, and turn the whole wall into a lamp.',mt:'Washi paper · hinoki lattice'});
+    leftShoji.add(p);
+  }
+}
+scene.add(leftShoji);
+
+// FRONT (south) — sliding shoji on a track, half-open onto the veranda
+const frontShoji=new THREE.Group(); frontShoji.position.y=PLATT;
+{
+  const pw=R.w/2, ph=R.wall-0.14;
+  // one panel slid to the left (open reveal on the right)
+  const p1=shojiPanel(pw-0.02,ph); p1.position.set(-hw+pw/2-0.34,0.07+ph/2, hd+0.02);
+  const p2=shojiPanel(pw-0.02,ph); p2.position.set(-hw+pw/2+0.02,0.07+ph/2, hd-0.02); // slightly behind, overlapping
+  for(const p of [p1,p2]) tag(p,{jp:'障子',nm:'Shoji (sliding)',ds:'The front screens slide on a wooden track. Pushed open, the room and the garden become one continuous room — the whole point of the engawa.',mt:'Washi paper · hinoki lattice'});
+  frontShoji.add(p1,p2);
+  // sliding track (kamoi/shikii) — top & bottom rails on the opening
+  const trackTop=box(R.w+0.1,0.05,0.10,M.beam()); trackTop.position.set(0,R.wall-0.10,hd+0.02); frontShoji.add(trackTop);
+  const trackBot=box(R.w+0.1,0.05,0.10,M.beam()); trackBot.position.set(0,0.05,hd+0.02); frontShoji.add(trackBot);
+}
+scene.add(frontShoji);
+
+/* right (east) wall — a plain earthen wall to close the box, with a small window shoji */
+const rightWall=box(0.06,R.wall,R.d+0.12,M.plaster);
+rightWall.position.set(hw+0.03,PLATT+R.wall/2,0); scene.add(rightWall);
+tag(rightWall,{jp:'壁',nm:'Earthen wall',ds:'The east wall closes the room. Bare clay plaster — nothing hangs on it; the emptiness is deliberate (yohaku).',mt:'Clay plaster'});
+// a small high window shoji on the right wall (a soft glow patch)
+{
+  const w=0.7,h=0.6; const p=shojiPanel(w,h); p.rotation.y=-Math.PI/2;
+  p.position.set(hw-0.001, PLATT+R.wall-0.55, 0.4);
+  tag(p,{jp:'窓',nm:'Window shoji',ds:'A small paper window high on the east wall — a second, quieter source of light for the afternoon.',mt:'Washi paper'});
+  scene.add(p);
+}
+
+/* ======================================================================
+   5) TOKONOMA — the recessed alcove, raised board, one branch, a scroll
+   ====================================================================== */
+const toko=new THREE.Group(); toko.position.set(-0.62,PLATT,-hd-0.005);
+const tW=0.95,tD=0.34,tH=R.wall-0.16;
+// alcove back (recessed) & side post (toko-bashira, a natural-edge post)
+const alcoveBack=box(tW,tH,0.03,mat('#DAD2C0',{rough:0.98})); alcoveBack.position.set(0,tH/2+0.06,-tD+0.02); toko.add(alcoveBack);
+// raised tatami/wood floor board of the alcove (toko-gamachi lip in dark wood)
+const tokoFloor=box(tW,0.08,tD,M.plank()); tokoFloor.position.set(0,0.04,-tD/2); toko.add(tokoFloor);
+const lip=box(tW,0.05,0.04,mat('#5A4A38',{rough:0.5})); lip.position.set(0,0.05,-0.02); toko.add(lip); // lacquered front lip
+// natural-edge alcove post on the room-side edge
+const bashira=(()=>{const p=cyl(0.05,0.06,tH,mat('#B79E70',{rough:0.85}),10); p.position.set(tW/2-0.02,tH/2+0.06,0.0); return p;})();
+toko.add(bashira);
+// hanging scroll (kakemono) — a tall muted washi with a single ink stroke
+{
+  const sc=new THREE.Group();
+  const paper=box(0.30,tH*0.66,0.005, mat('#EDE6D5',{rough:0.95})); paper.castShadow=false; sc.add(paper);
+  const stroke=box(0.03,tH*0.34,0.006, mat('#2B2A26',{rough:0.9})); stroke.position.set(0.02,-0.02,0.004); stroke.rotation.z=0.12; stroke.castShadow=false; sc.add(stroke);
+  const stroke2=box(0.018,tH*0.16,0.006, mat('#2B2A26',{rough:0.9})); stroke2.position.set(-0.03,-0.14,0.004); stroke2.rotation.z=-0.35; stroke2.castShadow=false; sc.add(stroke2);
+  // dowel top & bottom
+  const dT=cyl(0.012,0.012,0.34,mat('#3A3A38',{rough:0.6}),8); dT.rotation.z=Math.PI/2; dT.position.set(0,tH*0.33,0); sc.add(dT);
+  sc.position.set(0.02,tH*0.5+0.06,-tD+0.05);
+  toko.add(sc);
+}
+// the single branch in a slim vessel (ikebana) — the whole alcove exists for this
+{
+  const vase=cyl(0.045,0.06,0.24,M.ceramic,14); vase.position.set(-0.22,0.20,-tD/2); toko.add(vase);
+  const br=new THREE.Group();
+  function twig(x0,y0,z0,len,ax,ay,az,r){ const s=cyl(r*0.5,r,len,M.branch,6); s.position.set(x0,y0+len/2,z0); s.rotation.set(ax,ay,az); s.castShadow=false; return s; }
+  const t1=twig(0,0,0,0.5,0,0,0.1,0.010); br.add(t1);
+  const t2=twig(0.04,0.44,0,0.34,0,0.4,0.7,0.008); br.add(t2);
+  const t3=twig(-0.02,0.40,0.01,0.28,0,-0.3,-0.55,0.007); br.add(t3);
+  // a couple of small leaves/buds
+  for(const [lx,ly,lz] of [[0.16,0.62,0.02],[-0.12,0.60,0.0],[0.20,0.70,-0.02]]){
+    const lf=new THREE.Mesh(new THREE.SphereGeometry(0.028,8,6),M.leaf); lf.scale.set(1,0.5,1.4); lf.position.set(lx,ly,lz); lf.castShadow=false; br.add(lf);
+  }
+  br.position.set(-0.22,0.30,-tD/2);
+  tag(br,{jp:'床の間',nm:'Tokonoma',ds:'The alcove of honour — one hanging scroll, one branch, nothing else. A held silence you set a single beautiful thing into, and change with the season.',mt:'Ikebana branch · washi scroll'});
+  toko.add(br);
+}
+tag(tokoFloor,{jp:'床の間',nm:'Tokonoma',ds:'The alcove of honour — one hanging scroll, one branch, nothing else. The room’s spiritual centre; you sit facing it.',mt:'Kiri wood board · lacquer lip'});
+scene.add(toko);
+
+/* ======================================================================
+   6) FURNITURE — chabudai low table + zabuton floor cushions
+   ====================================================================== */
+const furn=new THREE.Group(); furn.position.y=PLATT+R.matT;
+// chabudai — a low round table
+{
+  const g=new THREE.Group();
+  const top=cyl(0.44,0.44,0.03,mat('#C9AE7E',{rough:0.5}),40); top.position.y=0.31; g.add(top); // slightly polished
+  // a soft chamfer ring under the top
+  const rim=cyl(0.44,0.42,0.02,mat('#B99C68',{rough:0.5}),40); rim.position.y=0.295; g.add(rim);
+  for(const a of [0,Math.PI/2,Math.PI,3*Math.PI/2]){
+    const leg=cyl(0.018,0.022,0.30,mat('#9E8355',{rough:0.6}),8);
+    leg.position.set(Math.cos(a)*0.33,0.15,Math.sin(a)*0.33); leg.rotation.x=Math.sin(a)*0.06; leg.rotation.z=-Math.cos(a)*0.06; g.add(leg);
+  }
+  // a small tea set on top — a cast-iron pot (tetsubin) and two cups
+  const pot=cyl(0.075,0.085,0.09,M.iron,16); pot.position.set(-0.08,0.375,0.02); g.add(pot);
+  const lid=cyl(0.045,0.05,0.02,M.iron,14); lid.position.set(-0.08,0.43,0.02); g.add(lid);
+  const knob=new THREE.Mesh(new THREE.SphereGeometry(0.014,8,6),M.iron); knob.position.set(-0.08,0.445,0.02); g.add(knob);
+  const handle=new THREE.Mesh(new THREE.TorusGeometry(0.05,0.006,8,20,Math.PI),M.iron); handle.rotation.x=Math.PI/2; handle.position.set(-0.08,0.44,0.02); g.add(handle);
+  for(const cx of [0.10,0.15]){ const cup=cyl(0.028,0.022,0.03,M.ceramic,14); cup.position.set(cx,0.34,cx>0.12?-0.02:0.05); g.add(cup); }
+  g.position.set(0.1,0,0.05);
+  tag(g,{jp:'卓袱台',nm:'Chabudai',ds:'A low round table you kneel to. The tea sits waiting — a cast-iron tetsubin and two cups. The room is arranged around this small warmth.',mt:'Keyaki wood · cast iron · ceramic'});
+  furn.add(g);
+}
+// zabuton cushions — three, one in the deep indigo accent
+function zabuton(col,ax,az,rot){
+  const g=new THREE.Group();
+  const pad=box(0.52,0.07,0.52, mat(col,{rough:0.95})); pad.position.y=0.035; g.add(pad);
+  // tufted centre + piped edge suggestion
+  const btn=new THREE.Mesh(new THREE.SphereGeometry(0.02,8,6),mat(col,{rough:0.9})); btn.scale.y=0.4; btn.position.y=0.06; g.add(btn);
+  g.position.set(ax,0,az); g.rotation.y=rot;
+  return g;
+}
+{
+  const zA=zabuton('#2C3A5C',0.1,0.66,0.0); // indigo — the accent, facing the tokonoma
+  tag(zA,{jp:'座布団',nm:'Zabuton',ds:'The seat of honour, in deep indigo — the one saturated colour in the whole retreat. Everything else is earth and paper; this is the note that holds the eye.',mt:'Indigo-dyed cotton (aizome)'});
+  furn.add(zA);
+  const zB=zabuton('#C9BFA4',-0.55,-0.1,0.4); tag(zB,{jp:'座布団',nm:'Zabuton',ds:'A floor cushion in undyed cotton — you sit on the floor here, low and level with the garden.',mt:'Undyed cotton'}); furn.add(zB);
+  const zC=zabuton('#BEB49A',0.7,-0.2,-0.5); tag(zC,{jp:'座布団',nm:'Zabuton',ds:'A floor cushion in undyed cotton — you sit on the floor here, low and level with the garden.',mt:'Undyed cotton'}); furn.add(zC);
+}
+// a paper lantern (andon) in the corner — soft warm glow, off but present
+{
+  const g=new THREE.Group();
+  const shade=cyl(0.13,0.14,0.42,mat('#F0E7D2',{rough:0.95,emissive:'#F2E4C4',ei:0.35}),16); shade.position.y=0.35; g.add(shade);
+  const cap=box(0.30,0.02,0.30,M.hinokiDark); cap.position.y=0.57; g.add(cap);
+  const base=box(0.30,0.03,0.30,M.hinokiDark); base.position.y=0.135; g.add(base);
+  const lm=new THREE.PointLight(0xF6E7C2,0.25,3.2,2.0); lm.position.y=0.35; g.add(lm);
+  g.position.set(hw-0.3,0,-hd+0.35);
+  tag(g,{jp:'行灯',nm:'Andon',ds:'A paper floor lantern in the corner — a low warm ember for the evening, waiting behind its own washi. It matches the screens.',mt:'Washi paper · hinoki frame'});
+  furn.add(g);
+}
+scene.add(furn);
+
+/* ======================================================================
+   7) ENGAWA — the wood veranda deck between room and garden
+   ====================================================================== */
+const engawa=new THREE.Group();
+const engW=R.w+0.9, engD=1.1;
+const deckY=PLATT-0.02;
+// deck planks running parallel to the room edge
+const nPlanks=9;
+for(let i=0;i<nPlanks;i++){
+  const pw=engW, pd=engD/nPlanks - 0.006;
+  const plk=box(pw,0.05,pd,M.plank());
+  plk.position.set(0.0, deckY, hd+0.10 + i*(engD/nPlanks) + pd/2);
+  engawa.add(plk);
+}
+// front deck edge beam
+const edge=box(engW,0.10,0.06,M.beam()); edge.position.set(0,deckY-0.03,hd+0.10+engD+0.03); engawa.add(edge);
+// two support posts under the front eave that also carry the deep roof overhang
+function eavePost(x){ const p=cyl(0.05,0.055,PLATT+R.wall+0.2,M.hinoki(),12); p.position.set(x,(PLATT+R.wall+0.2)/2-0.02,hd+0.10+engD); return p; }
+const ep1=eavePost(-engW/2+0.15), ep2=eavePost(engW/2-0.15);
+engawa.add(ep1,ep2);
+// tag the deck
+{
+  const proxy=box(engW,0.001,engD,mat('#CBB78F',{rough:0.7,transparent:true,opacity:0.001}));
+  proxy.position.set(0,deckY+0.03,hd+0.10+engD/2); proxy.visible=true;
+  tag(proxy,{jp:'縁側',nm:'Engawa',ds:'The wood veranda — the threshold that is neither inside nor out. Warmed by the low sun, it is where you sit with tea and watch the garden do nothing, beautifully.',mt:'Hinoki planks'});
+  engawa.add(proxy);
+}
+// a single flat cushion left on the engawa
+engawa.add((()=>{const c=box(0.5,0.05,0.42,mat('#C9BFA4',{rough:0.95})); c.position.set(0.5,deckY+0.055,hd+0.10+engD-0.35); return c;})());
+scene.add(engawa);
+
+/* deep eave / roof overhang above the veranda (casts the calm shade line) */
+{
+  const roof=new THREE.Group();
+  const eaveY=PLATT+R.wall+0.24;
+  // main roof board sloping gently outward
+  const board=box(engW+0.6,0.06,engD+R.d+0.7, mat('#8A7A5E',{rough:0.9}));
+  board.position.set(0,eaveY, (hd - (R.d))/2 + 0.4 );
+  board.rotation.x=-0.10;
+  board.castShadow=true; board.receiveShadow=false; roof.add(board);
+  // under-eave rafters (light)
+  for(let i=-4;i<=4;i++){ const r=box(0.03,0.03,engD+R.d+0.5,M.hinokiDark); r.position.set(i*0.34,eaveY-0.06,(hd-R.d)/2+0.4); r.rotation.x=-0.10; r.castShadow=false; roof.add(r); }
+  scene.add(roof);
+}
+
+/* a low step-down stone from the engawa to the garden (kutsunugi-ishi) */
+{
+  const st=new THREE.Mesh(new THREE.DodecahedronGeometry(0.28,0), M.stoneStep);
+  st.scale.set(1.3,0.45,1.0); st.position.set(0.4, 0.07, hd+0.10+engD+0.42); st.rotation.y=0.5; st.castShadow=true; st.receiveShadow=true;
+  tag(st,{jp:'沓脱石',nm:'Stepping stone',ds:'The shoe-removing stone at the garden edge — where the veranda ends and the earth begins. You step down from paper to gravel here.',mt:'Charcoal granite'});
+  scene.add(st);
+}
+
+/* ======================================================================
+   8) KARESANSUI — the dry garden: raked gravel, a stone, a maple, moss
+   ====================================================================== */
+const garden=new THREE.Group();
+const gX=0.0, gZ=hd+0.10+engD+2.6, gW=6.2, gD=4.4;
+// gravel bed
+const gravel=box(gW,0.06,gD,M.gravel); gravel.position.set(gX,0.03,gZ); gravel.receiveShadow=true;
+tag(gravel,{jp:'枯山水',nm:'Karesansui',ds:'The dry garden — no water, only raked gravel standing for the sea. You do not walk it; you read it. Stillness made visible.',mt:'Crushed white granite'});
+garden.add(gravel);
+// low earth border curb around the gravel
+const curbMat=mat('#7A6E52',{rough:1.0});
+garden.add((()=>{const b=box(gW+0.1,0.10,0.08,curbMat); b.position.set(gX,0.05,gZ-gD/2); return b;})());
+garden.add((()=>{const b=box(gW+0.1,0.10,0.08,curbMat); b.position.set(gX,0.05,gZ+gD/2); return b;})());
+garden.add((()=>{const b=box(0.08,0.10,gD,curbMat); b.position.set(gX-gW/2,0.05,gZ); return b;})());
+garden.add((()=>{const b=box(0.08,0.10,gD,curbMat); b.position.set(gX+gW/2,0.05,gZ); return b;})());
+
+// raked lines — thin ridges in the gravel: straight field + concentric rings round the stone
+const rakeMat=mat('#D3CBB6',{rough:1.0});
+const stoneGroupX=gX-1.4, stoneGroupZ=gZ+0.2;
+// straight rake across the open field (skip where the stone island sits)
+for(let z=-gD/2+0.35; z<=gD/2-0.35; z+=0.20){
+  const worldZ=gZ+z;
+  if(Math.abs((stoneGroupX)-gX)<2.4 && Math.abs(worldZ-stoneGroupZ)<1.15 && stoneGroupX<gX) {
+    // right half only for these rows (island on the left)
+    const seg=box((gW/2-0.5),0.012,0.03,rakeMat); seg.position.set(gX+ (gW/4)+0.05,0.062,worldZ); seg.receiveShadow=false; garden.add(seg);
+  } else {
+    const line=box(gW-0.4,0.012,0.03,rakeMat); line.position.set(gX,0.062,worldZ); line.receiveShadow=false; garden.add(line);
+  }
+}
+// concentric rings around the main stone (raked ripples)
+for(let r=0.42; r<=1.05; r+=0.20){
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(r,0.012,6,48), rakeMat);
+  ring.rotation.x=Math.PI/2; ring.position.set(stoneGroupX,0.063,stoneGroupZ); ring.receiveShadow=false; garden.add(ring);
+}
+
+// THE stone — a single upright charcoal rock, the garden's subject
+{
+  const g=new THREE.Group();
+  const main=new THREE.Mesh(new THREE.DodecahedronGeometry(0.5,0), M.stone);
+  main.scale.set(0.85,1.35,0.8); main.rotation.set(0.2,0.6,0.15); main.position.y=0.55; main.castShadow=true; main.receiveShadow=true; g.add(main);
+  // a small companion stone (gardens work in odd-numbered groupings)
+  const comp=new THREE.Mesh(new THREE.DodecahedronGeometry(0.26,0), M.stone);
+  comp.scale.set(1.1,0.6,1.0); comp.position.set(0.5,0.14,0.35); comp.rotation.y=1.0; comp.castShadow=true; comp.receiveShadow=true; g.add(comp);
+  // moss skirt at the base
+  const moss=new THREE.Mesh(new THREE.SphereGeometry(0.6,16,10,0,Math.PI*2,0,Math.PI/2), M.moss);
+  moss.scale.set(1.2,0.2,1.2); moss.position.y=0.05; g.add(moss);
+  g.position.set(stoneGroupX,0.06,stoneGroupZ);
+  tag(g,{jp:'石',nm:'Stone',ds:'The one standing stone — the mountain, the island, the presence the raked ripples break against. Set once, never moved. Moss keeps its feet.',mt:'Charcoal granite · moss'});
+  garden.add(g);
+}
+
+// the maple (momiji) — leaning over the garden, a few autumn-touched leaves
+{
+  const tree=new THREE.Group();
+  // trunk
+  const trunk=cyl(0.05,0.09,1.7,M.bark,10); trunk.position.set(0,0.85,0); trunk.rotation.z=0.18; tree.add(trunk);
+  // main limbs
+  function limb(x,y,z,len,rz,ry,r){ const l=cyl(r*0.5,r,len,M.bark,8); l.position.set(x,y,z); l.rotation.set(0,ry,rz); l.castShadow=true; return l; }
+  const l1=limb(0.25,1.5,0.05,0.9,0.9,0.3,0.04); tree.add(l1);
+  const l2=limb(0.05,1.65,-0.1,0.8,-0.5,-0.6,0.035); tree.add(l2);
+  const l3=limb(0.35,1.75,0.2,0.7,1.2,1.0,0.03); tree.add(l3);
+  // canopy — clusters of small leaf spheres (green with a few autumn reds)
+  const canopyPts=[[0.7,2.0,0.2],[0.4,2.2,-0.3],[0.9,2.15,-0.1],[0.2,2.35,0.1],[0.6,2.4,0.4],[-0.1,2.1,-0.2],[0.5,2.55,-0.15]];
+  for(const [cx,cy,cz] of canopyPts){
+    const n=14+Math.floor(rnd()*8);
+    for(let i=0;i<n;i++){
+      const red = rnd()<0.22;
+      const leaf=new THREE.Mesh(new THREE.SphereGeometry(0.05+rnd()*0.04,6,5), red?M.leafRed:M.leaf);
+      leaf.scale.set(1,0.5,1.2);
+      leaf.position.set(cx+(rnd()-0.5)*0.55, cy+(rnd()-0.5)*0.4, cz+(rnd()-0.5)*0.55);
+      leaf.rotation.set(rnd()*3,rnd()*3,rnd()*3);
+      leaf.castShadow=false; tree.add(leaf);
+    }
+  }
+  // a scatter of fallen leaves on the gravel near the tree
+  tree.position.set(gX+1.7,0.06,gZ-0.6);
+  tag(tree,{jp:'紅葉',nm:'Momiji',ds:'A single Japanese maple leaning in over the wall — borrowed scenery (shakkei). It carries the season: a few leaves already turning, soon to fall on the gravel.',mt:'Living maple'});
+  garden.add(tree);
+}
+// fallen leaves on the gravel (restraint: just a few, mostly the far corner)
+for(let i=0;i<14;i++){
+  const red=rnd()<0.5;
+  const lf=new THREE.Mesh(new THREE.CircleGeometry(0.03+rnd()*0.02,5), red?M.leafRed:M.leaf);
+  lf.rotation.x=-Math.PI/2; lf.rotation.z=rnd()*3;
+  lf.position.set(gX+0.6+(rnd()*2.2), 0.062, gZ-0.4+(rnd()*1.6));
+  lf.receiveShadow=false; garden.add(lf);
+}
+// a stone lantern (ishidoro) tucked at the garden's back corner
+{
+  const g=new THREE.Group(); const sm=mat('#6A6A66',{rough:0.95});
+  g.add((()=>{const b=cyl(0.14,0.16,0.10,sm,8); b.position.y=0.05; return b;})());     // base
+  g.add((()=>{const b=cyl(0.05,0.05,0.42,sm,8); b.position.y=0.30; return b;})());      // post
+  g.add((()=>{const b=cyl(0.16,0.14,0.06,sm,8); b.position.y=0.54; return b;})());      // platform
+  const box1=box(0.20,0.18,0.20,sm); box1.position.y=0.66; g.add(box1);                 // fire box
+  g.add((()=>{const b=cyl(0.02,0.19,0.14,sm,6); b.position.y=0.82; return b;})());      // roof
+  g.add((()=>{const b=new THREE.Mesh(new THREE.SphereGeometry(0.035,8,6),sm); b.position.y=0.92; return b;})()); // finial
+  // tiny warm glow inside
+  const gl=new THREE.PointLight(0xF4D9A0,0.18,2.2,2.0); gl.position.y=0.66; g.add(gl);
+  g.position.set(gX-2.4,0.06,gZ+1.5);
+  tag(g,{jp:'石灯籠',nm:'Ishidoro',ds:'A stone lantern at the garden’s edge — it holds a small flame at dusk. Weathered, lichened, older than the room; the garden pretends it was always there.',mt:'Weathered granite'});
+  garden.add(g);
+}
+scene.add(garden);
+
+/* a distant hedge / bamboo screen behind the garden to close the world softly */
+{
+  const hedge=box(gW+1.2,1.5,0.3, mat('#5F6E42',{rough:1.0})); hedge.position.set(gX,0.75,gZ+gD/2+0.5); hedge.castShadow=false; scene.add(hedge);
+  // a few vertical bamboo culms in front of the hedge
+  for(let i=0;i<9;i++){ const c=cyl(0.03,0.035,2.0+rnd()*0.6, mat('#9AA45E',{rough:0.85}),8); c.position.set(gX-gW/2+0.4+i*(gW/9)+ (rnd()-0.5)*0.2, 1.0, gZ+gD/2+0.3); c.castShadow=false; scene.add(c); }
+}
+
+/* soft, huge backdrop sky gradient dome (so the horizon is calm, not black) */
+{
+  const skyGeo=new THREE.SphereGeometry(80,24,16);
+  const skyMat=new THREE.ShaderMaterial({
+    side:THREE.BackSide,
+    uniforms:{ top:{value:new THREE.Color('#CFD8DC')}, bot:{value:new THREE.Color('#E7DECB')} },
+    vertexShader:`varying vec3 vp; void main(){ vp=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+    fragmentShader:`varying vec3 vp; uniform vec3 top; uniform vec3 bot; void main(){ float h=clamp((normalize(vp).y*0.5+0.5),0.0,1.0); gl_FragColor=vec4(mix(bot,top,pow(h,0.9)),1.0);} `
+  });
+  scene.add(new THREE.Mesh(skyGeo,skyMat));
+}
+
+/* ============================ controls ============================ */
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=0.06;
+controls.minDistance=1.6; controls.maxDistance=18;
+controls.maxPolarAngle=Math.PI*0.495; // stay above the ground
+controls.target.set(0.0,PLATT+0.6,0.4);
+controls.update();
+
+/* -------- saved viewpoints (camera glides) -------- */
+const VP=[
+  { // Tatami room
+    pos:new THREE.Vector3(2.9,2.0,3.4), tgt:new THREE.Vector3(-0.1,PLATT+0.55,0.1) },
+  { // Tokonoma
+    pos:new THREE.Vector3(1.15,1.45,1.5), tgt:new THREE.Vector3(-0.62,PLATT+0.9,-hd-0.1) },
+  { // Veranda
+    pos:new THREE.Vector3(-2.3,1.55,hd+2.4), tgt:new THREE.Vector3(0.4,PLATT+0.4,hd+1.2) },
+  { // Garden
+    pos:new THREE.Vector3(0.2,2.5,hd+1.3), tgt:new THREE.Vector3(stoneGroupX+0.3,0.5,stoneGroupZ) },
+];
+let glide=null;
+function easeInOut(t){ return t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+function goViewpoint(i){
+  const v=VP[i];
+  document.querySelectorAll('#dock button[data-vp]').forEach(b=>b.classList.toggle('on', +b.dataset.vp===i));
+  if(walkOn) toggleWalk(false);
+  if(REDUCED){ camera.position.copy(v.pos); controls.target.copy(v.tgt); controls.update(); hideNote(); return; }
+  glide={ t:0, dur:1500,
+    p0:camera.position.clone(), p1:v.pos.clone(),
+    t0:controls.target.clone(), t1:v.tgt.clone() };
+  hideNote();
+}
+document.querySelectorAll('#dock button[data-vp]').forEach(b=>{
+  b.addEventListener('click',()=>goViewpoint(+b.dataset.vp));
+});
+
+/* -------- WASD walk mode -------- */
+let walkOn=false;
+const walkBtn=document.getElementById('walkBtn');
+const keys={};
+const EYE=PLATT+1.1;
+let yaw=0,pitch=0;
+addEventListener('keydown',e=>{ keys[e.code]=true; if(walkOn && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault(); });
+addEventListener('keyup',e=>{ keys[e.code]=false; });
+function toggleWalk(force){
+  walkOn = (force===undefined)? !walkOn : force;
+  walkBtn.classList.toggle('armed',walkOn);
+  controls.enabled=!walkOn;
+  if(walkOn){
+    // seed yaw/pitch from current camera look
+    const dir=new THREE.Vector3(); camera.getWorldDirection(dir);
+    yaw=Math.atan2(dir.x,dir.z); pitch=Math.asin(THREE.MathUtils.clamp(dir.y,-1,1));
+    camera.position.y=EYE;
+    showHint('<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · drag to look · <kbd>Esc</kbd> exit',true);
+    renderer.domElement.requestPointerLock?.();
+  } else {
+    showHint('',false);
+    document.exitPointerLock?.();
+    controls.target.set(camera.position.x+Math.sin(yaw)*2, EYE-0.4, camera.position.z+Math.cos(yaw)*2);
+  }
+}
+walkBtn.addEventListener('click',()=>toggleWalk());
+addEventListener('keydown',e=>{ if(e.code==='Escape'&&walkOn) toggleWalk(false); });
+// pointer-look while walking (works with or without pointer lock)
+let dragging=false,lastX=0,lastY=0;
+renderer.domElement.addEventListener('mousedown',e=>{ if(walkOn){dragging=true;lastX=e.clientX;lastY=e.clientY;} });
+addEventListener('mouseup',()=>dragging=false);
+addEventListener('mousemove',e=>{
+  if(!walkOn) return;
+  let dx,dy;
+  if(document.pointerLockElement===renderer.domElement){ dx=e.movementX; dy=e.movementY; }
+  else if(dragging){ dx=e.clientX-lastX; dy=e.clientY-lastY; lastX=e.clientX; lastY=e.clientY; }
+  else return;
+  yaw   -= dx*0.0026;
+  pitch -= dy*0.0026;
+  pitch = THREE.MathUtils.clamp(pitch,-1.2,0.9);
+});
+function walkStep(dt){
+  const speed=2.4*dt;
+  const fwd=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
+  const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+  const move=new THREE.Vector3();
+  if(keys['KeyW']||keys['ArrowUp'])    move.add(fwd);
+  if(keys['KeyS']||keys['ArrowDown'])  move.sub(fwd);
+  if(keys['KeyA']||keys['ArrowLeft'])  move.sub(right);
+  if(keys['KeyD']||keys['ArrowRight']) move.add(right);
+  if(move.lengthSq()>0){ move.normalize().multiplyScalar(speed); camera.position.add(move); }
+  // clamp inside the site: from behind the room to the garden edge
+  camera.position.x=THREE.MathUtils.clamp(camera.position.x,-4.4,4.4);
+  camera.position.z=THREE.MathUtils.clamp(camera.position.z,-hd-0.6, gZ+gD/2-0.2);
+  camera.position.y=EYE;
+  const look=new THREE.Vector3(
+    camera.position.x+Math.sin(yaw)*Math.cos(pitch),
+    camera.position.y+Math.sin(pitch),
+    camera.position.z+Math.cos(yaw)*Math.cos(pitch));
+  camera.lookAt(look);
+}
+
+/* -------- hint helper -------- */
+const hintEl=document.getElementById('hint');
+let hintTimer=null;
+function showHint(html,sticky){
+  clearTimeout(hintTimer);
+  if(!html){ hintEl.classList.remove('show'); return; }
+  hintEl.innerHTML=html; hintEl.classList.add('show');
+  if(!sticky) hintTimer=setTimeout(()=>hintEl.classList.remove('show'),4200);
+}
+
+/* ============================ click → note ============================ */
+const raycaster=new THREE.Raycaster();
+const mouse=new THREE.Vector2();
+const noteEl=document.getElementById('note');
+function findNote(obj){ let o=obj; while(o){ if(o.userData && o.userData.note) return o.userData.note; o=o.parent; } return null; }
+function showNote(note,clientX,clientY){
+  document.getElementById('noteJp').textContent=note.jp||'';
+  document.getElementById('noteNm').textContent=note.nm||'';
+  document.getElementById('noteDs').textContent=note.ds||'';
+  document.getElementById('noteMt').textContent=note.mt||'';
+  const pad=16, w=Math.min(280,innerWidth-2*pad);
+  let x=clientX+16, y=clientY+14;
+  if(x+w>innerWidth-pad) x=clientX-w-16;
+  if(y+180>innerHeight-pad) y=Math.max(pad,clientY-190);
+  noteEl.style.left=Math.max(pad,x)+'px'; noteEl.style.top=Math.max(pad,y)+'px';
+  noteEl.classList.add('show');
+}
+function hideNote(){ noteEl.classList.remove('show'); }
+let downXY=null;
+renderer.domElement.addEventListener('pointerdown',e=>{ downXY=[e.clientX,e.clientY]; });
+renderer.domElement.addEventListener('pointerup',e=>{
+  if(walkOn) return;
+  if(!downXY) return;
+  const moved=Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1]);
+  downXY=null;
+  if(moved>6) return; // it was a drag, not a click
+  mouse.x=(e.clientX/innerWidth)*2-1;
+  mouse.y=-(e.clientY/innerHeight)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects(clickable,false);
+  for(const h of hits){
+    const note=findNote(h.object);
+    if(note){ showNote(note,e.clientX,e.clientY); return; }
+  }
+  hideNote();
+});
+// hover cursor affordance
+renderer.domElement.addEventListener('pointermove',e=>{
+  if(walkOn){ renderer.domElement.style.cursor='none'; return; }
+  mouse.x=(e.clientX/innerWidth)*2-1; mouse.y=-(e.clientY/innerHeight)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const hit=raycaster.intersectObjects(clickable,false)[0];
+  renderer.domElement.style.cursor = (hit && findNote(hit.object)) ? 'pointer':'grab';
+});
+
+/* ============================ About toggle ============================ */
+const aboutBox=document.getElementById('about');
+document.getElementById('aboutTog').addEventListener('click',()=>{
+  const open=aboutBox.dataset.open==='true';
+  aboutBox.dataset.open=String(!open);
+  document.getElementById('aboutTog').setAttribute('aria-expanded',String(!open));
+  document.getElementById('aboutLabel').textContent = open ? 'About this' : 'Close';
+});
+
+/* ============================ resize ============================ */
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+});
+
+/* ============================ render loop ============================ */
+const clock=new THREE.Clock();
+let firstFrame=true;
+function tick(){
+  const dt=Math.min(clock.getDelta(),0.05);
+  if(glide){
+    glide.t+=dt*1000;
+    const e=easeInOut(Math.min(glide.t/glide.dur,1));
+    camera.position.lerpVectors(glide.p0,glide.p1,e);
+    controls.target.lerpVectors(glide.t0,glide.t1,e);
+    if(glide.t>=glide.dur) glide=null;
+  }
+  if(walkOn) walkStep(dt);
+  controls.update();
+  renderer.render(scene,camera);
+  if(firstFrame){ firstFrame=false; setTimeout(()=>document.getElementById('veil').classList.add('gone'),240); }
+  requestAnimationFrame(tick);
+}
+tick();
+
+// first-load nicety: a soft hint after the veil clears
+setTimeout(()=>{ if(!walkOn) showHint('Drag to look around · tap a viewpoint below · click any surface',false); },1600);
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "expert": "data_analyst",
+  "key": "titanic",
+  "type": "chart",
+  "title": "Titanic survival study",
+  "desc": "The classic, decoded",
+  "brief": "An analytical exploration of the classic 891-passenger Titanic dataset: survival by class, sex and age as six small multiples; a class → sex → outcome survival flow diagram; per-class fare distributions on a log scale; the family-size effect; the 'women and children first' order quantified against the manifest; and three written insights — all recomputed live through interactive class and sex filters, with the full dataset embedded in the file.",
+  "da": "1912 ocean-liner museum exhibit — aged-paper sepia, slate-teal ink and oxidized-copper verdigris, art-deco ruled frames with corner diamonds, Cinzel display and numerals over Old Standard TT, engraving-style hatched fills and numbered plates.",
+  "generated": "2026-07-03"
+}

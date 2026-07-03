@@ -1,0 +1,10 @@
+{
+  "expert": "engineer",
+  "key": "space-landing",
+  "type": "site",
+  "title": "Space-tech landing page",
+  "desc": "Orbital-grade",
+  "brief": "The landing page for PERIGEE, a fictional orbital-logistics company offering rideshare launches plus last-mile orbital transfer vehicles. Hero with a thin-line engineering rocket rendering (pure SVG/CSS, no stock photos), live-feeling mission counters and a ticking T-minus clock, a vehicles section with drawn spec sheets, a launch-manifest timeline, a working payload-price estimator as the 'fly with us' CTA, a careers strip and a footer. Scroll animations tasteful, transform-only and reduced-motion aware.",
+  "da": "Aerospace flagship: near-black, Saira expanded-vs-condensed grotesk contrast, engineering-blueprint hairlines, one pure signal-orange accent (#FF6A00), Swiss negative space.",
+  "generated": "2026-07-03"
+}

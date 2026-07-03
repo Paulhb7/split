@@ -1,0 +1,10 @@
+{
+  "expert": "genius_ride",
+  "key": "trappist1",
+  "type": "scene",
+  "title": "TRAPPIST-1, to scale",
+  "desc": "Seven worlds, one red star",
+  "brief": "A Three.js orrery of the real TRAPPIST-1 system — an ultracool red dwarf 40.7 light-years away with seven roughly Earth-sized planets in a resonant chain. Built from the NASA Exoplanet Archive default parameter set (planet radii, masses, periods, semi-major axes, equilibrium temperatures) and Gaia DR3, all baked in and cited. The star is lit in its true ~2560 K deep orange-red (blackbody colour + granulation shader); the seven planets are shaded naturalistically by equilibrium temperature (scorched terracotta to slate to ice) and sized to true relative scale against the star. Drag to orbit, scroll to zoom, click any planet for its real dossier (radius, mass, period, distance, eq temp, insolation, and whether it sits in the habitable zone). A time control speeds or pauses the orbits at their real relative periods; a to-scale toggle flips between legible spacing and the true, cramped geometry; the habitable-zone shell (e, f, g) can be highlighted. Honours prefers-reduced-motion.",
+  "da": "Red-dwarf art direction: deep maroon-black space lit warm by the cool red star, one warm rust accent (#e0632c) for orbits and UI, naturalistic terracotta/slate/ice planet hues, Archivo for the dossier over IBM Plex Mono data — RED-LIT, distinct from every blue/violet dark-space piece in the library.",
+  "generated": "2026-07-03"
+}

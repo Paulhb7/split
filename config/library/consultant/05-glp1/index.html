@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The GLP-1 Gold Rush — The Weight-Loss Drug Market in 2026</title>
+<!-- ===========================================================
+     THE GLP-1 GOLD RUSH · Consultant / Split · July 2026
+     Art direction: "modern pharma brand"
+       ground  #FBFBF9 (warm near-white)
+       ink     #1A1A1A (confident graphite)
+       accent  #FF5A4D (capsule coral) — key numerals, chart primaries, through-line
+       type    Manrope (geometric grotesk) with very large stat numerals
+     Fixed 1920×1080 stage, scaled to viewport. All CSS/JS inline.
+     Every dated figure web-grounded (see Sources slide).
+     =========================================================== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===========================================
+   FIXED 16:9 STAGE — MANDATORY BASE (viewport-base.css, inlined verbatim)
+   =========================================== */
+html, body {
+    width: 100%; height: 100%; margin: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+.deck-viewport { position: fixed; inset: 0; overflow: hidden; background: var(--stage-bg, #000); }
+.deck-stage {
+    position: absolute; left: 0; top: 0;
+    width: 1920px; height: 1080px; overflow: hidden;
+    transform-origin: 0 0; background: var(--slide-bg, #fff);
+}
+.slide {
+    position: absolute; inset: 0;
+    width: 1920px; height: 1080px; overflow: hidden;
+    display: block; visibility: hidden; opacity: 0; pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+.slide.active, .slide.visible { visibility: visible; opacity: 1; pointer-events: auto; z-index: 1; }
+img, video, canvas, svg { max-width: 100%; max-height: 100%; }
+.deck-controls { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 1000; }
+@media print {
+    html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+    .deck-viewport { position: static; overflow: visible; background: #fff; }
+    .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+    .slide {
+        position: relative; display: block !important; visibility: visible !important;
+        opacity: 1 !important; pointer-events: auto !important;
+        width: 1920px; height: 1080px; break-after: page; page-break-after: always;
+    }
+    .slide:last-child { break-after: auto; page-break-after: auto; }
+    .deck-controls { display: none !important; }
+    /* Freeze every reveal at its final state for static print/PDF */
+    .reveal { opacity: 1 !important; transform: none !important; animation: none !important; }
+    .grow-x, .bar-grow { transform: none !important; animation: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+    /* Never leave revealed content stuck invisible when motion is off */
+    .reveal { opacity: 1 !important; transform: none !important; }
+    .grow-x, .bar-grow { transform: none !important; }
+}
+
+/* ===========================================
+   DESIGN TOKENS
+   =========================================== */
+:root {
+    --stage-bg: #E9E9E4;      /* letterbox — a touch darker than the ground so the stage reads as a card */
+    --slide-bg: #FBFBF9;      /* warm near-white ground */
+    --ink: #1A1A1A;           /* graphite */
+    --ink-2: #55554E;         /* secondary text */
+    --ink-3: #8C8C82;         /* tertiary / captions */
+    --coral: #FF5A4D;         /* the single saturated accent */
+    --coral-deep: #E23B2E;    /* darker coral for text-on-white contrast */
+    --coral-soft: #FFE7E3;    /* coral wash for fills */
+    --rule: #E2E2DA;          /* thin neutral rule */
+    --rule-2: #D2D2C8;        /* slightly stronger rule */
+    --card: #FFFFFF;          /* crisp card */
+    --card-ink: #14140F;      /* near-black card ground (Novo/Lilly duel accents) */
+    --font: 'Manrope', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+.slide {
+    font-family: var(--font);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    padding: 96px 120px 88px;
+}
+
+/* ---- shared type scale ---- */
+.eyebrow {
+    font-size: 20px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--coral-deep);
+}
+.eyebrow .num { color: var(--ink-3); font-weight: 600; letter-spacing: 0.14em; }
+.h-title { font-size: 76px; font-weight: 800; line-height: 0.98; letter-spacing: -0.03em; margin: 0; }
+.h-sub   { font-size: 30px; font-weight: 500; line-height: 1.3; color: var(--ink-2); }
+.footer {
+    position: absolute; left: 120px; right: 120px; bottom: 44px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 16px; color: var(--ink-3); font-weight: 500;
+    border-top: 1px solid var(--rule); padding-top: 16px;
+}
+.footer .src { max-width: 1250px; }
+.footer .src b { color: var(--ink-2); font-weight: 600; }
+.footer .pg { font-weight: 700; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+
+.slide-head { margin-bottom: 44px; }
+.slide-head .eyebrow { margin-bottom: 20px; }
+.slide-head .h-title { font-size: 60px; }
+
+.big-num { font-weight: 800; line-height: 0.85; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.coral { color: var(--coral-deep); }
+.mono-num { font-variant-numeric: tabular-nums; }
+
+/* thin top hairline that all content slides carry — pharma-brand precision */
+.rail {
+    position: absolute; left: 120px; top: 60px; width: 64px; height: 4px;
+    background: var(--coral); border-radius: 2px;
+}
+
+/* =========================================================
+   REVEAL ANIMATION (staggered, on active)
+   ========================================================= */
+.reveal { opacity: 0; transform: translateY(26px); }
+.slide.active .reveal {
+    animation: rise 0.72s cubic-bezier(.2,.7,.2,1) forwards;
+    animation-delay: var(--d, 0s);
+}
+@keyframes rise { to { opacity: 1; transform: translateY(0); } }
+.slide.active .grow-x { animation: growx 1s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: var(--d, .2s); }
+@keyframes growx { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.bar-grow { transform: scaleY(0); transform-origin: bottom; }
+.slide.active .bar-grow { animation: growy .9s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: var(--d, .3s); }
+@keyframes growy { to { transform: scaleY(1); } }
+
+/* =========================================================
+   COVER (slide 1)
+   ========================================================= */
+.cover { padding: 0; }
+.cover-grid { position: absolute; inset: 0; display: grid; grid-template-columns: 1.32fr 1fr; }
+.cover-left { padding: 108px 0 96px 120px; display: flex; flex-direction: column; justify-content: space-between; }
+.cover-right { position: relative; background: var(--ink); overflow: hidden; }
+.cover-kicker {
+    display: inline-flex; align-items: center; gap: 14px;
+    font-size: 19px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--coral-deep);
+}
+.cover-kicker .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--coral); }
+.cover h1 {
+    font-size: 128px; font-weight: 800; line-height: 0.92; letter-spacing: -0.045em; margin: 0;
+}
+.cover h1 em { font-style: normal; color: var(--coral-deep); }
+.cover .lede { font-size: 30px; font-weight: 500; color: var(--ink-2); max-width: 720px; line-height: 1.34; margin-top: 34px; }
+.cover-meta { display: flex; gap: 56px; margin-top: 8px; }
+.cover-meta .item .k { font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); font-weight: 700; }
+.cover-meta .item .v { font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 6px; }
+.cover-byline { font-size: 17px; color: var(--ink-3); font-weight: 500; }
+.cover-byline b { color: var(--ink-2); font-weight: 700; }
+
+/* the capsule motif on the dark panel */
+.capsule-field { position: absolute; inset: 0; }
+.capsule {
+    position: absolute; border-radius: 999px;
+}
+.cap-a { width: 300px; height: 128px; left: 120px; top: 150px; background: var(--coral); transform: rotate(-32deg);
+         box-shadow: 0 30px 80px rgba(255,90,77,.35); }
+.cap-a::after { content:''; position:absolute; right:0; top:0; width:50%; height:100%; background: #fff; border-radius: 999px; opacity:.94; }
+.cap-b { width: 210px; height: 88px; right: 96px; top: 360px; background: #2C2C26; transform: rotate(-32deg); border:2px solid #3d3d35;}
+.cap-b::after { content:''; position:absolute; right:0; top:0; width:50%; height:100%; background:#4a4a41; border-radius:999px; }
+.cap-c { width: 150px; height: 64px; left: 210px; top: 560px; background: var(--coral); opacity:.28; transform: rotate(-32deg); }
+.cover-stat {
+    position: absolute; left: 96px; bottom: 108px; color: #fff;
+}
+.cover-stat .n { font-size: 132px; font-weight: 800; line-height: .82; letter-spacing: -0.05em; color: var(--coral); }
+.cover-stat .n small { font-size: 62px; }
+.cover-stat .l { font-size: 22px; font-weight: 600; color: #cfcfc6; margin-top: 16px; max-width: 440px; line-height: 1.3; }
+.cover-stat .src { font-size: 14px; color: #7a7a70; margin-top: 12px; }
+.grain { position:absolute; inset:0; opacity:.5; mix-blend-mode:multiply;
+         background-image: radial-gradient(rgba(0,0,0,.05) 1px, transparent 1px); background-size: 4px 4px; }
+
+/* =========================================================
+   BRIEF (slide 2)
+   ========================================================= */
+.brief-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px; margin-top: 8px; }
+.brief-card {
+    background: var(--card); border: 1px solid var(--rule); border-radius: 18px; padding: 34px 36px;
+    position: relative;
+}
+.brief-card .tag {
+    font-size: 15px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--coral-deep);
+    display: flex; align-items: center; gap: 12px;
+}
+.brief-card .tag .i { width: 34px; height: 34px; border-radius: 9px; background: var(--coral-soft); color: var(--coral-deep);
+    display:grid; place-items:center; font-size: 18px; }
+.brief-card p { font-size: 21px; line-height: 1.42; color: var(--ink-2); margin: 18px 0 0; font-weight: 500; }
+.brief-card p b { color: var(--ink); font-weight: 700; }
+.thesis {
+    grid-column: 1 / -1; background: var(--ink); border:none; color: #fff; padding: 32px 40px;
+    display: flex; align-items: center; gap: 34px;
+}
+.thesis .lab { font-size: 15px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--coral); white-space: nowrap; }
+.thesis p { color: #f3f3ee; font-size: 25px; font-weight: 600; line-height: 1.36; margin: 0; }
+.thesis p b { color: #fff; }
+.thesis p em { font-style: normal; color: var(--coral); font-weight: 700; }
+
+/* =========================================================
+   MECHANISM (slide 3)
+   ========================================================= */
+.mech-wrap { display: grid; grid-template-columns: 1.05fr 1fr; gap: 64px; align-items: start; }
+.mech-flow { display: flex; flex-direction: column; gap: 0; }
+.mech-step { display: grid; grid-template-columns: 74px 1fr; gap: 26px; }
+.mech-step .rail-col { display: flex; flex-direction: column; align-items: center; }
+.mech-step .node {
+    width: 60px; height: 60px; border-radius: 50%; background: var(--coral); color: #fff;
+    display: grid; place-items: center; font-size: 26px; font-weight: 800; flex: none;
+    box-shadow: 0 10px 24px rgba(255,90,77,.30);
+}
+.mech-step.muted .node { background: var(--ink); box-shadow: 0 10px 24px rgba(0,0,0,.18); }
+.mech-step .line { width: 3px; flex: 1; background: var(--rule-2); min-height: 40px; margin: 6px 0; }
+.mech-step .body { padding-bottom: 34px; }
+.mech-step .body h4 { font-size: 26px; font-weight: 800; margin: 8px 0 8px; letter-spacing: -0.01em; }
+.mech-step .body p { font-size: 19px; line-height: 1.4; color: var(--ink-2); margin: 0; font-weight: 500; }
+.mech-side { background: var(--card); border: 1px solid var(--rule); border-radius: 18px; padding: 40px; }
+.mech-side h3 { font-size: 24px; font-weight: 800; margin: 0 0 6px; }
+.mech-side .cls { font-size: 17px; color: var(--ink-3); font-weight: 600; margin-bottom: 26px; }
+.mech-row { display: flex; justify-content: space-between; align-items: baseline; padding: 18px 0; border-top: 1px solid var(--rule); }
+.mech-row .name { font-size: 19px; font-weight: 700; }
+.mech-row .name small { display: block; font-size: 14px; color: var(--ink-3); font-weight: 600; margin-top: 3px; }
+.mech-row .val { font-size: 34px; font-weight: 800; color: var(--coral-deep); font-variant-numeric: tabular-nums; }
+.mech-row .val small { font-size: 17px; color: var(--ink-3); font-weight: 700; }
+.mech-note { margin-top: 24px; font-size: 15px; color: var(--ink-3); line-height: 1.5; font-weight: 500; }
+
+/* =========================================================
+   KPI FRAME (slide 4)
+   ========================================================= */
+.kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 24px; height: 720px; margin-top: 4px; }
+.kpi {
+    border: 1px solid var(--rule); border-radius: 18px; padding: 34px 36px; background: var(--card);
+    display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;
+}
+.kpi.hero { background: var(--ink); border: none; color: #fff; }
+.kpi .kpi-k { font-size: 17px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3); }
+.kpi.hero .kpi-k { color: #bdbdb4; }
+.kpi .kpi-n { font-size: 92px; font-weight: 800; line-height: 0.82; letter-spacing: -0.04em; color: var(--coral-deep); font-variant-numeric: tabular-nums; }
+.kpi.hero .kpi-n { color: var(--coral); font-size: 108px; }
+.kpi .kpi-n small { font-size: 44px; font-weight: 800; }
+.kpi .kpi-n .unit { font-size: 40px; }
+.kpi .kpi-d { font-size: 18px; line-height: 1.36; color: var(--ink-2); font-weight: 500; }
+.kpi.hero .kpi-d { color: #d9d9d0; }
+.kpi .kpi-d b { color: var(--ink); font-weight: 700; }
+.kpi.hero .kpi-d b { color: #fff; }
+.kpi .kpi-src { font-size: 13px; color: var(--ink-3); margin-top: 12px; font-weight: 500; }
+.kpi.hero .kpi-src { color: #85857b; }
+
+/* =========================================================
+   DUEL (slide 5) — dark split
+   ========================================================= */
+.slide.dark { background: var(--card-ink); color: #fff; }
+.slide.dark .eyebrow { color: var(--coral); }
+.slide.dark .h-title { color: #fff; }
+.slide.dark .rail { background: var(--coral); }
+.slide.dark .footer { color: #7d7d73; border-top-color: #2c2c26; }
+.slide.dark .footer .src b { color: #b5b5ab; }
+.duel { display: grid; grid-template-columns: 1fr 1fr; gap: 0; height: 700px; margin-top: 8px; border-radius: 20px; overflow: hidden; border: 1px solid #2c2c26; }
+.duel-col { padding: 46px 52px; display: flex; flex-direction: column; position: relative; }
+.duel-col.lly { background: linear-gradient(160deg, #1c1c16 0%, #171712 100%); border-right: 1px solid #2c2c26; }
+.duel-col.nvo { background: linear-gradient(160deg, #17130f 0%, #14100c 100%); }
+.duel-brand { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+.duel-brand .co { font-size: 30px; font-weight: 800; letter-spacing: -0.01em; }
+.duel-brand .co small { display:block; font-size: 15px; font-weight: 600; color: #8a8a80; letter-spacing: 0.04em; margin-top: 4px; }
+.duel-brand .cap { font-size: 15px; font-weight: 700; color: #b5b5ab; text-align: right; }
+.duel-brand .cap b { display:block; font-size: 30px; font-weight: 800; }
+.lly .cap b { color: var(--coral); }
+.nvo .cap b { color: #cfcfc6; }
+.duel-hero { margin: 8px 0 26px; }
+.duel-hero .n { font-size: 96px; font-weight: 800; line-height: .82; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.lly .duel-hero .n { color: var(--coral); }
+.nvo .duel-hero .n { color: #efefe8; }
+.duel-hero .g { font-size: 24px; font-weight: 700; margin-top: 12px; }
+.duel-hero .g.up { color: #6fe0a8; } .duel-hero .g.dn { color: #ff8f85; }
+.duel-hero .cap-l { font-size: 17px; color: #9a9a90; font-weight: 600; margin-top: 6px; }
+.duel-rows { margin-top: auto; }
+.duel-row { display: flex; justify-content: space-between; align-items: baseline; padding: 15px 0; border-top: 1px solid #2c2c26; }
+.duel-row .l { font-size: 18px; color: #b5b5ab; font-weight: 600; }
+.duel-row .v { font-size: 22px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+.duel-row .v.pos { color: #6fe0a8; } .duel-row .v.neg { color: #ff8f85; }
+
+/* =========================================================
+   BAR CHART (slide 6) — revenue duel
+   ========================================================= */
+.chart-wrap { display: grid; grid-template-columns: 1.55fr 1fr; gap: 60px; align-items: start; }
+.bars { height: 640px; display: flex; align-items: flex-end; gap: 46px; padding: 0 8px 0; border-bottom: 2px solid var(--ink); position: relative; }
+.bars .gridline { position: absolute; left: 0; right: 0; height: 1px; background: var(--rule); }
+.bars .gridline span { position: absolute; left: -58px; top: -9px; font-size: 14px; color: var(--ink-3); font-weight: 600; font-variant-numeric: tabular-nums; }
+.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; z-index: 2; }
+.bar-pair { display: flex; align-items: flex-end; gap: 12px; height: 100%; width: 100%; justify-content: center; }
+.bar { width: 74px; border-radius: 8px 8px 0 0; position: relative; }
+.bar.lly { background: var(--coral); }
+.bar.nvo { background: #2b2b24; }
+.bar .cap { position: absolute; top: -42px; left: 50%; transform: translateX(-50%); font-size: 25px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bar.lly .cap { color: var(--coral-deep); } .bar.nvo .cap { color: var(--ink); }
+.bar-group .xlab { position: absolute; bottom: -46px; font-size: 19px; font-weight: 700; text-align: center; width: 130%; }
+.bar-group .xlab small { display:block; font-size: 14px; color: var(--ink-3); font-weight: 600; margin-top: 2px; }
+.chart-side { padding-top: 4px; }
+.chart-legend { display: flex; gap: 26px; margin-bottom: 30px; }
+.chart-legend .li { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; }
+.chart-legend .sw { width: 18px; height: 18px; border-radius: 5px; }
+.chart-legend .sw.lly { background: var(--coral); } .chart-legend .sw.nvo { background: #2b2b24; }
+.chart-note { border-left: 3px solid var(--coral); padding-left: 22px; margin-bottom: 26px; }
+.chart-note .n { font-size: 56px; font-weight: 800; color: var(--coral-deep); line-height: .9; letter-spacing: -0.03em; }
+.chart-note .t { font-size: 19px; color: var(--ink-2); font-weight: 500; margin-top: 10px; line-height: 1.4; }
+.chart-note .t b { color: var(--ink); font-weight: 700; }
+
+/* =========================================================
+   PIPELINE TABLE (slide 7)
+   ========================================================= */
+.ptable { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.ptable th {
+    text-align: left; font-size: 15px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-3); padding: 0 20px 16px; border-bottom: 2px solid var(--ink);
+}
+.ptable th.r, .ptable td.r { text-align: right; }
+.ptable th.c, .ptable td.c { text-align: center; }
+.ptable td { padding: 19px 20px; border-bottom: 1px solid var(--rule); font-size: 20px; vertical-align: middle; }
+.ptable tr:last-child td { border-bottom: none; }
+.ptable .drug { font-weight: 800; font-size: 22px; }
+.ptable .drug small { display: block; font-size: 14px; color: var(--ink-3); font-weight: 600; margin-top: 3px; }
+.ptable .co { font-weight: 600; color: var(--ink-2); }
+.ptable .eff { font-weight: 800; font-size: 26px; color: var(--coral-deep); font-variant-numeric: tabular-nums; }
+.ptable .eff.grey { color: var(--ink-3); }
+.pill {
+    display: inline-block; padding: 6px 15px; border-radius: 999px; font-size: 15px; font-weight: 800;
+    letter-spacing: 0.03em;
+}
+.pill.launched { background: var(--coral); color: #fff; }
+.pill.filed { background: #1A1A1A; color: #fff; }
+.pill.p3 { background: var(--coral-soft); color: var(--coral-deep); }
+.pill.p2 { background: #EDEDE6; color: var(--ink-2); }
+.pill.china { background: #FFF0D6; color: #9a6b00; }
+.ptable tr.hl td { background: #FDF3F1; }
+
+/* =========================================================
+   PRICING (slide 8)
+   ========================================================= */
+.price-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 56px; align-items: start; }
+.price-list { display: flex; flex-direction: column; gap: 16px; }
+.price-item { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 24px;
+    background: var(--card); border: 1px solid var(--rule); border-radius: 14px; padding: 22px 30px; }
+.price-item .drug { font-size: 22px; font-weight: 800; }
+.price-item .drug small { display: block; font-size: 15px; color: var(--ink-3); font-weight: 600; margin-top: 3px; }
+.price-item .money { text-align: right; font-variant-numeric: tabular-nums; }
+.price-item .money .now { font-size: 40px; font-weight: 800; color: var(--coral-deep); line-height: 1; }
+.price-item .money .was { font-size: 16px; color: var(--ink-3); font-weight: 600; margin-top: 6px; }
+.price-item .money .was s { text-decoration-color: var(--coral); }
+.price-side { display: flex; flex-direction: column; gap: 22px; }
+.pol-card { background: var(--ink); color: #fff; border-radius: 18px; padding: 32px 36px; }
+.pol-card .lab { font-size: 15px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--coral); }
+.pol-card h4 { font-size: 27px; font-weight: 800; margin: 12px 0 10px; line-height: 1.15; }
+.pol-card p { font-size: 18px; line-height: 1.42; color: #d9d9d0; margin: 0; font-weight: 500; }
+.pol-card p b { color: #fff; }
+.pol-card.light { background: var(--card); color: var(--ink); border: 1px solid var(--rule); }
+.pol-card.light .lab { color: var(--coral-deep); }
+.pol-card.light p { color: var(--ink-2); }
+.pol-card.light p b { color: var(--ink); }
+
+/* =========================================================
+   SHOCKWAVES (slide 9)
+   ========================================================= */
+.shock-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 8px; }
+.shock {
+    border: 1px solid var(--rule); border-radius: 18px; padding: 32px 30px; background: var(--card);
+    display: flex; flex-direction: column; min-height: 560px;
+}
+.shock .ico { font-size: 34px; margin-bottom: 22px; }
+.shock .sector { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
+.shock .verdict { font-size: 14px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 8px; }
+.shock .verdict.dn { color: var(--coral-deep); } .shock .verdict.up { color: #1f9d5c; }
+.shock .n { font-size: 64px; font-weight: 800; line-height: .85; letter-spacing: -0.04em; margin: 22px 0 4px; font-variant-numeric: tabular-nums; }
+.shock .n.dn { color: var(--coral-deep); } .shock .n.up { color: #1f9d5c; }
+.shock .metric { font-size: 16px; color: var(--ink-2); font-weight: 600; line-height: 1.35; }
+.shock .desc { font-size: 16px; color: var(--ink-2); line-height: 1.4; margin-top: auto; padding-top: 20px; font-weight: 500; border-top: 1px solid var(--rule); }
+.shock .desc b { color: var(--ink); font-weight: 700; }
+
+/* =========================================================
+   SUPPLY (slide 10)
+   ========================================================= */
+.supply-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+.supply-left h3 { font-size: 27px; font-weight: 800; margin: 0 0 24px; }
+.invest-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 20px; padding: 20px 0; border-top: 1px solid var(--rule); }
+.invest-row:last-child { border-bottom: 1px solid var(--rule); }
+.invest-row .who { font-size: 20px; font-weight: 700; }
+.invest-row .who small { display: block; font-size: 15px; color: var(--ink-3); font-weight: 600; margin-top: 3px; }
+.invest-row .amt { font-size: 34px; font-weight: 800; color: var(--coral-deep); font-variant-numeric: tabular-nums; }
+.invest-row .who .who-co { font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.supply-right { background: var(--ink); color: #fff; border-radius: 20px; padding: 44px 48px; height: 100%; }
+.supply-right .eyebrow2 { font-size: 15px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--coral); }
+.supply-right h3 { font-size: 40px; font-weight: 800; margin: 16px 0 26px; line-height: 1.06; }
+.supply-right ul { list-style: none; padding: 0; margin: 0; }
+.supply-right li { display: flex; gap: 18px; padding: 18px 0; border-top: 1px solid #2c2c26; font-size: 19px; line-height: 1.4; color: #d9d9d0; font-weight: 500; }
+.supply-right li:first-of-type { border-top: none; }
+.supply-right li .b { color: var(--coral); font-weight: 800; flex: none; font-size: 20px; }
+.supply-right li b { color: #fff; font-weight: 700; }
+
+/* =========================================================
+   RISKS (slide 11)
+   ========================================================= */
+.risk-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; margin-top: 6px; }
+.risk {
+    display: grid; grid-template-columns: 62px 1fr; gap: 24px; align-items: start;
+    background: var(--card); border: 1px solid var(--rule); border-radius: 16px; padding: 28px 32px;
+    border-left: 4px solid var(--coral);
+}
+.risk .idx { font-size: 40px; font-weight: 800; color: var(--coral); line-height: 1; font-variant-numeric: tabular-nums; }
+.risk h4 { font-size: 23px; font-weight: 800; margin: 2px 0 8px; }
+.risk p { font-size: 18px; line-height: 1.4; color: var(--ink-2); margin: 0; font-weight: 500; }
+.risk p b { color: var(--ink); font-weight: 700; }
+
+/* =========================================================
+   OUTLOOK (slide 12)
+   ========================================================= */
+.out-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 60px; align-items: start; }
+.out-left .lead { font-size: 30px; font-weight: 600; line-height: 1.32; color: var(--ink); }
+.out-left .lead em { font-style: normal; color: var(--coral-deep); font-weight: 800; }
+.out-projection { margin-top: 40px; background: var(--card); border: 1px solid var(--rule); border-radius: 18px; padding: 36px; }
+.out-projection .row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-top: 1px solid var(--rule); }
+.out-projection .row:first-child { border-top: none; }
+.out-projection .row .l { font-size: 19px; font-weight: 600; color: var(--ink-2); }
+.out-projection .row .r { font-size: 26px; font-weight: 800; color: var(--coral-deep); font-variant-numeric: tabular-nums; }
+.out-projection .row .r small { color: var(--ink-3); font-size: 16px; font-weight: 700; }
+.out-calls { display: flex; flex-direction: column; gap: 18px; }
+.call { background: var(--card); border: 1px solid var(--rule); border-radius: 16px; padding: 26px 30px; position: relative; }
+.call .k { font-size: 14px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--coral-deep); }
+.call h4 { font-size: 24px; font-weight: 800; margin: 8px 0 8px; }
+.call p { font-size: 18px; line-height: 1.4; color: var(--ink-2); margin: 0; font-weight: 500; }
+.call p b { color: var(--ink); font-weight: 700; }
+.disclaimer {
+    grid-column: 1 / -1; margin-top: 4px; font-size: 16px; color: var(--ink-3); font-weight: 500;
+    background: #F2F2EC; border-radius: 12px; padding: 18px 26px; line-height: 1.4; border: 1px solid var(--rule);
+}
+.disclaimer b { color: var(--ink-2); font-weight: 700; }
+
+/* =========================================================
+   SOURCES (slide 13)
+   ========================================================= */
+.src-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 56px; margin-top: 8px; }
+.src-item { display: grid; grid-template-columns: 34px 1fr; gap: 14px; padding: 12px 0; border-top: 1px solid var(--rule); align-items: baseline; }
+.src-item .n { font-size: 15px; font-weight: 800; color: var(--coral-deep); font-variant-numeric: tabular-nums; }
+.src-item .meta .pub { font-size: 18px; font-weight: 700; color: var(--ink); }
+.src-item .meta .pub .date { color: var(--ink-3); font-weight: 600; font-size: 15px; }
+.src-item .meta .url { font-size: 14px; color: var(--ink-3); font-weight: 500; word-break: break-all; margin-top: 2px; }
+.src-foot { position: absolute; left: 120px; right: 120px; bottom: 44px; font-size: 15px; color: var(--ink-3); border-top: 1px solid var(--rule); padding-top: 14px; line-height: 1.4; }
+.src-foot b { color: var(--ink-2); }
+
+/* =========================================================
+   NAV / CHROME
+   ========================================================= */
+.nav-hint { position: fixed; right: 26px; bottom: 22px; z-index: 1000; display: flex; align-items: center; gap: 14px;
+    font-family: var(--font); font-size: 13px; color: var(--ink-3); font-weight: 600; background: rgba(251,251,249,.85);
+    padding: 9px 15px; border-radius: 999px; border: 1px solid var(--rule); backdrop-filter: blur(6px); }
+.nav-hint kbd { font-family: var(--font); font-weight: 700; background: #fff; border: 1px solid var(--rule-2); border-radius: 6px;
+    padding: 2px 8px; font-size: 12px; color: var(--ink-2); }
+.progress { position: fixed; left: 0; top: 0; height: 3px; background: var(--coral); z-index: 1001; transition: width .4s cubic-bezier(.2,.7,.2,1); }
+.brandmark { position: fixed; left: 26px; bottom: 22px; z-index: 1000; font-family: var(--font); font-size: 13px; font-weight: 700;
+    color: var(--ink-3); letter-spacing: 0.04em; display: flex; align-items: center; gap: 9px; }
+.brandmark .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--coral); }
+@media print { .nav-hint, .brandmark, .progress { display: none !important; } }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="deck-viewport" id="viewport">
+  <div class="deck-stage" id="stage">
+
+    <!-- ============================================================ SLIDE 1 · COVER -->
+    <section class="slide cover active">
+      <div class="cover-grid">
+        <div class="cover-left">
+          <div>
+            <div class="cover-kicker reveal" style="--d:.05s"><span class="dot"></span>Split · Consultant Briefing · July 2026</div>
+            <h1 class="reveal" style="--d:.16s; margin-top:34px">The GLP-1<br>Gold&nbsp;<em>Rush</em></h1>
+            <p class="lede reveal" style="--d:.3s">The weight-loss drug market in 2026 — the business story of the decade in pharma, mapped from mechanism to market to shockwave.</p>
+          </div>
+          <div class="cover-meta reveal" style="--d:.42s">
+            <div class="item"><div class="k">Audience</div><div class="v">Investor / Executive</div></div>
+            <div class="item"><div class="k">Scope</div><div class="v">Global · Obesity + T2D</div></div>
+            <div class="item"><div class="k">As of</div><div class="v">3 July 2026</div></div>
+          </div>
+          <div class="cover-byline reveal" style="--d:.5s"><b>An executive deck.</b> Every dated figure web-grounded — sources on the final slide. Not investment advice.</div>
+        </div>
+        <div class="cover-right">
+          <div class="capsule-field">
+            <div class="capsule cap-a"></div>
+            <div class="capsule cap-b"></div>
+            <div class="capsule cap-c"></div>
+          </div>
+          <div class="cover-stat">
+            <div class="n">$200<small>B</small></div>
+            <div class="l">projected global incretin market by 2030 — up from ~$82B in 2026.</div>
+            <div class="src">J.P. Morgan Global Research, 2026</div>
+          </div>
+          <div class="grain"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ SLIDE 2 · BRIEF -->
+    <section class="slide">
+      <div class="rail"></div>
+      <div class="slide-head">
+        <div class="eyebrow reveal"><span class="num">01 / </span>The Brief</div>
+        <h1 class="h-title reveal" style="--d:.08s">What this deck is, and how to read it</h1>
+      </div>
+      <div class="brief-grid">
+        <div class="brief-card reveal" style="--d:.14s">
+          <div class="tag"><span class="i">◎</span>Why</div>
+          <p>Give an investor / executive audience a <b>clear, numbers-first map</b> of the GLP-1 weight-loss market as it stands mid-2026: the mechanism, the money, the duel, the pipeline, the second-order shockwaves, and a reasoned outlook.</p>
+        </div>
+        <div class="brief-card reveal" style="--d:.2s">
+          <div class="tag"><span class="i">▦</span>Context</div>
+          <p>The market has split into a <b>two-horse race</b> (Eli Lilly, Novo Nordisk) now widening under an oral-pill wave, a U.S. pricing reset, and a pipeline crowding in from Amgen, Roche, Viking and Chinese entrants.</p>
+        </div>
+        <div class="brief-card reveal" style="--d:.26s">
+          <div class="tag"><span class="i">→</span>How to use it</div>
+          <p>Read it top-to-bottom as a briefing, or jump to a slide. <b>Left-to-right</b>: what the drugs are → market size → the Lilly/Novo duel → pipeline → pricing → shockwaves → supply → risks → outlook → sources.</p>
+        </div>
+        <div class="brief-card reveal" style="--d:.32s">
+          <div class="tag"><span class="i">≈</span>What I assumed</div>
+          <p>Global scope, obesity + type-2 diabetes combined. Figures are the <b>latest disclosed</b> (Q1 2026 filings, July-2026 valuations). Currency in USD unless noted; DKK/USD conversions per source. Estimates flagged.</p>
+        </div>
+        <div class="thesis reveal" style="--d:.4s">
+          <div class="lab">The thesis</div>
+          <p>Demand is not the constraint — <em>supply, price and durability</em> are. The winner is being decided less by efficacy than by <b>who can make it, sell it as a pill, and defend the price</b>.</p>
+        </div>
+      </div>
+      <div class="footer"><div class="src"><b>Source basis:</b> company Q1-2026 filings (Lilly, Novo Nordisk), KFF, J.P. Morgan &amp; Morgan Stanley Research, FDA, CNBC — full list on slide 13.</div><div class="pg">02 / 13</div></div>
+    </section>
+
+    <!-- ============================================================ SLIDE 3 · MECHANISM -->
+    <section class="slide">
+      <div class="rail"></div>
+      <div class="slide-head">
+        <div class="eyebrow reveal"><span class="num">02 / </span>The Mechanism</div>
+        <h1 class="h-title reveal" style="--d:.08s">One hormone, four effects, and why it works</h1>
+      </div>
+      <div class="mech-wrap">
+        <div class="mech-flow">
+          <div class="mech-step reveal" style="--d:.14s">
+            <div class="rail-col"><div class="node">1</div><div class="line"></div></div>
+            <div class="body"><h4>Mimics a gut hormone (GLP-1)</h4><p>These drugs copy glucagon-like peptide-1, released by the gut after eating. Next-gen molecules also hit the <b>GIP</b> and <b>glucagon</b> receptors — the &ldquo;dual&rdquo; and &ldquo;triple&rdquo; agonists.</p></div>
+          </div>
+          <div class="mech-step reveal" style="--d:.2s">
+            <div class="rail-col"><div class="node">2</div><div class="line"></div></div>
+            <div class="body"><h4>Signals satiety to the brain</h4><p>It tells the brain you are full and slows how fast the stomach empties. Appetite drops; portions shrink; snacking falls. This is the lever that reshapes food demand downstream.</p></div>
+          </div>
+          <div class="mech-step reveal" style="--d:.26s">
+            <div class="rail-col"><div class="node">3</div><div class="line"></div></div>
+            <div class="body"><h4>Improves blood-sugar control</h4><p>It boosts insulin when glucose is high and blunts glucagon — the diabetes heritage of the class (Ozempic, Mounjaro) before obesity became the bigger prize.</p></div>
+          </div>
+          <div class="mech-step muted reveal" style="--d:.32s">
+            <div class="rail-col"><div class="node">4</div></div>
+            <div class="body"><h4>The catch: keep taking it</h4><p>Effect persists only while dosed. Stop, and appetite and weight tend to return — the commercial engine (recurring revenue) and the clinical weakness (adherence) are the same fact.</p></div>
+          </div>
+        </div>
+        <div class="mech-side reveal" style="--d:.24s">
+          <h3>Efficacy, head-to-head</h3>
+          <div class="cls">Mean weight loss at trial endpoint</div>
+          <div class="mech-row"><div class="name">Tirzepatide <small>Zepbound · GLP-1/GIP</small></div><div class="val">~20<small>%</small></div></div>
+          <div class="mech-row"><div class="name">Semaglutide <small>Wegovy · GLP-1</small></div><div class="val">~15<small>%</small></div></div>
+          <div class="mech-row"><div class="name">CagriSema <small>Novo · REDEFINE 1, 68wk</small></div><div class="val">22.7<small>%</small></div></div>
+          <div class="mech-row"><div class="name">Mazdutide <small>Innovent · GCG/GLP-1, GLORY-2</small></div><div class="val">20.1<small>%</small></div></div>
+          <div class="mech-note">Figures are approximate trial means across differing protocols and doses; not a like-for-like comparison. The gap between injectable classes now sits inside a few points — competition is shifting to <b>route, price and side-effects</b>.</div>
+        </div>
+      </div>
+      <div class="footer"><div class="src"><b>Sources:</b> Novo Nordisk REDEFINE 1 (2025); Innovent GLORY-2 (PR Newswire, 2025); Patient Care Online (Apr 2026). Weight-loss means are dose- and trial-specific.</div><div class="pg">03 / 13</div></div>
+    </section>
+
+    <!-- ============================================================ SLIDE 4 · MARKET KPIs -->
+    <section class="slide">
+      <div class="rail"></div>
+      <div class="slide-head">
+        <div class="eyebrow reveal"><span class="num">03 / </span>The Prize</div>
+        <h1 class="h-title reveal" style="--d:.08s">A market sized to become pharma's biggest ever</h1>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi hero reveal" style="--d:.12s">
+          <div class="kpi-k">Global incretin market · by 2030</div>
+          <div class="kpi-n">$200<span class="unit">B</span></div>
+          <div>
+            <div class="kpi-d"><b>~$82B in 2026</b>, on a trajectory Morgan Stanley puts near $190B for T2D + obesity by 2035.</div>
+            <div class="kpi-src">J.P. Morgan &amp; Morgan Stanley Research, 2026</div>
+          </div>
+        </div>
+        <div class="kpi reveal" style="--d:.18s">
+          <div class="kpi-k">U.S. adults on a GLP-1</div>
+          <div class="kpi-n">1<small> in </small>8</div>
+          <div><div class="kpi-d"><b>12% currently</b>; ~18% ever. Highest at ages 50–64 (22%).</div><div class="kpi-src">KFF poll, Oct–Nov 2025</div></div>
+        </div>
+        <div class="kpi reveal" style="--d:.24s">
+          <div class="kpi-k">U.S. patients · trajectory</div>
+          <div class="kpi-n">~10<span class="unit">M</span></div>
+          <div><div class="kpi-d">on treatment in 2026, from ~6M in 2024 — J.P. Morgan sees <b>~30M by 2030</b>.</div><div class="kpi-src">J.P. Morgan Research, 2026</div></div>
+        </div>
+        <div class="kpi reveal" style="--d:.3s">
+          <div class="kpi-k">Combined Lilly tirzepatide · 2025</div>
+          <div class="kpi-n">~$36<span class="unit">B</span></div>
+          <div><div class="kpi-d">Mounjaro + Zepbound full-year 2025 — <b>now ahead of</b> Novo's Ozempic + Wegovy.</div><div class="kpi-src">Company filings; Motley Fool, 2026</div></div>
+        </div>
+        <div class="kpi reveal" style="--d:.36s">
+          <div class="kpi-k">WL-drug use for weight loss</div>
+          <div class="kpi-n">12.4<span class="unit">%</span></div>
+          <div><div class="kpi-d">of U.S. adults, up from <b>5.8% in Feb 2024</b> — a doubling in under two years.</div><div class="kpi-src">RAND / survey data, 2025</div></div>
+        </div>
+        <div class="kpi reveal" style="--d:.42s">
+          <div class="kpi-k">Food &amp; beverage sales at risk</div>
+          <div class="kpi-n">$30–55<span class="unit">B</span></div>
+          <div><div class="kpi-d">annual U.S. F&amp;B revenue J.P. Morgan estimates GLP-1s could erase <b>by 2030</b>.</div><div class="kpi-src">J.P. Morgan, 2026 (estimate)</div></div>
+        </div>
+      </div>
+      <div class="footer"><div class="src"><b>Sources:</b> J.P. Morgan Global Research; Morgan Stanley Research; KFF (Oct–Nov 2025); RAND (2025); company filings — see slide 13. Market-size figures vary by definition.</div><div class="pg">04 / 13</div></div>
+    </section>
+
+    <!-- ============================================================ SLIDE 5 · THE DUEL -->
+    <section class="slide dark">
+      <div class="rail"></div>
+      <div class="slide-head">
+        <div class="eyebrow reveal"><span class="num">04 / </span>The Duel</div>
+        <h1 class="h-title reveal" style="--d:.08s">Eli Lilly vs Novo Nordisk — Q1 2026</h1>
+      </div>
+      <div class="duel">
+        <div class="duel-col lly reveal" style="--d:.14s">
+          <div class="duel-brand">
+            <div class="co">Eli Lilly<small>Tirzepatide · Zepbound / Mounjaro</small></div>
+            <div class="cap">Market cap<b>~$1.07T</b></div>
+          </div>
+          <div class="duel-hero">
+            <div class="n">$19.8B</div>
+            <div class="g up">+56% YoY total revenue</div>
+            <div class="cap-l">Q1 2026 · full-year guidance raised to $82–85B</div>
+          </div>
+          <div class="duel-rows">
+            <div class="duel-row"><div class="l">Mounjaro (T2D)</div><div class="v">$8.7B <span class="pos">+125%</span></div></div>
+            <div class="duel-row"><div class="l">Zepbound (obesity)</div><div class="v">$4.2B <span class="pos">+80%</span></div></div>
+            <div class="duel-row"><div class="l">EPS</div><div class="v">$8.26 <span class="pos">+170%</span></div></div>
+            <div class="duel-row"><div class="l">Oral pill (Foundayo / orforglipron)</div><div class="v pos">Launched Apr 1</div></div>
+          </div>
+        </div>
+        <div class="duel-col nvo reveal" style="--d:.22s">
+          <div class="duel-brand">
+            <div class="co">Novo Nordisk<small>Semaglutide · Wegovy / Ozempic</small></div>
+            <div class="cap">Market cap<b>~$213B</b></div>
+          </div>
+          <div class="duel-hero">
+            <div class="n">−4 to −12%</div>
+            <div class="g dn">FY26 sales growth guidance (CER)</div>
+            <div class="cap-l">Improved from −5 to −13% on strong oral-pill launch</div>
+          </div>
+          <div class="duel-rows">
+            <div class="duel-row"><div class="l">Wegovy injectable</div><div class="v pos">DKK 18.2B · +12%</div></div>
+            <div class="duel-row"><div class="l">Ozempic</div><div class="v neg">−8%</div></div>
+            <div class="duel-row"><div class="l">Wegovy pill (US, since Jan)</div><div class="v">~$354M · 1.3M Rx</div></div>
+            <div class="duel-row"><div class="l">Share of new U.S. Rx</div><div class="v">65%</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><div class="src"><b>Sources:</b> Lilly Q1-2026 release (Apr 2026); Novo Nordisk Q1-2026 6-K &amp; CNBC (May 6, 2026); companiesmarketcap.com (Jun–Jul 2026). DKK 2.26B ≈ $354M per source.</div><div class="pg">05 / 13</div></div>
+    </section>
+
+    <!-- ============================================================ SLIDE 6 · REVENUE CHART -->
+    <section class="slide">
+      <div class="rail"></div>
+      <div class="slide-head">
+        <div class="eyebrow reveal"><span class="num">05 / </span>The Cross-Over</div>
+        <h1 class="h-title reveal" style="--d:.08s">Lilly's flagship obesity brands overtook Novo's</h1>
+      </div>
+      <div class="chart-wrap">
+        <div class="bars reveal" style="--d:.14s">
+          <!-- gridlines: scale 0..9 ($B), plot area height 640px -->
+          <div class="gridline" style="bottom:0"><span>$0B</span></div>
+          <div class="gridline" style="bottom:213px"><span>$3B</span></div>
+          <div class="gridline" style="bottom:427px"><span>$6B</span></div>
+          <div class="gridline" style="bottom:640px"><span>$9B</span></div>
+
+          <!-- Zepbound vs Wegovy (obesity, Q1'26) -->
+          <div class="bar-group">
+            <div class="bar-pair">
+              <!-- Zepbound $4.2B -> 4.2/9*640 ≈ 299px -->
+              <div class="bar lly bar-grow" style="height:299px; --d:.3s"><span class="cap">$4.2B</span></div>
+              <!-- Wegovy inj DKK18.2B ≈ $2.85B -> ≈203px -->
+              <div class="bar nvo bar-grow" style="height:203px; --d:.4s"><span class="cap">~$2.9B</span></div>
+            </div>
+            <div class="xlab">Obesity flagship<small>Zepbound vs Wegovy inj.</small></div>
+          </div>
+
+          <!-- Diabetes: Mounjaro vs Ozempic (Q1'26) -->
+          <div class="bar-group">
+            <div class="bar-pair">
+              <!-- Mounjaro $8.7B -> 8.7/9*640 ≈ 619px -->
+              <div class="bar lly bar-grow" style="height:619px; --d:.5s"><span class="cap">$8.7B</span></div>
+              <!-- Ozempic ~ $4.6B (est. from Novo mix; flagged) -> ≈327px -->
+              <div class="bar nvo bar-grow" style="height:327px; --d:.6s"><span class="cap">~$4.6B*</span></div>
+            </div>
+            <div class="xlab">Diabetes flagship<small>Mounjaro vs Ozempic</small></div>
+          </div>
+
+          <!-- YoY growth: Lilly obesity franchise vs Novo -->
+          <div class="bar-group">
+            <div class="bar-pair">
+              <!-- Zepbound +80% -> illustrative on same 0..9 mapped to 0..100%: 80% -> 569px -->
+              <div class="bar lly bar-grow" style="height:569px; --d:.7s"><span class="cap">+80%</span></div>
+              <!-- Wegovy +12% -> 85px -->
+              <div class="bar nvo bar-grow" style="height:85px; --d:.8s"><span class="cap">+12%</span></div>
+            </div>
+            <div class="xlab">YoY growth<small>obesity brand, right axis</small></div>
+          </div>
+        </div>
+        <div class="chart-side">
+          <div class="chart-legend reveal" style="--d:.2s">
+            <div class="li"><span class="sw lly"></span>Eli Lilly</div>
+            <div class="li"><span class="sw nvo"></span>Novo Nordisk</div>
+          </div>
+          <div class="chart-note reveal" style="--d:.28s">
+            <div class="n">~$36B</div>
+            <div class="t">combined tirzepatide (Mounjaro + Zepbound) in <b>2025</b> — the first full year Lilly's pair topped Novo's Ozempic + Wegovy.</div>
+          </div>
+          <div class="chart-note reveal" style="--d:.36s">
+            <div class="n">+125%</div>
+            <div class="t">Mounjaro YoY in Q1 2026, vs Ozempic <b>−8%</b>. Momentum, not just size, has flipped to Lilly.</div>
+          </div>
+          <div style="font-size:14px; color:var(--ink-3); margin-top:26px; line-height:1.5; font-weight:500;">*Ozempic Q1'26 is an <b style="color:var(--ink-2)">estimate</b> derived from Novo's reported mix (Ozempic −8% YoY); Novo reports in DKK. Bars 3 use a 0–100% right axis for growth. Injectable Wegovy DKK 18.2B converted at the DKK/USD rate implied by Novo's pill disclosure (~6.4).</div>
+        </div>
+      </div>
+      <div class="footer"><div class="src"><b>Sources:</b> Lilly Q1-2026 release; Novo Nordisk Q1-2026 6-K; Motley Fool (Jan 2026). USD conversions and Ozempic split are estimates — flagged.</div><div class="pg">06 / 13</div></div>
+    </section>
+
+    <!-- ============================================================ SLIDE 7 · PIPELINE -->
+    <section class="slide">
+      <div class="rail"></div>
+      <div class="slide-head">
+        <div class="eyebrow reveal"><span class="num">06 / </span>The Pipeline Race</div>
+        <h1 class="h-title reveal" style="--d:.08s">The challengers: oral pills, new mechanisms, new geographies</h1>
+      </div>
+      <table class="ptable reveal" style="--d:.14s">
+        <thead>
+          <tr><th style="width:24%">Drug</th><th style="width:20%">Company</th><th style="width:20%">Mechanism / route</th><th class="c" style="width:16%">Weight loss</th><th class="c" style="width:20%">Stage · 2026</th></tr>
+        </thead>
+        <tbody>
+          <tr class="hl">
+            <td class="drug">Foundayo <small>orforglipron</small></td>
+            <td class="co">Eli Lilly</td>
+            <td class="co">Oral GLP-1 · no food/water</td>
+            <td class="c"><span class="eff">~15%</span></td>
+            <td class="c"><span class="pill launched">Launched Apr 1</span></td>
+          </tr>
+          <tr>
+            <td class="drug">Wegovy pill <small>oral semaglutide 25mg</small></td>
+            <td class="co">Novo Nordisk</td>
+            <td class="co">Oral GLP-1</td>
+            <td class="c"><span class="eff grey">~14%</span></td>
+            <td class="c"><span class="pill launched">Launched Jan</span></td>
+          </tr>
+          <tr>
+            <td class="drug">CagriSema <small>cagrilintide + sema</small></td>
+            <td class="co">Novo Nordisk</td>
+            <td class="co">Amylin + GLP-1 · inj.</td>
+            <td class="c"><span class="eff">22.7%</span></td>
+            <td class="c"><span class="pill filed">FDA filed · dec late '26</span></td>
+          </tr>
+          <tr>
+            <td class="drug">MariTide <small>maridebart cafraglutide</small></td>
+            <td class="co">Amgen</td>
+            <td class="co">GLP-1/GIP · monthly inj.</td>
+            <td class="c"><span class="eff grey">~20%</span></td>
+            <td class="c"><span class="pill p3">Phase 3 · MARITIME</span></td>
+          </tr>
+          <tr>
+            <td class="drug">VK2735 <small>subcut. + oral</small></td>
+            <td class="co">Viking Therapeutics</td>
+            <td class="co">GLP-1/GIP · inj. + pill</td>
+            <td class="c"><span class="eff grey">14.7%</span></td>
+            <td class="c"><span class="pill p3">Phase 3 · VANQUISH</span></td>
+          </tr>
+          <tr>
+            <td class="drug">Petrelintide</td>
+            <td class="co">Roche / Zealand</td>
+            <td class="co">Amylin analog · inj.</td>
+            <td class="c"><span class="eff grey">10.7%</span></td>
+            <td class="c"><span class="pill p2">Ph2 · Ph3 call '26</span></td>
+          </tr>
+          <tr>
+            <td class="drug">Mazdutide</td>
+            <td class="co">Innovent / Lilly</td>
+            <td class="co">Glucagon/GLP-1 · inj.</td>
+            <td class="c"><span class="eff">20.1%</span></td>
+            <td class="c"><span class="pill china">Approved · China</span></td>
+          </tr>
+          <tr>
+            <td class="drug">Ribupatide</td>
+            <td class="co">Hengrui</td>
+            <td class="co">Oral GIP/GLP-1</td>
+            <td class="c"><span class="eff grey">12.1%</span></td>
+            <td class="c"><span class="pill p2">Phase 2 · China push</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="footer"><div class="src"><b>Sources:</b> FDA / Patient Care Online (Apr 2026); Novo REDEFINE 1; Amgen ADA 2025; Viking VENTURE/VANQUISH; Roche ZUPREME-1; Fierce Pharma (mazdutide, ribupatide). Weight-loss figures are trial-specific.</div><div class="pg">07 / 13</div></div>
+    </section>
+
+    <!-- ============================================================ SLIDE 8 · PRICING & ACCESS -->
+    <section class="slide">
+      <div class="rail"></div>
+      <div class="slide-head">
+        <div class="eyebrow reveal"><span class="num">07 / </span>Price &amp; Access</div>
+        <h1 class="h-title reveal" style="--d:.08s">The price reset — and the compounding fight</h1>
+      </div>
+      <div class="price-grid">
+        <div class="price-list">
+          <div style="font-size:16px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px" class="reveal" style="--d:.12s">Cash price / month · TrumpRx &amp; direct-to-consumer</div>
+          <div class="price-item reveal" style="--d:.16s">
+            <div class="drug">Wegovy pill<small>oral semaglutide · intro offer</small></div>
+            <div class="money"><div class="now">$149</div><div class="was">then $199/mo</div></div>
+          </div>
+          <div class="price-item reveal" style="--d:.2s">
+            <div class="drug">Wegovy / Ozempic injectable<small>by dose</small></div>
+            <div class="money"><div class="now">$199–350</div><div class="was">from list ~$1,000+</div></div>
+          </div>
+          <div class="price-item reveal" style="--d:.24s">
+            <div class="drug">Zepbound vials<small>LillyDirect · by dose</small></div>
+            <div class="money"><div class="now">$299–449</div><div class="was"><s>was $349–499</s></div></div>
+          </div>
+          <div class="price-item reveal" style="--d:.28s">
+            <div class="drug">Medicare beneficiaries<small>obesity + comorbidity · copay</small></div>
+            <div class="money"><div class="now">$50</div><div class="was">fixed monthly copay</div></div>
+          </div>
+        </div>
+        <div class="price-side">
+          <div class="pol-card reveal" style="--d:.22s">
+            <div class="lab">The deal</div>
+            <h4>Most-Favored-Nation pricing</h4>
+            <p>A Nov-2025 agreement between the Trump administration, <b>Lilly and Novo</b> tied U.S. GLP-1 prices toward the lowest developed-market level, launching via the <b>TrumpRx</b> portal — the driver behind the cuts above.</p>
+          </div>
+          <div class="pol-card light reveal" style="--d:.3s">
+            <div class="lab">The fight</div>
+            <h4>The compounding crackdown</h4>
+            <p>With shortages over, the <b>FDA moved (Apr 2026)</b> to strip semaglutide &amp; tirzepatide from the 503B bulk-compounding list — ending large-scale copies that had undercut brands. Now in <b>Fifth Circuit litigation</b>; 503A pharmacies may persist.</p>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><div class="src"><b>Sources:</b> TrumpRx / HealthFacts Journal (2026); CNBC (Dec 2025); NPR (May 6, 2026); AMCP; Orrick &amp; Pharmacy Times (May 2026); Courthouse News. Prices are intro/dose-dependent.</div><div class="pg">08 / 13</div></div>
+    </section>
+
+    <!-- ============================================================ SLIDE 9 · SHOCKWAVES -->
+    <section class="slide">
+      <div class="rail"></div>
+      <div class="slide-head">
+        <div class="eyebrow reveal"><span class="num">08 / </span>Second-Order Shockwaves</div>
+        <h1 class="h-title reveal" style="--d:.08s">The appetite lever reaches far past pharma</h1>
+      </div>
+      <div class="shock-grid">
+        <div class="shock reveal" style="--d:.14s">
+          <div class="ico">🛒</div>
+          <div class="sector">Food &amp; Beverage</div>
+          <div class="verdict dn">Structural headwind</div>
+          <div class="n dn">$30–55B</div>
+          <div class="metric">annual U.S. sales J.P. Morgan sees at risk by 2030</div>
+          <div class="desc">GLP-1 households cut grocery spend <b>~5–6%</b>; savory snacks ~−11%, sweet baked ~−7%. Nestlé, Danone, Coca-Cola pivot to <b>protein, fiber, low-sugar</b>.</div>
+        </div>
+        <div class="shock reveal" style="--d:.2s">
+          <div class="ico">🍟</div>
+          <div class="sector">Snacking</div>
+          <div class="verdict dn">Disrupted, not doomed</div>
+          <div class="n dn">−40–60%</div>
+          <div class="metric">reported drop in snack consumption among users</div>
+          <div class="desc">~70% of users cutting calories say they <b>snack less</b>. Winners tilt to bars, yogurt, high-protein &amp; sugar-free hydration — a mix shift, per AlixPartners.</div>
+        </div>
+        <div class="shock reveal" style="--d:.26s">
+          <div class="ico">🔪</div>
+          <div class="sector">Bariatric Surgery</div>
+          <div class="verdict dn">Displacement</div>
+          <div class="n dn">−20%+</div>
+          <div class="metric">U.S. volumes; below 200k procedures in 2024</div>
+          <div class="desc">Procedures fell <b>~34% from 2022–2024</b> as GLP-1 use rose ~140%. The share of adults getting surgery roughly halved — programs are re-tooling around drugs.</div>
+        </div>
+        <div class="shock reveal" style="--d:.32s">
+          <div class="ico">🫁</div>
+          <div class="sector">Devices &amp; Comorbidity</div>
+          <div class="verdict up">New indication tailwind</div>
+          <div class="n up">OSA</div>
+          <div class="metric">Zepbound cleared for obstructive sleep apnea</div>
+          <div class="desc">Weight-loss drugs now reach <b>sleep apnea, cardiovascular &amp; MASH</b> — a double edge: expands the drug TAM, pressures CPAP / device franchises (Inspire, ResMed).</div>
+        </div>
+      </div>
+      <div class="footer"><div class="src"><b>Sources:</b> J.P. Morgan (2026); Food Business News; CNBC (Mar 2026); AlixPartners; JAMA Surgery / Becker's &amp; US News (May 2026); Harvard Chan School. Snacking figures are survey-reported.</div><div class="pg">09 / 13</div></div>
+    </section>
+
+    <!-- ============================================================ SLIDE 10 · SUPPLY -->
+    <section class="slide">
+      <div class="rail"></div>
+      <div class="slide-head">
+        <div class="eyebrow reveal"><span class="num">09 / </span>The Bottleneck</div>
+        <h1 class="h-title reveal" style="--d:.08s">Supply is the moat — and the war chest</h1>
+      </div>
+      <div class="supply-wrap">
+        <div class="supply-left">
+          <h3 class="reveal" style="--d:.12s">Announced manufacturing build-out</h3>
+          <div class="invest-row reveal" style="--d:.16s">
+            <div class="who"><div class="who-co">Novo Nordisk</div>Clayton, NC — 2nd fill/finish plant<small>1.4M sq ft · ~1,000 jobs · online 2027–29</small></div>
+            <div class="amt">$4.1B</div>
+          </div>
+          <div class="invest-row reveal" style="--d:.2s">
+            <div class="who"><div class="who-co">Eli Lilly</div>Alzey, Germany — injectables &amp; devices<small>GLP-1 / GIP production</small></div>
+            <div class="amt">$2.5B</div>
+          </div>
+          <div class="invest-row reveal" style="--d:.24s">
+            <div class="who"><div class="who-co">Eli Lilly</div>Concord, NC — doubled since 2022<small>obesity / diabetes capacity</small></div>
+            <div class="amt">$2.0B</div>
+          </div>
+          <div class="invest-row reveal" style="--d:.28s">
+            <div class="who"><div class="who-co">Eli Lilly</div>India — via regional contract partners<small>expand supply for emerging markets</small></div>
+            <div class="amt">$1.0B</div>
+          </div>
+        </div>
+        <div class="supply-right reveal" style="--d:.24s">
+          <div class="eyebrow2">Why it decides the race</div>
+          <h3>Making it is harder than approving it</h3>
+          <ul>
+            <li><span class="b">1</span><span>Injectable GLP-1s need <b>large, specialised capex</b> (fill/finish, device assembly) — a multi-year, multi-billion barrier that even generics face.</span></li>
+            <li><span class="b">2</span><span>The 2022–24 <b>shortage</b> is the cautionary tale: unmet demand fed compounders and eroded pricing power. Capacity is now the defence.</span></li>
+            <li><span class="b">3</span><span>Oral pills (orforglipron is <b>small-molecule</b>, not a peptide) ease this — cheaper to scale, no cold chain — reshaping who can supply the next 20M patients.</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer"><div class="src"><b>Sources:</b> BioProcess Intl; Xtalks; pharmaphorum; SEC 6-K (Novo Clayton, NC); J.P. Morgan Research (2026). Facility timelines per company announcements.</div><div class="pg">10 / 13</div></div>
+    </section>
+
+    <!-- ============================================================ SLIDE 11 · RISKS -->
+    <section class="slide">
+      <div class="rail"></div>
+      <div class="slide-head">
+        <div class="eyebrow reveal"><span class="num">10 / </span>What Can Break It</div>
+        <h1 class="h-title reveal" style="--d:.08s">Four risks that bound the thesis</h1>
+      </div>
+      <div class="risk-grid">
+        <div class="risk reveal" style="--d:.14s">
+          <div class="idx">01</div>
+          <div><h4>Adherence &amp; durability</h4><p><b>Over half discontinue within year one</b>; ~three-quarters by year two. Weight tends to return off-drug. GI side effects hit a large share; muscle-loss concerns are live. Real-world value hinges on staying on it.</p></div>
+        </div>
+        <div class="risk reveal" style="--d:.2s">
+          <div class="idx">02</div>
+          <div><h4>The patent cliff</h4><p>Semaglutide's core U.S. patent expires <b>2032</b> — but China's lapses <b>in 2026</b>, with India, Brazil, Canada following. Generic &ldquo;Nozempic&rdquo; supply in ex-U.S. markets is already reshaping Novo's 2026 guidance.</p></div>
+        </div>
+        <div class="risk reveal" style="--d:.26s">
+          <div class="idx">03</div>
+          <div><h4>Political pricing pressure</h4><p>The MFN deal cut U.S. list-adjacent prices hard. Further government leverage — Medicare, MFN extensions — could compress margins faster than volume growth offsets, especially for the injectable base.</p></div>
+        </div>
+        <div class="risk reveal" style="--d:.32s">
+          <div class="idx">04</div>
+          <div><h4>Crowding &amp; commoditisation</h4><p>Amgen, Roche, Viking and Chinese entrants (mazdutide, ribupatide) are massing behind the leaders. As efficacy converges near ~20%, differentiation narrows to <b>price, route and side-effects</b> — a margin risk for everyone.</p></div>
+        </div>
+      </div>
+      <div class="footer"><div class="src"><b>Sources:</b> AJMC; ScienceDirect; PMC adherence studies (2025–26); Grand View Research &amp; C&amp;EN (patent cliff); Novo Nordisk Q1-2026 guidance; company pipelines.</div><div class="pg">11 / 13</div></div>
+    </section>
+
+    <!-- ============================================================ SLIDE 12 · OUTLOOK -->
+    <section class="slide">
+      <div class="rail"></div>
+      <div class="slide-head">
+        <div class="eyebrow reveal"><span class="num">11 / </span>The Outlook</div>
+        <h1 class="h-title reveal" style="--d:.08s">Where this goes — a reasoned view</h1>
+      </div>
+      <div class="out-grid">
+        <div class="out-left">
+          <p class="lead reveal" style="--d:.12s">The gold rush is <em>real, not a bubble</em> — but the prize concentrates. Expect a durable duopoly, an oral-pill land-grab through 2027, and a widening gap between whoever can <em>make it and defend the price</em>.</p>
+          <div class="out-projection reveal" style="--d:.2s">
+            <div class="row"><div class="l">Global incretin market, 2030</div><div class="r">$200B <small>· J.P.M.</small></div></div>
+            <div class="row"><div class="l">U.S. patients, 2030</div><div class="r">~30M <small>· from ~10M</small></div></div>
+            <div class="row"><div class="l">Market by 2035 (T2D + obesity)</div><div class="r">~$190B <small>· Morgan Stanley</small></div></div>
+            <div class="row"><div class="l">Semaglutide U.S. patent</div><div class="r">2032 <small>· China 2026</small></div></div>
+          </div>
+        </div>
+        <div class="out-calls">
+          <div class="call reveal" style="--d:.24s">
+            <div class="k">Call 01 · The leaders</div>
+            <h4>Lilly's lead widens; Novo's fight is the pill</h4>
+            <p>Tirzepatide's efficacy + <b>Foundayo's oral reach</b> compound Lilly's momentum. Novo's counter is the fastest oral-Wegovy ramp on record and CagriSema — a 2026 verdict.</p>
+          </div>
+          <div class="call reveal" style="--d:.3s">
+            <div class="k">Call 02 · The challengers</div>
+            <h4>Watch the pill &amp; the amylins</h4>
+            <p><b>Viking</b> as an M&amp;A / manufacturing prize; <b>Amgen's monthly</b> MariTide on convenience; Roche's amylin on tolerability; China as a volume &amp; price wildcard.</p>
+          </div>
+          <div class="call reveal" style="--d:.36s">
+            <div class="k">Call 03 · The adjacencies</div>
+            <h4>Price the shockwave, not just the drug</h4>
+            <p>F&amp;B mix-shift and device displacement are <b>slow-burn re-ratings</b> — position on the derivatives (protein, satiety, sleep) as much as the two pharma names.</p>
+          </div>
+        </div>
+        <div class="disclaimer reveal" style="--d:.42s"><b>Not investment advice.</b> This deck is an educational, journalistic synthesis of publicly available information as of 3 July 2026. Figures are drawn from cited third-party sources and may be estimates, subject to revision, or superseded. It is not a recommendation to buy, sell or hold any security. Do your own research and consult a licensed professional.</div>
+      </div>
+      <div class="footer"><div class="src"><b>Sources:</b> J.P. Morgan &amp; Morgan Stanley Research; company filings; Grand View Research. Forward figures are third-party projections, not the author's forecasts.</div><div class="pg">12 / 13</div></div>
+    </section>
+
+    <!-- ============================================================ SLIDE 13 · SOURCES -->
+    <section class="slide">
+      <div class="rail"></div>
+      <div class="slide-head">
+        <div class="eyebrow reveal"><span class="num">12 / </span>Sources</div>
+        <h1 class="h-title reveal" style="--d:.08s">Every dated figure, traced</h1>
+      </div>
+      <div class="src-grid">
+        <div class="src-item reveal" style="--d:.1s"><div class="n">01</div><div class="meta"><div class="pub">Eli Lilly — Q1 2026 results <span class="date">· Apr 2026</span></div><div class="url">investor.lilly.com · pharmaceutical-technology.com/news/eli-lilly-lifts-2026-revenue-guidance</div></div></div>
+        <div class="src-item reveal" style="--d:.13s"><div class="n">02</div><div class="meta"><div class="pub">Novo Nordisk — Q1 2026 (6-K &amp; earnings) <span class="date">· May 6 2026</span></div><div class="url">sec.gov · cnbc.com/2026/05/06/wegovy-glp1-weight-loss-novo-nordisk-earnings</div></div></div>
+        <div class="src-item reveal" style="--d:.16s"><div class="n">03</div><div class="meta"><div class="pub">J.P. Morgan Global Research — obesity drugs <span class="date">· 2026</span></div><div class="url">jpmorgan.com/insights/global-research/current-events/obesity-drugs</div></div></div>
+        <div class="src-item reveal" style="--d:.19s"><div class="n">04</div><div class="meta"><div class="pub">Morgan Stanley Research — GLP-1 market <span class="date">· 2026</span></div><div class="url">morganstanley.com/insights/articles/glp1-weight-loss-market-may-double-190-billion-2035</div></div></div>
+        <div class="src-item reveal" style="--d:.22s"><div class="n">05</div><div class="meta"><div class="pub">KFF — GLP-1 usage poll <span class="date">· Oct–Nov 2025</span></div><div class="url">kff.org/public-opinion/poll-1-in-8-adults-say-they-are-currently-taking-a-glp-1</div></div></div>
+        <div class="src-item reveal" style="--d:.25s"><div class="n">06</div><div class="meta"><div class="pub">FDA / Patient Care Online — orforglipron approval <span class="date">· Apr 2026</span></div><div class="url">patientcareonline.com/view/fda-approves-orforglipron-first-oral-glp-1</div></div></div>
+        <div class="src-item reveal" style="--d:.28s"><div class="n">07</div><div class="meta"><div class="pub">TrumpRx / HealthFacts Journal — pricing <span class="date">· 2026</span></div><div class="url">healthfactsjournal.com/trumprx-weight-loss-prices-glp1 · trumprx.gov</div></div></div>
+        <div class="src-item reveal" style="--d:.31s"><div class="n">08</div><div class="meta"><div class="pub">FDA compounding — Orrick / Pharmacy Times <span class="date">· May 2026</span></div><div class="url">orrick.com/en/Insights/2026/05/FDA-Moves-to-Shut-the-Door-on-Large-Scale-Compounding</div></div></div>
+        <div class="src-item reveal" style="--d:.34s"><div class="n">09</div><div class="meta"><div class="pub">CNBC / Food Business News — F&amp;B impact <span class="date">· Mar 2026</span></div><div class="url">cnbc.com/2026/03/21/glp-1-diets-restaurants-protein-fiber-weight-loss-drugs</div></div></div>
+        <div class="src-item reveal" style="--d:.37s"><div class="n">10</div><div class="meta"><div class="pub">JAMA Surgery / Becker's / US News — bariatric <span class="date">· May 2026</span></div><div class="url">beckershospitalreview.com/glp-1s/bariatric-surgery-volumes-continue-falling</div></div></div>
+        <div class="src-item reveal" style="--d:.4s"><div class="n">11</div><div class="meta"><div class="pub">BioProcess Intl / Xtalks / pharmaphorum — capacity <span class="date">· 2025–26</span></div><div class="url">bioprocessintl.com/facilities-capacity/eli-lilly-novo-nordisk-expand-operations</div></div></div>
+        <div class="src-item reveal" style="--d:.43s"><div class="n">12</div><div class="meta"><div class="pub">Fierce Pharma / PR Newswire — mazdutide, ribupatide <span class="date">· 2025–26</span></div><div class="url">fiercepharma.com · fiercebiotech.com/biotech/hengruis-glp-1gip-agonist</div></div></div>
+        <div class="src-item reveal" style="--d:.46s"><div class="n">13</div><div class="meta"><div class="pub">Grand View Research / C&amp;EN — patent cliff <span class="date">· 2025–26</span></div><div class="url">grandviewresearch.com/market-trends/semaglutide-market-navigating-patent-cliff</div></div></div>
+        <div class="src-item reveal" style="--d:.49s"><div class="n">14</div><div class="meta"><div class="pub">companiesmarketcap.com — LLY &amp; NVO valuations <span class="date">· Jun–Jul 2026</span></div><div class="url">companiesmarketcap.com/eli-lilly · /novo-nordisk</div></div></div>
+      </div>
+      <div class="src-foot reveal" style="--d:.52s"><b>Method:</b> figures pulled from company filings and primary reporting, cross-checked across ≥2 sources where non-obvious. Market-size and forward figures are third-party projections and vary by definition; currency conversions (DKK/USD) and the Ozempic Q1 split are estimates, flagged on-slide. Compiled by <b>Consultant · Split</b>, 3 July 2026. Not investment advice.</div>
+    </section>
+
+  </div>
+</div>
+
+<!-- chrome -->
+<div class="brandmark"><span class="dot"></span>The GLP-1 Gold Rush · Consultant / Split</div>
+<div class="nav-hint"><kbd>←</kbd><kbd>→</kbd> navigate · <kbd>F</kbd> fullscreen</div>
+
+<script>
+/* =========================================================
+   FIXED-STAGE SCALING + NAVIGATION
+   ========================================================= */
+(function () {
+  var stage = document.getElementById('stage');
+  var viewport = document.getElementById('viewport');
+  var progress = document.getElementById('progress');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var DESIGN_W = 1920, DESIGN_H = 1080;
+  var idx = 0;
+
+  /* Scale the 1920×1080 stage to fit the viewport, centered (letterbox) */
+  function fit() {
+    var vw = viewport.clientWidth, vh = viewport.clientHeight;
+    var scale = Math.min(vw / DESIGN_W, vh / DESIGN_H);
+    var x = (vw - DESIGN_W * scale) / 2;
+    var y = (vh - DESIGN_H * scale) / 2;
+    stage.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + scale + ')';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  function show(n) {
+    idx = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (s, i) { s.classList.toggle('active', i === idx); });
+    progress.style.width = ((idx + 1) / slides.length * 100) + '%';
+    if (location.hash !== '#' + (idx + 1)) history.replaceState(null, '', '#' + (idx + 1));
+  }
+  function next() { show(idx + 1); }
+  function prev() { show(idx - 1); }
+
+  /* Keyboard */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+    else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) { (document.documentElement.requestFullscreen || function(){})(); }
+      else { document.exitFullscreen(); }
+    }
+  });
+
+  /* Wheel (debounced) */
+  var wheelLock = false;
+  window.addEventListener('wheel', function (e) {
+    if (wheelLock) return;
+    if (Math.abs(e.deltaY) < 24 && Math.abs(e.deltaX) < 24) return;
+    wheelLock = true;
+    (e.deltaY > 0 || e.deltaX > 0) ? next() : prev();
+    setTimeout(function () { wheelLock = false; }, 620);
+  }, { passive: true });
+
+  /* Touch swipe */
+  var tx = 0, ty = 0;
+  window.addEventListener('touchstart', function (e) { tx = e.changedTouches[0].clientX; ty = e.changedTouches[0].clientY; }, { passive: true });
+  window.addEventListener('touchend', function (e) {
+    var dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) { dx < 0 ? next() : prev(); }
+  }, { passive: true });
+
+  /* Hash deep-link on load */
+  var start = parseInt((location.hash || '').replace('#', ''), 10);
+  show(isNaN(start) ? 0 : start - 1);
+})();
+</script>
+</body>
+</html>

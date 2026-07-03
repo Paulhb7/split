@@ -1,0 +1,220 @@
+/* ===========================================================================
+   Onboarding page 5 — HIRE YOUR TEAM (CastSpread.tsx). One spread, two faces
+   (final-flow board, p5), switched by the top-right candidate toggle:
+     · .face-cast   — the chromeless app page (base .cst-* rules);
+     · .face-spread — the framed editorial board (overrides at the bottom).
+   Inherits the .app / onboarding tokens (--brand, --line, --mono, --disp …);
+   every accent tracks --brand so the page follows the skin.
+   =========================================================================== */
+.cst-spread { position: relative; flex: 1; min-height: 0; display: grid; grid-template-columns: 1.08fr 1fr; gap: 42px; }
+
+/* the Spread/Cast candidate switcher — floats above the page content */
+.cst-toggle { position: absolute; top: -20px; right: 0; z-index: 6; display: flex; gap: 6px; }
+.cst-toggle button { font: 500 10px var(--mono); letter-spacing: 0.05em; padding: 5px 10px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--line); color: var(--dim); background: color-mix(in srgb, var(--ink) 72%, transparent); transition: 0.15s; }
+.cst-toggle button:hover { color: var(--text); border-color: var(--rim); }
+.cst-toggle button.on { color: var(--brand); border-color: color-mix(in srgb, var(--brand) 55%, var(--line));
+  background: color-mix(in srgb, var(--brand) 9%, transparent); }
+
+.cst-left { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding-right: 40px; border-right: 1px solid var(--line2); }
+.cst-eyebrow { font-family: var(--mono); font-size: 10.5px; font-weight: 500; letter-spacing: 0.24em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--brand) 78%, var(--dim)); margin-bottom: 14px; }
+.cst-statement { font-family: var(--disp); font-weight: 600; font-size: clamp(34px, 3.4vw, 44px); line-height: 1; letter-spacing: -0.02em; margin: 0; }
+.cst-statement .n { color: var(--brand); font-style: italic; }
+.cst-statement em { font-style: italic; color: var(--brand); }
+.cst-lede { font-size: 13.5px; line-height: 1.6; color: var(--dim); max-width: 430px; margin: 16px 0 0; }
+.cst-feature { flex: 1; min-height: 0; position: relative; margin-top: 22px; }
+.cst-hero { position: absolute; inset: 0; display: flex; flex-direction: column; opacity: 0; transform: translateY(14px) scale(0.99); pointer-events: none; }
+/* The card remounts (key=activeSlug) on selection/rotation, so it fades in
+   via an entrance animation rather than a class-toggle crossfade. */
+.cst-hero.show { opacity: 1; transform: none; pointer-events: auto; animation: cstHeroIn 0.5s cubic-bezier(0.2, 0.7, 0.2, 1); }
+@keyframes cstHeroIn { from { opacity: 0; transform: translateY(14px) scale(0.99); } to { opacity: 1; transform: none; } }
+.cst-hero-byline { display: flex; align-items: center; gap: 16px; flex: none; }
+.cst-hero-crest { width: 62px; height: 62px; border-radius: 15px; overflow: hidden; flex: none; border: 1px solid var(--line); box-shadow: 0 14px 34px -18px rgba(0,0,0,0.85); }
+.cst-hero-cat { font-family: var(--mono); font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--brand); }
+.cst-hero-name { font-family: var(--disp); font-weight: 600; font-size: 33px; line-height: 1; letter-spacing: -0.015em; margin-top: 5px; }
+.cst-hero-name.gen { font-style: italic; }
+.cst-hero-role { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); margin-top: 6px; }
+.cst-hero-voice { font-family: var(--disp); font-size: 20px; line-height: 1.46; font-weight: 400; color: var(--text); margin: 22px 0 0; position: relative; max-width: 440px; }
+.cst-hero-voice .mk { font-family: var(--disp); font-style: italic; font-size: 42px; color: color-mix(in srgb, var(--brand) 34%, transparent); position: absolute; left: -23px; top: -6px; }
+.cst-peek { flex: 1; min-height: 0; margin-top: 22px; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+  background: linear-gradient(165deg, color-mix(in srgb, var(--panel2) 80%, transparent), color-mix(in srgb, var(--ink) 55%, transparent));
+  box-shadow: 0 26px 60px -38px rgba(0,0,0,0.85); }
+.cst-peek-prev { flex: 1; min-height: 110px; position: relative; overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--brand) 8%, transparent), transparent 62%); border-bottom: 1px solid var(--line2); }
+.cst-peek-prev svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.cst-peek-meta { flex: none; padding: 13px 18px 15px; display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
+.cst-peek-type { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim2); display: flex; align-items: center; gap: 7px; }
+.cst-peek-type i { width: 5px; height: 5px; border-radius: 1.5px; background: var(--brand); }
+.cst-peek-title { font-family: var(--disp); font-size: 19px; font-weight: 600; letter-spacing: -0.01em; margin-top: 7px; line-height: 1.1; }
+.cst-peek-desc { font-size: 11.5px; color: var(--dim); margin-top: 3px; }
+.cst-peek-tag { font-family: var(--mono); font-size: 9px; color: var(--dim2); white-space: nowrap; padding-bottom: 2px; }
+.cst-rail { display: flex; align-items: center; gap: 9px; margin-top: 16px; flex: none; }
+.cst-pip { flex: none; width: 26px; height: 3px; border-radius: 2px; background: var(--line); cursor: pointer; position: relative; overflow: hidden; transition: 0.2s; border: 0; padding: 0; }
+.cst-pip:hover { background: var(--rim); }
+.cst-pip.on { background: color-mix(in srgb, var(--brand) 22%, transparent); }
+.cst-pip.on::after { content: ""; position: absolute; inset: 0; width: 0; background: var(--brand); animation: cstFill 5s linear forwards; }
+@keyframes cstFill { to { width: 100%; } }
+.cst-rail-lbl { font-family: var(--mono); font-size: 9.5px; color: var(--dim2); letter-spacing: 0.08em; margin-left: 4px; }
+.cst-rail-lbl b { color: var(--dim); font-weight: 500; }
+
+.cst-right { padding-left: 40px; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.cst-ix-head { display: flex; align-items: baseline; justify-content: space-between; flex: none; margin-bottom: 4px; }
+.cst-ix-head .h { font-family: var(--disp); font-size: 21px; font-weight: 600; }
+.cst-ix-head .ct { font-family: var(--mono); font-size: 10px; color: var(--dim2); }
+.cst-ix-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-right: 8px; margin-right: -8px; margin-top: 8px; }
+.cst-ix-cat { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim2); margin: 16px 2px 9px; display: flex; align-items: center; gap: 10px; }
+.cst-ix-cat:first-child { margin-top: 2px; }
+.cst-ix-cat::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line2), transparent); }
+.cst-ix-cat .c { color: var(--dim); }
+.cst-ix-cat .ct { color: var(--dim2); }
+.cst-ix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 14px; }
+
+/* Delos-style avatar cards — one full-body avatar per card, name + role over a
+   bottom gradient, ★ to hire. Source art is 3:4 so cover shows the whole figure
+   with no crop. Replaces the small avatar+text rows in the onboarding roster. */
+.cst-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(116px, 1fr)); gap: 12px; margin-top: 4px; }
+.face-spread .cst-cards { grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); }
+.cst-card { position: relative; aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden; padding: 0; cursor: pointer;
+  border: 1px solid var(--line2); background: color-mix(in srgb, var(--text) 3%, #0b0b0d); transition: transform .18s, border-color .18s, box-shadow .18s; }
+.cst-card:hover { border-color: var(--line); transform: translateY(-2px); }
+.cst-card.sel { border-color: color-mix(in srgb, var(--brand) 75%, var(--line)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 45%, transparent); }
+.cst-card.hired { border-color: color-mix(in srgb, var(--brand) 55%, var(--line)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 40%, transparent), 0 10px 26px -14px color-mix(in srgb, var(--brand) 60%, transparent); }
+.cst-card-img { width: 100%; height: 100%; object-fit: cover; object-position: center 10%; display: block; }
+.cst-card-cap { position: absolute; inset: auto 0 0 0; padding: 22px 10px 8px; text-align: left; display: flex; flex-direction: column; gap: 1px; pointer-events: none;
+  background: linear-gradient(to top, rgba(0,0,0,.85) 18%, rgba(0,0,0,.35) 62%, rgba(0,0,0,0)); }
+.cst-card-nm { font-size: 12.5px; font-weight: 650; letter-spacing: -0.01em; line-height: 1.1; color: #fff; }
+.cst-card.genius .cst-card-nm { font-family: var(--disp); font-style: italic; font-weight: 500; font-size: 13.5px; }
+.cst-card-kd { font-family: var(--mono); font-size: 8px; color: rgba(255,255,255,0.62); text-transform: uppercase; letter-spacing: 0.05em; }
+.cst-card-star { position: absolute; top: 6px; right: 7px; z-index: 2; font-size: 15px; line-height: 1; color: rgba(255,255,255,0.78); text-shadow: 0 1px 3px rgba(0,0,0,0.6); opacity: 0.9; transition: transform .12s; }
+.cst-card.hired .cst-card-star { color: var(--brand); opacity: 1; }
+.cst-card-star:hover { transform: scale(1.18); }
+
+/* ---- Stage layout (cast v2): big hero render on top, grid below ---- */
+.cst-spread.cst-stagev { display: block; overflow-y: auto; }
+.cst-stagev .cst-head { margin-bottom: 16px; }
+.cst-stage { display: grid; grid-template-columns: minmax(220px, 320px) 1fr; gap: 26px; align-items: center;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--text) 4%, transparent), transparent);
+  border: 1px solid var(--line); border-radius: 20px; padding: 0 30px 0 4px; overflow: hidden; min-height: 336px; margin-bottom: 10px; }
+.cst-stage-pic { position: relative; aspect-ratio: 3 / 4; max-height: 412px; margin: 22px 0; align-self: center;
+  border-radius: 16px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--hue) 32%, var(--line));
+  box-shadow: 0 24px 55px -22px color-mix(in srgb, var(--hue) 45%, #000); }
+.cst-stage-pic::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  box-shadow: inset 0 -70px 60px -50px color-mix(in srgb, var(--hue) 55%, transparent); }
+.cst-stage-img { width: 100%; height: 100%; object-fit: cover; object-position: center 8%; display: block; animation: cstFade .28s ease; }
+@keyframes cstFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.cst-stage-glow { display: none; }
+.cst-stage-info { padding: 26px 0; min-width: 0; }
+.cst-stage-tag { font: 9px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--hue); }
+.cst-stage-nm { font: 600 32px/1.03 -apple-system, sans-serif; letter-spacing: -.02em; margin: 8px 0 3px; color: var(--text); }
+.cst-stage-nm.gen { font-family: var(--disp); font-style: italic; font-weight: 500; font-size: 36px; }
+.cst-stage-role { font: 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--dim2); }
+.cst-stage-voice { font: italic 20px/1.42 var(--disp); color: #e9e2d2; margin: 16px 0; max-width: 46ch; }
+.cst-stage-voice .mk { color: var(--hue); font-size: 25px; margin-right: 2px; }
+.cst-stage-hire { margin-top: 8px; padding: 11px 22px; border-radius: 12px; cursor: pointer; font: 600 14px -apple-system;
+  border: 1px solid color-mix(in srgb, var(--hue) 45%, var(--line)); background: color-mix(in srgb, var(--hue) 16%, transparent); color: var(--text); transition: .15s; }
+.cst-stage-hire:hover { background: color-mix(in srgb, var(--hue) 26%, transparent); }
+.cst-stage-hire.on { background: var(--hue); color: #0b0b0d; border-color: var(--hue); }
+
+/* the maker's deliverables, in the stage */
+.cst-stage-work { margin: 18px 0 18px; }
+.cst-stage-work-lbl { font: 9px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim2); margin-bottom: 9px; }
+.cst-stage-work-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.cst-work-card { width: 154px; border: 1px solid var(--line2); border-radius: 11px; overflow: hidden; background: color-mix(in srgb, var(--text) 2%, transparent); transition: .16s; }
+.cst-work-card:hover { border-color: color-mix(in srgb, var(--hue) 45%, var(--line)); transform: translateY(-2px); }
+.cst-work-prev { height: 90px; overflow: hidden; position: relative; border-bottom: 1px solid var(--line2); }
+.cst-work-thumb { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+.cst-work-meta { padding: 7px 9px 9px; }
+.cst-work-type { font: 8px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--hue); display: flex; align-items: center; gap: 5px; }
+.cst-work-type i { width: 4px; height: 4px; border-radius: 50%; background: var(--hue); display: inline-block; }
+.cst-work-title { font-size: 12px; font-weight: 600; margin-top: 3px; line-height: 1.15; }
+
+.cst-roster { margin-top: 6px; }
+.cst-stagev .cst-cards { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); }
+
+/* per-agent hue on the cards (overrides the earlier --brand accents) */
+.cst-card::after { content: ""; position: absolute; inset: 0; border-radius: 14px; pointer-events: none; box-shadow: inset 0 0 0 0 var(--hue); transition: .2s; }
+.cst-card:hover { border-color: color-mix(in srgb, var(--hue) 55%, var(--line)); }
+.cst-card:hover::after { box-shadow: inset 0 -50px 44px -38px color-mix(in srgb, var(--hue) 55%, transparent); }
+.cst-card.sel, .cst-card.active { border-color: color-mix(in srgb, var(--hue) 78%, var(--line)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--hue) 48%, transparent); }
+.cst-card.hired { border-color: color-mix(in srgb, var(--hue) 58%, var(--line)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--hue) 42%, transparent), 0 12px 30px -16px color-mix(in srgb, var(--hue) 65%, transparent); }
+.cst-card.hired .cst-card-star { color: var(--hue); }
+
+@media (max-width: 720px) { .cst-stage { grid-template-columns: 1fr; padding: 0 16px 16px; } .cst-stage-pic { height: 290px; } }
+
+.cst-ix-cell { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; border: 1px solid transparent; transition: 0.16s;
+  width: 100%; text-align: left; font-family: inherit; color: var(--text); background: none; cursor: pointer; }
+.cst-ix-cell:hover { background: color-mix(in srgb, var(--text) 2%, transparent); border-color: var(--line2); }
+.cst-ix-cell:hover .cst-ix-star { opacity: 0.6; }
+.cst-ix-cell.hired { background: color-mix(in srgb, var(--brand) 11%, transparent); border-color: color-mix(in srgb, var(--brand) 30%, var(--line)); }
+/* Selected = the cell whose details fill the left panel (a ring, distinct from
+   the brand-fill of hired so a cell can read as both at once). */
+.cst-ix-cell.sel { border-color: color-mix(in srgb, var(--brand) 62%, var(--line)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 40%, transparent); }
+.cst-ix-crest { width: 28px; height: 28px; border-radius: 8px; overflow: hidden; flex: none; border: 1px solid var(--line2); }
+.cst-ix-nm { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.1; }
+.cst-ix-cell.genius .cst-ix-nm { font-family: var(--disp); font-style: italic; font-weight: 500; font-size: 14px; }
+.cst-ix-kd { font-family: var(--mono); font-size: 8.5px; color: var(--dim2); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+/* Empty ☆ is hidden by default (skill 9.F: no decorative marks on every row);
+   it fades in on hover, and the filled ★ shows for hired (real state). The
+   star is its own hire target, so it answers hover with brand + a nudge. */
+.cst-ix-star { margin-left: auto; flex: none; width: 22px; text-align: center; font-size: 13px; color: var(--dim2); opacity: 0; transition: 0.16s; }
+.cst-ix-star:hover { opacity: 1; color: var(--brand); transform: scale(1.15); }
+.cst-ix-cell.hired .cst-ix-star { color: var(--brand); opacity: 1; }
+
+/* Featured-maker Hire toggle (left column hero byline). */
+.cst-hero-hire { margin-left: auto; align-self: flex-start; flex: none; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em;
+  padding: 7px 12px; border-radius: 9px; cursor: pointer; transition: 0.16s; white-space: nowrap;
+  border: 1px solid color-mix(in srgb, var(--brand) 32%, var(--line)); background: color-mix(in srgb, var(--brand) 6%, transparent); color: color-mix(in srgb, var(--brand) 85%, var(--text)); }
+.cst-hero-hire:hover { border-color: color-mix(in srgb, var(--brand) 55%, var(--line)); background: color-mix(in srgb, var(--brand) 12%, transparent); }
+.cst-hero-hire.on { background: var(--brand); border-color: var(--brand); color: var(--ink); font-weight: 600; }
+.cst-recruit { margin-top: 18px; display: flex; align-items: center; gap: 13px; padding: 13px 15px; flex: none; text-align: left; width: 100%; font-family: inherit; color: var(--text);
+  border: 1px dashed color-mix(in srgb, var(--brand) 30%, var(--line)); border-radius: 13px; background: color-mix(in srgb, var(--brand) 5%, transparent); cursor: pointer; transition: 0.18s; }
+.cst-recruit:hover { border-color: color-mix(in srgb, var(--brand) 48%, var(--line)); background: color-mix(in srgb, var(--brand) 8%, transparent); }
+.cst-recruit-ic { width: 40px; height: 40px; border-radius: 11px; overflow: hidden; flex: none; border: 1px solid var(--line); }
+.cst-recruit b { font-size: 13.5px; }
+.cst-recruit .rn { font-family: var(--disp); font-style: italic; font-weight: 500; }
+.cst-recruit p { margin: 3px 0 0; font-size: 11.5px; color: var(--dim); line-height: 1.42; }
+.cst-recruit-cta { margin-left: auto; font-family: var(--mono); font-size: 10.5px; color: var(--brand); white-space: nowrap; }
+
+/* ── FACE A · the Spread (board) — framed hero, italic voice, 48px rows ── */
+.face-spread { grid-template-columns: 1.06fr 1fr; }
+.face-spread .cst-left { padding-right: 46px; }
+.face-spread .cst-statement { font-weight: 700; font-size: clamp(36px, 4.4vw, 52px); letter-spacing: -0.04em; line-height: 1.02; }
+.face-spread .cst-statement .n { color: inherit; font-style: italic; font-weight: 600; }
+.face-spread .cst-statement em { font-weight: 700; }
+.face-spread .cst-lede { max-width: 46ch; }
+.face-spread .cst-feature { min-height: 260px; margin-top: 26px; }
+.face-spread .cst-hero { padding: 24px 26px 22px; border: 1px solid var(--line); border-radius: 18px;
+  background: linear-gradient(165deg, color-mix(in srgb, var(--panel2) 88%, transparent), color-mix(in srgb, var(--ink2) 55%, transparent));
+  box-shadow: 0 34px 80px -48px rgba(0, 0, 0, 0.9); }
+.face-spread .cst-hero-name { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin-top: 6px; }
+.face-spread .cst-hero-name.gen { font-weight: 600; }
+.face-spread .cst-hero-voice { font-style: italic; font-size: clamp(19px, 1.85vw, 24px); line-height: 1.42; letter-spacing: -0.005em; max-width: 44ch; margin: 22px 0 18px; }
+.face-spread .cst-hero-voice .mk { left: -24px; top: -8px; font-size: 44px; color: color-mix(in srgb, var(--brand) 42%, transparent); }
+.face-spread .cst-peek { flex: none; margin-top: auto; border-radius: var(--r); }
+.face-spread .cst-peek-prev { flex: none; height: clamp(104px, 15vh, 168px); min-height: 0;
+  background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--brand) 7%, transparent), transparent 64%); }
+.face-spread .cst-peek-title { font-size: 18px; margin-top: 6px; }
+.face-spread .cst-rail { margin-top: 18px; }
+.face-spread .cst-pip.on { background: color-mix(in srgb, var(--brand) 30%, var(--line)); }
+.face-spread .cst-right { padding-left: 46px; }
+.face-spread .cst-ix-head .h { font-size: 20px; letter-spacing: -0.015em; }
+.face-spread .cst-ix-cat { margin: 18px 2px 9px; letter-spacing: 0.22em; }
+.face-spread .cst-ix-grid { gap: 6px 12px; }
+.face-spread .cst-ix-cell { height: 48px; padding: 6px 9px; }
+.face-spread .cst-ix-nm { font-size: 13.5px; }
+.face-spread .cst-recruit { margin-top: 16px; }
+
+@media (max-width: 1080px) {
+  .cst-spread { grid-template-columns: 1fr; gap: 24px; overflow-y: auto; }
+  .cst-left, .face-spread .cst-left { border-right: 0; padding-right: 0; }
+  .cst-right, .face-spread .cst-right { padding-left: 0; }
+  .cst-feature, .face-spread .cst-feature { min-height: 380px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cst-hero.show { animation: none; }
+  .cst-pip.on { background: var(--brand); }
+  .cst-pip.on::after { animation: none; }
+  .cst-ix-cell, .cst-ix-star { transition: none; }
+}

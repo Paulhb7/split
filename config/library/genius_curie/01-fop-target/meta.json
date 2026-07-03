@@ -1,0 +1,10 @@
+{
+  "expert": "genius_curie",
+  "key": "fop-target",
+  "type": "molecule",
+  "title": "The target — ACVR1, in 3D",
+  "desc": "The FOP receptor, mutated",
+  "brief": "An interactive 3D structural brief on ACVR1 / ALK2 (UniProt Q04771), the receptor kinase behind fibrodysplasia ossificans progressiva (OMIM 135100). It renders the real crystal structure of the ACVR1 kinase domain (RCSB PDB 3H9R, 2.35 A, co-crystallised with FKBP12 and the ATP-site inhibitor dorsomorphin) via 3Dmol.js with coordinates baked inline for offline use — a spectrum-coloured cartoon that highlights the R206H FOP mutation site (c.617G>A, at the end of the GS domain) in clinical crimson and the ATP-binding pocket in a restrained blue, with toggles for cartoon / surface / mutation / pocket / FKBP12 clamp / spin. A cited dossier rail explains what ACVR1 does, why R206H makes it hyperactive (weakened FKBP12 clamp plus Activin-A neofunction), why the ATP pocket is druggable, and the current inhibitor landscape as of July 2026 (zilurgisertib positive, fidrisertib failed, saracatinib, palovarotene).",
+  "da": "Structural-biology lab: cool near-white ground, graphite text, the protein carries the colour, one clinical crimson reserved only for the R206H mutation and a restrained blue for the ATP pocket; Inter Tight + JetBrains Mono, thin lab hairlines.",
+  "generated": "2026-07-03"
+}

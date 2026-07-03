@@ -48,7 +48,8 @@
             "group": "Start here",
             "pages": [
               "experts/overview",
-              "experts/choosing"
+              "experts/choosing",
+              "experts/dark-genius"
             ]
           },
           {
@@ -61,8 +62,7 @@
               "experts/super/data-analyst",
               "experts/super/engineer",
               "experts/super/designer",
-              "experts/super/influencer",
-              "experts/super/toscanini"
+              "experts/super/influencer"
             ]
           },
           {
@@ -111,8 +111,7 @@
             "group": "Runtime",
             "pages": [
               "concepts/the-wire",
-              "concepts/auth",
-              "concepts/memory"
+              "concepts/auth"
             ]
           }
         ]

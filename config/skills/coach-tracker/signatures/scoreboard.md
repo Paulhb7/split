@@ -4,7 +4,7 @@ name: Scoreboard / Race bib
 tagline: Brand-athletic look — condensed display, race-bib day-number, full-bleed color blocks, stadium accent.
 mood: athletic, bold, kinetic, populist
 references: Nike Run Club, New Balance, NYRR race posters, Strava segments
-default_for: coach_sport (race builds, event countdowns, 1RM pushes)
+default_for: training (race builds, event countdowns, 1RM pushes)
 also_consider_for: any tracker with a hard deadline and a daily number that grows
 palette: near-black + one stadium accent (lime-fluo, coral, neon-yellow)
 ---

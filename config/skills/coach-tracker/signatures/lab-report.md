@@ -4,7 +4,7 @@ name: Lab Report / clinical panel
 tagline: Vitals printout — clinical serif headers, mono numbers, hairline rules, in-zone / out-of-zone marks.
 mood: clinical, calm, disciplined, data-respectful
 references: Apple Health summary, blood-panel report, a Theranos-aesthetic done honestly, Cronometer
-default_for: coach_diet (cuts, recomps, accountability blocks)
+default_for: nutrition (cuts, recomps, accountability blocks)
 also_consider_for: any tracker where the daily signal is a measured intake (water, supplements, sleep duration)
 palette: near-white paper + deep teal accent (red only for out-of-zone)
 ---

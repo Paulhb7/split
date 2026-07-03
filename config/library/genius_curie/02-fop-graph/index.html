@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FOP — From Disease to Drug · a clinical knowledge graph</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<style>
+  :root{
+    /* Clinical ground — soft white / pale clinical gray. NOT dark. */
+    --paper:#f6f7f9;
+    --paper-2:#eef1f4;
+    --panel:#ffffff;
+    --ink:#1c2530;
+    --ink-2:#4a5765;
+    --ink-3:#7c8896;
+    --line:#dce1e7;
+    --line-2:#e9edf1;
+    --hair:#f0f3f6;
+
+    /* Entity palette — calm clinical hues */
+    --c-disease:#c0364a;   /* crimson  — the disease */
+    --c-gene:#3f4b9a;      /* indigo   — gene / mutation / protein */
+    --c-drug:#128a7d;      /* teal-green — drugs / therapeutics */
+    --c-pathway:#c98a1e;   /* amber    — signalling pathway */
+    --c-pheno:#5a6b7d;     /* slate    — phenotype / downstream biology */
+
+    --disease-soft:#f7e6e9;
+    --gene-soft:#e6e8f4;
+    --drug-soft:#e0f0ee;
+    --pathway-soft:#f6ecd8;
+    --pheno-soft:#e8ecf0;
+
+    --focus:#0f766e;
+    --shadow:0 1px 2px rgba(28,37,48,.05), 0 8px 30px rgba(28,37,48,.06);
+    --shadow-sm:0 1px 2px rgba(28,37,48,.06);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:"IBM Plex Sans", system-ui, sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 78% -10%, #ffffff 0%, rgba(255,255,255,0) 55%),
+      linear-gradient(180deg, #f8f9fb 0%, var(--paper) 100%);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    overflow:hidden;
+  }
+  .mono{font-family:"IBM Plex Mono", ui-monospace, monospace; font-feature-settings:"tnum" 1;}
+
+  /* ————— Shell ————— */
+  .app{
+    display:grid;
+    grid-template-columns: 1fr 372px;
+    grid-template-rows: auto 1fr;
+    height:100vh;
+    width:100vw;
+  }
+
+  header.top{
+    grid-column:1 / -1;
+    display:flex; align-items:flex-end; justify-content:space-between;
+    gap:24px;
+    padding:18px 26px 14px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#ffffff, #fbfcfd);
+    z-index:6;
+  }
+  .brand{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;}
+  .kicker{
+    font-size:10.5px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--ink-3); font-weight:600;
+  }
+  h1{
+    font-size:19px; font-weight:600; margin:0; letter-spacing:-.01em;
+    line-height:1;
+  }
+  h1 .sub{color:var(--ink-3); font-weight:400;}
+  .omim{
+    font-size:11.5px; color:var(--ink-2); border:1px solid var(--line);
+    background:var(--paper-2); border-radius:999px; padding:3px 9px;
+    text-decoration:none;
+  }
+  .omim:hover{border-color:#c9ccd2; color:var(--ink);}
+  .headmeta{
+    text-align:right; font-size:11px; color:var(--ink-3); line-height:1.5;
+    max-width:340px;
+  }
+  .headmeta b{color:var(--ink-2); font-weight:600;}
+
+  /* ————— About banner ————— */
+  .about{
+    grid-column:1 / -1;
+    margin:0; border-bottom:1px solid var(--line-2);
+    background:#fcfdfe;
+  }
+  .about > summary{
+    list-style:none; cursor:pointer; user-select:none;
+    display:flex; align-items:center; gap:10px;
+    padding:8px 26px; font-size:11.5px; color:var(--ink-2);
+  }
+  .about > summary::-webkit-details-marker{display:none}
+  .about > summary .chev{
+    font-size:10px; color:var(--ink-3); transition:transform .18s ease;
+  }
+  .about[open] > summary .chev{transform:rotate(90deg)}
+  .about > summary .lbl{font-weight:600; letter-spacing:.02em; color:var(--ink);}
+  .about > summary .hint{color:var(--ink-3); font-weight:400;}
+  .about .body{
+    padding:2px 26px 16px;
+    display:grid; grid-template-columns:repeat(4,1fr); gap:18px;
+    font-size:11.5px; color:var(--ink-2); line-height:1.5;
+  }
+  .about .body h4{
+    margin:0 0 4px; font-size:10px; text-transform:uppercase; letter-spacing:.14em;
+    color:var(--ink-3); font-weight:600;
+  }
+  @media (max-width:1080px){ .about .body{grid-template-columns:1fr 1fr;} }
+
+  /* ————— Graph stage ————— */
+  .stage{
+    position:relative; overflow:hidden;
+    background:
+      radial-gradient(900px 520px at 40% 44%, #ffffff 0%, rgba(255,255,255,0) 70%);
+  }
+  svg.graph{display:block; width:100%; height:100%; cursor:grab;}
+  svg.graph:active{cursor:grabbing;}
+
+  .grid-bg line{stroke:#eaeef2; stroke-width:1;}
+
+  .link{stroke:#c3ccd6; stroke-opacity:.9;}
+  .link.causal{stroke:#b9424f;}
+  .link.dim{stroke-opacity:.12;}
+  .link-label{
+    font-family:"IBM Plex Mono", monospace; font-size:8.5px;
+    fill:var(--ink-3); paint-order:stroke; stroke:#fbfcfd; stroke-width:3px;
+    stroke-linejoin:round; pointer-events:none; letter-spacing:.02em;
+  }
+  .link-label.dim{opacity:0}
+
+  .node{cursor:pointer;}
+  .node .shape{
+    stroke:#ffffff; stroke-width:1.6px;
+    transition:filter .15s ease, opacity .15s ease;
+    filter:drop-shadow(0 1px 1.5px rgba(28,37,48,.16));
+  }
+  .node:hover .shape{filter:drop-shadow(0 2px 5px rgba(28,37,48,.26));}
+  .node.dim{opacity:.16;}
+  .node.sel .shape{stroke:var(--ink); stroke-width:2.4px;}
+  .node .halo{fill:none; stroke-width:2px; opacity:0;}
+  .node.sel .halo{opacity:.5;}
+
+  .nlabel{
+    font-size:11px; font-weight:500; fill:var(--ink);
+    paint-order:stroke; stroke:#f7f9fb; stroke-width:3.4px; stroke-linejoin:round;
+    pointer-events:none; letter-spacing:-.005em;
+  }
+  .nlabel.sub{font-size:9.5px; fill:var(--ink-3); font-weight:400;}
+  .nlabel.dim{opacity:.18}
+
+  /* Approved-drug ring accent */
+  .node .approved-ring{fill:none; stroke:var(--c-drug); stroke-width:1.3px; stroke-dasharray:2 2.4; opacity:.85;}
+
+  /* ————— Controls (floating on stage) ————— */
+  .controls{
+    position:absolute; left:18px; top:16px; z-index:4;
+    display:flex; flex-direction:column; gap:10px; max-width:250px;
+  }
+  .card{
+    background:rgba(255,255,255,.92); backdrop-filter:blur(6px);
+    border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow-sm);
+  }
+  .filters{padding:11px 12px 12px;}
+  .filters .ftitle{
+    font-size:9.5px; text-transform:uppercase; letter-spacing:.16em;
+    color:var(--ink-3); font-weight:600; margin-bottom:9px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .filters .ftitle a{font-size:9.5px; color:var(--focus); text-decoration:none; letter-spacing:.02em; text-transform:none;}
+  .chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .chip{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11px; padding:5px 9px 5px 8px; border-radius:999px;
+    border:1px solid var(--line); background:#fff; color:var(--ink-2);
+    cursor:pointer; user-select:none; transition:all .13s ease; font-weight:500;
+    white-space:nowrap;
+  }
+  .chip:hover{border-color:#c4c9d0;}
+  .chip .dot{width:9px; height:9px; border-radius:3px; flex:0 0 auto;}
+  .chip.off{opacity:.4; background:var(--paper-2); text-decoration:line-through; text-decoration-color:var(--ink-3);}
+  .chip.mode{width:100%; justify-content:center; border-style:dashed;}
+  .chip.mode.active{background:#fdeef0; border-color:var(--c-disease); border-style:solid; color:var(--c-disease); text-decoration:none;}
+
+  .legend-note{
+    font-size:10px; color:var(--ink-3); line-height:1.5; padding:0 2px; margin-top:9px;
+    border-top:1px dashed var(--line-2); padding-top:8px;
+  }
+  .legend-note .sw{display:inline-block; vertical-align:middle; margin:0 3px;}
+
+  .searchwrap{padding:9px 10px;}
+  .searchwrap input{
+    width:100%; border:none; outline:none; background:transparent;
+    font-family:inherit; font-size:12px; color:var(--ink);
+  }
+  .searchwrap input::placeholder{color:var(--ink-3);}
+  .searchrow{display:flex; align-items:center; gap:8px;}
+  .searchrow .ic{color:var(--ink-3); font-size:12px;}
+
+  /* zoom buttons */
+  .zoom{position:absolute; right:14px; bottom:14px; z-index:4; display:flex; flex-direction:column; gap:6px;}
+  .zbtn{
+    width:30px; height:30px; border-radius:9px; border:1px solid var(--line);
+    background:rgba(255,255,255,.94); color:var(--ink-2); font-size:15px; cursor:pointer;
+    display:grid; place-items:center; box-shadow:var(--shadow-sm); line-height:1;
+  }
+  .zbtn:hover{color:var(--ink); border-color:#c4c9d0;}
+  .zbtn.sm{font-size:10px; letter-spacing:-.02em;}
+
+  .counter{
+    position:absolute; left:18px; bottom:14px; z-index:4;
+    font-size:10.5px; color:var(--ink-3);
+    background:rgba(255,255,255,.85); border:1px solid var(--line-2);
+    border-radius:8px; padding:4px 9px;
+  }
+  .counter b{color:var(--ink-2); font-weight:600;}
+
+  /* ————— Side panel ————— */
+  aside.panel{
+    border-left:1px solid var(--line);
+    background:linear-gradient(180deg,#ffffff,#fcfdfe);
+    display:flex; flex-direction:column;
+    height:100%; min-height:0;
+    box-shadow:-6px 0 24px rgba(28,37,48,.03);
+  }
+  .panel .scroll{overflow-y:auto; padding:20px 22px 26px; flex:1; min-height:0;}
+  .panel .scroll::-webkit-scrollbar{width:9px}
+  .panel .scroll::-webkit-scrollbar-thumb{background:#e2e7ec; border-radius:9px; border:2px solid #fff}
+
+  .empty{color:var(--ink-3); font-size:12.5px; line-height:1.65;}
+  .empty .big{
+    font-size:13px; color:var(--ink-2); font-weight:600; margin-bottom:8px;
+    letter-spacing:-.01em;
+  }
+  .empty ul{margin:14px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px;}
+  .empty li{display:flex; align-items:center; gap:10px; font-size:11.5px; color:var(--ink-2);}
+  .empty li .g{width:16px; height:16px; border-radius:5px; flex:0 0 auto; display:grid; place-items:center;}
+
+  .p-type{
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:10px; text-transform:uppercase; letter-spacing:.14em; font-weight:600;
+    padding:4px 10px; border-radius:999px; margin-bottom:12px;
+  }
+  .p-title{font-size:20px; font-weight:600; letter-spacing:-.015em; line-height:1.15; margin:0 0 3px;}
+  .p-alias{font-size:12px; color:var(--ink-3); margin:0 0 14px; line-height:1.4;}
+  .p-alias .mono{font-size:11.5px;}
+
+  .idrow{display:flex; flex-wrap:wrap; gap:6px; margin:0 0 16px;}
+  .idpill{
+    font-size:10.5px; color:var(--ink-2); border:1px solid var(--line);
+    background:var(--paper); border-radius:7px; padding:3px 8px;
+  }
+  .idpill b{color:var(--ink); font-weight:600;}
+
+  .p-desc{font-size:13px; line-height:1.62; color:var(--ink); margin:0 0 16px;}
+  .p-desc sup{color:var(--focus); font-weight:600; font-size:10px; padding-left:1px;}
+
+  .factgrid{display:grid; grid-template-columns:1fr 1fr; gap:9px; margin:0 0 16px;}
+  .fact{border:1px solid var(--line-2); border-radius:10px; padding:9px 11px; background:#fcfdfe;}
+  .fact .k{font-size:9.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-3); font-weight:600; margin-bottom:3px;}
+  .fact .v{font-size:12.5px; color:var(--ink); font-weight:500; line-height:1.3;}
+  .fact.wide{grid-column:1 / -1;}
+
+  .status-tag{
+    display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:600;
+    padding:3px 9px; border-radius:999px; margin-top:2px;
+  }
+  .status-tag .d{width:7px; height:7px; border-radius:50%;}
+  .st-approved{background:#e2f3ef; color:#0c6f62;} .st-approved .d{background:#0c6f62;}
+  .st-p3{background:#e5f0e8; color:#2f6b40;} .st-p3 .d{background:#2f6b40;}
+  .st-p2{background:#fbf1dd; color:#8a5d10;} .st-p2 .d{background:#c98a1e;}
+  .st-fail{background:#f3e6e8; color:#953040;} .st-fail .d{background:#953040;}
+  .st-tool{background:#eceef4; color:#414c7c;} .st-tool .d{background:#5762a0;}
+
+  .rel-head{
+    font-size:10px; text-transform:uppercase; letter-spacing:.14em; color:var(--ink-3);
+    font-weight:600; margin:18px 0 9px; padding-top:14px; border-top:1px solid var(--line-2);
+  }
+  .rel{
+    display:flex; align-items:center; gap:9px; font-size:12px; padding:6px 0;
+    cursor:pointer; border-radius:8px; margin:0 -8px; padding-left:8px; padding-right:8px;
+    transition:background .12s ease;
+  }
+  .rel:hover{background:var(--paper-2);}
+  .rel .verb{
+    font-family:"IBM Plex Mono", monospace; font-size:9.5px; color:var(--ink-3);
+    text-transform:uppercase; letter-spacing:.04em; min-width:56px; text-align:right; flex:0 0 auto;
+  }
+  .rel .arrow{color:var(--ink-3); flex:0 0 auto; font-size:11px;}
+  .rel .tgt{display:flex; align-items:center; gap:7px; color:var(--ink); font-weight:500;}
+  .rel .tgt .g{width:11px; height:11px; border-radius:3px; flex:0 0 auto;}
+
+  .ref{
+    display:block; margin-top:16px; padding-top:14px; border-top:1px solid var(--line-2);
+    font-size:11.5px; line-height:1.55; color:var(--ink-2); text-decoration:none;
+  }
+  .ref .rlab{font-size:9.5px; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-3); font-weight:600; display:block; margin-bottom:5px;}
+  .ref .cite{color:var(--ink); border-bottom:1px solid #cfd6dd;}
+  .ref:hover .cite{border-color:var(--focus); color:var(--focus);}
+  .ref .src{color:var(--ink-3); font-style:italic;}
+  .ref .u{font-family:"IBM Plex Mono", monospace; font-size:10px; color:var(--focus); word-break:break-all; display:block; margin-top:3px;}
+
+  .disclaimer{
+    grid-column:1 / -1;
+    font-size:10.5px; color:var(--ink-3); text-align:center;
+    padding:7px 26px; border-top:1px solid var(--line-2);
+    background:#fbfcfd; letter-spacing:.01em;
+  }
+  .disclaimer b{color:var(--ink-2); font-weight:600;}
+
+  .madewith{color:var(--ink-3); opacity:.7; font-size:10px;}
+
+  @media (max-width:900px){
+    .app{grid-template-columns:1fr;}
+    aside.panel{position:fixed; right:0; top:0; width:340px; z-index:20;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══════════ Header ══════════ -->
+  <header class="top">
+    <div class="brand">
+      <div>
+        <div class="kicker">Curie · Split — a clinical knowledge graph</div>
+        <h1>FOP — From Disease to Drug <span class="sub">· the map, connected</span></h1>
+      </div>
+      <a class="omim mono" href="https://omim.org/entry/135100" target="_blank" rel="noopener">OMIM #135100</a>
+    </div>
+    <div class="headmeta">
+      <b>Fibrodysplasia ossificans progressiva</b> — one gene, one recurrent mutation,<br/>
+      a hyperactive receptor that turns muscle to bone. <b>32 entities · 5 classes.</b><br/>
+      Every drug, target &amp; trial is real and cited. Click a node to read why.
+    </div>
+  </header>
+
+  <!-- ══════════ About this (exec summary) ══════════ -->
+  <details class="about">
+    <summary>
+      <span class="chev">▶</span>
+      <span class="lbl">About this map</span>
+      <span class="hint">— why it exists, how to read it, what I assumed</span>
+    </summary>
+    <div class="body">
+      <div>
+        <h4>Why</h4>
+        A curated biomedical knowledge graph — a PrimeKG-style subgraph — that walks
+        the full arc of a single orphan disease: <b>disease → gene → mutation → protein
+        → pathway → biology → phenotype → drug</b>, so the mechanism and the therapeutic
+        pipeline are legible on one page.
+      </div>
+      <div>
+        <h4>Context</h4>
+        FOP (≈1 in 1,000,000) is driven by the recurrent <span class="mono">ACVR1</span>
+        <span class="mono">R206H</span> variant. The node set is hand-picked and each
+        drug, target and trial verified against OMIM, UniProt, RCSB PDB,
+        ClinicalTrials.gov and the primary literature (2013–2026).
+      </div>
+      <div>
+        <h4>How to use</h4>
+        Click any node → a cited explanation opens on the right with one real reference
+        and its neighbours. Filter by class in the top-left, or hit
+        <b>“Causal path only”</b> to isolate disease → drug. Drag nodes, scroll to zoom,
+        search by name.
+      </div>
+      <div>
+        <h4>What I assumed</h4>
+        Classic <span class="mono">R206H</span> FOP (not the atypical variants).
+        Drug status reflects the public record to <b>July 2026</b> — incl. garetosmab’s
+        positive phase-3 OPTIMA and the discontinued FALKON (fidrisertib). This is a
+        research/teaching map, <b>not medical advice</b>.
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════ Graph ══════════ -->
+  <section class="stage" id="stage">
+    <div class="controls">
+      <div class="card searchwrap">
+        <div class="searchrow">
+          <span class="ic mono">⌕</span>
+          <input id="search" type="text" placeholder="Search a node…" autocomplete="off" spellcheck="false" />
+        </div>
+      </div>
+      <div class="card filters">
+        <div class="ftitle"><span>Entity classes</span><a href="#" id="reset">reset</a></div>
+        <div class="chips" id="typeChips"></div>
+        <div class="chips" style="margin-top:9px;">
+          <span class="chip mode" id="causalMode"><span class="dot" style="background:var(--c-disease)"></span>Causal path only</span>
+        </div>
+        <div class="legend-note">
+          Shapes encode class: disease <b>◆</b>, gene/protein <b>●</b>, pathway <b>▲</b>,
+          phenotype <b>■</b>, drug <b>⬢</b>. A dashed teal ring marks an
+          <b>approved</b> therapy. Red edges are the causal chain.
+        </div>
+      </div>
+    </div>
+    <svg class="graph" id="svg"></svg>
+    <div class="zoom">
+      <button class="zbtn" id="zin" title="Zoom in">+</button>
+      <button class="zbtn" id="zout" title="Zoom out">−</button>
+      <button class="zbtn sm" id="zfit" title="Fit to view">fit</button>
+    </div>
+    <div class="counter"><b id="cShown">0</b> shown · <span id="cEdges">0</span> relations</div>
+  </section>
+
+  <!-- ══════════ Side panel ══════════ -->
+  <aside class="panel">
+    <div class="scroll" id="panel">
+      <!-- filled by JS -->
+    </div>
+  </aside>
+
+  <!-- ══════════ Footer ══════════ -->
+  <div class="disclaimer">
+    <b>Research &amp; education, not medical advice.</b> Curated by Curie · Split from public
+    sources (OMIM · UniProt · RCSB PDB · ClinicalTrials.gov · PubMed · IFOPA), verified to July 2026.
+    Consult a qualified clinician for any medical decision. &nbsp;·&nbsp;
+    <span class="madewith">Made with Split</span>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   FOP knowledge graph — curated nodes & edges.
+   Every id/mutation/structure/drug/trial below is verified against a real
+   source; each node carries an inline citation shown in the side panel.
+   ══════════════════════════════════════════════════════════════════════ */
+
+const TYPES = {
+  disease: { label:"Disease",           color:"var(--c-disease)", hex:"#c0364a", soft:"#f7e6e9", shape:"diamond" },
+  gene:    { label:"Gene · Protein",    color:"var(--c-gene)",    hex:"#3f4b9a", soft:"#e6e8f4", shape:"circle"  },
+  pathway: { label:"Pathway · Signal",  color:"var(--c-pathway)", hex:"#c98a1e", soft:"#f6ecd8", shape:"triangle"},
+  pheno:   { label:"Phenotype · Biology",color:"var(--c-pheno)",  hex:"#5a6b7d", soft:"#e8ecf0", shape:"square"  },
+  drug:    { label:"Drug · Therapeutic",color:"var(--c-drug)",    hex:"#128a7d", soft:"#e0f0ee", shape:"hex"     }
+};
+
+// ——— NODES ———
+const NODES = [
+  /* DISEASE */
+  { id:"fop", type:"disease", label:"FOP", alias:"Fibrodysplasia ossificans progressiva",
+    r:24, size:"L",
+    ids:[["OMIM","135100"],["ORPHA","337"],["prevalence","≈1 / 1,000,000"]],
+    desc:"An ultra-rare heritable disorder of connective tissue in which soft tissue — muscle, tendon, ligament, fascia — progressively turns to bone through endochondral ossification. Prevalence is about 1 in a million; more than 97% of affected people carry a single recurrent activating variant in <i>ACVR1</i>.<sup>1</sup> It is congenital, relentless and, at present, incurable.",
+    facts:[["Inheritance","Autosomal dominant (mostly de novo)"],["Cardinal signs","Great-toe malformation + progressive HO"],["Onset","HO flares from the first decade"],["Median survival","≈ 40 years (thoracic insufficiency)"]],
+    ref:{cite:"Kaplan FS, et al. Fibrodysplasia Ossificans Progressiva. GeneReviews®. NCBI Bookshelf.", src:"University of Washington, Seattle (2020, updated).", url:"https://www.ncbi.nlm.nih.gov/books/NBK558090/"} },
+
+  /* GENE / PROTEIN */
+  { id:"acvr1", type:"gene", label:"ACVR1", alias:"Activin A receptor type 1 — the causal gene",
+    r:19, size:"M",
+    ids:[["Gene ID","90"],["OMIM","102576"],["locus","2q24.1"]],
+    desc:"The gene mutated in FOP. <i>ACVR1</i> encodes ALK2, a type-I BMP receptor serine/threonine kinase. The classic FOP variant lies here; all other FOP-causing variants also fall in its GS or kinase domain.<sup>1</sup> One gene, one dominant mechanism — which is exactly what makes FOP a clean drug target.",
+    facts:[["Encodes","ALK2 (BMP type-I receptor)"],["Class","Ser/Thr protein kinase"],["FOP variants","GS domain or kinase domain"],["Chromosome","2q24.1"]],
+    ref:{cite:"NCBI Gene: ACVR1 activin A receptor type 1 [Homo sapiens].", src:"National Center for Biotechnology Information.", url:"https://www.ncbi.nlm.nih.gov/gene/90"} },
+
+  { id:"r206h", type:"gene", label:"R206H", alias:"c.617G>A · p.Arg206His — the recurrent mutation",
+    r:20, size:"M",
+    ids:[["cDNA","c.617G>A"],["protein","p.Arg206His"],["domain","GS domain"]],
+    desc:"The single nucleotide change that causes ~97% of FOP. A G→A substitution at cDNA position 617 swaps arginine for histidine at residue 206, inside the glycine-serine-rich (GS) regulatory domain of ALK2.<sup>1</sup> This is the defining lesion of classic FOP and the anchor of every mechanistic hypothesis on this map.",
+    facts:[["Substitution","Arg → His at codon 206"],["Frequency","> 97% of FOP patients"],["Location","GS domain (regulatory)"],["Effect","Gain-of-function (constitutive)"]],
+    ref:{cite:"Shore EM, et al. A recurrent mutation in the BMP type I receptor ACVR1 causes inherited and sporadic fibrodysplasia ossificans progressiva. Nat Genet 38:525–527.", src:"Nature Genetics (2006).", url:"https://pubmed.ncbi.nlm.nih.gov/16642017/"} },
+
+  { id:"alk2", type:"gene", label:"ALK2 receptor", alias:"The BMP type-I receptor protein",
+    r:18, size:"M",
+    ids:[["UniProt","Q04771"],["length","509 aa"],["PDB (ref)","4C02"]],
+    desc:"The protein product of <i>ACVR1</i> — activin receptor-like kinase 2, a single-pass transmembrane receptor with an extracellular ligand domain, a GS regulatory domain and an intracellular kinase.<sup>1</sup> Its experimental structure (kinase domain bound to FKBP12.6 and the tool inhibitor dorsomorphin) is solved at 2.17 Å in PDB 4C02.<sup>2</sup> Its druggable ATP pocket is where the ALK2-inhibitor programmes aim.",
+    facts:[["UniProt","Q04771 (human)"],["Architecture","ECD · TM · GS · kinase"],["Structure","PDB 4C02 · 2.17 Å"],["Druggable site","ATP-binding pocket"]],
+    ref:{cite:"RCSB PDB 4C02 — Crystal structure of human ACVR1 (ALK2) in complex with FKBP12.6 and dorsomorphin. Chaikuad A, et al. J Biol Chem 287:36990 (2012).", src:"RCSB Protein Data Bank / UniProt Q04771.", url:"https://www.rcsb.org/structure/4C02"} },
+
+  { id:"fkbp12", type:"gene", label:"FKBP12", alias:"FKBP1A — the receptor's brake",
+    r:14, size:"S",
+    ids:[["UniProt","P62942"],["gene","FKBP1A"],["role","inhibitory chaperone"]],
+    desc:"An immunophilin that clamps the GS domain of ALK2 and silences the receptor in the absence of ligand — the molecular brake. The R206H substitution weakens FKBP12 binding, so the receptor leaks signal without proper stimulation.<sup>1</sup> Losing this brake is a core part of why the mutant receptor is constitutively active.",
+    facts:[["Gene","FKBP1A (FKBP-12)"],["Function","Silences ALK2 at rest"],["In FOP","Binding to GS domain reduced"],["Consequence","Leaky BMP signalling"]],
+    ref:{cite:"Groppe JC, et al. In vitro analyses of the dysregulated R206H ACVR1 kinase in FOP. J Bone Miner Res 26:S1 / Chaikuad A, et al. J Biol Chem 287:36990.", src:"Journal of Biological Chemistry (2012).", url:"https://pubmed.ncbi.nlm.nih.gov/22936801/"} },
+
+  /* PATHWAY / SIGNAL */
+  { id:"bmp", type:"pathway", label:"BMP signalling", alias:"Bone morphogenetic protein ligands",
+    r:16, size:"M",
+    ids:[["family","TGF-β superfamily"],["receptor","ALK2 (type I)"]],
+    desc:"The bone-forming arm of the TGF-β superfamily. BMP ligands engage type-I receptors like ALK2 to drive skeletal patterning. In FOP the mutant receptor amplifies this signal and — critically — becomes responsive to the wrong ligand (activin A), converting a normal developmental pathway into a bone-forming pathology.<sup>1</sup>",
+    facts:[["Superfamily","TGF-β"],["Type-I receptor","ALK2 / ACVR1"],["Effector","SMAD1/5/8"],["In FOP","Over-active + mis-activated"]],
+    ref:{cite:"Katagiri T, Tsukamoto S, Kuratani M. Accumulated knowledge of the mechanism of FOP: hopes for future therapies. J Oral Biosci / Bone Res.", src:"Reactome pathway R-HSA-201451 (BMP signaling).", url:"https://reactome.org/content/detail/R-HSA-201451"} },
+
+  { id:"activinA", type:"pathway", label:"Activin A", alias:"INHBA — the aberrant agonist",
+    r:16, size:"M",
+    ids:[["gene","INHBA"],["UniProt","P08476"],["normal role","antagonist"]],
+    desc:"The pivotal insight of the last decade. Activin A normally <i>antagonises</i> ALK2, but the R206H mutant receptor treats it as an <i>agonist</i>, so inflammation-driven activin A ignites heterotopic bone.<sup>1</sup> This neofunction is the rationale for garetosmab (anti-activin-A) and reframes FOP flares as an activin-A–driven disease.",
+    facts:[["Gene","INHBA (activin βA)"],["Normal effect","Antagonist of ALK2"],["On R206H","Acts as agonist (neofunction)"],["Drug target","Garetosmab (mAb)"]],
+    ref:{cite:"Hatsell SJ, et al. ACVR1R206H receptor mutation causes FOP by imparting responsiveness to activin A. Sci Transl Med 7:303ra137.", src:"Science Translational Medicine (2015).", url:"https://pubmed.ncbi.nlm.nih.gov/26333933/"} },
+
+  { id:"smad", type:"pathway", label:"SMAD1/5/8", alias:"The intracellular effector cascade",
+    r:15, size:"M",
+    ids:[["effectors","SMAD1/5/8"],["co-SMAD","SMAD4"],["output","BMP target genes"]],
+    desc:"The signal ALK2 sends inward. Activated ALK2 phosphorylates SMAD1, SMAD5 and SMAD8, which partner with SMAD4 and enter the nucleus to switch on osteogenic genes.<sup>1</sup> R206H drives excess pSMAD1/5/8 even at rest — the measurable readout of the disease, and the node most therapies aim to lower.",
+    facts:[["Phosphorylated by","ALK2 kinase"],["Partners","SMAD4 (co-SMAD)"],["Readout","pSMAD1/5/8 levels"],["In FOP","Elevated / ligand-independent"]],
+    ref:{cite:"Kaplan FS, et al. The medical management of FOP; Katagiri T. Recent topics in FOP. Endocrinol Metab — pSMAD1/5/8 as pathway readout.", src:"Reactome R-HSA-201451 · SMAD1/5/8 activation.", url:"https://reactome.org/content/detail/R-HSA-201451"} },
+
+  { id:"mtor", type:"pathway", label:"mTOR", alias:"An amplifying downstream node",
+    r:13, size:"S",
+    ids:[["pathway","PI3K–AKT–mTOR"],["drug","sirolimus"]],
+    desc:"A parallel amplifier of heterotopic ossification downstream of activin A / ALK2. Mouse work shows activin A initiates HO partly via mTOR, and the mTOR inhibitor rapamycin blunts it.<sup>1</sup> This is the mechanistic basis for repurposing sirolimus in FOP — an established drug hitting a downstream node rather than the receptor itself.",
+    facts:[["Pathway","PI3K–AKT–mTOR"],["Role in FOP","Amplifies HO"],["Inhibitor","Rapamycin / sirolimus"],["Evidence","Preclinical + phase 2"]],
+    ref:{cite:"Hino K, et al. Activin-A enhances mTOR signaling to promote aberrant chondrogenesis in FOP. J Clin Invest 127:3339–3352.", src:"Journal of Clinical Investigation (2017).", url:"https://pubmed.ncbi.nlm.nih.gov/28758906/"} },
+
+  { id:"rar", type:"pathway", label:"RARγ signalling", alias:"Retinoic-acid receptor gamma",
+    r:13, size:"S",
+    ids:[["receptor","RARG"],["ligand","retinoids"]],
+    desc:"A regulatory brake on chondrogenesis. RARγ agonism suppresses the cartilage anlage that precedes heterotopic bone, and lowers BMP/ALK2 → SMAD1/5/8 signalling.<sup>1</sup> This is the target of palovarotene, the only approved FOP drug — it acts one axis away from the receptor, on the differentiation programme itself.",
+    facts:[["Receptor","RARγ (RARG)"],["Effect","Suppresses chondrogenesis"],["Downstream","Lowers pSMAD1/5/8"],["Drug","Palovarotene (agonist)"]],
+    ref:{cite:"Shimono K, et al. Potent inhibition of heterotopic ossification by nuclear retinoic acid receptor-γ agonists. Nat Med 17:454–460.", src:"Nature Medicine (2011).", url:"https://pubmed.ncbi.nlm.nih.gov/21460849/"} },
+
+  /* PHENOTYPE / DOWNSTREAM BIOLOGY */
+  { id:"ho", type:"pheno", label:"Heterotopic ossification", alias:"Extra-skeletal bone — the core lesion",
+    r:18, size:"M",
+    ids:[["HPO","HP:0011987"],["process","endochondral"]],
+    desc:"The defining pathology: mature, lamellar bone forming where it should not — in muscle and connective tissue — through an endochondral route (a cartilage template that is replaced by bone).<sup>1</sup> Each flare lays down a new ribbon of skeleton, progressively locking the body. It is the endpoint every FOP therapy is measured against (annualised HO volume by CT).",
+    facts:[["Route","Endochondral (via cartilage)"],["Trigger","Flares / inflammation / trauma"],["Measured by","Low-dose whole-body CT"],["HPO","HP:0011987"]],
+    ref:{cite:"Pignolo RJ, Shore EM, Kaplan FS. Fibrodysplasia ossificans progressiva: clinical and genetic aspects. Orphanet J Rare Dis 6:80.", src:"Orphanet Journal of Rare Diseases (2011).", url:"https://ojrd.biomedcentral.com/articles/10.1186/1750-1172-6-80"} },
+
+  { id:"chondro", type:"pheno", label:"Chondrogenesis", alias:"Aberrant cartilage formation",
+    r:14, size:"S",
+    ids:[["stage","pre-osseous"],["target","RARγ"]],
+    desc:"The cartilage intermediate. Before bone appears in a flare, connective-tissue progenitors commit to cartilage — an ectopic anlage that is then ossified.<sup>1</sup> Because this step gates the whole process, it is the point palovarotene (RARγ agonist) is designed to interrupt.",
+    facts:[["Position","Upstream of ossification"],["Cells","Connective-tissue progenitors"],["Drives","The cartilage template"],["Blocked by","RARγ agonism"]],
+    ref:{cite:"Lees-Shepard JB, et al. Activin-dependent signaling in fibro/adipogenic progenitors causes fibrodysplasia ossificans progressiva. Nat Commun 9:471.", src:"Nature Communications (2018).", url:"https://pubmed.ncbi.nlm.nih.gov/29396429/"} },
+
+  { id:"flare", type:"pheno", label:"Flare-ups", alias:"Painful pre-osseous inflammation",
+    r:14, size:"S",
+    ids:[["trigger","trauma / viral"],["cell","immune infiltrate"]],
+    desc:"The episodic inflammatory swellings that herald new bone. Often provoked by soft-tissue injury, intramuscular injections, or viral illness, a flare recruits immune cells and activin A, seeding the next ossification.<sup>1</sup> Reducing flares is a key secondary endpoint (garetosmab cut flare activity markedly).",
+    facts:[["Triggers","Trauma · injections · illness"],["Biology","Immune + activin-A driven"],["Risk","Warns of imminent HO"],["Caution","Biopsy/IM injection avoided"]],
+    ref:{cite:"Di Rocco M, et al.; and post-hoc LUMINA-1 flare analysis. J Bone Miner Res 39:1486–1495 (2024).", src:"Journal of Bone and Mineral Research.", url:"https://academic.oup.com/jbmr/article/39/10/1486/7746744"} },
+
+  { id:"halluxvalgus", type:"pheno", label:"Great-toe malformation", alias:"Congenital hallux valgus — the neonatal tell",
+    r:14, size:"S",
+    ids:[["HPO","HP:0001822"],["frequency","> 97%"]],
+    desc:"The one sign present at birth. A short, malformed, medially deviated great toe (monophalangism / hallux valgus) is found in over 97% of classic FOP and is the earliest diagnostic clue — years before the first ossifying flare.<sup>1</sup> Recognising it prevents catastrophic misdiagnosis and biopsy.",
+    facts:[["Sign","Malformed / short great toe"],["Frequency","> 97% of classic FOP"],["Timing","Present at birth"],["Value","Enables early diagnosis"]],
+    ref:{cite:"Kaplan FS, et al. Fibrodysplasia Ossificans Progressiva. GeneReviews®. NCBI Bookshelf (2020).", src:"University of Washington, Seattle.", url:"https://www.ncbi.nlm.nih.gov/books/NBK558090/"} },
+
+  { id:"ankylosis", type:"pheno", label:"Joint ankylosis", alias:"Progressive immobilisation",
+    r:13, size:"S",
+    ids:[["HPO","HP:0031013"],["course","cumulative"]],
+    desc:"The cumulative disability. As successive flares bridge joints with new bone, the skeleton fuses — a “second skeleton” that locks the spine, shoulders, hips and jaw, immobilising the person over decades.<sup>1</sup> This is why halting new HO, not reversing old bone, is the realistic therapeutic goal.",
+    facts:[["Mechanism","Bridging HO across joints"],["Pattern","Cranial→caudal, axial→append."],["Impact","Loss of mobility, jaw fusion"],["Goal","Prevent new bridges"]],
+    ref:{cite:"Pignolo RJ, et al. The natural history of flare-ups in FOP: a comprehensive global assessment. J Bone Miner Res 31:650–656.", src:"Journal of Bone and Mineral Research (2016).", url:"https://pubmed.ncbi.nlm.nih.gov/26480031/"} },
+
+  { id:"thoracic", type:"pheno", label:"Thoracic insufficiency", alias:"Restrictive chest disease",
+    r:13, size:"S",
+    ids:[["HPO","HP:0002094"],["outcome","life-limiting"]],
+    desc:"The leading cause of death. Ossification of the chest wall, costovertebral joints and paraspinal muscles restricts breathing, producing thoracic insufficiency syndrome and cardiorespiratory failure — the reason median survival is around 40 years.<sup>1</sup> It anchors the urgency behind disease-modifying therapy.",
+    facts:[["Mechanism","Rigid, ossified chest wall"],["Effect","Restrictive lung disease"],["Outcome","Cardiorespiratory failure"],["Median survival","≈ 40 years"]],
+    ref:{cite:"Kaplan FS, et al. Thoracic insufficiency syndrome in patients with FOP. Clin Rev Bone Miner Metab 3:213–216 / GeneReviews.", src:"NCBI Bookshelf — GeneReviews (2020).", url:"https://www.ncbi.nlm.nih.gov/books/NBK558090/"} },
+
+  /* DRUGS / THERAPEUTICS */
+  { id:"palovarotene", type:"drug", label:"Palovarotene", alias:"Sohonos™ — RARγ agonist", approved:true,
+    r:18, size:"M", status:"approved",
+    ids:[["brand","Sohonos"],["target","RARγ"],["trial","MOVE · NCT03312634"]],
+    desc:"The first and only approved FOP drug (FDA, Aug 2023). An oral selective RARγ agonist that suppresses the chondrogenic step and lowers BMP/ALK2→SMAD1/5/8 signalling, reducing new heterotopic bone.<sup>1</sup> In the phase-3 MOVE trial it cut annualised new-HO volume by ~54% (weighted analysis); premature growth-plate closure in children is its defining safety concern, and it remains unapproved in the EU.",
+    facts:[["Class","Oral RARγ agonist (retinoid)"],["Status","FDA-approved (2023)"],["Pivotal trial","MOVE · NCT03312634"],["Key risk","Premature growth-plate closure"]],
+    ref:{cite:"Pignolo RJ, et al. Reduction of new heterotopic ossification in the open-label, phase 3 MOVE trial of palovarotene for FOP. J Bone Miner Res 38:381–394.", src:"Journal of Bone and Mineral Research (2023).", url:"https://academic.oup.com/jbmr/article/38/3/381/7610246"} },
+
+  { id:"garetosmab", type:"drug", label:"Garetosmab", alias:"REGN2477 — anti-activin-A antibody", approved:false,
+    r:18, size:"M", status:"p3",
+    ids:[["code","REGN2477"],["target","Activin A"],["trial","OPTIMA · NCT05394116"]],
+    desc:"A fully human monoclonal antibody that neutralises activin A — the ligand that turns the mutant receptor on. In the phase-3 OPTIMA trial (63 adults) it reduced new HO lesions by 90–94% and lesion volume by >99% vs placebo, with no deaths reported.<sup>1</sup> Regeneron holds FDA Priority Review with a target action date in 2026 — the leading late-stage candidate on this map.",
+    facts:[["Class","Anti-activin-A mAb (IV)"],["Status","Phase 3 positive · under FDA review"],["Pivotal trial","OPTIMA · NCT05394116"],["Effect","90–94% fewer new HO lesions"]],
+    ref:{cite:"Regeneron. Positive Phase 3 OPTIMA trial in adults with FOP — garetosmab prevents >99% of abnormal bone volume (press release, 17 Sep 2025); Phase-2 in Nat Med 29:2615 (2023).", src:"Regeneron Investor / Nature Medicine.", url:"https://investor.regeneron.com/news-releases/news-release-details/regeneron-announces-positive-phase-3-trial-adults-ultra-rare"} },
+
+  { id:"saracatinib", type:"drug", label:"Saracatinib", alias:"AZD0530 — repurposed ALK2 inhibitor", approved:false,
+    r:16, size:"M", status:"p2",
+    ids:[["code","AZD0530"],["target","ALK2 kinase"],["trial","STOPFOP · NCT04307953"]],
+    desc:"A repurposing story: an oral Src/Abl kinase inhibitor from oncology found to be a potent (~5 nM) inhibitor of ALK2 and of R206H neofunction, blocking HO in mice.<sup>1</sup> Because it already cleared safety in cancer trials, it de-risks early FOP testing — the phase-2 STOPFOP trial (20 patients) reached primary completion in 2025; results are pending in the public record.",
+    facts:[["Class","Oral Src/ALK2 kinase inhibitor"],["Origin","Repurposed from oncology"],["Potency","ALK2 IC50 ≈ 5 nM"],["Trial","STOPFOP · NCT04307953 (P2)"]],
+    ref:{cite:"Williams E, et al.; STOPFOP protocol: Sanchez-Duffhues G, et al. BMC Musculoskelet Disord 23:519 — saracatinib inhibits ALK2 and prevents HO in FOP models.", src:"BMC Musculoskeletal Disorders (2022).", url:"https://bmcmusculoskeletdisord.biomedcentral.com/articles/10.1186/s12891-022-05471-x"} },
+
+  { id:"fidrisertib", type:"drug", label:"Fidrisertib", alias:"IPN60130 — selective ALK2 inhibitor", approved:false,
+    r:15, size:"S", status:"fail",
+    ids:[["code","IPN60130"],["target","mutant ALK2"],["trial","FALKON · NCT05039515"]],
+    desc:"An oral, highly selective inhibitor of pathogenic ALK2 variants — the receptor-targeted approach in its purest form. Despite strong rationale, the phase-2 FALKON trial (113 patients — the largest ever in FOP) missed its primary endpoint on annualised HO volume, and Ipsen discontinued the programme in December 2025.<sup>1</sup> It is included here as an honest negative: mechanism ≠ outcome.",
+    facts:[["Class","Selective mutant-ALK2 inhibitor"],["Status","Discontinued (Dec 2025)"],["Trial","FALKON · NCT05039515 (P2)"],["Outcome","Missed primary endpoint"]],
+    ref:{cite:"Ipsen. Update on Phase II FALKON trial of fidrisertib (IPN60130) in FOP — primary endpoint not met, study to be discontinued (19 Dec 2025).", src:"Ipsen press release / GlobeNewswire.", url:"https://www.globenewswire.com/news-release/2025/12/19/3208286/0/en/Ipsen-update-on-Phase-II-FALKON-trial-in-patients-with-ultra-rare-bone-disease-fibrodysplasia-ossificans-progressiva-FOP.html"} },
+
+  { id:"sirolimus", type:"drug", label:"Sirolimus", alias:"Rapamycin — repurposed mTOR inhibitor", approved:false,
+    r:15, size:"S", status:"p2",
+    ids:[["a.k.a.","Rapamycin"],["target","mTOR"],["setting","Japan phase 2"]],
+    desc:"An approved immunosuppressant repurposed at the mTOR node downstream of activin A. Rapamycin suppresses HO in FOP mouse models and is in a Japanese phase-2 trial, though isolated patient reports have been mixed.<sup>1</sup> A pragmatic, already-safe candidate that hits an amplifier rather than the receptor — a genuine repurposing lead, not a proven treatment.",
+    facts:[["Class","mTOR inhibitor (approved elsewhere)"],["Target node","mTOR (downstream of activin A)"],["Status","Phase 2 (Japan)"],["Evidence","Preclinical strong; clinical mixed"]],
+    ref:{cite:"Hino K, et al. Activin-A enhances mTOR signaling to promote aberrant chondrogenesis in FOP. J Clin Invest 127:3339 (2017); IFOPA rapamycin trial page.", src:"Journal of Clinical Investigation / IFOPA.", url:"https://pubmed.ncbi.nlm.nih.gov/28758906/"} },
+
+  { id:"ldn", type:"drug", label:"LDN-193189", alias:"Dorsomorphin derivative — research tool", approved:false,
+    r:13, size:"S", status:"tool",
+    ids:[["parent","dorsomorphin"],["target","ALK2/3"],["use","preclinical only"]],
+    desc:"Not a medicine — the tool compound that opened the field. A dorsomorphin-derived small molecule that inhibits BMP type-I receptors (ALK2 IC50 ≈ 5 nM) and blocks SMAD1/5/8 phosphorylation, used to validate ALK2 as a target and to model HO in mice.<sup>1</sup> It is on the map as the mechanistic probe that de-risked the clinical ALK2 inhibitors, with no path to the clinic itself.",
+    facts:[["Class","ALK2/3 inhibitor (chemical probe)"],["Use","Preclinical / research only"],["Potency","ALK2 IC50 ≈ 5 nM"],["Legacy","Validated ALK2 as a target"]],
+    ref:{cite:"Yu PB, et al. BMP type I receptor inhibition reduces heterotopic ossification. Nat Med 14:1363–1369; Cuny GD, et al. Bioorg Med Chem Lett 18:4388.", src:"Nature Medicine (2008).", url:"https://pubmed.ncbi.nlm.nih.gov/19029982/"} }
+];
+
+// ——— EDGES ——— (source, target, relation, causal?)
+const LINKS = [
+  // causal spine: mutation → gene → protein → pathway → biology → disease
+  ["r206h","acvr1","mutates", true],
+  ["acvr1","alk2","encodes", true],
+  ["r206h","alk2","alters", true],
+  ["alk2","bmp","transduces", true],
+  ["alk2","smad","phosphorylates", true],
+  ["bmp","smad","activates", true],
+  ["smad","chondro","drives", true],
+  ["chondro","ho","precedes", true],
+  ["ho","fop","defines", true],
+  ["r206h","fop","causes", true],
+
+  // activin-A neofunction arm
+  ["activinA","alk2","activates(mut)", true],
+  ["activinA","mtor","enhances", false],
+  ["mtor","chondro","amplifies", false],
+  ["activinA","flare","drives", false],
+  ["flare","ho","triggers", false],
+
+  // regulator
+  ["fkbp12","alk2","inhibits", false],
+  ["r206h","fkbp12","disrupts", false],
+
+  // downstream biology → phenotypes
+  ["ho","ankylosis","causes", false],
+  ["ankylosis","thoracic","causes", false],
+  ["fop","halluxvalgus","presents", false],
+  ["fop","flare","presents", false],
+
+  // pathway regulator RAR
+  ["rar","chondro","suppresses", false],
+
+  // drugs → targets  (treats / targets / inhibits)
+  ["palovarotene","rar","agonises", false],
+  ["palovarotene","fop","treats", false],
+  ["palovarotene","ho","reduces", false],
+
+  ["garetosmab","activinA","neutralises", false],
+  ["garetosmab","fop","treats", false],
+  ["garetosmab","ho","reduces", false],
+
+  ["saracatinib","alk2","inhibits", false],
+  ["saracatinib","fop","treats", false],
+
+  ["fidrisertib","alk2","inhibits", false],
+  ["fidrisertib","fop","treats", false],
+
+  ["sirolimus","mtor","inhibits", false],
+  ["sirolimus","fop","treats", false],
+
+  ["ldn","alk2","inhibits", false]
+];
+
+/* ════════════ RENDER ════════════ */
+const svgEl = document.getElementById("svg");
+const stage = document.getElementById("stage");
+let W = stage.clientWidth, H = stage.clientHeight;
+
+const svg = d3.select(svgEl).attr("viewBox",[0,0,W,H]);
+const defs = svg.append("defs");
+
+// subtle grid
+const gridG = svg.append("g").attr("class","grid-bg").attr("opacity",.55);
+function drawGrid(){
+  gridG.selectAll("*").remove();
+  const step=44;
+  for(let x=0;x<=W;x+=step) gridG.append("line").attr("x1",x).attr("y1",0).attr("x2",x).attr("y2",H);
+  for(let y=0;y<=H;y+=step) gridG.append("line").attr("x1",0).attr("y1",y).attr("x2",W).attr("y2",y);
+}
+drawGrid();
+
+const root = svg.append("g");
+const gLink = root.append("g");
+const gLinkLbl = root.append("g");
+const gNode = root.append("g");
+
+// node index + link objects
+const byId = Object.fromEntries(NODES.map(n=>[n.id,n]));
+const linkData = LINKS.map(([s,t,rel,causal])=>({source:s,target:t,rel,causal}));
+
+// adjacency for highlighting
+const adj = {}; NODES.forEach(n=>adj[n.id]=new Set());
+linkData.forEach(l=>{ adj[l.source].add(l.target); adj[l.target].add(l.source); });
+
+// ——— simulation ———
+const sim = d3.forceSimulation(NODES)
+  .force("link", d3.forceLink(linkData).id(d=>d.id).distance(l=>{
+      // disease + hubs sit a touch farther
+      const hub = (byId[typeof l.source==="object"?l.source.id:l.source].size==="L") ||
+                  (byId[typeof l.target==="object"?l.target.id:l.target].size==="L");
+      return l.causal ? (hub?128:104) : (hub?150:120);
+    }).strength(l=> l.causal ? .55 : .32))
+  .force("charge", d3.forceManyBody().strength(d=> d.size==="L"?-1150: d.size==="M"?-720:-460))
+  .force("collide", d3.forceCollide().radius(d=>d.r+22).strength(.9))
+  .force("center", d3.forceCenter(W/2, H/2))
+  .force("x", d3.forceX(W/2).strength(.045))
+  .force("y", d3.forceY(H/2).strength(.06));
+
+// ——— links ———
+const link = gLink.selectAll("line").data(linkData).join("line")
+  .attr("class", d=> "link"+(d.causal?" causal":""))
+  .attr("stroke-width", d=> d.causal? 1.7 : 1.1);
+
+// link labels
+const linkLbl = gLinkLbl.selectAll("text").data(linkData).join("text")
+  .attr("class","link-label")
+  .attr("text-anchor","middle")
+  .text(d=>d.rel);
+
+// ——— node shape generator ———
+function shapePath(sel){
+  sel.each(function(d){
+    const g=d3.select(this), t=TYPES[d.type], R=d.r;
+    g.selectAll(".shape,.approved-ring,.halo").remove();
+    // halo (selection)
+    let haloEl;
+    const mk = (tag)=>g.insert(tag, ":first-child");
+    if(t.shape==="circle"){
+      g.append("circle").attr("class","halo").attr("r",R+6).attr("stroke",t.hex);
+      g.append("circle").attr("class","shape").attr("r",R).attr("fill",t.hex);
+      if(d.approved) g.append("circle").attr("class","approved-ring").attr("r",R+4.5);
+    } else if(t.shape==="diamond"){
+      const p=`M0,${-R*1.32} L${R*1.16},0 L0,${R*1.32} L${-R*1.16},0 Z`;
+      g.append("path").attr("class","halo").attr("d",`M0,${-R*1.32-6} L${R*1.16+6},0 L0,${R*1.32+6} L${-R*1.16-6},0 Z`).attr("stroke",t.hex);
+      g.append("path").attr("class","shape").attr("d",p).attr("fill",t.hex);
+    } else if(t.shape==="square"){
+      const s=R*1.72;
+      g.append("rect").attr("class","halo").attr("x",-s/2-5).attr("y",-s/2-5).attr("width",s+10).attr("height",s+10).attr("rx",5).attr("stroke",t.hex);
+      g.append("rect").attr("class","shape").attr("x",-s/2).attr("y",-s/2).attr("width",s).attr("height",s).attr("rx",4).attr("fill",t.hex);
+    } else if(t.shape==="triangle"){
+      const p=trianglePts(R*1.28);
+      g.append("path").attr("class","halo").attr("d",trianglePts(R*1.28+6)).attr("stroke",t.hex);
+      g.append("path").attr("class","shape").attr("d",p).attr("fill",t.hex);
+    } else if(t.shape==="hex"){
+      const p=hexPts(R*1.12);
+      g.append("path").attr("class","halo").attr("d",hexPts(R*1.12+5.5)).attr("stroke",t.hex);
+      g.append("path").attr("class","shape").attr("d",p).attr("fill",t.hex);
+      if(d.approved) g.append("path").attr("class","approved-ring").attr("d",hexPts(R*1.12+4));
+    }
+  });
+}
+function trianglePts(R){ // rounded-ish equilateral pointing up
+  const a=[[0,-R],[R*0.95,R*0.72],[-R*0.95,R*0.72]];
+  return `M${a[0]} L${a[1]} L${a[2]} Z`.replace(/,/g,",").replace(/ /g," ");
+}
+function hexPts(R){
+  let pts=[];
+  for(let i=0;i<6;i++){ const ang=Math.PI/180*(60*i-30); pts.push([Math.cos(ang)*R, Math.sin(ang)*R]); }
+  return "M"+pts.map(p=>p.join(",")).join(" L")+" Z";
+}
+
+const node = gNode.selectAll("g.node").data(NODES).join("g")
+  .attr("class","node")
+  .call(shapePath)
+  .call(d3.drag()
+    .on("start",(e,d)=>{ if(!e.active) sim.alphaTarget(.3).restart(); d.fx=d.x; d.fy=d.y; })
+    .on("drag",(e,d)=>{ d.fx=e.x; d.fy=e.y; })
+    .on("end",(e,d)=>{ if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; }))
+  .on("click",(e,d)=>{ e.stopPropagation(); select(d.id); })
+  .on("mouseover",(e,d)=>{ if(!selected) hoverHi(d.id,true); })
+  .on("mouseout",(e,d)=>{ if(!selected) clearHi(); });
+
+// labels (name + optional sub)
+node.append("text").attr("class","nlabel").attr("text-anchor","middle")
+  .attr("dy", d=> d.r + 14)
+  .text(d=>d.label);
+node.append("text").attr("class","nlabel sub").attr("text-anchor","middle")
+  .attr("dy", d=> d.r + 25.5)
+  .text(d=> d.type==="drug" ? drugSub(d) : "");
+
+function drugSub(d){
+  return d.status==="approved" ? "approved" :
+         d.status==="p3" ? "phase 3" :
+         d.status==="p2" ? "phase 2" :
+         d.status==="fail" ? "discontinued" :
+         d.status==="tool" ? "research tool" : "";
+}
+
+// ——— tick ———
+sim.on("tick",()=>{
+  NODES.forEach(d=>{ d.x=Math.max(d.r+8, Math.min(W-d.r-8, d.x)); d.y=Math.max(d.r+8, Math.min(H-d.r-8, d.y)); });
+  link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);
+  linkLbl.attr("x",d=>(d.source.x+d.target.x)/2).attr("y",d=>(d.source.y+d.target.y)/2 - 2);
+  node.attr("transform",d=>`translate(${d.x},${d.y})`);
+});
+
+// ——— zoom ———
+const zoom = d3.zoom().scaleExtent([0.45, 3.2]).on("zoom",(e)=>{ root.attr("transform", e.transform); });
+svg.call(zoom).on("dblclick.zoom", null);
+document.getElementById("zin").onclick=()=>svg.transition().duration(220).call(zoom.scaleBy,1.3);
+document.getElementById("zout").onclick=()=>svg.transition().duration(220).call(zoom.scaleBy,1/1.3);
+document.getElementById("zfit").onclick=fitView;
+
+function fitView(){
+  const pad=70;
+  const xs=NODES.map(n=>n.x), ys=NODES.map(n=>n.y);
+  const x0=Math.min(...xs)-pad, x1=Math.max(...xs)+pad, y0=Math.min(...ys)-pad, y1=Math.max(...ys)+pad;
+  const w=x1-x0, h=y1-y0;
+  const k=Math.min(W/w, H/h, 1.6);
+  const tx=W/2 - k*(x0+x1)/2, ty=H/2 - k*(y0+y1)/2;
+  svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.translate(tx,ty).scale(k));
+}
+
+// ══════════ Highlight + selection ══════════
+let selected=null;
+
+function hoverHi(id, soft){
+  const keep=new Set([id, ...adj[id]]);
+  node.classed("dim", d=>!keep.has(d.id));
+  node.selectAll(".nlabel").classed("dim", function(){ return d3.select(this.parentNode).classed("dim"); });
+  link.classed("dim", d=> !(d.source.id===id||d.target.id===id));
+  linkLbl.classed("dim", d=> !(d.source.id===id||d.target.id===id));
+}
+function clearHi(){
+  if(activeCausal){ applyCausalView(); return; }
+  applyTypeFilter();
+  node.classed("dim",false).selectAll(".nlabel").classed("dim",false);
+  link.classed("dim",false); linkLbl.classed("dim",false);
+}
+
+function select(id){
+  selected=id;
+  node.classed("sel", d=>d.id===id);
+  hoverHi(id);
+  renderPanel(byId[id]);
+  // ensure it isn't hidden by filters
+}
+
+svg.on("click",()=>{ selected=null; node.classed("sel",false); clearHi(); renderEmpty(); });
+
+// ══════════ Side panel ══════════
+const panel=document.getElementById("panel");
+
+function verbArrow(){ return "→"; }
+
+function renderPanel(d){
+  const t=TYPES[d.type];
+  const outRel = linkData.filter(l=>l.source.id===d.id).map(l=>({v:l.rel, id:l.target.id, dir:"out"}));
+  const inRel  = linkData.filter(l=>l.target.id===d.id).map(l=>({v:l.rel, id:l.source.id, dir:"in"}));
+
+  let statusHtml="";
+  if(d.type==="drug"){
+    const map={approved:["st-approved","Approved"], p3:["st-p3","Phase 3 · positive"], p2:["st-p2","Phase 2"], fail:["st-fail","Discontinued"], tool:["st-tool","Research tool"]};
+    const [cls,txt]=map[d.status]||["st-tool","—"];
+    statusHtml=`<span class="status-tag ${cls}"><span class="d"></span>${txt}</span>`;
+  }
+
+  panel.innerHTML = `
+    <span class="p-type" style="background:${t.soft}; color:${t.hex};">
+      <span style="width:9px;height:9px;border-radius:${t.shape==='circle'?'50%':'2px'};background:${t.hex};display:inline-block;"></span>
+      ${t.label}
+    </span>
+    <div class="p-title">${d.label}</div>
+    <div class="p-alias">${d.alias}</div>
+    ${statusHtml? `<div style="margin:-6px 0 14px;">${statusHtml}</div>`:""}
+    <div class="idrow">
+      ${d.ids.map(([k,v])=>`<span class="idpill"><b>${k}</b> <span class="mono">${v}</span></span>`).join("")}
+    </div>
+    <div class="p-desc">${d.desc}</div>
+    ${d.facts? `<div class="factgrid">${d.facts.map(([k,v])=>`<div class="fact"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("")}</div>`:""}
+    ${(outRel.length||inRel.length)? `<div class="rel-head">Connections (${outRel.length+inRel.length})</div>`:""}
+    ${outRel.map(r=>relRow(r,d.id)).join("")}
+    ${inRel.map(r=>relRow(r,d.id)).join("")}
+    <a class="ref" href="${d.ref.url}" target="_blank" rel="noopener">
+      <span class="rlab">Reference</span>
+      <span class="cite">${d.ref.cite}</span><br/>
+      <span class="src">${d.ref.src}</span>
+      <span class="u">${d.ref.url}</span>
+    </a>
+  `;
+  panel.scrollTop=0;
+}
+
+function relRow(r, selfId){
+  const other=byId[r.id]; const t=TYPES[other.type];
+  const out = r.dir==="out";
+  return `<div class="rel" data-jump="${r.id}">
+    <span class="verb">${out? r.v : r.v}</span>
+    <span class="arrow">${out? "→":"←"}</span>
+    <span class="tgt"><span class="g" style="background:${t.hex}; border-radius:${t.shape==='circle'?'50%':'3px'};"></span>${other.label}</span>
+  </div>`;
+}
+
+panel.addEventListener("click",(e)=>{
+  const row=e.target.closest("[data-jump]");
+  if(row){ select(row.getAttribute("data-jump")); }
+});
+
+function renderEmpty(){
+  const items = Object.entries(TYPES).map(([k,t])=>{
+    const n = NODES.filter(x=>x.type===k).length;
+    return `<li><span class="g" style="background:${t.hex}; border-radius:${t.shape==='circle'?'50%':'3px'};"></span>
+      <span><b style="color:var(--ink)">${t.label}</b> · ${n} node${n>1?'s':''}</span></li>`;
+  }).join("");
+  panel.innerHTML = `
+    <div class="empty">
+      <div class="big">One disease, mapped end to end.</div>
+      This is the FOP knowledge graph — a curated <b>disease → gene → mutation → protein →
+      pathway → biology → phenotype → drug</b> subgraph in the spirit of PrimeKG.
+      <br/><br/>
+      Start with <b style="color:var(--c-disease)">FOP</b> (the crimson diamond) and follow the
+      red causal edges out to the approved and investigational therapies — or click any node to
+      read a short, cited explanation.
+      <ul>${items}</ul>
+      <div style="margin-top:16px; font-size:11px; color:var(--ink-3); line-height:1.6; border-top:1px dashed var(--line-2); padding-top:12px;">
+        Every drug, target and clinical trial here is real and verified to <b>July 2026</b>.
+        Nodes with a dashed teal ring are FDA-approved.
+      </div>
+    </div>`;
+}
+
+// ══════════ Filters (type chips + causal mode) ══════════
+const typeState = Object.fromEntries(Object.keys(TYPES).map(k=>[k,true]));
+let activeCausal=false;
+
+const chipWrap=document.getElementById("typeChips");
+Object.entries(TYPES).forEach(([k,t])=>{
+  const c=document.createElement("span");
+  c.className="chip"; c.dataset.type=k;
+  c.innerHTML=`<span class="dot" style="background:${t.hex}; border-radius:${t.shape==='circle'?'50%':'2px'};"></span>${t.label}`;
+  c.onclick=()=>{ typeState[k]=!typeState[k]; c.classList.toggle("off",!typeState[k]); if(activeCausal){activeCausal=false; document.getElementById("causalMode").classList.remove("active");} applyTypeFilter(); };
+  chipWrap.appendChild(c);
+});
+
+const causalIds = (()=>{ // nodes on any causal edge
+  const s=new Set(); linkData.forEach(l=>{ if(l.causal){ s.add(l.source.id||l.source); s.add(l.target.id||l.target);} });
+  return s;
+})();
+
+document.getElementById("causalMode").onclick=function(){
+  activeCausal=!activeCausal;
+  this.classList.toggle("active",activeCausal);
+  if(activeCausal) applyCausalView(); else { Object.keys(typeState).forEach(k=>typeState[k]=true); document.querySelectorAll(".chip[data-type]").forEach(c=>c.classList.remove("off")); applyTypeFilter(); }
+};
+
+document.getElementById("reset").onclick=(e)=>{
+  e.preventDefault();
+  Object.keys(typeState).forEach(k=>typeState[k]=true);
+  document.querySelectorAll(".chip[data-type]").forEach(c=>c.classList.remove("off"));
+  activeCausal=false; document.getElementById("causalMode").classList.remove("active");
+  document.getElementById("search").value="";
+  applyTypeFilter();
+  selected=null; node.classed("sel",false); renderEmpty();
+};
+
+function nodeVisibleByType(d){ return typeState[d.type]; }
+
+function applyTypeFilter(){
+  node.style("display", d=> nodeVisibleByType(d)? null:"none");
+  link.style("display", d=> (nodeVisibleByType(byId[d.source.id])&&nodeVisibleByType(byId[d.target.id]))? null:"none");
+  linkLbl.style("display", d=> (nodeVisibleByType(byId[d.source.id])&&nodeVisibleByType(byId[d.target.id]))? null:"none");
+  updateCounter();
+}
+
+function applyCausalView(){
+  node.style("display", d=> causalIds.has(d.id)? null:"none");
+  node.classed("dim", d=> !causalIds.has(d.id));
+  link.style("display", d=> d.causal? null:"none").classed("dim", d=>!d.causal);
+  linkLbl.style("display", d=> d.causal? null:"none").classed("dim", d=>!d.causal);
+  updateCounter();
+}
+
+function updateCounter(){
+  let ns=0, es=0;
+  node.each(function(){ if(this.style.display!=="none") ns++; });
+  link.each(function(){ if(this.style.display!=="none") es++; });
+  document.getElementById("cShown").textContent=ns;
+  document.getElementById("cEdges").textContent=es;
+}
+
+// ——— search ———
+const searchEl=document.getElementById("search");
+searchEl.addEventListener("input",()=>{
+  const q=searchEl.value.trim().toLowerCase();
+  if(!q){ node.selectAll(".shape").style("opacity",1); node.classed("dim",false).selectAll(".nlabel").classed("dim",false); if(activeCausal)applyCausalView(); return; }
+  const hit=new Set(NODES.filter(n=> (n.label+" "+n.alias+" "+(n.ids||[]).flat().join(" ")).toLowerCase().includes(q)).map(n=>n.id));
+  node.classed("dim", d=>!hit.has(d.id));
+  node.selectAll(".nlabel").classed("dim", function(){ return d3.select(this.parentNode).classed("dim"); });
+  link.classed("dim", d=> !(hit.has(d.source.id)&&hit.has(d.target.id)) );
+  linkLbl.classed("dim", d=> !(hit.has(d.source.id)&&hit.has(d.target.id)) );
+  if(hit.size===1){ const only=[...hit][0]; setTimeout(()=>select(only),0); }
+});
+searchEl.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ const q=searchEl.value.trim().toLowerCase(); const first=NODES.find(n=>(n.label+" "+n.alias).toLowerCase().includes(q)); if(first) select(first.id); } });
+
+// ——— init ———
+renderEmpty();
+updateCounter();
+// gentle settle then fit
+sim.alpha(1).restart();
+setTimeout(fitView, 900);
+
+// resize
+window.addEventListener("resize", ()=>{
+  W=stage.clientWidth; H=stage.clientHeight;
+  svg.attr("viewBox",[0,0,W,H]);
+  drawGrid();
+  sim.force("center", d3.forceCenter(W/2,H/2));
+  sim.force("x", d3.forceX(W/2).strength(.045));
+  sim.force("y", d3.forceY(H/2).strength(.06));
+  sim.alpha(.4).restart();
+});
+</script>
+</body>
+</html>

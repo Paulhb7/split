@@ -1,0 +1,69 @@
+/* ===========================================================================
+   Cabinet Noir — the hidden black-&-gold chamber for the dark geniuses.
+   Self-contained palette (it deliberately ignores the app skin): warm near-black
+   + gold, embers, vignette. Opened only via the secret seal (long-press the logo
+   / the midnight hour). Rendered by CabinetNoir.tsx.
+   =========================================================================== */
+.cnoir {
+  position: fixed; inset: 0; z-index: 130; outline: none;
+  --noir: #0a0806; --gold: #d9b65c; --gold-soft: #e7cd86; --gold-dim: #8a7332; --gold-deep: #5c4a1e;
+  --ink: #ece2cb; --dim: #a89a78; --dim2: #6f6347;
+  --disp: 'Fraunces', Georgia, serif; --mono: 'JetBrains Mono', ui-monospace, monospace;
+  display: flex; flex-direction: column; align-items: center;
+  color: var(--ink); font-family: var(--disp);
+  background:
+    radial-gradient(110% 80% at 50% -8%, rgba(217,182,92,.10), transparent 55%),
+    radial-gradient(120% 90% at 50% 120%, rgba(120,90,20,.10), transparent 60%),
+    var(--noir);
+  animation: cnoirIn 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.cnoir.leaving { animation: cnoirOut 0.36s ease forwards; }
+@keyframes cnoirIn { from { opacity: 0; transform: scale(1.015); } to { opacity: 1; transform: none; } }
+@keyframes cnoirOut { to { opacity: 0; } }
+.cnoir::after { content: ""; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 240px 40px rgba(0,0,0,.85); }
+
+/* embers */
+.cnoir-embers { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.cnoir-ember { position: absolute; bottom: -10px; width: 3px; height: 3px; border-radius: 50%;
+  background: radial-gradient(circle, var(--gold-soft), rgba(217,182,92,.1)); box-shadow: 0 0 6px var(--gold);
+  opacity: .5; animation: cnoirRise linear infinite; }
+.cnoir-ember.big { width: 4px; height: 4px; }
+@keyframes cnoirRise { 0% { transform: translateY(0); opacity: 0; } 12% { opacity: .8; } 90% { opacity: .4; } 100% { transform: translateY(-105vh) translateX(28px); opacity: 0; } }
+
+.cnoir-x { position: absolute; top: 16px; right: 18px; z-index: 3; width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid var(--gold-dim); background: rgba(0,0,0,.3); color: var(--dim); cursor: pointer; font-size: 13px; transition: 0.15s; }
+.cnoir-x:hover { color: var(--gold-soft); border-color: var(--gold); box-shadow: 0 0 16px rgba(217,182,92,.25); }
+
+.cnoir-head { position: relative; flex: none; text-align: center; padding: 56px 40px 4px; }
+.cnoir-eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.4em; text-transform: uppercase; color: var(--gold-dim); }
+.cnoir-head h1 { font-family: var(--disp); font-style: italic; font-weight: 500; font-size: 44px; letter-spacing: -0.01em; margin: 12px 0 10px;
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold-dim)); -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: 0 0 50px rgba(217,182,92,.18); }
+.cnoir-head p { font-size: 14px; color: var(--dim); max-width: 580px; margin: 0 auto; line-height: 1.55; }
+
+.cnoir-roster { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 18px; padding: 24px 40px; flex-wrap: wrap; }
+.cnoir-dg { position: relative; width: 214px; min-height: 320px; cursor: pointer; border-radius: 16px; overflow: hidden;
+  border: 1px solid rgba(217,182,92,.16); background: linear-gradient(170deg, rgba(28,22,11,.7), rgba(8,6,3,.85));
+  display: flex; flex-direction: column; align-items: center; padding: 26px 18px 20px; color: var(--ink); font-family: inherit;
+  transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.4s, box-shadow 0.4s;
+  animation: cnoirEnter 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes cnoirEnter { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.cnoir-dg:hover { transform: translateY(-8px); border-color: rgba(217,182,92,.5); box-shadow: 0 26px 60px -28px #000, 0 0 50px -8px rgba(217,182,92,.25); }
+.cnoir-aura { position: absolute; inset: 0; opacity: .5; pointer-events: none; background: radial-gradient(70% 45% at 50% 0%, rgba(217,182,92,.12), transparent 70%); transition: opacity 0.4s; }
+.cnoir-dg:hover .cnoir-aura { opacity: 1; }
+.cnoir-crest { width: 84px; height: 84px; border-radius: 50%; flex: none; overflow: hidden; position: relative;
+  border: 1px solid var(--gold-dim); box-shadow: 0 0 0 4px rgba(217,182,92,.05), 0 0 26px rgba(217,182,92,.22), inset 0 0 20px rgba(0,0,0,.6); }
+.cnoir-crest svg { width: 100%; height: 100%; display: block; }
+.cnoir-name { font-family: var(--disp); font-style: italic; font-weight: 500; font-size: 25px; margin-top: 16px; color: var(--gold-soft); letter-spacing: -0.01em; }
+.cnoir-role { font-family: var(--mono); font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold-dim); margin-top: 6px; }
+.cnoir-craft { font-size: 12.5px; line-height: 1.5; color: var(--dim); text-align: center; margin-top: 12px; max-width: 174px; }
+.cnoir-voice { margin-top: auto; font-family: var(--disp); font-style: italic; font-size: 13px; line-height: 1.5; color: var(--ink); text-align: center;
+  opacity: 0; max-height: 0; transform: translateY(8px); overflow: hidden; transition: opacity 0.4s, max-height 0.5s, transform 0.4s; }
+.cnoir-dg:hover .cnoir-voice { opacity: 1; max-height: 130px; transform: none; }
+.cnoir-summon { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-top: 14px;
+  opacity: 0; transition: opacity 0.4s; }
+.cnoir-dg:hover .cnoir-summon { opacity: 1; }
+
+.cnoir-foot { position: relative; flex: none; text-align: center; padding: 4px 0 26px; }
+.cnoir-note { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim2); }
+.cnoir-seal-line { display: block; margin-top: 8px; font-family: var(--disp); font-style: italic; font-size: 13px; color: var(--gold-dim); }

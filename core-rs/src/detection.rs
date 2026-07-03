@@ -262,7 +262,12 @@ mod tests {
 
     #[test]
     fn available_appends_auth_missing_diagnostic() {
-        let d = DetectedHarness::available("claude", Some("1.2.3".into()), "/x/claude", AuthState::Missing);
+        let d = DetectedHarness::available(
+            "claude",
+            Some("1.2.3".into()),
+            "/x/claude",
+            AuthState::Missing,
+        );
         assert!(d.available);
         assert_eq!(d.diagnostics.len(), 1);
         assert_eq!(d.diagnostics[0].kind, DiagnosticKind::AuthMissing);

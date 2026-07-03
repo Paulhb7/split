@@ -27,11 +27,11 @@ rules and an ASCII preview.
 
 | Slug | Name | Default for | One-line |
 |---|---|---|---|
-| [`scoreboard`](scoreboard.md) | Scoreboard / Race bib | `coach_sport` (race builds) | Condensed display, race-bib day-number, stadium accent. |
-| [`cockpit`](cockpit.md) | Cockpit / Tech-watch | `coach_sport` (strength, HR/zone) | Mono numbers, SVG activity ring with Z1-Z5 arcs. |
-| [`lab-report`](lab-report.md) | Lab Report / clinical panel | `coach_diet` | Clinical serif + mono, vitals panel, hairline rules. |
-| [`coursepack`](coursepack.md) | Syllabus / Coursepack | `coach_learning` | Serif body, §-section numbering, ✓/◯ margin marks. |
-| [`service-ticket`](service-ticket.md) | Mise-en-place / Service Ticket | `coach_cooking` | Editorial serif + italic notes, numbered ticket. |
+| [`scoreboard`](scoreboard.md) | Scoreboard / Race bib | training (race builds) | Condensed display, race-bib day-number, stadium accent. |
+| [`cockpit`](cockpit.md) | Cockpit / Tech-watch | training (strength, HR/zone) | Mono numbers, SVG activity ring with Z1-Z5 arcs. |
+| [`lab-report`](lab-report.md) | Lab Report / clinical panel | nutrition | Clinical serif + mono, vitals panel, hairline rules. |
+| [`coursepack`](coursepack.md) | Syllabus / Coursepack | learning | Serif body, §-section numbering, ✓/◯ margin marks. |
+| [`service-ticket`](service-ticket.md) | Mise-en-place / Service Ticket | cooking | Editorial serif + italic notes, numbered ticket. |
 
 ## When to add a new signature
 

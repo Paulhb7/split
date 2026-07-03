@@ -1,6 +1,7 @@
 import type { VEvt } from "./events";
 import { isDeliverableArtifact } from "./events";
 import type { Session } from "./models";
+import { parsePartialQuestionForm, parseQuestionForm, visibleAnswer } from "./questionForm";
 
 const clip = (s: string, n = 90) => (s.length > n ? s.slice(s.length - n) : s);
 const head = (s: string, n = 90) => (s.length > n ? s.slice(0, n) + "…" : s);
@@ -19,14 +20,22 @@ export function applyEvent(s: Session, ev: VEvt): Session {
     case "ready":
       return { ...s, summary: s.summary === "briefing…" ? "starting engine…" : s.summary };
 
-    case "say":
+    case "say": {
+      // Keep `answer` raw (form markup included) — the reducer strips it at the
+      // idle commit and Conversation strips it for the live view. Lift the
+      // still-streaming `<question-form>` onto `questionForm` so the panel fills
+      // in progressively; the summary shows the visible prose, not raw JSON.
+      const answer = s.answer + ev.text;
+      const qf = parsePartialQuestionForm(answer);
       return {
         ...s,
         status: "running",
         turnStartedAt: turnStart(s),
-        answer: s.answer + ev.text,
-        summary: "writing · " + clip(s.answer + ev.text),
+        answer,
+        questionForm: qf ?? s.questionForm,
+        summary: "writing · " + clip(visibleAnswer(answer) || answer),
       };
+    }
 
     case "thought":
       return {
@@ -63,10 +72,15 @@ export function applyEvent(s: Session, ev: VEvt): Session {
         const withThoughts = s.thoughts
           ? [...s.thread, { role: "thought" as const, text: s.thoughts }]
           : s.thread;
+        // Strip the `<question-form>` markup from the committed text (it renders
+        // in the panel, not the thread) and finalize the parsed form. A
+        // form-only turn (no prose) commits no agent bubble.
+        const visible = visibleAnswer(s.answer);
+        const finalForm = parseQuestionForm(s.answer) ?? s.questionForm;
         // The turn's activity (steps + duration) rides the answer turn so the
         // collapsed "what it did" fold sits with the reply it produced.
-        const committed = s.answer
-          ? [...withThoughts, { role: "agent" as const, text: s.answer, steps, tookMs }]
+        const committed = visible
+          ? [...withThoughts, { role: "agent" as const, text: visible, steps, tookMs }]
           : withThoughts;
         return {
           ...s,
@@ -76,7 +90,8 @@ export function applyEvent(s: Session, ev: VEvt): Session {
           answer: "",
           thoughts: "",
           steps: [],
-          summary: "done · " + (head(s.answer) || "ready"),
+          questionForm: finalForm,
+          summary: "done · " + (head(visible) || "ready"),
         };
       }
       if (ev.status === "error")
@@ -137,6 +152,11 @@ export function applyEvent(s: Session, ev: VEvt): Session {
         },
         summary: "needs approval · " + ev.toolId,
       };
+
+    case "frame":
+      // Newest browser screenshot from the live frame watcher. Replace in
+      // place — only the latest matters; older frames are not retained.
+      return { ...s, liveFrame: { seq: ev.seq, mime: ev.mime, data: ev.data, ts: ev.ts } };
 
     default:
       return s;

@@ -1,0 +1,10 @@
+{
+  "expert": "scientist",
+  "key": "jepa-sota",
+  "type": "doc",
+  "title": "JEPA state of the art",
+  "desc": "The papers, synthesized",
+  "brief": "A literature review of Joint-Embedding Predictive Architectures as of July 2026: the lineage of LeCun's world-model program from the 2022 position paper through I-JEPA, V-JEPA, V-JEPA 2/2.1, LeJEPA and LeWorldModel; what JEPA changed versus contrastive and generative pretraining; the empirical record on benchmarks (SSv2, Epic-Kitchens, zero-shot robot manipulation, IntPhys 2); the theory turn on representation collapse; and what remains contested — the intuitive-physics gap, video-native versus frozen-feature world models, and the generative rival. Eight anchor papers synthesized with verified citations and working arXiv links.",
+  "da": "arXiv preprint austerity — pure white page, STIX Two serif, justified text, numbered sections, booktabs tables, thin-line boxed SVG figures, hyperref-blue footnote citations with hover popovers.",
+  "generated": "2026-07-03"
+}

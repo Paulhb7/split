@@ -1,0 +1,10 @@
+{
+  "expert": "data_analyst",
+  "key": "exoplanets",
+  "type": "chart",
+  "title": "Exoplanet atlas",
+  "desc": "6,000 worlds, charted",
+  "brief": "A spectacular interactive exploration of the real confirmed-exoplanet catalogue (6,316 planets from the NASA Exoplanet Archive, embedded): an animated discoveries-per-year timeline by detection method, a radius-vs-orbital-period log-log scatter colored by equilibrium temperature with the temperate-rocky band highlighted, a nearest-worlds table, a detection-method breakdown with per-method reach, and a weirdest-worlds spotlight — hover tooltips everywhere.",
+  "da": "Deep-field planetarium: black-violet nebula and live starfield, glassy translucent panels, plasma cyan/magenta accents, Space Grotesk display over IBM Plex Mono readouts.",
+  "generated": "2026-07-03"
+}

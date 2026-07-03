@@ -1,0 +1,10 @@
+{
+  "expert": "genius_ride",
+  "key": "solar-system-now",
+  "type": "scene",
+  "title": "The solar system, now",
+  "desc": "Fly NASA's own view",
+  "brief": "NASA's own real-time 3D app, Eyes on the Solar System, embedded as the hero — every planet and 150+ missions placed by real JPL ephemerides at the minute you open the page, pilotable by hand (drag, scroll, double-click to fly anywhere, time controls 1950→2050). Beside it, the dossier rail: today's heliocentric and Earth distances for all eight planets fetched from the JPL Horizons API at epoch 2026-07-03 00:00 UTC and baked in with light-travel times, six provenance-stamped facts (closest planet today: Mercury; Voyager 1 at 170 au), and the DE440/441 ephemerides paper the whole view rests on.",
+  "da": "The Eyes-viewer signature: black-to-indigo void with a drifting starfield, one accent — NASA worm red #FC3D21 — JetBrains Mono for every figure, glow-not-borders around the live NASA embed.",
+  "generated": "2026-07-03"
+}

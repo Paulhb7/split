@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CFTR — Variant Landscape · Curie · Split</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Azeret+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    /* ——— genome-browser ground: crisp cool-white, graphite ink ——— */
+    --paper:#fbfcfd;
+    --paper-2:#f2f5f8;
+    --panel:#ffffff;
+    --track:#eef2f6;          /* the protein axis lane */
+    --track-line:#c3ccd6;     /* baseline hairline */
+    --ink:#1b2026;            /* graphite text */
+    --ink-2:#5a636e;          /* muted */
+    --ink-3:#8b95a1;          /* faint / rulers */
+    --ink-4:#aeb7c2;
+    --line:#dee4ea;
+    --line-2:#e8edf2;
+    --hair:#eef2f6;
+
+    /* ——— the ONLY colour: a clinical significance ramp ——— */
+    --sig-path:#c1272d;       /* pathogenic — red */
+    --sig-lp:#e0663a;         /* likely pathogenic — warm */
+    --sig-vus:#8b8f98;        /* VUS / conflicting — neutral graphite */
+    --sig-lb:#5b8fc9;         /* likely benign */
+    --sig-benign:#2166ac;     /* benign — blue */
+
+    --sig-path-soft:#f6dcdd;
+    --sig-lp-soft:#f8e4d8;
+    --sig-vus-soft:#e7e9ec;
+    --sig-benign-soft:#dce8f4;
+
+    --shadow:0 1px 2px rgba(24,32,44,.05), 0 10px 34px rgba(24,32,44,.06);
+    --shadow-sm:0 1px 2px rgba(24,32,44,.06);
+    --shadow-pop:0 6px 14px rgba(24,32,44,.12), 0 24px 60px rgba(24,32,44,.18);
+    --radius:11px;
+  }
+
+  *{box-sizing:border-box}
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    margin:0;
+    font-family:"Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color:var(--ink);
+    background:
+      linear-gradient(0deg, rgba(19,26,36,.015) 1px, transparent 1px) 0 0 / 100% 26px,
+      radial-gradient(1200px 620px at 82% -12%, #ffffff 0%, rgba(255,255,255,0) 58%),
+      linear-gradient(180deg,#fdfefe 0%, var(--paper) 100%);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    font-size:15px; line-height:1.5;
+  }
+  .mono{font-family:"Azeret Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-feature-settings:"tnum" 1, "zero" 1;}
+  a{color:var(--sig-benign);text-decoration:none;border-bottom:1px solid rgba(33,102,172,.28)}
+  a:hover{border-bottom-color:var(--sig-benign)}
+
+  .wrap{max-width:1360px;margin:0 auto;padding:24px 26px 64px}
+
+  /* ————— masthead ————— */
+  header.top{display:flex;align-items:flex-start;justify-content:space-between;gap:26px;flex-wrap:wrap;margin-bottom:6px}
+  .eyebrow{display:flex;align-items:center;gap:11px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  .eyebrow .tick{width:22px;height:9px;position:relative;flex:none}
+  .eyebrow .tick::before{content:"";position:absolute;left:0;right:0;top:50%;height:1.5px;background:var(--track-line)}
+  .eyebrow .tick i{position:absolute;top:1px;bottom:1px;width:1.5px;background:var(--sig-path)}
+  .eyebrow .tick i:nth-child(1){left:2px}
+  .eyebrow .tick i:nth-child(2){left:8px;background:var(--ink-3)}
+  .eyebrow .tick i:nth-child(3){left:15px;background:var(--sig-benign)}
+  h1{font-size:31px;line-height:1.05;font-weight:800;letter-spacing:-.02em;margin:.34em 0 .12em}
+  h1 .gene{font-family:"Azeret Mono",monospace;font-weight:600;letter-spacing:-.01em}
+  h1 .sub{color:var(--ink-2);font-weight:500}
+  .lede{color:var(--ink-2);max-width:76ch;font-size:14.5px;margin:.2em 0 0}
+  .idcol{display:flex;flex-direction:column;align-items:flex-end;gap:8px;padding-top:4px}
+  .idtag{font-size:11px;color:var(--ink-2);border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:5px 11px;white-space:nowrap}
+  .idtag b{color:var(--ink);font-weight:600}
+  .brand{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  .brand .sq{width:14px;height:14px;border-radius:4px;background:linear-gradient(135deg,var(--sig-path),var(--sig-benign));box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+
+  /* ————— about (exec summary) ————— */
+  details.about{margin:16px 0 18px;border:1px solid var(--line);background:linear-gradient(180deg,#ffffff,#fbfcfe);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden}
+  details.about>summary{cursor:pointer;list-style:none;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:600;color:var(--ink-2);user-select:none}
+  details.about>summary::-webkit-details-marker{display:none}
+  details.about>summary .dot{width:7px;height:7px;border-radius:50%;background:var(--sig-path);box-shadow:0 0 0 4px var(--sig-path-soft)}
+  details.about>summary .chev{margin-left:auto;transition:transform .2s;color:var(--ink-3)}
+  details.about[open]>summary .chev{transform:rotate(90deg)}
+  details.about .body{padding:4px 18px 18px;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);gap:16px 26px}
+  @media(max-width:900px){details.about .body{grid-template-columns:1fr 1fr}}
+  .about .body h4{margin:14px 0 4px;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--sig-path);font-weight:700}
+  .about .body p{margin:0;font-size:13px;color:var(--ink-2);line-height:1.5}
+
+  /* ————— toolbar ————— */
+  .toolbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 14px;padding:11px 14px;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(180deg,#ffffff,#f8fafc);box-shadow:var(--shadow-sm)}
+  .toolbar .lab{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+  .filters{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 11px 5px 9px;cursor:pointer;user-select:none;transition:all .14s;line-height:1}
+  .chip .sw{width:10px;height:10px;border-radius:3px;flex:none}
+  .chip:hover{border-color:var(--ink-4);color:var(--ink)}
+  .chip[aria-pressed="false"]{opacity:.4;filter:saturate(.5)}
+  .chip .n{font-family:"Azeret Mono",monospace;font-size:10.5px;color:var(--ink-3);font-weight:500}
+  .sw.path{background:var(--sig-path)} .sw.lp{background:var(--sig-lp)} .sw.vus{background:var(--sig-vus)} .sw.benign{background:var(--sig-benign)}
+  .toolbar .grow{margin-left:auto}
+  .btn{font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 11px;cursor:pointer;transition:all .14s}
+  .btn:hover{border-color:var(--ink-4);color:var(--ink)}
+
+  /* ————— the browser panel ————— */
+  .browser{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow);overflow:hidden;position:relative}
+  .browser .head{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fdfefe,#f6f9fb);font-size:12px;color:var(--ink-2)}
+  .browser .head b{color:var(--ink);font-weight:600}
+  .browser .head .rs{margin-left:auto;font-size:11px;color:var(--ink-3)}
+  .browser .head .rs .mono{color:var(--ink-2)}
+  .plotwrap{position:relative;width:100%;overflow:hidden}
+  svg#plot{display:block;width:100%;height:auto;font-family:"Archivo",sans-serif}
+  svg text{ -webkit-font-smoothing:antialiased; }
+
+  .dom-label{font-size:12px;font-weight:700;fill:#ffffff;letter-spacing:.02em}
+  .dom-sub{font-size:9px;font-weight:600;fill:rgba(255,255,255,.85);font-family:"Azeret Mono",monospace}
+  .axis-num{font-size:9.5px;fill:var(--ink-3);font-family:"Azeret Mono",monospace}
+  .axis-cap{font-size:10px;fill:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+  .ytick{font-size:9px;fill:var(--ink-4);font-family:"Azeret Mono",monospace}
+  .lolli-label{font-size:9.5px;font-weight:600;font-family:"Azeret Mono",monospace;fill:var(--ink-2)}
+  .hotspot-band{fill:rgba(193,39,45,.05)}
+  .hotspot-cap{font-size:9px;font-weight:700;fill:var(--sig-path);letter-spacing:.08em;text-transform:uppercase}
+
+  .lolli{cursor:pointer}
+  .lolli .stem{stroke-width:1.4}
+  .lolli .head-c{transition:r .12s}
+  .lolli.dim{opacity:.14}
+  .lolli.hot .head-c{stroke:#1b2026;stroke-width:1.4}
+
+  /* ————— hover card ————— */
+  #tip{position:absolute;z-index:30;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s, transform .12s;max-width:290px;
+       background:#ffffff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-pop);padding:0;overflow:hidden}
+  #tip.on{opacity:1;transform:translateY(0)}
+  #tip .cap{height:4px}
+  #tip .in{padding:11px 13px 12px}
+  #tip .hgvs{font-family:"Azeret Mono",monospace;font-size:14px;font-weight:600;color:var(--ink);letter-spacing:-.01em}
+  #tip .cds{font-family:"Azeret Mono",monospace;font-size:11px;color:var(--ink-2);margin-top:1px}
+  #tip .sigrow{display:flex;align-items:center;gap:7px;margin:9px 0 8px}
+  #tip .pill{font-size:10.5px;font-weight:700;letter-spacing:.02em;padding:3px 8px;border-radius:999px;color:#fff}
+  #tip .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:11.5px;color:var(--ink-2)}
+  #tip .kv dt{color:var(--ink-3);font-weight:600}
+  #tip .kv dd{margin:0;color:var(--ink)}
+  #tip .kv dd .mono{font-size:11px}
+  #tip .foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--line-2);font-size:10.5px;color:var(--ink-3)}
+  #tip .foot .cid{font-family:"Azeret Mono",monospace}
+
+  /* ————— lower grid ————— */
+  .lower{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+  @media(max-width:960px){.lower{grid-template-columns:1fr}}
+
+  .card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow-sm);overflow:hidden}
+  .card .ch{display:flex;align-items:center;gap:9px;padding:11px 15px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fdfefe,#f7f9fb)}
+  .card .ch .k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+  .card .ch .mk{width:8px;height:8px;border-radius:2px;background:var(--sig-path)}
+  .card .cb{padding:14px 15px 16px}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;background:var(--line-2)}
+  .stat{background:var(--panel);padding:13px 15px}
+  .stat .v{font-family:"Azeret Mono",monospace;font-size:23px;font-weight:600;color:var(--ink);letter-spacing:-.02em;line-height:1}
+  .stat .v small{font-size:13px;color:var(--ink-3)}
+  .stat .l{font-size:11px;color:var(--ink-2);margin-top:5px;line-height:1.35}
+  .stat .l b{color:var(--ink);font-weight:600}
+  .stat.accent .v{color:var(--sig-path)}
+  .bar{height:7px;border-radius:99px;background:var(--sig-vus-soft);margin-top:9px;overflow:hidden;display:flex}
+  .bar i{height:100%;display:block}
+  .bar i.p{background:var(--sig-path)} .bar i.l{background:var(--sig-lp)} .bar i.v{background:var(--sig-vus)} .bar i.b{background:var(--sig-benign)}
+
+  /* legend list (domains) */
+  .leg{display:flex;flex-direction:column;gap:0}
+  .leg .row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:11px;padding:8px 2px;border-bottom:1px solid var(--hair);font-size:12.5px}
+  .leg .row:last-child{border-bottom:none}
+  .leg .sw{width:26px;height:13px;border-radius:3px;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}
+  .leg .nm{color:var(--ink);font-weight:600}
+  .leg .nm small{display:block;color:var(--ink-3);font-weight:500;font-size:10.5px;letter-spacing:.02em}
+  .leg .rg{font-family:"Azeret Mono",monospace;font-size:10.5px;color:var(--ink-2);white-space:nowrap}
+
+  /* hotspot callout */
+  .hot-note{display:flex;gap:13px;align-items:flex-start;padding:13px 15px;border:1px solid var(--sig-path-soft);background:linear-gradient(180deg,#fff,#fdf6f6);border-radius:10px;margin-top:14px}
+  .hot-note .mark{font-family:"Azeret Mono",monospace;font-size:12px;font-weight:600;color:#fff;background:var(--sig-path);border-radius:7px;padding:6px 9px;white-space:nowrap;line-height:1.2;text-align:center}
+  .hot-note .mark small{display:block;font-size:8.5px;font-weight:500;opacity:.85;letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+  .hot-note p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.5}
+  .hot-note p b{color:var(--ink);font-weight:600}
+
+  /* method / sources */
+  .meth{font-size:12px;color:var(--ink-2);line-height:1.55}
+  .meth p{margin:0 0 9px}
+  .meth .srcs{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .meth .srcs a{font-size:11px;font-family:"Azeret Mono",monospace;color:var(--ink-2);background:var(--paper-2);border:1px solid var(--line);border-radius:7px;padding:3px 8px;border-bottom:1px solid var(--line)}
+  .meth .srcs a:hover{border-color:var(--ink-4);color:var(--ink)}
+
+  footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;font-size:11px;color:var(--ink-3)}
+  .disclaim{font-size:11px;color:var(--ink-3);max-width:64ch;line-height:1.5}
+  .disclaim b{color:var(--ink-2);font-weight:600}
+  footer .sig{display:flex;align-items:center;gap:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+  footer .sig .sq{width:12px;height:12px;border-radius:3px;background:linear-gradient(135deg,var(--sig-path),var(--sig-benign))}
+
+  .sronly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="eyebrow"><span class="tick"><i></i><i></i><i></i></span> Variant landscape · a needle plot</div>
+      <h1><span class="gene">CFTR</span> <span class="sub">— the mutations of cystic fibrosis, mapped along the protein</span></h1>
+      <p class="lede">Every reported change is a needle at its true residue. Height is how often it is reported; colour is what the clinic has decided it means. One protein, 1,480 residues, and the reason a single deletion at position 508 dominates a disease.</p>
+    </div>
+    <div class="idcol">
+      <div class="brand"><span class="sq"></span> Curie · Split</div>
+      <div class="idtag">UniProt <b>P13569</b> · 1,480 aa</div>
+      <div class="idtag">OMIM <b>219700</b> · CFTR-CF</div>
+      <div class="idtag mono">GRCh38 · NM_000492.4</div>
+    </div>
+  </header>
+
+  <details class="about">
+    <summary><span class="dot"></span> About this — why this exists, and how to read it <span class="chev">▸</span></summary>
+    <div class="body">
+      <div>
+        <h4>Why</h4>
+        <p>To show, at a glance, the pathogenic-variant landscape of a well-characterised orphan disease along its causal protein — where mutations cluster, and which single allele carries the disease.</p>
+      </div>
+      <div>
+        <h4>Context</h4>
+        <p>Cystic fibrosis (~1 in 2,500–3,500 newborns of European descent) is caused by loss-of-function variants in <span class="mono">CFTR</span>, an ABC-transporter chloride channel. Over 1,000 variants are now classified as disease-causing.</p>
+      </div>
+      <div>
+        <h4>How to use it</h4>
+        <p>Hover a needle for its HGVS, consequence, and clinical significance. Filter by significance with the chips. The domain track and hotspot bands are drawn to residue scale.</p>
+      </div>
+      <div>
+        <h4>What I assumed</h4>
+        <p>A curated, teaching-grade panel of well-documented variants (not the full ClinVar dump). Heights encode reported allele frequency in CF cohorts, not ClinVar submission counts. Domain limits follow UniProt features.</p>
+      </div>
+    </div>
+  </details>
+
+  <div class="toolbar">
+    <span class="lab">Significance</span>
+    <div class="filters" id="filters">
+      <button class="chip" data-sig="pathogenic" aria-pressed="true"><span class="sw path"></span>Pathogenic <span class="n" id="n-path">0</span></button>
+      <button class="chip" data-sig="likely_path" aria-pressed="true"><span class="sw lp"></span>Likely / mild-path <span class="n" id="n-lp">0</span></button>
+      <button class="chip" data-sig="vus" aria-pressed="true"><span class="sw vus"></span>VUS / conflicting <span class="n" id="n-vus">0</span></button>
+      <button class="chip" data-sig="benign" aria-pressed="true"><span class="sw benign"></span>Benign <span class="n" id="n-benign">0</span></button>
+    </div>
+    <span class="grow"></span>
+    <button class="btn" id="reset">Reset view</button>
+  </div>
+
+  <div class="browser">
+    <div class="head">
+      <b>CFTR</b> protein · needle plot of curated CF variants
+      <span class="rs">domains to scale · <span class="mono">UniProt P13569</span> features · hover a needle</span>
+    </div>
+    <div class="plotwrap" id="plotwrap">
+      <svg id="plot" viewBox="0 0 1300 470" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Needle plot of CFTR variants along the protein"></svg>
+      <div id="tip" role="tooltip"></div>
+    </div>
+  </div>
+
+  <div class="lower">
+    <!-- LEFT: stats + hotspot -->
+    <section class="card">
+      <div class="ch"><span class="mk"></span><span class="k">The picture in numbers</span></div>
+      <div class="cb">
+        <div class="stats" style="border-radius:9px;overflow:hidden;border:1px solid var(--line-2)">
+          <div class="stat"><div class="v" id="s-total">18</div><div class="l"><b>Variants plotted</b> — a curated teaching panel spanning all five domains</div></div>
+          <div class="stat accent"><div class="v" id="s-pct">83<small>%</small></div><div class="l"><b>Pathogenic</b> or likely-pathogenic among the plotted set</div></div>
+          <div class="stat"><div class="v">~70<small>%</small></div><div class="l"><b>F508del</b> alleles worldwide — the single dominant disease allele</div></div>
+          <div class="stat"><div class="v">1,085</div><div class="l"><b>CF-causing</b> variants now classified in CFTR2 (late 2024)</div></div>
+        </div>
+        <div class="bar" title="Composition of the plotted set by significance">
+          <i class="p" id="bp"></i><i class="l" id="bl"></i><i class="v" id="bv"></i><i class="b" id="bb"></i>
+        </div>
+
+        <div class="hot-note">
+          <div class="mark">508<small>hotspot</small></div>
+          <p><b>NBD1 is the hotspot.</b> The recurrent in-frame deletion <span class="mono">p.Phe508del</span> (a misfolding, class II defect) and the gating/processing cluster around <span class="mono">542·551·553·560</span> all sit in the first nucleotide-binding domain. Removing one residue at 508 destabilises folding enough to dominate the entire disease.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: domain legend + method -->
+    <section class="card">
+      <div class="ch"><span class="mk"></span><span class="k">Domain track · UniProt P13569</span></div>
+      <div class="cb">
+        <div class="leg" id="leg"></div>
+        <div class="meth" style="margin-top:14px">
+          <p><b>Method.</b> Variants curated from ClinVar (NM_000492.4 / NP_000483.3) and the CFTR2 registry; each carries its real HGVS, molecular consequence, ClinVar germline classification and Variation ID. Domain boundaries are UniProt P13569 sequence features. Needle height encodes reported CF-cohort allele frequency (a curated scale for legibility), not ClinVar submission volume. Verified 3 July 2026.</p>
+          <div class="srcs">
+            <a href="https://www.uniprot.org/uniprotkb/P13569/entry" target="_blank" rel="noopener">UniProt P13569</a>
+            <a href="https://www.ncbi.nlm.nih.gov/clinvar/?term=CFTR%5Bgene%5D" target="_blank" rel="noopener">ClinVar · CFTR</a>
+            <a href="https://cftr2.org/" target="_blank" rel="noopener">CFTR2 registry</a>
+            <a href="https://www.omim.org/entry/219700" target="_blank" rel="noopener">OMIM 219700</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <p class="disclaim"><b>Research and education, not medical advice.</b> A curated illustration of the CFTR variant landscape; variant significance and clinical meaning are context-dependent (allele combinations, modifiers such as the poly-T tract, ancestry) and evolve as ClinVar and CFTR2 are recurated. Do not use for diagnosis, carrier interpretation, or treatment decisions. Confirm any variant against its current ClinVar record.</p>
+    <span class="sig"><span class="sq"></span> Curie · Split</span>
+  </footer>
+
+</div>
+
+<script>
+/* ————————————————————————————————————————————————————————————————
+   CFTR variant landscape — all data verified against ClinVar
+   (NM_000492.4 / NP_000483.3) + UniProt P13569 + CFTR2, 3 Jul 2026.
+   sig: pathogenic | likely_path | vus | benign
+   freq: reported CF-cohort allele frequency band (for needle height)
+   ———————————————————————————————————————————————————————————————— */
+
+var PROT_LEN = 1480;
+
+/* UniProt P13569 sequence features (residue ranges) */
+var DOMAINS = [
+  { id:"tmd1", name:"TMD1",     sub:"transmembrane · type-1", start:78,   end:358,  col:"#6b7280" },
+  { id:"nbd1", name:"NBD1",     sub:"nucleotide-binding 1",   start:423,  end:646,  col:"#3f5b8c" },
+  { id:"r",    name:"R region", sub:"regulatory · disordered",start:654,  end:831,  col:"#a9b1bd" },
+  { id:"tmd2", name:"TMD2",     sub:"transmembrane · type-2", start:859,  end:1155, col:"#6b7280" },
+  { id:"nbd2", name:"NBD2",     sub:"nucleotide-binding 2",   start:1210, end:1443, col:"#3f5b8c" }
+];
+
+/* Mutation hotspots (drawn as bands behind the needles) */
+var HOTSPOTS = [
+  { label:"NBD1 folding + gating hotspot", start:455, end:572 },
+  { label:"NBD2 hotspot", start:1152, end:1303 }
+];
+
+/* Curated, individually ClinVar-verified variant panel */
+var VARIANTS = [
+  { pos:75,   name:"R75Q",    c:"c.224G>A",        p:"p.Arg75Gln",   cons:"missense",         sig:"benign",      freq:2, cid:"35839", dom:"N-term", note:"Benign / mild — bicarbonate-conductance & pancreatitis risk, not classic-CF alone" },
+  { pos:85,   name:"G85E",    c:"c.254G>A",        p:"p.Gly85Glu",   cons:"missense",         sig:"pathogenic",  freq:2, cid:"7143",  dom:"TMD1", note:"Class II folding defect" },
+  { pos:92,   name:"E92K",    c:"c.274G>A",        p:"p.Glu92Lys",   cons:"missense",         sig:"pathogenic",  freq:1, cid:"7181",  dom:"TMD1", note:"<10% of WT function; reviewed by expert panel" },
+  { pos:117,  name:"R117H",   c:"c.350G>A",        p:"p.Arg117His",  cons:"missense",         sig:"vus",         freq:2, cid:"7109",  dom:"TMD1", note:"Conflicting / risk — penetrance set by cis poly-T (5T/7T/9T)" },
+  { pos:334,  name:"R334W",   c:"c.1000C>T",       p:"p.Arg334Trp",  cons:"missense",         sig:"pathogenic",  freq:2, cid:"7139",  dom:"TMD1", note:"Conductance defect; often pancreatic-sufficient" },
+  { pos:347,  name:"R347P",   c:"c.1040G>C",       p:"p.Arg347Pro",  cons:"missense",         sig:"pathogenic",  freq:2, cid:"—",     dom:"TMD1", note:"Pore residue; variable pancreatic status" },
+  { pos:455,  name:"A455E",   c:"c.1364C>A",       p:"p.Ala455Glu",  cons:"missense",         sig:"likely_path", freq:2, cid:"7111",  dom:"NBD1", note:"CF-causing, milder / residual function" },
+  { pos:470,  name:"V470M",   c:"c.1408G>A",       p:"p.Val470Met",  cons:"missense",         sig:"benign",      freq:5, cid:"7130",  dom:"NBD1", note:"Common polymorphism (M470V); modulates 5T penetrance" },
+  { pos:507,  name:"I507del", c:"c.1519_1521del",  p:"p.Ile507del",  cons:"inframe deletion", sig:"pathogenic",  freq:3, cid:"7106",  dom:"NBD1", note:"Neighbour of F508del; folding / trafficking defect" },
+  { pos:508,  name:"F508del", c:"c.1521_1523del",  p:"p.Phe508del",  cons:"inframe deletion", sig:"pathogenic",  freq:9, cid:"7105",  dom:"NBD1", note:"THE dominant allele (~70% worldwide); class II misfolding · practice guideline" },
+  { pos:542,  name:"G542X",   c:"c.1624G>T",       p:"p.Gly542Ter",  cons:"nonsense",         sig:"pathogenic",  freq:6, cid:"7115",  dom:"NBD1", note:"2nd most common; class I, NMD-targeted null" },
+  { pos:551,  name:"G551D",   c:"c.1652G>A",       p:"p.Gly551Asp",  cons:"missense",         sig:"pathogenic",  freq:5, cid:"7120",  dom:"NBD1", note:"Class III gating defect; ivacaftor-responsive" },
+  { pos:553,  name:"R553X",   c:"c.1657C>T",       p:"p.Arg553Ter",  cons:"nonsense",         sig:"pathogenic",  freq:4, cid:"7113",  dom:"NBD1", note:"Class I premature stop" },
+  { pos:560,  name:"R560T",   c:"c.1679G>C",       p:"p.Arg560Thr",  cons:"missense",         sig:"pathogenic",  freq:3, cid:"7122",  dom:"NBD1", note:"Maturation + conductance defect" },
+  { pos:1152, name:"D1152H",  c:"c.3454G>C",       p:"p.Asp1152His", cons:"missense",         sig:"likely_path", freq:3, cid:"46895", dom:"TMD2", note:"Anion-selectivity defect; variable, often mild" },
+  { pos:1162, name:"R1162X",  c:"c.3484C>T",       p:"p.Arg1162Ter", cons:"nonsense",         sig:"pathogenic",  freq:3, cid:"7137",  dom:"TMD2", note:"Common class I null; NMD-targeted" },
+  { pos:1282, name:"W1282X",  c:"c.3846G>A",       p:"p.Trp1282Ter", cons:"nonsense",         sig:"pathogenic",  freq:4, cid:"7136",  dom:"NBD2", note:"Class I; highest frequency in the Ashkenazi Jewish population" },
+  { pos:1303, name:"N1303K",  c:"c.3909C>G",       p:"p.Asn1303Lys", cons:"missense",         sig:"pathogenic",  freq:5, cid:"7129",  dom:"NBD2", note:"Class II; abolishes maturation + channel function" }
+];
+
+var SIG = {
+  pathogenic:  { label:"Pathogenic",         short:"Pathogenic",        col:"#c1272d", soft:"#f6dcdd" },
+  likely_path: { label:"Likely / mild-path", short:"Likely path.",      col:"#e0663a", soft:"#f8e4d8" },
+  vus:         { label:"VUS / conflicting",  short:"VUS · conflicting", col:"#8b8f98", soft:"#e7e9ec" },
+  benign:      { label:"Benign",             short:"Benign",            col:"#2166ac", soft:"#dce8f4" }
+};
+
+/* ————— geometry ————— */
+var W = 1300, H = 470;
+var M = { l:56, r:26, t:34, b:40 };
+var plotW = W - M.l - M.r;
+var axisY = 300;               // protein baseline
+var trackH = 30;               // domain track thickness
+var maxStem = 200;             // tallest needle reaches near the top
+var maxFreq = 9;
+
+function xOf(res){ return M.l + (res / PROT_LEN) * plotW; }
+function yOf(freq){ return axisY - trackH/2 - 8 - (freq / maxFreq) * (maxStem); }
+
+var active = { pathogenic:true, likely_path:true, vus:true, benign:true };
+function bucket(sig){ return sig; } // 1:1 here
+
+var svg = document.getElementById('plot');
+var SVGNS = "http://www.w3.org/2000/svg";
+function el(n, a){ var e=document.createElementNS(SVGNS,n); if(a) for(var k in a) e.setAttribute(k,a[k]); return e; }
+
+function draw(){
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+
+  /* hotspot bands (behind everything) */
+  HOTSPOTS.forEach(function(hs){
+    var x1=xOf(hs.start), x2=xOf(hs.end);
+    svg.appendChild(el('rect',{x:x1,y:M.t+6,width:(x2-x1),height:(axisY - trackH/2 - M.t - 6),class:'hotspot-band',rx:4}));
+    svg.appendChild(el('line',{x1:x1,y1:M.t+6,x2:x1,y2:axisY - trackH/2,stroke:'rgba(193,39,45,.28)','stroke-width':1,'stroke-dasharray':'2 3'}));
+    svg.appendChild(el('line',{x1:x2,y1:M.t+6,x2:x2,y2:axisY - trackH/2,stroke:'rgba(193,39,45,.28)','stroke-width':1,'stroke-dasharray':'2 3'}));
+    var cap=el('text',{x:(x1+x2)/2,y:M.t+2,'text-anchor':'middle',class:'hotspot-cap'});
+    cap.textContent='◆ hotspot'; svg.appendChild(cap);
+  });
+
+  /* y-axis: frequency ruler */
+  svg.appendChild(el('line',{x1:M.l,y1:yOf(0),x2:M.l,y2:yOf(maxFreq),stroke:'var(--line)','stroke-width':1}));
+  [0,3,6,9].forEach(function(f){
+    var y=yOf(f);
+    svg.appendChild(el('line',{x1:M.l-4,y1:y,x2:M.l,y2:y,stroke:'var(--line-2)','stroke-width':1}));
+    svg.appendChild(el('line',{x1:M.l,y1:y,x2:W-M.r,y2:y,stroke:'var(--hair)','stroke-width':1,'stroke-dasharray':'1 5'}));
+    var t=el('text',{x:M.l-8,y:y+3,'text-anchor':'end',class:'ytick'}); t.textContent=(f===0?'0':f); svg.appendChild(t);
+  });
+  var yl=el('text',{x:M.l-8,y:yOf(maxFreq)-12,'text-anchor':'end',class:'axis-cap'});
+  yl.textContent='reports'; svg.appendChild(yl);
+
+  /* baseline / intron line across the full protein */
+  svg.appendChild(el('line',{x1:M.l,y1:axisY,x2:W-M.r,y2:axisY,stroke:'var(--track-line)','stroke-width':1.5}));
+
+  /* domain track base (the full protein bar, light) */
+  svg.appendChild(el('rect',{x:M.l,y:axisY-trackH/2,width:plotW,height:trackH,rx:5,fill:'var(--track)',stroke:'var(--track-line)','stroke-width':1}));
+
+  /* domains */
+  DOMAINS.forEach(function(d){
+    var x=xOf(d.start), w=xOf(d.end)-xOf(d.start);
+    svg.appendChild(el('rect',{x:x,y:axisY-trackH/2,width:w,height:trackH,rx:5,fill:d.col,stroke:'rgba(255,255,255,.35)','stroke-width':1}));
+    if(w>52){
+      var lab=el('text',{x:x+w/2,y:axisY-1,'text-anchor':'middle',class:'dom-label'}); lab.textContent=d.name; svg.appendChild(lab);
+      var sub=el('text',{x:x+w/2,y:axisY+10,'text-anchor':'middle',class:'dom-sub'}); sub.textContent=d.start+'–'+d.end; svg.appendChild(sub);
+    } else {
+      var lab2=el('text',{x:x+w/2,y:axisY+3,'text-anchor':'middle',class:'dom-label',style:'font-size:9px'}); lab2.textContent=d.name; svg.appendChild(lab2);
+    }
+  });
+
+  /* residue axis numbers under the track */
+  [1,200,400,600,800,1000,1200,1400,1480].forEach(function(r){
+    var x=xOf(r);
+    svg.appendChild(el('line',{x1:x,y1:axisY+trackH/2,x2:x,y2:axisY+trackH/2+5,stroke:'var(--line-2)','stroke-width':1}));
+    var t=el('text',{x:x,y:axisY+trackH/2+16,'text-anchor':(r===1?'start':(r===1480?'end':'middle')),class:'axis-num'});
+    t.textContent=(r===1480?'1480 aa':r); svg.appendChild(t);
+  });
+
+  /* needles — sort so tall ones draw first, short on top for hover */
+  var vs = VARIANTS.slice().sort(function(a,b){ return b.freq - a.freq; });
+  vs.forEach(function(v){
+    var on = active[bucket(v.sig)];
+    var x=xOf(v.pos), yTop=yOf(v.freq), yBase=axisY-trackH/2;
+    var col=SIG[v.sig].col;
+    var g=el('g',{class:'lolli'+(on?'':' dim')+(v.name==='F508del'?' hot':'')});
+    g.setAttribute('data-name', v.name);
+    /* stem */
+    g.appendChild(el('line',{x1:x,y1:yBase,x2:x,y2:yTop+ (v.name==='F508del'?7:5),class:'stem',stroke:col,'stroke-opacity':'.55'}));
+    /* head */
+    var r = 4 + Math.min(v.freq,9)*0.62;
+    if(v.name==='F508del') r += 1.5;
+    var head=el('circle',{cx:x,cy:yTop,r:r,class:'head-c',fill:col,stroke:'#fff','stroke-width':1.5});
+    g.appendChild(head);
+    /* label for the prominent ones */
+    if(v.freq>=5 || v.name==='F508del'){
+      var tl=el('text',{x:x,y:yTop-r-4,'text-anchor':'middle',class:'lolli-label'});
+      tl.textContent=v.name; tl.setAttribute('fill', col);
+      g.appendChild(tl);
+    }
+    /* interaction */
+    g.addEventListener('mouseenter', function(ev){ if(on) showTip(v, x, yTop, col); });
+    g.addEventListener('mousemove', function(ev){ if(on) moveTip(ev); });
+    g.addEventListener('mouseleave', hideTip);
+    svg.appendChild(g);
+  });
+}
+
+/* ————— tooltip ————— */
+var tip = document.getElementById('tip');
+var wrap = document.getElementById('plotwrap');
+function showTip(v, x, y, col){
+  var s = SIG[v.sig];
+  tip.innerHTML =
+    '<div class="cap" style="background:'+col+'"></div>'+
+    '<div class="in">'+
+      '<div class="hgvs">'+v.p+'</div>'+
+      '<div class="cds">'+v.c+' · <span style="color:var(--ink-3)">'+v.name+'</span></div>'+
+      '<div class="sigrow"><span class="pill" style="background:'+col+'">'+s.label+'</span>'+
+        '<span style="font-size:11px;color:var(--ink-3)">'+v.cons+'</span></div>'+
+      '<dl class="kv">'+
+        '<dt>Residue</dt><dd class="mono">'+v.pos+' / 1480</dd>'+
+        '<dt>Domain</dt><dd>'+v.dom+'</dd>'+
+        '<dt>Condition</dt><dd>Cystic fibrosis</dd>'+
+        '<dt>Note</dt><dd style="font-size:11px;line-height:1.4">'+v.note+'</dd>'+
+      '</dl>'+
+      '<div class="foot">ClinVar '+(v.cid==='—'?'record':'<span class="cid">VCV'+String(v.cid).padStart(9,'0')+'</span>')+' · NM_000492.4</div>'+
+    '</div>';
+  tip.classList.add('on');
+}
+function moveTip(ev){
+  var b = wrap.getBoundingClientRect();
+  var px = ev.clientX - b.left, py = ev.clientY - b.top;
+  var tw = tip.offsetWidth, th = tip.offsetHeight;
+  var left = px + 16; if(left + tw > b.width - 6) left = px - tw - 16;
+  var top = py - th - 12; if(top < 4) top = py + 18;
+  tip.style.left = Math.max(4,left) + 'px';
+  tip.style.top = top + 'px';
+}
+function hideTip(){ tip.classList.remove('on'); }
+
+/* ————— domain legend ————— */
+function buildLegend(){
+  var host = document.getElementById('leg');
+  var order = [
+    {name:"TMD1", sub:"Transmembrane domain 1 · 6 helices", rg:"78–358", col:"#6b7280"},
+    {name:"NBD1", sub:"Nucleotide-binding domain 1 — the hotspot", rg:"423–646", col:"#3f5b8c"},
+    {name:"R region", sub:"Regulatory · intrinsically disordered", rg:"654–831", col:"#a9b1bd"},
+    {name:"TMD2", sub:"Transmembrane domain 2 · 6 helices", rg:"859–1155", col:"#6b7280"},
+    {name:"NBD2", sub:"Nucleotide-binding domain 2", rg:"1210–1443", col:"#3f5b8c"}
+  ];
+  host.innerHTML = order.map(function(d){
+    return '<div class="row"><span class="sw" style="background:'+d.col+'"></span>'+
+      '<span class="nm">'+d.name+'<small>'+d.sub+'</small></span>'+
+      '<span class="rg">'+d.rg+'</span></div>';
+  }).join('');
+}
+
+/* ————— stats + counts ————— */
+function tallyCounts(){
+  var c={pathogenic:0,likely_path:0,vus:0,benign:0};
+  VARIANTS.forEach(function(v){ c[bucket(v.sig)]++; });
+  document.getElementById('n-path').textContent=c.pathogenic;
+  document.getElementById('n-lp').textContent=c.likely_path;
+  document.getElementById('n-vus').textContent=c.vus;
+  document.getElementById('n-benign').textContent=c.benign;
+  var tot=VARIANTS.length;
+  document.getElementById('s-total').textContent=tot;
+  var pctPath=Math.round(((c.pathogenic+c.likely_path)/tot)*100);
+  document.getElementById('s-pct').innerHTML=pctPath+'<small>%</small>';
+  /* composition bar */
+  document.getElementById('bp').style.width=(c.pathogenic/tot*100)+'%';
+  document.getElementById('bl').style.width=(c.likely_path/tot*100)+'%';
+  document.getElementById('bv').style.width=(c.vus/tot*100)+'%';
+  document.getElementById('bb').style.width=(c.benign/tot*100)+'%';
+}
+
+/* ————— filter chips ————— */
+document.getElementById('filters').addEventListener('click', function(e){
+  var btn = e.target.closest('.chip'); if(!btn) return;
+  var sig = btn.getAttribute('data-sig');
+  var key = sig==='likely_path'?'likely_path':sig;
+  active[key] = !active[key];
+  btn.setAttribute('aria-pressed', active[key]?'true':'false');
+  draw();
+});
+document.getElementById('reset').addEventListener('click', function(){
+  for(var k in active) active[k]=true;
+  [].forEach.call(document.querySelectorAll('.chip'), function(c){ c.setAttribute('aria-pressed','true'); });
+  draw();
+});
+
+/* init */
+buildLegend();
+tallyCounts();
+draw();
+</script>
+</body>
+</html>

@@ -135,13 +135,6 @@ const SEALS: Record<string, ReactNode> = {
       <path d="M19 18 L21 24 M26 17 L28 23 M33 16 L35 22" strokeWidth="1.5" />
     </>
   ),
-  genius_bronte: (
-    <>
-      <path d="M13 37 C20 22 30 13 37 11 C36 21 28 31 17 35 Z" />
-      <path d="M18 32 L26 24" />
-      <path d="M11 39 L20 39" />
-    </>
-  ),
   genius_davinci: (
     <>
       <rect x="13" y="19" width="17" height="17" />
@@ -178,13 +171,6 @@ const SEALS: Record<string, ReactNode> = {
     </>
   ),
   // — working hands —
-  toscanini: (
-    <>
-      <path d="M14 35 L32 16" />
-      <circle className="dot" cx="13.5" cy="35.5" r="2.6" />
-      <path d="M33 12 q4 3 1 7 M37 14 q3 3 0 6" strokeWidth="1.5" />
-    </>
-  ),
   consultant: (
     <>
       <rect x="11" y="12" width="26" height="19" rx="2" />
@@ -266,36 +252,6 @@ const SEALS: Record<string, ReactNode> = {
       <path d="M9 39 L9 33 M9 39 L15 39" strokeWidth="1.6" />
     </>
   ),
-  // — coaches —
-  coach_diet: (
-    <>
-      <path d="M24 17 C18 13 12 18 13 26 C14 34 19 38 24 35 C29 38 34 34 35 26 C36 18 30 13 24 17 Z" />
-      <path d="M24 17 L25 11" />
-      <path className="dot" d="M25 13 q5 -3 7 1 q-5 2 -7 -1 Z" />
-    </>
-  ),
-  coach_learning: (
-    <>
-      <path className="dot" d="M24 14 L39 20 L24 26 L9 20 Z" />
-      <path d="M16 23 V29 a8 3 0 0 0 16 0 V23" />
-      <path d="M39 20 V31" strokeWidth="1.5" />
-      <circle className="dot" cx="39" cy="32" r="1.6" />
-    </>
-  ),
-  coach_sport: (
-    <>
-      <path d="M16 24 H32" />
-      <path d="M13 18 V30 M17 21 V27" />
-      <path d="M35 18 V30 M31 21 V27" />
-    </>
-  ),
-  coach_cooking: (
-    <>
-      <path d="M16 30 a5 5 0 0 1 -1 -10 a6.5 6.5 0 0 1 18 0 a5 5 0 0 1 -1 10 Z" />
-      <rect x="16" y="30" width="16" height="6" rx="1.5" />
-      <path d="M24 21 V30" strokeWidth="1.4" />
-    </>
-  ),
 };
 
 // Fallback when kind is missing/unknown — a calm concentric ring.
@@ -306,32 +262,43 @@ const FALLBACK: ReactNode = (
   </>
 );
 
-// Stable string hash → seed. Same expert always yields the same crest, so the
-// mark reads as that expert's identity wherever it appears.
-function hashSeed(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return h;
-}
-
-// Generative rim: a milled coin edge whose dot-count and rotation come from the
-// seed. This is what makes two same-`kind` experts (e.g. four "creator"
-// geniuses) distinct without changing the central archetype. Only drawn at
-// showcase size (>= HOUSE_MIN, see the render gate): at chrome size the dots go
-// sub-pixel and just read as grit around the mark, and the per-expert seal +
-// engine glow already carry identity there.
-function rimDots(seed: string): ReactNode {
-  const h = hashSeed(seed);
-  const count = 9 + (h % 5); // 9..13
-  const phase = (h >> 3) % 360;
-  const dots: ReactNode[] = [];
-  for (let i = 0; i < count; i++) {
-    const a = ((phase + (i * 360) / count) * Math.PI) / 180;
-    dots.push(
-      <circle key={i} className="dot" cx={24 + 22 * Math.cos(a)} cy={24 + 22 * Math.sin(a)} r="0.9" />,
-    );
-  }
-  return <g opacity="0.5">{dots}</g>;
+// Per-expert signature hue — curated (not seeded), stable. Drives the crest's
+// relief glow + glyph tint (the "Relief coin" direction): the coin stays the
+// etched-glass cabinet object, but each expert now reads as its own colour
+// instead of the shared skin accent. Resolution: per-slug → per-kind → --brand
+// (so any crest without a known seed/kind falls back to the old behaviour).
+// See design/crest-relief-proposals.html (direction 1).
+const KIND_HUE: Record<ExpertKind, string> = {
+  researcher: "#5b8bff",
+  advisor: "#b08948",
+  analyst: "#4aa3df",
+  builder: "#ff8a3c",
+  creator: "#e85ad0",
+  finder: "#c79a3c",
+  operator: "#6b8cae",
+  coach: "#5ec27a",
+  organizer: "#6c8cff",
+  recruiter: "#a3a05a",
+};
+const EXPERT_HUE: Record<string, string> = {
+  // — supers —
+  consultant: "#5b8bff", scientist: "#2fae9b", financier: "#3a9d5d", lawyer: "#9a6b3f",
+  data_analyst: "#4aa3df", engineer: "#ff8a3c", designer: "#e85ad0", influencer: "#ff5c8a",
+  project_manager: "#6c8cff", sales: "#e0a52e",
+  // — geniuses —
+  genius_davinci: "#e0603c", genius_karl: "#7c8696", genius_gaudi: "#ef7d57",
+  genius_wolfgang: "#f2b53a", genius_homer: "#3f6fb0", genius_hitchcock: "#b23a48",
+  genius_ride: "#3aa0d9", genius_curie: "#39d98a",
+  genius_tesla: "#8b6cff", genius_alfred: "#6b8cae", genius_socrates: "#a3a05a",
+  genius_indiana: "#c79a3c", genius_maradona: "#5aa9e6", genius_marcopolo: "#2bbfa0",
+  genius_vatel: "#b5543f", genius_machiavelli: "#9e2b3a", genius_moriarty: "#355e7a",
+  genius_faust: "#b5462a", genius_hannibal: "#7a2e3a", genius_loki: "#36b37e",
+  // — coaches —
+};
+function hueFor(seed?: string, kind?: ExpertKind): string | undefined {
+  if (seed && EXPERT_HUE[seed]) return EXPERT_HUE[seed];
+  if (kind && KIND_HUE[kind]) return KIND_HUE[kind];
+  return undefined;
 }
 
 export function Crest({
@@ -357,17 +324,18 @@ export function Crest({
   // Per-expert seal (keyed by the slug `seed`) wins; else the kind archetype;
   // else the calm ring. So same-kind experts now read as themselves.
   const arch = (seed ? SEALS[seed] : undefined) ?? (kind ? (ARCHETYPES[kind] ?? FALLBACK) : FALLBACK);
+  // Per-expert signature hue → `--crest-c`; CSS falls back to --brand when unset.
+  const hue = hueFor(seed, kind);
   // One id per instance (several crests share a page) → unique sphere
   // gradient + majordome mask, same pattern as SplitMark.
   const uid = useId();
   return (
     <span
       className={"crest" + (className ? " " + className : "")}
-      style={vars({ "--cs": `${size}px` })}
+      style={vars({ "--cs": `${size}px`, ...(hue ? { "--crest-c": hue } : {}) })}
       title={title}
     >
       <svg className="crest-mark" viewBox="0 0 48 48" aria-hidden="true">
-        {seed && size >= HOUSE_MIN ? rimDots(seed) : null}
         <g transform="translate(24 24) scale(0.84) translate(-24 -24)">{arch}</g>
       </svg>
       {/* House signet — Split's majordome in a small glass sphere, struck

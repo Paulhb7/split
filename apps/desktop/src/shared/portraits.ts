@@ -1,53 +1,93 @@
-// Portrait mapping for the Cabinet gallery — slug → image URL.
+// Portrait mapping for the Cabinet gallery — slug → image.
 //
-// Genius wing: canonical public-domain Wikimedia Commons portraits, resolved
-// via the Wikipedia REST API's `originalimage.source` (the article's lead
-// image). Stable URLs that survive page edits.
+// The whole roster is now one visual world: "house majordome" cartoon avatars
+// (Pixar-style, dark cabinet background, warm rim-light), generated 2026-07-03
+// via Higgsfield nano_banana_2 and vendored under src/assets/avatars/.
+//   • Supers + coach — the house livery (powdered wig + navy tailcoat, per-agent
+//     EXPERT_HUE waistcoat).
+//   • Geniuses — same render + cabinet world, but each keeps their OWN iconic
+//     look (DaVinci's robe, Curie's lab, Socrates' toga, Alfred's butler
+//     tailcoat…), so the tier reads distinct while staying in-world. Replaces
+//     the earlier Wikimedia/Unsplash placeholders.
 //
-// Super agents + coaches: still Unsplash stock placeholders. These are roles,
-// not historical figures — they need a coherent generated avatar set (style
-// gravure XIXè, watercolor, etc.) that DaVinci can produce in a dedicated
-// pass.
-//
-// Fictional characters (Indiana, Alfred): no PD source — also placeholder
-// until generated.
+// Unknown slugs (custom experts before their avatar ships) fall back to a
+// generic Unsplash portrait.
+
+// — supers + coach —
+import consultantAvatar from "../assets/avatars/consultant.jpg";
+import scientistAvatar from "../assets/avatars/scientist.jpg";
+import financierAvatar from "../assets/avatars/financier.jpg";
+import lawyerAvatar from "../assets/avatars/lawyer.jpg";
+import dataAnalystAvatar from "../assets/avatars/data_analyst.jpg";
+import engineerAvatar from "../assets/avatars/engineer.jpg";
+import designerAvatar from "../assets/avatars/designer.jpg";
+import influencerAvatar from "../assets/avatars/influencer.jpg";
+import projectManagerAvatar from "../assets/avatars/project_manager.jpg";
+import salesAvatar from "../assets/avatars/sales.jpg";
+import coachAvatar from "../assets/avatars/coach.jpg";
+// — geniuses —
+import davinciAvatar from "../assets/avatars/genius_davinci.jpg";
+import curieAvatar from "../assets/avatars/genius_curie.jpg";
+import teslaAvatar from "../assets/avatars/genius_tesla.jpg";
+import socratesAvatar from "../assets/avatars/genius_socrates.jpg";
+import wolfgangAvatar from "../assets/avatars/genius_wolfgang.jpg";
+import alfredAvatar from "../assets/avatars/genius_alfred.jpg";
+import karlAvatar from "../assets/avatars/genius_karl.jpg";
+import gaudiAvatar from "../assets/avatars/genius_gaudi.jpg";
+import homerAvatar from "../assets/avatars/genius_homer.jpg";
+import hitchcockAvatar from "../assets/avatars/genius_hitchcock.jpg";
+import rideAvatar from "../assets/avatars/genius_ride.jpg";
+import indianaAvatar from "../assets/avatars/genius_indiana.jpg";
+import maradonaAvatar from "../assets/avatars/genius_maradona.jpg";
+import marcopoloAvatar from "../assets/avatars/genius_marcopolo.jpg";
+import vatelAvatar from "../assets/avatars/genius_vatel.jpg";
+import machiavelliAvatar from "../assets/avatars/genius_machiavelli.jpg";
+import moriartyAvatar from "../assets/avatars/genius_moriarty.jpg";
+import faustAvatar from "../assets/avatars/genius_faust.jpg";
+import hannibalAvatar from "../assets/avatars/genius_hannibal.jpg";
+import lokiAvatar from "../assets/avatars/genius_loki.jpg";
 
 const PORTRAITS: Record<string, string> = {
-  // ---- Genius wing — Wikimedia Commons (public domain) ----
-  genius_davinci:   "https://upload.wikimedia.org/wikipedia/commons/c/cb/Francesco_Melzi_-_Portrait_of_Leonardo.png",
-  genius_wolfgang:  "https://upload.wikimedia.org/wikipedia/commons/a/ad/The_Mozart_Family_-_Wolfgang_Amadeus_Mozart_headshot.jpg",
-  genius_curie:     "https://upload.wikimedia.org/wikipedia/commons/c/c8/Marie_Curie_c._1920s.jpg",
-  genius_tesla:     "https://upload.wikimedia.org/wikipedia/commons/7/79/Tesla_circa_1890.jpeg",
-  genius_bronte:    "https://upload.wikimedia.org/wikipedia/commons/f/fc/Emily_Bront%C3%AB_by_Patrick_Branwell_Bront%C3%AB_restored.jpg",
-  genius_homer:     "https://upload.wikimedia.org/wikipedia/commons/f/f1/Homer_At_the_British_Museum_2024_%283x4_cropped%29.jpg",
-  genius_kubrick:   "https://upload.wikimedia.org/wikipedia/commons/5/59/Stanley_Kubrick_in_Dr._Strangelove_Trailer_%284%29_Cropped.jpg",
-  genius_socrates:  "https://upload.wikimedia.org/wikipedia/commons/a/a4/Socrates_Louvre.jpg",
-  genius_ride:      "https://upload.wikimedia.org/wikipedia/commons/0/0c/Sally_Ride_%281984%29.jpg",
-  // Fictional — placeholders until generated avatars ship
-  genius_indiana:   "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=500&q=80",
-  genius_alfred:    "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=500&q=80",
+  // ---- Genius wing — iconic-look cartoon avatars ----
+  genius_davinci:     davinciAvatar,
+  genius_curie:       curieAvatar,
+  genius_tesla:       teslaAvatar,
+  genius_socrates:    socratesAvatar,
+  genius_wolfgang:    wolfgangAvatar,
+  genius_alfred:      alfredAvatar,
+  genius_karl:        karlAvatar,
+  genius_gaudi:       gaudiAvatar,
+  genius_homer:       homerAvatar,
+  genius_hitchcock:   hitchcockAvatar,
+  genius_ride:        rideAvatar,
+  genius_indiana:     indianaAvatar,
+  genius_maradona:    maradonaAvatar,
+  genius_marcopolo:   marcopoloAvatar,
+  genius_vatel:       vatelAvatar,
+  genius_machiavelli: machiavelliAvatar,
+  genius_moriarty:    moriartyAvatar,
+  genius_faust:       faustAvatar,
+  genius_hannibal:    hannibalAvatar,
+  genius_loki:        lokiAvatar,
 
-  // ---- Super wing (working hands — stylized portraits TBD) ----
-  toscanini:        "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=500&q=80",
-  consultant:       "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=500&q=80",
-  scientist:        "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=500&q=80",
-  financier:        "https://images.unsplash.com/photo-1556157382-97eda2d62296?w=500&q=80",
-  lawyer:           "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=500&q=80",
-  data_analyst:     "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&q=80",
-  engineer:         "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=500&q=80",
-  project_manager:  "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=500&q=80",
-  sales:            "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500&q=80",
+  // ---- Super wing — house-majordome avatars (per-agent EXPERT_HUE waistcoat) ----
+  consultant:       consultantAvatar,
+  scientist:        scientistAvatar,
+  financier:        financierAvatar,
+  lawyer:           lawyerAvatar,
+  data_analyst:     dataAnalystAvatar,
+  engineer:         engineerAvatar,
+  designer:         designerAvatar,
+  influencer:       influencerAvatar,
+  project_manager:  projectManagerAvatar,
+  sales:            salesAvatar,
 
-  // ---- Coach wing ----
-  coach_diet:       "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80",
-  coach_learning:   "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80",
-  coach_sport:      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80",
-  coach_cooking:    "https://images.unsplash.com/photo-1607631568010-a87245c0daf8?w=400&q=80",
+  // ---- Coach (the four coaches merged into one super, 2026-07) ----
+  coach:            coachAvatar,
 };
 
-/** Fallback portrait when a slug has no registered image (custom experts
- * created via @Socrates, future experts before their portrait ships). The
- * gallery component reads the same Unsplash CDN so the failover is silent. */
+/** Fallback portrait when a slug has no registered avatar (custom experts
+ * created via @Socrates, future experts before their avatar ships). */
 const PORTRAIT_FALLBACK =
   "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=600&q=80";
 

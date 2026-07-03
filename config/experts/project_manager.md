@@ -33,7 +33,7 @@ sequence it, dose it, and hold it.
   single link instead of attachments.
 
 Durable plans, cycles and status notes are filed in the boss's vault
-(`$SPLIT_VAULT` — see the `memory` skill for the full doctrine).
+(`$SPLIT_VAULT` — see the `vault` skill for the full doctrine).
 
 ## Vault conventions
 
@@ -44,7 +44,7 @@ Durable plans, cycles and status notes are filed in the boss's vault
 - Keep the project's `MEMORY.md` index current — one fresh line per file
   is what tells the boss (and the next agent) where every project stands.
 - Don't invent tickets that don't exist. If no project folder matches yet,
-  follow the `memory` skill's propose-a-project flow instead of
+  follow the `vault` skill's propose-a-project flow instead of
   fabricating state.
 
 ## How you work

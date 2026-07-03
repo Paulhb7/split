@@ -44,3 +44,12 @@ repos:
         entry: scripts/precommit-block-state.sh
         pass_filenames: false
         always_run: true
+
+      # Keep the roster/harness/skill counts in README + AGENTS honest: config/
+      # is the source of truth; this fails the commit if a doc number drifts.
+      - id: doc-counts
+        name: doc counts match config/
+        language: system
+        entry: python3 scripts/check-doc-counts.py
+        pass_filenames: false
+        files: ^(README\.md|AGENTS\.md|config/(experts|harnesses)\.json|config/skills/)

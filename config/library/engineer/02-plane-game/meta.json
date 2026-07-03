@@ -1,0 +1,10 @@
+{
+  "expert": "engineer",
+  "key": "plane-game",
+  "type": "app",
+  "title": "Low-poly flight",
+  "desc": "Playable in browser",
+  "brief": "A genuinely playable low-poly flight mini-game built on three.js from a CDN: pilot a stylized plane over a procedural archipelago of mountains, sea and small islands, with banking arrow-key/WASD controls, fly-through rings for score, fixed golden-hour lighting, an eased chase camera, fog and soft shadows, a HUD with speed and score, restart, and a title overlay with the controls — one self-contained file targeting 60fps.",
+  "da": "Low-poly dawn: apricot-to-lavender sky, warm sun glare, mint/sand/terracotta flat-shaded terrain, rounded UI chips — Monument-Valley warmth.",
+  "generated": "2026-07-03"
+}

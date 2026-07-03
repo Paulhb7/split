@@ -4,7 +4,7 @@ name: Mise-en-place / Service Ticket
 tagline: Chef's service ticket — editorial serif + italic notes, numbered ticket header, mise-en-place checklist, cream paper.
 mood: warm, editorial, hospitable, hands-on
 references: Bon Appétit, Le Creuset booklets, Diana Henry cookbooks, brigade prep cards, brasserie menus
-default_for: coach_cooking (any multi-week cooking journey or menu)
+default_for: cooking (any multi-week cooking journey or menu)
 also_consider_for: a hospitality / event-prep tracker
 palette: cream paper + ink + one warm accent (paprika, saffron, or bordeaux)
 ---

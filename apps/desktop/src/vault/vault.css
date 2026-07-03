@@ -31,6 +31,9 @@
 }
 
 .vault-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   font-family: var(--disp);
   font-size: 15px;
   font-weight: 700;
@@ -89,8 +92,9 @@
 
 .vault-ic {
   flex: none;
-  font-size: 12px;
-  filter: saturate(0.8);
+  display: grid;
+  place-items: center;
+  color: var(--dim);
 }
 
 .vault-name {
@@ -194,7 +198,9 @@
   background: var(--brand);
   border: none;
   border-radius: 8px;
-  color: #fff;
+  /* On-brand text — var(--ink) like the other solid CTAs (.seg .on, .att-badge),
+     so the label survives skins whose --brand is near-white (Ember). */
+  color: var(--ink);
   font-size: 12px;
   font-weight: 600;
   padding: 6px 14px;

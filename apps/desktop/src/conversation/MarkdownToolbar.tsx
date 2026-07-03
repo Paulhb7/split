@@ -28,7 +28,7 @@ export function MarkdownToolbar({ editor }: { editor: Editor }) {
   };
   const promptLink = () => {
     const prev = (editor.getAttributes("link") as { href?: string }).href ?? "";
-    const url = window.prompt("Lien (vide pour supprimer)", prev);
+    const url = window.prompt("Link (empty to remove)", prev);
     if (url === null) return;
     if (url === "") editor.chain().focus().extendMarkRange("link").unsetLink().run();
     else editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
@@ -37,61 +37,61 @@ export function MarkdownToolbar({ editor }: { editor: Editor }) {
   return (
     <div className="md-tb" role="toolbar" aria-label="Formatting">
       <Group>
-        <Btn on={is("bold")} onClick={run(() => editor.chain().focus().toggleBold().run())} title="Gras (⌘B)">
+        <Btn on={is("bold")} onClick={run(() => editor.chain().focus().toggleBold().run())} title="Bold (⌘B)">
           <b>B</b>
         </Btn>
-        <Btn on={is("italic")} onClick={run(() => editor.chain().focus().toggleItalic().run())} title="Italique (⌘I)">
+        <Btn on={is("italic")} onClick={run(() => editor.chain().focus().toggleItalic().run())} title="Italic (⌘I)">
           <i>I</i>
         </Btn>
-        <Btn on={is("strike")} onClick={run(() => editor.chain().focus().toggleStrike().run())} title="Barré">
+        <Btn on={is("strike")} onClick={run(() => editor.chain().focus().toggleStrike().run())} title="Strikethrough">
           <s>S</s>
         </Btn>
-        <Btn on={is("code")} onClick={run(() => editor.chain().focus().toggleCode().run())} title="Code inline">
+        <Btn on={is("code")} onClick={run(() => editor.chain().focus().toggleCode().run())} title="Inline code">
           <span className="md-tb-mono">{"</>"}</span>
         </Btn>
       </Group>
       <Sep />
       <Group>
-        <Btn on={is("heading", { level: 1 })} onClick={run(() => editor.chain().focus().toggleHeading({ level: 1 }).run())} title="Titre 1">
+        <Btn on={is("heading", { level: 1 })} onClick={run(() => editor.chain().focus().toggleHeading({ level: 1 }).run())} title="Heading 1">
           H1
         </Btn>
-        <Btn on={is("heading", { level: 2 })} onClick={run(() => editor.chain().focus().toggleHeading({ level: 2 }).run())} title="Titre 2">
+        <Btn on={is("heading", { level: 2 })} onClick={run(() => editor.chain().focus().toggleHeading({ level: 2 }).run())} title="Heading 2">
           H2
         </Btn>
-        <Btn on={is("heading", { level: 3 })} onClick={run(() => editor.chain().focus().toggleHeading({ level: 3 }).run())} title="Titre 3">
+        <Btn on={is("heading", { level: 3 })} onClick={run(() => editor.chain().focus().toggleHeading({ level: 3 }).run())} title="Heading 3">
           H3
         </Btn>
       </Group>
       <Sep />
       <Group>
-        <Btn on={is("bulletList")} onClick={run(() => editor.chain().focus().toggleBulletList().run())} title="Liste à puces">
+        <Btn on={is("bulletList")} onClick={run(() => editor.chain().focus().toggleBulletList().run())} title="Bullet list">
           •
         </Btn>
-        <Btn on={is("orderedList")} onClick={run(() => editor.chain().focus().toggleOrderedList().run())} title="Liste numérotée">
+        <Btn on={is("orderedList")} onClick={run(() => editor.chain().focus().toggleOrderedList().run())} title="Numbered list">
           1.
         </Btn>
-        <Btn on={is("blockquote")} onClick={run(() => editor.chain().focus().toggleBlockquote().run())} title="Citation">
+        <Btn on={is("blockquote")} onClick={run(() => editor.chain().focus().toggleBlockquote().run())} title="Quote">
           ❝
         </Btn>
-        <Btn on={is("codeBlock")} onClick={run(() => editor.chain().focus().toggleCodeBlock().run())} title="Bloc de code">
+        <Btn on={is("codeBlock")} onClick={run(() => editor.chain().focus().toggleCodeBlock().run())} title="Code block">
           <span className="md-tb-mono">{ }</span>
         </Btn>
       </Group>
       <Sep />
       <Group>
-        <Btn on={is("link")} onClick={promptLink} title="Lien (⌘K)">
+        <Btn on={is("link")} onClick={promptLink} title="Link (⌘K)">
           ↗
         </Btn>
-        <Btn onClick={run(() => editor.chain().focus().setHorizontalRule().run())} title="Séparateur">
+        <Btn onClick={run(() => editor.chain().focus().setHorizontalRule().run())} title="Divider">
           —
         </Btn>
       </Group>
       <div className="md-tb-spacer" />
       <Group>
-        <Btn onClick={run(() => editor.chain().focus().undo().run())} disabled={!editor.can().undo()} title="Annuler (⌘Z)">
+        <Btn onClick={run(() => editor.chain().focus().undo().run())} disabled={!editor.can().undo()} title="Undo (⌘Z)">
           ↶
         </Btn>
-        <Btn onClick={run(() => editor.chain().focus().redo().run())} disabled={!editor.can().redo()} title="Rétablir (⌘⇧Z)">
+        <Btn onClick={run(() => editor.chain().focus().redo().run())} disabled={!editor.can().redo()} title="Redo (⌘⇧Z)">
           ↷
         </Btn>
       </Group>

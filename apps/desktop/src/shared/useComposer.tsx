@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { composeTurn, type Attachment } from "./util";
 import { isActiveExpert, type ExpertMap } from "./experts";
+import { Icon } from "./ui";
 
 // The shared composer brain: the input value + attachments, the three
 // type-ahead pickers (`@` expert mention, `#` vault project, `/` slash
@@ -42,7 +43,7 @@ export function useComposer(opts: {
   // time the `#` menu opens.
   const [vaultProjects, setVaultProjects] = useState<string[]>([]);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const expertEntries = useMemo(() => Object.entries(experts).filter(([slug]) => isActiveExpert(experts, slug)), [experts]);
 
@@ -204,8 +205,9 @@ export function useComposer(opts: {
   // While the @-mention (or #-project) picker is open, Enter picks the top
   // filtered entry instead of submitting the brief. Returns true when the
   // keystroke was consumed; the caller's onKey falls through otherwise.
+  // Shift+Enter is never a pick — it stays a newline in the textarea.
   function handlePickerEnter(e: React.KeyboardEvent): boolean {
-    if (e.key !== "Enter") return false;
+    if (e.key !== "Enter" || e.shiftKey) return false;
     if (menu === "expert" && mentionQuery !== null && filteredExperts.length > 0) {
       e.preventDefault();
       pickExpert(filteredExperts[0][0]);
@@ -265,7 +267,7 @@ export function useComposer(opts: {
       {projectChip}
       {attachments.map((a, i) => (
         <span key={i} className="chip">
-          📎 {a.name}
+          <Icon name="paperclip" size={11} /> {a.name}
           <button className="xbtn" onMouseDown={(e) => { e.preventDefault(); setAttachments((p) => p.filter((_, k) => k !== i)); }}>✕</button>
         </span>
       ))}
@@ -278,4 +280,16 @@ export function useComposer(opts: {
     handleInputChange, pickExpert, pickProject, pickCommand,
     handlePickerEnter, closePickers, addAttachments, takeTurn,
   };
+}
+
+// Auto-grow the brief textarea: 1 row at rest, tracks content up to ~5 rows,
+// then scrolls. Called from an effect keyed on `value` in each composer, so a
+// remount (home ↔ conversation, same shared draft) re-fits too.
+export function fitBrief(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  const cs = getComputedStyle(el);
+  const line = parseFloat(cs.lineHeight) || 20;
+  const pad = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  el.style.height = "auto";
+  el.style.height = `${Math.min(el.scrollHeight, Math.ceil(line * 5 + pad))}px`;
 }

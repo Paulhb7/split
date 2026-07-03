@@ -41,7 +41,7 @@ export function MarkdownEditor({ initial, onReady, onSave, onCancel }: Props) {
     extensions: [
       StarterKit,
       Link.configure({ openOnClick: false, autolink: true }),
-      Placeholder.configure({ placeholder: "Écris ton markdown…" }),
+      Placeholder.configure({ placeholder: "Write your markdown…" }),
       Typography,
       // `html: true` keeps raw HTML the user might have pasted; the editor
       // round-trips it instead of dropping it on save.
@@ -74,7 +74,7 @@ export function MarkdownEditor({ initial, onReady, onSave, onCancel }: Props) {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
       e.preventDefault();
       const prev = (editor.getAttributes("link") as { href?: string }).href ?? "";
-      const url = window.prompt("Lien (vide pour supprimer)", prev);
+      const url = window.prompt("Link (empty to remove)", prev);
       if (url === null) return;
       if (url === "") editor.chain().focus().extendMarkRange("link").unsetLink().run();
       else editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
@@ -90,7 +90,7 @@ export function MarkdownEditor({ initial, onReady, onSave, onCancel }: Props) {
           className={"md-bubble-btn" + (editor.isActive("bold") ? " on" : "")}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleBold().run()}
-          title="Gras"
+          title="Bold"
         >
           <b>B</b>
         </button>
@@ -99,7 +99,7 @@ export function MarkdownEditor({ initial, onReady, onSave, onCancel }: Props) {
           className={"md-bubble-btn" + (editor.isActive("italic") ? " on" : "")}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          title="Italique"
+          title="Italic"
         >
           <i>I</i>
         </button>
@@ -118,12 +118,12 @@ export function MarkdownEditor({ initial, onReady, onSave, onCancel }: Props) {
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             const prev = (editor.getAttributes("link") as { href?: string }).href ?? "";
-            const url = window.prompt("Lien (vide pour supprimer)", prev);
+            const url = window.prompt("Link (empty to remove)", prev);
             if (url === null) return;
             if (url === "") editor.chain().focus().extendMarkRange("link").unsetLink().run();
             else editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
           }}
-          title="Lien"
+          title="Link"
         >
           ↗
         </button>

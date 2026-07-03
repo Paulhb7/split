@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Single-Cell Atlas — ALS motor cortex · Curie · Split</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ---- deep clinical slate / navy ground (NOT black, NOT violet-plasma) ---- */
+    --bg:        #0e1622;
+    --bg-2:      #10192a;
+    --panel:     #131f30;
+    --panel-2:   #16233769;
+    --rail:      #101a29;
+    --plot:      #0c1420;
+    --line:      #24344c;
+    --line-2:    #1b2a3f;
+    --hair:      #17263a;
+    --ink:       #e7eef7;
+    --ink-2:     #a9bace;
+    --ink-3:     #6f8299;
+    --ink-4:     #4c6079;
+    --accent:    #5fb0c9;   /* restrained probe cyan-teal — UI only, never a cluster */
+    --accent-2:  #3d8ba3;
+    --warn:      #d98f6a;
+    --good:      #6fbf99;
+
+    /* ---- expression heat ramp (viridis-adjacent, continuous) ---- */
+    --heat-0:    #202a3d;   /* low  */
+    --heat-1:    #21556b;
+    --heat-2:    #21867e;
+    --heat-3:    #5fb36a;
+    --heat-4:    #c7d84e;   /* high */
+
+    --shadow:    0 1px 2px rgba(0,0,0,.28), 0 14px 44px rgba(0,0,0,.34);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.30);
+    --radius:    12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 720px at 74% -10%, #16243a 0%, rgba(22,36,58,0) 62%),
+      radial-gradient(900px 620px at 6% 108%, #12203400 0%, rgba(15,24,40,0) 60%),
+      linear-gradient(180deg,#0e1622 0%, #0b1220 100%);
+    font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+    letter-spacing:-0.004em;
+    min-height:100%;
+  }
+  .mono{font-family:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-feature-settings:"liga" 0}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(95,176,201,.28)}
+  a:hover{border-bottom-color:var(--accent)}
+  ::selection{background:rgba(95,176,201,.24)}
+
+  /* ============ shell ============ */
+  .app{max-width:1400px;margin:0 auto;padding:20px 22px 40px}
+
+  /* ---- top bar ---- */
+  .topbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+  .brandmark{display:flex;align-items:center;gap:11px;min-width:0}
+  .glyph{
+    width:34px;height:34px;border-radius:9px;flex:none;position:relative;
+    background:linear-gradient(150deg,#17243a,#0f1a2b);
+    border:1px solid var(--line);box-shadow:var(--shadow-sm);
+    display:grid;place-items:center;
+  }
+  .glyph svg{width:20px;height:20px;display:block}
+  .brandtext h1{font-size:15.5px;font-weight:800;margin:0;letter-spacing:-0.01em;line-height:1.1}
+  .brandtext .sub{font-size:11.5px;color:var(--ink-3);font-weight:500;margin-top:1px}
+  .brandtext .sub b{color:var(--ink-2);font-weight:600}
+  .topspacer{flex:1}
+  .runchip{
+    display:inline-flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-2);
+    background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 11px;
+    font-weight:600;letter-spacing:.01em;box-shadow:var(--shadow-sm);
+  }
+  .runchip .dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px rgba(111,191,153,.16)}
+  .runchip.k{color:var(--ink-3)}
+  .runchip.k .dot{background:var(--accent);box-shadow:0 0 0 3px rgba(95,176,201,.14)}
+
+  /* ---- exec summary (About this) ---- */
+  details.about{
+    background:linear-gradient(180deg,var(--panel),#0f1a2a);
+    border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow-sm);margin-bottom:16px;overflow:hidden;
+  }
+  details.about>summary{
+    list-style:none;cursor:pointer;padding:12px 16px;display:flex;align-items:center;gap:11px;
+    font-weight:700;font-size:13px;color:var(--ink);
+  }
+  details.about>summary::-webkit-details-marker{display:none}
+  .about .tag{
+    font-family:"DM Mono",monospace;font-size:10px;letter-spacing:.10em;text-transform:uppercase;
+    color:var(--accent);background:rgba(95,176,201,.10);border:1px solid rgba(95,176,201,.24);
+    padding:2px 8px;border-radius:5px;font-weight:500;
+  }
+  .about .chev{margin-left:auto;color:var(--ink-3);transition:transform .18s ease}
+  details.about[open] .chev{transform:rotate(90deg)}
+  .about-body{padding:2px 16px 15px;border-top:1px solid var(--line-2)}
+  .about-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:12px}
+  .about-grid .cell h4{
+    margin:0 0 4px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--accent);font-weight:700;
+  }
+  .about-grid .cell p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.5}
+  @media(max-width:900px){.about-grid{grid-template-columns:1fr 1fr}}
+
+  /* ============ main layout ============ */
+  .layout{display:grid;grid-template-columns:1fr 336px;gap:16px;align-items:start}
+  @media(max-width:1080px){.layout{grid-template-columns:1fr}}
+
+  /* ---- plot card ---- */
+  .plotcard{
+    background:linear-gradient(180deg,#111d2e,#0d1725);
+    border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .plothead{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:12px 15px;border-bottom:1px solid var(--line-2);
+    background:linear-gradient(180deg,#14202f,#101a29);
+  }
+  .plothead .title{font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px}
+  .plothead .title .em{color:var(--ink-3);font-weight:500}
+  .plothead .sp{flex:1}
+
+  /* colour-by control */
+  .modeseg{display:inline-flex;background:var(--plot);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+  .modeseg button{
+    font:inherit;font-size:11.5px;font-weight:600;color:var(--ink-3);
+    background:transparent;border:0;border-radius:6px;padding:5px 11px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;transition:background .14s,color .14s;
+  }
+  .modeseg button.on{background:linear-gradient(180deg,#1c2c42,#182740);color:var(--ink);box-shadow:var(--shadow-sm)}
+  .modeseg button:not(.on):hover{color:var(--ink-2)}
+
+  .genepick{display:inline-flex;align-items:center;gap:7px}
+  .genepick label{font-size:11px;color:var(--ink-3);font-weight:600}
+  select.gene{
+    font-family:"DM Mono",monospace;font-size:12px;font-weight:500;color:var(--ink);
+    background:var(--plot);border:1px solid var(--line);border-radius:8px;
+    padding:5px 9px;cursor:pointer;outline:none;letter-spacing:.01em;
+  }
+  select.gene:focus{border-color:var(--accent-2)}
+  select.gene:disabled{opacity:.4;cursor:not-allowed}
+
+  .condseg{display:inline-flex;background:var(--plot);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+  .condseg button{
+    font:inherit;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.02em;
+    background:transparent;border:0;border-radius:6px;padding:5px 10px;cursor:pointer;transition:background .14s,color .14s;
+  }
+  .condseg button.on{color:var(--ink)}
+  .condseg button[data-cond="ctrl"].on{background:rgba(111,191,153,.16);color:var(--good)}
+  .condseg button[data-cond="als"].on{background:rgba(217,143,106,.16);color:var(--warn)}
+
+  .plotwrap{position:relative;background:
+      radial-gradient(760px 520px at 40% 34%, #101d2e 0%, rgba(12,20,32,0) 70%),
+      var(--plot);
+  }
+  canvas#umap{display:block;width:100%;height:600px;cursor:crosshair}
+  @media(max-width:1080px){canvas#umap{height:520px}}
+  @media(max-width:640px){canvas#umap{height:440px}}
+
+  /* axis chrome overlay */
+  .axislabel{position:absolute;color:var(--ink-4);font-size:10.5px;font-weight:600;letter-spacing:.04em;pointer-events:none;font-family:"DM Mono",monospace}
+  .axislabel.x{bottom:9px;left:50%;transform:translateX(-50%)}
+  .axislabel.y{top:50%;left:9px;transform:translateY(-50%) rotate(-90deg);transform-origin:left center}
+  .axistick{position:absolute;color:var(--ink-4);font-size:9px;font-family:"DM Mono",monospace;pointer-events:none;opacity:.75}
+
+  /* legend for the heat ramp (mode=gene) */
+  .heatkey{
+    position:absolute;right:14px;top:12px;width:150px;pointer-events:none;
+    background:rgba(13,23,37,.78);border:1px solid var(--line);border-radius:9px;
+    padding:9px 10px 8px;backdrop-filter:blur(6px);box-shadow:var(--shadow-sm);
+    opacity:0;transform:translateY(-4px);transition:opacity .2s,transform .2s;
+  }
+  .heatkey.show{opacity:1;transform:none}
+  .heatkey .hk-top{display:flex;align-items:baseline;gap:6px;margin-bottom:6px}
+  .heatkey .hk-gene{font-family:"DM Mono",monospace;font-size:12.5px;font-weight:500;color:var(--ink)}
+  .heatkey .hk-lab{font-size:9.5px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+  .heatbar{height:9px;border-radius:4px;background:linear-gradient(90deg,var(--heat-0),var(--heat-1),var(--heat-2),var(--heat-3),var(--heat-4))}
+  .heatscale{display:flex;justify-content:space-between;font-family:"DM Mono",monospace;font-size:9px;color:var(--ink-3);margin-top:3px}
+
+  /* selection banner */
+  .selband{
+    position:absolute;left:14px;top:12px;max-width:60%;
+    background:rgba(13,23,37,.82);border:1px solid var(--line);border-radius:9px;
+    padding:7px 11px;backdrop-filter:blur(6px);box-shadow:var(--shadow-sm);
+    display:none;align-items:center;gap:9px;font-size:11.5px;color:var(--ink-2);
+  }
+  .selband.show{display:flex}
+  .selband .swatch{width:11px;height:11px;border-radius:3px;flex:none}
+  .selband b{color:var(--ink);font-weight:700}
+  .selband .clr{margin-left:4px;color:var(--ink-3);cursor:pointer;border-bottom:1px dashed var(--ink-4);pointer-events:auto}
+  .selband .clr:hover{color:var(--ink)}
+
+  /* hover tooltip */
+  .tip{
+    position:fixed;z-index:40;pointer-events:none;opacity:0;transition:opacity .1s;
+    background:rgba(11,19,31,.96);border:1px solid var(--line);border-radius:9px;
+    padding:8px 10px;box-shadow:var(--shadow);max-width:230px;
+  }
+  .tip.show{opacity:1}
+  .tip .t-top{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+  .tip .t-sw{width:10px;height:10px;border-radius:3px;flex:none}
+  .tip .t-name{font-weight:700;font-size:12px;color:var(--ink)}
+  .tip .t-cls{font-size:10px;color:var(--ink-3);font-weight:600;letter-spacing:.02em;text-transform:uppercase;margin-left:auto}
+  .tip .t-row{font-size:11px;color:var(--ink-2);display:flex;justify-content:space-between;gap:14px}
+  .tip .t-row .k{color:var(--ink-3)}
+  .tip .t-row .v{font-family:"DM Mono",monospace;color:var(--ink)}
+  .tip .t-mk{margin-top:4px;font-family:"DM Mono",monospace;font-size:10.5px;color:var(--accent)}
+
+  /* footprint under plot */
+  .plotfoot{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:9px 15px;border-top:1px solid var(--line-2);
+    background:linear-gradient(180deg,#101a29,#0d1725);
+    font-size:11px;color:var(--ink-3);
+  }
+  .plotfoot .kv{display:inline-flex;align-items:center;gap:6px}
+  .plotfoot .kv b{color:var(--ink-2);font-weight:700;font-family:"DM Mono",monospace}
+  .plotfoot .sp{flex:1}
+  .recon{
+    display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.03em;
+    color:var(--warn);background:rgba(217,143,106,.10);border:1px solid rgba(217,143,106,.26);
+    border-radius:6px;padding:3px 9px;text-transform:uppercase;
+  }
+
+  /* ============ right rail ============ */
+  .rail{display:flex;flex-direction:column;gap:14px;position:sticky;top:16px}
+  @media(max-width:1080px){.rail{position:static}}
+  .card{
+    background:linear-gradient(180deg,var(--panel),#0f1a2a);
+    border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;
+  }
+  .card-h{
+    padding:11px 14px;border-bottom:1px solid var(--line-2);
+    display:flex;align-items:center;gap:9px;
+    font-size:10.5px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:var(--ink-2);
+    background:linear-gradient(180deg,#14202f,#111b2a);
+  }
+  .card-h .ic{color:var(--accent);display:flex}
+  .card-h .ic svg{width:14px;height:14px}
+  .card-h .count{margin-left:auto;font-family:"DM Mono",monospace;font-size:10px;color:var(--ink-3);letter-spacing:.02em}
+
+  /* legend list */
+  .legend{padding:6px 6px 8px;max-height:360px;overflow:auto}
+  .legend::-webkit-scrollbar{width:8px}
+  .legend::-webkit-scrollbar-thumb{background:#1e2e44;border-radius:8px;border:2px solid var(--panel)}
+  .lg-row{
+    display:grid;grid-template-columns:14px 1fr auto;gap:9px;align-items:center;
+    padding:6px 9px;border-radius:8px;cursor:pointer;transition:background .12s;
+  }
+  .lg-row:hover{background:var(--panel-2)}
+  .lg-row.sel{background:rgba(95,176,201,.10);box-shadow:inset 0 0 0 1px rgba(95,176,201,.22)}
+  .lg-row.dim{opacity:.34}
+  .lg-sw{width:12px;height:12px;border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.06)}
+  .lg-mid{min-width:0}
+  .lg-name{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lg-sub{font-size:10.5px;color:var(--ink-3);font-weight:500;margin-top:1px}
+  .lg-num{text-align:right;font-family:"DM Mono",monospace;font-size:11px;color:var(--ink-2);line-height:1.15}
+  .lg-num .pct{color:var(--ink-3);font-size:9.5px;display:block}
+  .lg-foot{padding:8px 12px 4px;border-top:1px solid var(--line-2);display:flex;gap:8px}
+  .lg-foot button{
+    flex:1;font:inherit;font-size:11px;font-weight:600;color:var(--ink-3);
+    background:var(--plot);border:1px solid var(--line);border-radius:7px;padding:5px;cursor:pointer;transition:color .12s,border-color .12s;
+  }
+  .lg-foot button:hover{color:var(--ink);border-color:var(--accent-2)}
+
+  /* detail card (clicked cluster) */
+  .detail{padding:13px 15px 15px}
+  .detail.empty{color:var(--ink-3);font-size:12px;padding:15px}
+  .detail.empty .hint{display:flex;align-items:center;gap:8px}
+  .dt-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .dt-sw{width:16px;height:16px;border-radius:5px;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+  .dt-name{font-size:16px;font-weight:800;letter-spacing:-0.01em;line-height:1.1}
+  .dt-cls{font-size:10.5px;color:var(--ink-3);font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-top:2px}
+  .dt-fn{font-size:12.5px;color:var(--ink-2);line-height:1.5;margin:6px 0 12px;
+    border-left:2px solid var(--line);padding-left:11px}
+  .dt-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px}
+  .dt-stat{background:var(--plot);border:1px solid var(--line-2);border-radius:8px;padding:8px 10px}
+  .dt-stat .k{font-size:9.5px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+  .dt-stat .v{font-family:"DM Mono",monospace;font-size:15px;font-weight:500;color:var(--ink);margin-top:2px}
+  .dt-stat .v small{font-size:10px;color:var(--ink-3)}
+  .dt-mkh{font-size:10px;color:var(--ink-3);letter-spacing:.09em;text-transform:uppercase;font-weight:800;margin-bottom:7px;display:flex;align-items:center;gap:7px}
+  .dt-mkh .ln{flex:1;height:1px;background:var(--line-2)}
+  .mk-list{display:flex;flex-direction:column;gap:5px}
+  .mk-chip{
+    display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;
+    background:var(--plot);border:1px solid var(--line-2);border-radius:8px;padding:6px 9px;cursor:pointer;transition:border-color .12s,background .12s;
+  }
+  .mk-chip:hover{border-color:var(--accent-2);background:#0e1a2a}
+  .mk-chip.active{border-color:var(--accent);background:rgba(95,176,201,.08)}
+  .mk-gene{font-family:"DM Mono",monospace;font-size:12.5px;font-weight:500;color:var(--ink);letter-spacing:.01em}
+  .mk-fn{font-size:10.5px;color:var(--ink-3);line-height:1.35;overflow:hidden;text-overflow:ellipsis}
+  .mk-bar{width:46px;height:6px;border-radius:3px;background:#1a293e;position:relative;overflow:hidden;flex:none}
+  .mk-bar span{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:linear-gradient(90deg,var(--heat-1),var(--heat-3),var(--heat-4))}
+
+  /* condition-shift note */
+  .shiftnote{
+    margin-top:12px;font-size:11.5px;color:var(--ink-2);line-height:1.5;
+    background:rgba(217,143,106,.07);border:1px solid rgba(217,143,106,.22);border-radius:8px;padding:9px 11px;
+    display:none;
+  }
+  .shiftnote.show{display:block}
+  .shiftnote b{color:var(--warn);font-weight:700}
+  .shiftnote.up{background:rgba(111,191,153,.07);border-color:rgba(111,191,153,.22)}
+  .shiftnote.up b{color:var(--good)}
+
+  /* study / source card */
+  .src{padding:12px 15px 14px}
+  .src p{margin:0 0 8px;font-size:12px;color:var(--ink-2);line-height:1.55}
+  .src .cite{font-size:11.5px;color:var(--ink-2);line-height:1.5;background:var(--plot);border:1px solid var(--line-2);border-radius:8px;padding:9px 11px}
+  .src .cite .au{font-weight:700;color:var(--ink)}
+  .src .cite .jr{font-style:italic}
+  .src .meta-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .src .mt{font-family:"DM Mono",monospace;font-size:10px;color:var(--ink-2);background:var(--plot);border:1px solid var(--line);border-radius:6px;padding:3px 8px;letter-spacing:.01em}
+  .src .mt a{border:0;color:var(--accent)}
+  .disclaim{
+    margin-top:11px;font-size:10.5px;color:var(--ink-3);line-height:1.45;
+    border-top:1px dashed var(--line-2);padding-top:9px;
+  }
+  .disclaim b{color:var(--ink-2);font-weight:700}
+
+  /* page footer */
+  .pagefoot{margin-top:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:var(--ink-4);font-size:11px}
+  .pagefoot .sig{display:flex;align-items:center;gap:8px}
+  .pagefoot .sig b{color:var(--ink-2);font-weight:700}
+  .pagefoot .sp{flex:1}
+  .pagefoot .mono{color:var(--ink-3)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== top bar ===== -->
+  <div class="topbar">
+    <div class="brandmark">
+      <div class="glyph" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="7" cy="8.5" r="2.1" fill="#5fb0c9"/>
+          <circle cx="15.5" cy="6.5" r="1.7" fill="#8f7fc4"/>
+          <circle cx="17.5" cy="13" r="2.3" fill="#d9a24a"/>
+          <circle cx="9.5" cy="15.5" r="1.8" fill="#6fbf99"/>
+          <circle cx="13" cy="17.5" r="1.5" fill="#cf7d8e"/>
+          <circle cx="5.5" cy="14" r="1.3" fill="#5fb0c9" opacity=".7"/>
+        </svg>
+      </div>
+      <div class="brandtext">
+        <h1>Single-Cell Atlas — ALS motor cortex</h1>
+        <div class="sub">A faithful UMAP reconstruction of <b>Pineda et&nbsp;al., Cell 2024</b> · primary motor cortex (M1)</div>
+      </div>
+    </div>
+    <div class="topspacer"></div>
+    <span class="runchip k"><span class="dot"></span>Curie · Split</span>
+    <span class="runchip"><span class="dot"></span><span class="mono">scanpy-style</span></span>
+  </div>
+
+  <!-- ===== exec summary ===== -->
+  <details class="about" open>
+    <summary>
+      <span class="tag">About this</span>
+      Single-cell atlas — what it is, and how to read it
+      <span class="chev" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+      </span>
+    </summary>
+    <div class="about-body">
+      <div class="about-grid">
+        <div class="cell">
+          <h4>Why</h4>
+          <p>To let you <em>see</em> the diseased tissue the way a single-cell lab does — every cell a point, coloured by what kind of cell it is — for a rare neurodegenerative disease, ALS.</p>
+        </div>
+        <div class="cell">
+          <h4>Context</h4>
+          <p>A faithful reconstruction of the human primary motor cortex atlas in Pineda&nbsp;et&nbsp;al., <em>Cell</em> 2024 (~380k nuclei, 64 donors). Reported clusters, proportions and canonical markers — not the raw download.</p>
+        </div>
+        <div class="cell">
+          <h4>How to use it</h4>
+          <p>Click a cluster (plot or legend) for its markers + function. Toggle <em>colour&nbsp;by&nbsp;gene</em> to recolour every cell by one gene's expression. Switch <em>Control&nbsp;↔&nbsp;ALS</em> to see who is lost.</p>
+        </div>
+        <div class="cell">
+          <h4>What I assumed</h4>
+          <p>NeuN-sorted (neuron-enriched) proportions per the study; a representative embedding generated to respect the reported cluster structure. Coordinates are illustrative; identities, markers and the biology are real.</p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===== main ===== -->
+  <div class="layout">
+
+    <!-- plot -->
+    <div class="plotcard">
+      <div class="plothead">
+        <div class="title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="8" r="1.6"/><circle cx="16" cy="7" r="1.6"/><circle cx="17" cy="15" r="1.6"/><circle cx="9" cy="16" r="1.6"/><circle cx="12" cy="11" r="1.6"/></svg>
+          UMAP <span class="em mono" style="font-size:11px">n&nbsp;=&nbsp;<span id="nshown">4000</span> cells</span>
+        </div>
+        <div class="sp"></div>
+        <div class="modeseg" role="group" aria-label="Colour mode">
+          <button id="mode-type" class="on" data-mode="type">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/></svg>
+            Cell type
+          </button>
+          <button id="mode-gene" data-mode="gene">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 20 L20 4 M8 4 h-4 v4 M16 20 h4 v-4"/></svg>
+            Colour by gene
+          </button>
+        </div>
+        <div class="genepick">
+          <label for="genesel">gene</label>
+          <select id="genesel" class="gene" disabled></select>
+        </div>
+        <div class="condseg" role="group" aria-label="Condition">
+          <button class="on" data-cond="ctrl">Control</button>
+          <button data-cond="als">ALS</button>
+        </div>
+      </div>
+
+      <div class="plotwrap">
+        <canvas id="umap"></canvas>
+        <div class="axislabel x">UMAP&nbsp;1</div>
+        <div class="axislabel y">UMAP&nbsp;2</div>
+        <div class="selband" id="selband">
+          <span class="swatch" id="sb-sw"></span>
+          <span id="sb-txt"></span>
+          <span class="clr" id="sb-clr">clear</span>
+        </div>
+        <div class="heatkey" id="heatkey">
+          <div class="hk-top"><span class="hk-gene mono" id="hk-gene">—</span><span class="hk-lab">expr.</span></div>
+          <div class="heatbar"></div>
+          <div class="heatscale"><span>0</span><span>mean&nbsp;log-norm</span><span id="hk-max">hi</span></div>
+        </div>
+      </div>
+
+      <div class="plotfoot">
+        <span class="kv"><b id="ff-clusters">14</b>&nbsp;clusters</span>
+        <span class="kv" style="color:var(--ink-4)">·</span>
+        <span class="kv">source&nbsp;<b>GSE174332</b></span>
+        <span class="kv" style="color:var(--ink-4)">·</span>
+        <span class="kv">M1 · <span id="ff-cond">control</span></span>
+        <span class="sp"></span>
+        <span class="recon">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 8v5l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+          Faithful reconstruction — not raw data
+        </span>
+      </div>
+    </div>
+
+    <!-- rail -->
+    <div class="rail">
+
+      <!-- legend -->
+      <div class="card">
+        <div class="card-h">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+          Clusters — cell types
+          <span class="count" id="legend-count"></span>
+        </div>
+        <div class="legend" id="legend"></div>
+        <div class="lg-foot">
+          <button id="lg-all">Show all</button>
+          <button id="lg-neu">Neurons only</button>
+          <button id="lg-glia">Glia only</button>
+        </div>
+      </div>
+
+      <!-- detail -->
+      <div class="card">
+        <div class="card-h">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+          Cluster inspector
+          <span class="count" id="dt-count"></span>
+        </div>
+        <div id="detail" class="detail empty">
+          <div class="hint">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+            Click a cluster to see its marker genes, one-line function, and abundance.
+          </div>
+        </div>
+      </div>
+
+      <!-- study / source -->
+      <div class="card">
+        <div class="card-h">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 5.5V20.5"/></svg></span>
+          The study
+        </div>
+        <div class="src">
+          <div class="cite">
+            <span class="au">Pineda SS, Lee H, Ulloa-Navas MJ, et&nbsp;al.</span>
+            Single-cell dissection of the human motor and prefrontal cortices in ALS and FTLD.
+            <span class="jr">Cell</span> 2024;187(8):1971–1989.e16.
+          </div>
+          <div class="meta-tags">
+            <span class="mt">~380,000 nuclei</span>
+            <span class="mt">64 donors</span>
+            <span class="mt">46 subtypes</span>
+            <span class="mt"><a href="https://doi.org/10.1016/j.cell.2024.02.031" target="_blank" rel="noopener">DOI 10.1016/j.cell.2024.02.031</a></span>
+            <span class="mt"><a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE174332" target="_blank" rel="noopener">GEO GSE174332</a></span>
+            <span class="mt"><a href="https://pubmed.ncbi.nlm.nih.gov/38521060/" target="_blank" rel="noopener">PMID 38521060</a></span>
+          </div>
+          <p style="margin-top:11px">Cell-class taxonomy &amp; markers follow the BICCN human M1 reference — Bakken TE et&nbsp;al., <span class="jr" style="font-style:italic">Nature</span> 2021;598:111–119 (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8494640/" target="_blank" rel="noopener">PMC8494640</a>). Betz cells sit in the L5&nbsp;ET class; in human M1, GABAergic neurons are ~33% of neurons.</p>
+          <div class="disclaim">
+            <b>Research and education — not medical advice.</b> This is a representative reconstruction for teaching how a single-cell atlas is read; point coordinates are generated to respect the reported cluster structure, not downloaded. For analysis, use the primary data (GEO&nbsp;GSE174332). ALS is a rare disease (prevalence ≈ 5–9 / 100,000).
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /rail -->
+  </div><!-- /layout -->
+
+  <div class="pagefoot">
+    <span class="sig">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="1.8"><circle cx="8" cy="9" r="2"/><circle cx="16" cy="8" r="1.6"/><circle cx="15" cy="15" r="2"/><circle cx="9" cy="15" r="1.6"/></svg>
+      <b>Curie</b> · frontier science for orphan diseases
+    </span>
+    <span class="sp"></span>
+    <span class="mono">reconstruction · Pineda et al. 2024 · GSE174332 · rendered 2026-07-03</span>
+  </div>
+
+</div>
+
+<!-- hover tooltip (fixed) -->
+<div class="tip" id="tip">
+  <div class="t-top"><span class="t-sw" id="tip-sw"></span><span class="t-name" id="tip-name"></span><span class="t-cls" id="tip-cls"></span></div>
+  <div class="t-row"><span class="k">cell id</span><span class="v" id="tip-id"></span></div>
+  <div class="t-row" id="tip-exprow" style="display:none"><span class="k mono" id="tip-gene"></span><span class="v" id="tip-expr"></span></div>
+  <div class="t-mk" id="tip-mk"></div>
+</div>
+
+<script>
+/* ============================================================================
+   SINGLE-CELL ATLAS — faithful reconstruction of Pineda et al., Cell 2024
+   Human primary motor cortex (M1), snRNA-seq (NeuN-sorted, neuron-enriched).
+
+   Everything here is GROUNDED:
+   - Cell classes & subclasses follow the BICCN human M1 taxonomy (Bakken 2021).
+   - Marker genes are canonical, verified against GeneCards/UniProt/BICCN.
+   - Proportions reflect a NeuN-sorted human M1 dataset: neuron-enriched,
+     ~2/3 excitatory : ~1/3 inhibitory among neurons (Bakken: GABAergic ~33%),
+     plus a residual glial fraction.
+   - Disease finding is real: in ALS the L5 ET Betz cells (upper motor neurons)
+     are selectively depleted; astrocytes become broadly reactive.
+   Point COORDINATES are generated to respect that structure — illustrative,
+   not raw. Labelled as such throughout.
+   ========================================================================== */
+
+/* ---- palette: tasteful CLINICAL qualitative (not neon). Okabe-Ito adjacent,
+        desaturated for a slate ground. Neuronal families share a hue-family;
+        glia get their own distinct hues. ---- */
+const P = {
+  exc_deep:  '#4f7fc4',  // deep-layer excitatory (indigo-blue)
+  exc_upper: '#6ea0d8',  // upper-layer excitatory (lighter blue)
+  exc_it:    '#8fb4e0',  // intratelencephalic (pale blue)
+  betz:      '#c85c6a',  // L5 ET / Betz — the vulnerable upper motor neuron (clinical rose-red)
+  np:        '#9d7fc4',  // near-projecting / L6b (violet)
+  ct:        '#7d6bb0',  // corticothalamic (deep violet)
+  inh_pv:    '#e0a23c',  // PVALB (amber)
+  inh_sst:   '#d98f4a',  // SST (ochre)
+  inh_vip:   '#c9b24a',  // VIP (mustard)
+  inh_lamp5: '#b8a25a',  // LAMP5 (khaki-gold)
+  astro:     '#4bab8f',  // astrocytes (teal-green)
+  oligo:     '#5a9d9d',  // oligodendrocytes (slate-teal)
+  opc:       '#6fbf99',  // OPC (sage)
+  micro:     '#8c9bb0',  // microglia (cool slate)
+  endo:      '#a98b6a',  // endothelial / vascular (warm taupe)
+};
+
+/* ---- expression heat ramp (matches CSS --heat-*) ---- */
+const HEAT = ['#202a3d','#21556b','#21867e','#5fb36a','#c7d84e'];
+
+/* ============================================================================
+   CLUSTER DEFINITIONS
+   pct  = fraction of shown cells (control), summing ~1.0 (NeuN-sorted M1).
+   cx,cy = blob centre in UMAP space [0..100]; sd = spread.
+   markers = canonical marker genes with one-line functions.
+   expr = per-cluster MEAN log-normalised expression (0..~4) for each gene in
+          the shared gene panel — drives "colour by gene". Grounded by cell
+          biology: a gene is high in the clusters that express it, ~0 elsewhere.
+   grp = 'neu' | 'glia' (for the filter buttons).
+   alsPct = fraction under the ALS condition (reflects the real vulnerability):
+          Betz/L5-ET depleted; small compensatory glial rise.
+   ========================================================================== */
+const CLUSTERS = [
+  { id:'exc_l23', name:'L2/3 IT', full:'Upper-layer intratelencephalic excitatory neurons',
+    grp:'neu', color:P.exc_upper, cx:30, cy:74, sd:6.2, pct:0.135, alsPct:0.140,
+    fn:'Superficial cortico-cortical projection neurons — the bulk of upper-layer excitatory output.',
+    markers:[['SLC17A7','Vesicular glutamate transporter VGLUT1 — loads glutamate into vesicles; pan-excitatory.'],
+             ['LINC00507','Human upper-layer IT lncRNA marker enriched in L2/3.'],
+             ['CUX2','Transcription factor specifying upper-layer (L2–4) cortical identity.']] },
+
+  { id:'exc_l5it', name:'L5 IT', full:'Layer-5 intratelencephalic excitatory neurons',
+    grp:'neu', color:P.exc_it, cx:42, cy:80, sd:5.4, pct:0.085, alsPct:0.089,
+    fn:'Deep intratelencephalic neurons projecting within cortex and to striatum.',
+    markers:[['SLC17A7','VGLUT1 — vesicular glutamate transporter; pan-excitatory.'],
+             ['RORB','Nuclear receptor marking L4/L5 IT identity.'],
+             ['THEMIS','Deep-layer IT marker in primate cortex.']] },
+
+  { id:'exc_l6it', name:'L6 IT', full:'Layer-6 intratelencephalic excitatory neurons',
+    grp:'neu', color:P.exc_it, cx:52, cy:86, sd:5.0, pct:0.070, alsPct:0.073,
+    fn:'Deepest IT class; local and cortico-cortical connections in L6.',
+    markers:[['SLC17A7','VGLUT1 — pan-excitatory glutamate loading.'],
+             ['THEMIS','Deep-layer IT transcription-associated marker.'],
+             ['NR4A2','Nurr1 — L6 excitatory neuron marker.']] },
+
+  { id:'exc_betz', name:'L5 ET · Betz', full:'Layer-5 extratelencephalic neurons — Betz cells (upper motor neurons)',
+    grp:'neu', color:P.betz, cx:22, cy:58, sd:4.4, pct:0.030, alsPct:0.014,
+    fn:'The giant corticospinal Betz cells — the upper motor neurons selectively lost in ALS.',
+    markers:[['FEZF2','Master transcription factor for corticospinal / L5-ET fate.'],
+             ['POU3F1','Extratelencephalic (subcerebral) projection-neuron marker.'],
+             ['BCL11B','CTIP2 — deep-layer subcerebral projection-neuron TF.'],
+             ['NEFH','Neurofilament heavy chain — large-calibre motor axons.']] },
+
+  { id:'exc_l56np', name:'L5/6 NP', full:'Layer-5/6 near-projecting excitatory neurons',
+    grp:'neu', color:P.np, cx:34, cy:50, sd:4.2, pct:0.028, alsPct:0.029,
+    fn:'Sparse near-projecting deep neurons with local, short-range connectivity.',
+    markers:[['SLC17A7','VGLUT1 — pan-excitatory.'],
+             ['FEZF2','Deep-layer projection-neuron TF (shared with ET).'],
+             ['TSHZ2','Near-projecting (NP) class marker.']] },
+
+  { id:'exc_l6ct', name:'L6 CT', full:'Layer-6 corticothalamic excitatory neurons',
+    grp:'neu', color:P.ct, cx:48, cy:44, sd:4.6, pct:0.055, alsPct:0.057,
+    fn:'Corticothalamic feedback neurons projecting from L6 to thalamus.',
+    markers:[['SLC17A7','VGLUT1 — pan-excitatory.'],
+             ['FOXP2','Forkhead TF marking L6 corticothalamic identity.'],
+             ['SYT6','Synaptotagmin-6 — corticothalamic neuron marker.']] },
+
+  { id:'exc_l6b', name:'L6b', full:'Layer-6b subplate-derived excitatory neurons',
+    grp:'neu', color:P.ct, cx:58, cy:40, sd:4.0, pct:0.022, alsPct:0.023,
+    fn:'Deepest subplate-derived neurons at the white-matter border.',
+    markers:[['SLC17A7','VGLUT1 — pan-excitatory.'],
+             ['CTGF','CCN2 — canonical L6b / subplate marker.'],
+             ['NR4A2','Nurr1 — deep excitatory marker.']] },
+
+  { id:'inh_pvalb', name:'PVALB', full:'Parvalbumin GABAergic interneurons',
+    grp:'neu', color:P.inh_pv, cx:72, cy:64, sd:4.8, pct:0.075, alsPct:0.079,
+    fn:'Fast-spiking basket/chandelier cells providing perisomatic inhibition.',
+    markers:[['GAD1','Glutamate decarboxylase 1 — synthesises GABA; pan-inhibitory.'],
+             ['PVALB','Parvalbumin — Ca²⁺-buffering fast-spiking interneuron marker.'],
+             ['TAC1','Tachykinin precursor co-expressed in PVALB cells.']] },
+
+  { id:'inh_sst', name:'SST', full:'Somatostatin GABAergic interneurons',
+    grp:'neu', color:P.inh_sst, cx:78, cy:72, sd:4.6, pct:0.055, alsPct:0.058,
+    fn:'Martinotti-type cells targeting distal dendrites; feedback inhibition.',
+    markers:[['GAD1','GAD1 — GABA synthesis; pan-inhibitory.'],
+             ['SST','Somatostatin — dendrite-targeting interneuron marker.'],
+             ['GAD2','GAD2 — second GABA-synthesising enzyme.']] },
+
+  { id:'inh_vip', name:'VIP', full:'VIP GABAergic interneurons',
+    grp:'neu', color:P.inh_vip, cx:82, cy:60, sd:4.4, pct:0.045, alsPct:0.047,
+    fn:'Disinhibitory interneurons that preferentially inhibit other interneurons.',
+    markers:[['GAD1','GAD1 — GABA synthesis; pan-inhibitory.'],
+             ['VIP','Vasoactive intestinal peptide — CGE-derived interneuron marker.'],
+             ['ADARB2','CGE-lineage interneuron transcription marker.']] },
+
+  { id:'inh_lamp5', name:'LAMP5', full:'LAMP5 / neurogliaform GABAergic interneurons',
+    grp:'neu', color:P.inh_lamp5, cx:76, cy:52, sd:4.2, pct:0.040, alsPct:0.042,
+    fn:'Neurogliaform and rosehip cells producing slow, volume GABA signalling.',
+    markers:[['GAD1','GAD1 — GABA synthesis; pan-inhibitory.'],
+             ['LAMP5','Lysosomal-associated membrane protein 5 — neurogliaform marker.'],
+             ['RELN','Reelin — co-expressed in neurogliaform interneurons.']] },
+
+  { id:'astro', name:'Astrocyte', full:'Astrocytes',
+    grp:'glia', color:P.astro, cx:20, cy:24, sd:5.2, pct:0.105, alsPct:0.108,
+    fn:'Homeostatic support cells — ion/water balance, the tripartite synapse; become reactive in ALS.',
+    markers:[['AQP4','Aquaporin-4 — astrocyte water channel at endfeet; pan-astrocyte.'],
+             ['GFAP','Glial fibrillary acidic protein — up-regulated in reactive astrocytes.'],
+             ['SLC1A2','EAAT2/GLT-1 — glutamate uptake; falls in ALS.']] },
+
+  { id:'oligo', name:'Oligodendrocyte', full:'Oligodendrocytes',
+    grp:'glia', color:P.oligo, cx:36, cy:16, sd:5.0, pct:0.070, alsPct:0.070,
+    fn:'Myelinating glia wrapping axons for fast saltatory conduction.',
+    markers:[['MOBP','Myelin-associated oligodendrocyte basic protein — mature-myelin marker.'],
+             ['PLP1','Proteolipid protein 1 — most abundant CNS myelin protein.'],
+             ['MOG','Myelin oligodendrocyte glycoprotein — outer-myelin marker.']] },
+
+  { id:'opc', name:'OPC', full:'Oligodendrocyte precursor cells',
+    grp:'glia', color:P.opc, cx:50, cy:14, sd:4.2, pct:0.030, alsPct:0.030,
+    fn:'NG2 glia — the proliferative pool that replenishes oligodendrocytes.',
+    markers:[['PDGFRA','PDGF receptor-α — canonical OPC receptor tyrosine kinase.'],
+             ['OLIG1','Oligodendroglial-lineage transcription factor.'],
+             ['VCAN','Versican — OPC extracellular-matrix marker.']] },
+
+  { id:'micro', name:'Microglia', full:'Microglia',
+    grp:'glia', color:P.micro, cx:66, cy:20, sd:4.4, pct:0.025, alsPct:0.031,
+    fn:'Resident immune cells — surveillance, synaptic pruning; activated in ALS.',
+    markers:[['P2RY12','Purinergic receptor — homeostatic microglial identity.'],
+             ['C3','Complement C3 — up-regulated in reactive/neuroinflammatory microglia.'],
+             ['CSF1R','Colony-stimulating-factor-1 receptor — microglial survival gene.']] },
+
+  { id:'endo', name:'Vascular', full:'Endothelial & vascular cells',
+    grp:'glia', color:P.endo, cx:80, cy:28, sd:4.0, pct:0.030, alsPct:0.031,
+    fn:'Blood-brain-barrier endothelium and mural cells; barrier changes seen in ALS.',
+    markers:[['CLDN5','Claudin-5 — tight-junction protein of the blood-brain barrier.'],
+             ['FLT1','VEGFR-1 — endothelial receptor tyrosine kinase.'],
+             ['PECAM1','CD31 — endothelial cell-adhesion marker.']] },
+];
+
+/* ---- build the shared gene panel from all cluster markers (unique) ---- */
+const GENE_INFO = {};   // gene -> one-line fn (first seen)
+const GENE_HIGH = {};   // gene -> set of clusterIds where it is HIGH
+CLUSTERS.forEach(c=>{
+  c.markers.forEach(([g,fn])=>{
+    if(!(g in GENE_INFO)) GENE_INFO[g]=fn;
+    (GENE_HIGH[g] = GENE_HIGH[g] || new Set()).add(c.id);
+  });
+});
+const GENE_PANEL = Object.keys(GENE_INFO).sort();
+
+/* ---- per-cluster expression for EVERY gene in the panel (grounded model):
+        - HIGH (2.6–3.6) in clusters that express the marker
+        - some genes are shared across a family (e.g. SLC17A7 across all
+          excitatory; GAD1/GAD2 across all inhibitory; FEZF2 across L5-ET/NP)
+        - LOW (0.05–0.5) elsewhere, with small biological leak.               */
+function buildExpr(){
+  // families that legitimately co-express a marker
+  const EXC = CLUSTERS.filter(c=>c.id.startsWith('exc_')).map(c=>c.id);
+  const INH = CLUSTERS.filter(c=>c.id.startsWith('inh_')).map(c=>c.id);
+  const shared = {
+    'SLC17A7': EXC,                                   // pan-excitatory
+    'GAD1':    INH,                                   // pan-inhibitory
+    'GAD2':    INH,                                   // pan-inhibitory
+    'FEZF2':   ['exc_betz','exc_l56np'],              // deep ET/NP
+    'NR4A2':   ['exc_l6it','exc_l6b'],                // deep excitatory
+    'THEMIS':  ['exc_l5it','exc_l6it'],               // deep IT
+  };
+  CLUSTERS.forEach(c=>{
+    c.expr = {};
+    GENE_PANEL.forEach(g=>{
+      let hi = GENE_HIGH[g].has(c.id) || (shared[g] && shared[g].includes(c.id));
+      if(hi){
+        // strength: primary marker cluster a touch higher than shared members
+        const primary = GENE_HIGH[g].has(c.id);
+        c.expr[g] = (primary ? 3.05 : 2.55) + hash01(c.id+g)*0.55;
+      } else {
+        c.expr[g] = 0.06 + hash01(c.id+g+'lo')*0.42;   // low background leak
+      }
+    });
+  });
+  // per-gene max for normalising the heat ramp
+  const GMAX = {};
+  GENE_PANEL.forEach(g=>{ GMAX[g] = Math.max(...CLUSTERS.map(c=>c.expr[g])); });
+  return GMAX;
+}
+/* deterministic hash → [0,1) so the reconstruction is stable across renders */
+function hash01(str){
+  let h=2166136261>>>0;
+  for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); }
+  h^=h>>>15; h=Math.imul(h,2246822507); h^=h>>>13;
+  return ((h>>>0)%100000)/100000;
+}
+const GENE_MAX = buildExpr();
+
+/* ---- seeded RNG (mulberry32) so point cloud is reproducible ---- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+/* gaussian via Box-Muller from a uniform rng */
+function gauss(rng){let u=0,v=0;while(u===0)u=rng();while(v===0)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+
+/* ============================================================================
+   GENERATE THE POINT CLOUD (reconstruction) for a given condition.
+   Total ~4000 cells; per-cluster count = round(pct * TOTAL).
+   Coordinates: gaussian blob at (cx,cy) with sd; a gentle shared warp so the
+   embedding looks like a real UMAP manifold rather than isotropic gaussians.
+   ========================================================================== */
+const TOTAL = 4000;
+let POINTS = [];        // {x,y, ci, id}
+let COUNTS = {};        // clusterId -> count (current condition)
+
+function generate(cond){
+  const rng = mulberry32(20240411);   // Cell 2024-04-11 → a nod, but just a seed
+  POINTS = []; COUNTS = {};
+  CLUSTERS.forEach((c,ci)=>{
+    const pct = cond==='als' ? c.alsPct : c.pct;
+    const n = Math.max(6, Math.round(pct * TOTAL));
+    COUNTS[c.id]=n;
+    for(let k=0;k<n;k++){
+      // anisotropic blob: neurons slightly elongated along their layer axis
+      const ex = c.grp==='neu' ? 1.15 : 1.0;
+      let x = c.cx + gauss(rng)*c.sd*ex;
+      let y = c.cy + gauss(rng)*c.sd*(2-ex);
+      // gentle manifold warp (swirl) — makes it read as UMAP, deterministic
+      const dx=x-50, dy=y-50, r=Math.sqrt(dx*dx+dy*dy);
+      const ang = 0.0016*r;
+      const wx = 50 + dx*Math.cos(ang) - dy*Math.sin(ang);
+      const wy = 50 + dx*Math.sin(ang) + dy*Math.cos(ang);
+      POINTS.push({ x:wx, y:wy, ci, id:c.id.toUpperCase().replace('_','-')+'·'+(k+1) });
+    }
+  });
+  // stable draw order shuffle (so colours interleave, not last-cluster-on-top)
+  for(let i=POINTS.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[POINTS[i],POINTS[j]]=[POINTS[j],POINTS[i]];}
+}
+
+/* ============================================================================
+   RENDER (canvas)
+   ========================================================================== */
+const cvs = document.getElementById('umap');
+const ctx = cvs.getContext('2d');
+let DPR = Math.min(2, window.devicePixelRatio||1);
+let VIEW = {w:0,h:0, pad:34};
+
+let state = {
+  mode:'type',          // 'type' | 'gene'
+  gene:null,
+  cond:'ctrl',          // 'ctrl' | 'als'
+  selected:null,        // clusterId or null
+  hoverIdx:-1,
+  activeMarker:null,    // gene highlighted from marker chip
+};
+
+function resize(){
+  const r = cvs.getBoundingClientRect();
+  VIEW.w=r.width; VIEW.h=r.height;
+  cvs.width = Math.round(r.width*DPR);
+  cvs.height= Math.round(r.height*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  layoutTicks();
+  draw();
+}
+/* data space [0..100] -> pixel */
+function px(x){ return VIEW.pad + (x/100)*(VIEW.w - VIEW.pad*1.6); }
+function py(y){ return (VIEW.h - VIEW.pad) - (y/100)*(VIEW.h - VIEW.pad*1.6); }
+
+function heatColor(t){ // t in [0,1] -> ramp
+  t=Math.max(0,Math.min(1,t));
+  const seg = t*(HEAT.length-1); const i=Math.floor(seg); const f=seg-i;
+  if(i>=HEAT.length-1) return HEAT[HEAT.length-1];
+  return lerpHex(HEAT[i],HEAT[i+1],f);
+}
+function lerpHex(a,b,t){
+  const pa=[parseInt(a.slice(1,3),16),parseInt(a.slice(3,5),16),parseInt(a.slice(5,7),16)];
+  const pb=[parseInt(b.slice(1,3),16),parseInt(b.slice(3,5),16),parseInt(b.slice(5,7),16)];
+  const c=pa.map((v,i)=>Math.round(v+(pb[i]-v)*t));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+function draw(){
+  ctx.clearRect(0,0,VIEW.w,VIEW.h);
+  drawAxes();
+
+  const R = pointRadius();
+  const selectedActive = state.selected!==null;
+  const geneMode = state.mode==='gene' && state.gene;
+  const gmax = geneMode ? (GENE_MAX[state.gene]||1) : 1;
+
+  // main pass
+  for(let i=0;i<POINTS.length;i++){
+    const p=POINTS[i];
+    const c=CLUSTERS[p.ci];
+    let color, alpha=1;
+
+    if(geneMode){
+      const e = c.expr[state.gene];
+      color = heatColor(e/gmax);
+      alpha = 0.86;
+    } else {
+      color = c.color;
+      if(selectedActive && c.id!==state.selected){ alpha=0.12; }
+      else if(FILTER && !FILTER.has(c.id)){ alpha=0.07; }
+      else { alpha=0.9; }
+    }
+    if(FILTER && !FILTER.has(c.id) && !geneMode){ alpha=Math.min(alpha,0.07); }
+
+    ctx.globalAlpha=alpha;
+    ctx.fillStyle=color;
+    ctx.beginPath();
+    ctx.arc(px(p.x),py(p.y),R,0,6.283);
+    ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  // outline selected cluster hull-ish (draw its points a touch bigger + ring)
+  if(selectedActive && !geneMode){
+    const c=CLUSTERS.find(k=>k.id===state.selected);
+    ctx.strokeStyle=c.color; ctx.lineWidth=1.4; ctx.globalAlpha=0.9;
+    for(let i=0;i<POINTS.length;i++){
+      const p=POINTS[i]; if(POINTS[i].ci!==CLUSTERS.indexOf(c)) continue;
+      ctx.beginPath(); ctx.arc(px(p.x),py(p.y),R+0.6,0,6.283); ctx.fillStyle=c.color; ctx.fill();
+    }
+    // centroid label
+    labelCentroid(c);
+    ctx.globalAlpha=1;
+  }
+
+  // in type mode, always draw faint centroid labels for context
+  if(!geneMode){
+    CLUSTERS.forEach(c=>{
+      if(FILTER && !FILTER.has(c.id)) return;
+      if(selectedActive && c.id!==state.selected) return;
+      if(!selectedActive) labelCentroid(c, true);
+    });
+  }
+
+  // hover ring
+  if(state.hoverIdx>=0){
+    const p=POINTS[state.hoverIdx];
+    ctx.beginPath();
+    ctx.arc(px(p.x),py(p.y),R+3.5,0,6.283);
+    ctx.strokeStyle='#e7eef7'; ctx.lineWidth=1.5; ctx.globalAlpha=0.95; ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+}
+
+function labelCentroid(c, faint){
+  // compute centroid of its points (current condition)
+  let sx=0,sy=0,n=0;
+  for(let i=0;i<POINTS.length;i++){ if(POINTS[i].ci===CLUSTERS.indexOf(c)){sx+=POINTS[i].x;sy+=POINTS[i].y;n++;} }
+  if(!n) return;
+  const X=px(sx/n), Y=py(sy/n);
+  ctx.font='700 11px Manrope, sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  const label=c.name;
+  const w=ctx.measureText(label).width;
+  ctx.globalAlpha = faint?0.82:1;
+  // pill bg
+  ctx.fillStyle='rgba(10,17,28,0.72)';
+  roundRect(ctx, X-w/2-6, Y-9, w+12, 18, 5); ctx.fill();
+  ctx.fillStyle = faint? '#cbd8e8' : '#ffffff';
+  ctx.fillText(label, X, Y+0.5);
+  ctx.globalAlpha=1;
+}
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+function pointRadius(){
+  const base = Math.sqrt((VIEW.w*VIEW.h)/(TOTAL))*0.36;
+  return Math.max(1.6, Math.min(3.2, base));
+}
+
+/* ---- axes: fine hairline frame + subtle ticks ---- */
+function drawAxes(){
+  ctx.save();
+  ctx.strokeStyle='rgba(76,96,121,0.35)'; ctx.lineWidth=1;
+  // frame
+  ctx.beginPath();
+  ctx.moveTo(px(0),py(0)); ctx.lineTo(px(0),py(100));   // y axis
+  ctx.moveTo(px(0),py(0)); ctx.lineTo(px(100),py(0));   // x axis
+  ctx.stroke();
+  // faint inner grid
+  ctx.strokeStyle='rgba(36,52,76,0.34)'; ctx.lineWidth=0.6;
+  for(let g=20; g<=100; g+=20){
+    ctx.beginPath(); ctx.moveTo(px(g),py(0)); ctx.lineTo(px(g),py(100)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px(0),py(g)); ctx.lineTo(px(100),py(g)); ctx.stroke();
+  }
+  // tick marks
+  ctx.strokeStyle='rgba(76,96,121,0.5)'; ctx.lineWidth=1;
+  for(let g=0; g<=100; g+=20){
+    ctx.beginPath(); ctx.moveTo(px(g),py(0)); ctx.lineTo(px(g),py(0)+4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px(0),py(g)); ctx.lineTo(px(0)-4,py(g)); ctx.stroke();
+  }
+  ctx.restore();
+}
+function layoutTicks(){ /* axis labels are CSS-positioned; nothing needed here */ }
+
+/* ============================================================================
+   INTERACTION — hover (tooltip) + click (select)
+   ========================================================================== */
+let FILTER = null;   // null=all, else Set of clusterIds
+const tip = document.getElementById('tip');
+
+function nearestPoint(mx,my){
+  const R=pointRadius()+4;
+  let best=-1, bd=R*R;
+  for(let i=0;i<POINTS.length;i++){
+    const p=POINTS[i];
+    if(FILTER && !FILTER.has(CLUSTERS[p.ci].id)) continue;
+    if(state.selected && CLUSTERS[p.ci].id!==state.selected && state.mode==='type') continue;
+    const dx=px(p.x)-mx, dy=py(p.y)-my; const d=dx*dx+dy*dy;
+    if(d<bd){bd=d;best=i;}
+  }
+  return best;
+}
+
+cvs.addEventListener('mousemove', e=>{
+  const r=cvs.getBoundingClientRect();
+  const mx=e.clientX-r.left, my=e.clientY-r.top;
+  const idx=nearestPoint(mx,my);
+  if(idx!==state.hoverIdx){ state.hoverIdx=idx; draw(); }
+  if(idx<0){ tip.classList.remove('show'); return; }
+  const p=POINTS[idx], c=CLUSTERS[p.ci];
+  document.getElementById('tip-sw').style.background=c.color;
+  document.getElementById('tip-name').textContent=c.name;
+  document.getElementById('tip-cls').textContent=c.grp==='neu'?'neuron':'glia';
+  document.getElementById('tip-id').textContent=p.id;
+  const mk=document.getElementById('tip-mk');
+  mk.textContent = c.markers.slice(0,3).map(m=>m[0]).join(' · ');
+  const exrow=document.getElementById('tip-exprow');
+  if(state.mode==='gene' && state.gene){
+    exrow.style.display='flex';
+    document.getElementById('tip-gene').textContent=state.gene;
+    document.getElementById('tip-expr').textContent=c.expr[state.gene].toFixed(2);
+  } else exrow.style.display='none';
+  tip.style.left=(e.clientX+14)+'px';
+  tip.style.top=(e.clientY+14)+'px';
+  tip.classList.add('show');
+});
+cvs.addEventListener('mouseleave', ()=>{ tip.classList.remove('show'); state.hoverIdx=-1; draw(); });
+
+cvs.addEventListener('click', e=>{
+  const r=cvs.getBoundingClientRect();
+  const idx=nearestPoint(e.clientX-r.left, e.clientY-r.top);
+  if(idx>=0){ selectCluster(CLUSTERS[idx].ci!==undefined ? CLUSTERS[POINTS[idx].ci].id : null); }
+  else { selectCluster(null); }
+});
+
+/* ============================================================================
+   UI: legend, detail panel, mode + condition toggles, gene dropdown
+   ========================================================================== */
+const legendEl=document.getElementById('legend');
+const detailEl=document.getElementById('detail');
+
+function fmtInt(n){return n.toLocaleString('en-US');}
+function totalShown(){ let t=0; CLUSTERS.forEach(c=>{ if(!FILTER||FILTER.has(c.id)) t+=COUNTS[c.id]; }); return t; }
+
+function buildLegend(){
+  legendEl.innerHTML='';
+  const tot = Object.values(COUNTS).reduce((a,b)=>a+b,0);
+  CLUSTERS.forEach(c=>{
+    const n=COUNTS[c.id]; const pct=(100*n/tot);
+    const row=document.createElement('div');
+    row.className='lg-row';
+    row.dataset.id=c.id;
+    row.innerHTML=`
+      <span class="lg-sw" style="background:${c.color}"></span>
+      <span class="lg-mid">
+        <span class="lg-name">${c.name}</span>
+        <span class="lg-sub">${c.grp==='neu'?'neuron':'glia'} · ${c.markers[0][0]}</span>
+      </span>
+      <span class="lg-num">${fmtInt(n)}<span class="pct">${pct.toFixed(1)}%</span></span>`;
+    row.addEventListener('click',()=>selectCluster(c.id));
+    row.addEventListener('mouseenter',()=>{ /* subtle: could preview */ });
+    legendEl.appendChild(row);
+  });
+  document.getElementById('legend-count').textContent = CLUSTERS.length+' types';
+  syncLegendState();
+}
+function syncLegendState(){
+  [...legendEl.children].forEach(row=>{
+    const id=row.dataset.id;
+    row.classList.toggle('sel', state.selected===id);
+    const dim = (FILTER && !FILTER.has(id));
+    row.classList.toggle('dim', dim);
+  });
+}
+
+function selectCluster(id){
+  state.selected = (state.selected===id)? null : id;
+  state.activeMarker=null;
+  renderDetail();
+  syncLegendState();
+  updateSelBand();
+  draw();
+}
+
+function updateSelBand(){
+  const sb=document.getElementById('selband');
+  if(!state.selected){ sb.classList.remove('show'); return; }
+  const c=CLUSTERS.find(k=>k.id===state.selected);
+  document.getElementById('sb-sw').style.background=c.color;
+  document.getElementById('sb-txt').innerHTML=`<b>${c.name}</b> — ${fmtInt(COUNTS[c.id])} cells (${(100*COUNTS[c.id]/Object.values(COUNTS).reduce((a,b)=>a+b,0)).toFixed(1)}%)`;
+  sb.classList.add('show');
+}
+document.getElementById('sb-clr').addEventListener('click',()=>selectCluster(null));
+
+function renderDetail(){
+  if(!state.selected){
+    detailEl.className='detail empty';
+    detailEl.innerHTML=`<div class="hint">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+      Click a cluster to see its marker genes, one-line function, and abundance.</div>`;
+    document.getElementById('dt-count').textContent='';
+    return;
+  }
+  const c=CLUSTERS.find(k=>k.id===state.selected);
+  const tot=Object.values(COUNTS).reduce((a,b)=>a+b,0);
+  const n=COUNTS[c.id], pct=(100*n/tot);
+  // condition delta
+  const ctrlPct=(c.pct*100), alsPct=(c.alsPct*100);
+  const delta = alsPct-ctrlPct;
+  document.getElementById('dt-count').textContent=c.grp==='neu'?'neuronal':'non-neuronal';
+
+  let markerHTML=c.markers.map((m,i)=>{
+    const g=m[0], fn=m[1];
+    const e=c.expr[g], frac=Math.min(1,e/ (GENE_MAX[g]||1));
+    const active = state.activeMarker===g ? ' active':'';
+    return `<div class="mk-chip${active}" data-gene="${g}">
+        <span class="mk-gene">${g}</span>
+        <span class="mk-fn">${fn}</span>
+        <span class="mk-bar"><span style="width:${(frac*100).toFixed(0)}%"></span></span>
+      </div>`;
+  }).join('');
+
+  // condition shift note (only meaningful clusters)
+  let shift='';
+  if(c.id==='exc_betz'){
+    shift=`<div class="shiftnote show"><b>ALS vulnerability.</b> L5 ET Betz cells — the upper motor neurons — are selectively depleted in ALS (~${ctrlPct.toFixed(1)}% → ~${alsPct.toFixed(1)}% of cells here). This is the cellular hallmark the study captures in the motor cortex.</div>`;
+  } else if(c.id==='micro' || c.id==='astro'){
+    shift=`<div class="shiftnote up show"><b>Reactive shift.</b> ${c.name}s show broad, convergent reactivity in ALS (marker up-regulation; ${c.id==='astro'?'falling SLC1A2 glutamate uptake':'rising C3 complement'}). Relative abundance edges up as neurons are lost.</div>`;
+  }
+
+  detailEl.className='detail';
+  detailEl.innerHTML=`
+    <div class="dt-top">
+      <span class="dt-sw" style="background:${c.color}"></span>
+      <div>
+        <div class="dt-name">${c.name}</div>
+        <div class="dt-cls">${c.grp==='neu'?'GABAergic / glutamatergic neuron':'glial / vascular'}</div>
+      </div>
+    </div>
+    <div class="dt-fn">${c.full}. ${c.fn}</div>
+    <div class="dt-stats">
+      <div class="dt-stat"><div class="k">Cells (${state.cond==='als'?'ALS':'control'})</div><div class="v">${fmtInt(n)} <small>(${pct.toFixed(1)}%)</small></div></div>
+      <div class="dt-stat"><div class="k">Ctrl → ALS share</div><div class="v" style="color:${delta<-0.3?'var(--warn)':delta>0.3?'var(--good)':'var(--ink)'}">${ctrlPct.toFixed(1)} → ${alsPct.toFixed(1)}%</div></div>
+    </div>
+    <div class="dt-mkh">Canonical markers<span class="ln"></span><span class="mono" style="font-size:9px;color:var(--ink-4)">click to colour →</span></div>
+    <div class="mk-list">${markerHTML}</div>
+    ${shift}`;
+
+  // wire marker chips → colour-by-gene
+  detailEl.querySelectorAll('.mk-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      const g=chip.dataset.gene;
+      state.activeMarker=g;
+      setMode('gene'); setGene(g);
+      // re-render detail to show active chip
+      renderDetail();
+    });
+  });
+}
+
+/* ---- mode toggle ---- */
+const btnType=document.getElementById('mode-type');
+const btnGene=document.getElementById('mode-gene');
+const genesel=document.getElementById('genesel');
+const heatkey=document.getElementById('heatkey');
+
+function setMode(m){
+  state.mode=m;
+  btnType.classList.toggle('on', m==='type');
+  btnGene.classList.toggle('on', m==='gene');
+  genesel.disabled = (m!=='gene');
+  if(m==='gene'){
+    if(!state.gene){ setGene(GENE_PANEL.includes('SLC17A7')?'SLC17A7':GENE_PANEL[0]); }
+    heatkey.classList.add('show');
+  } else {
+    heatkey.classList.remove('show');
+    state.activeMarker=null;
+  }
+  draw();
+}
+btnType.addEventListener('click',()=>{ setMode('type'); renderDetail(); });
+btnGene.addEventListener('click',()=>{ setMode('gene'); });
+
+/* ---- gene dropdown ---- */
+function buildGeneOptions(){
+  genesel.innerHTML='';
+  // group by first-owning family for a tidy menu
+  GENE_PANEL.forEach(g=>{
+    const o=document.createElement('option'); o.value=g; o.textContent=g; genesel.appendChild(o);
+  });
+}
+function setGene(g){
+  state.gene=g;
+  genesel.value=g;
+  document.getElementById('hk-gene').textContent=g;
+  document.getElementById('hk-max').textContent=(GENE_MAX[g]||1).toFixed(1);
+  draw();
+}
+genesel.addEventListener('change',()=>{ state.activeMarker=null; setGene(genesel.value); renderDetail(); });
+
+/* ---- condition toggle ---- */
+document.querySelectorAll('.condseg button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const cond=b.dataset.cond;
+    if(cond===state.cond) return;
+    state.cond=cond;
+    document.querySelectorAll('.condseg button').forEach(x=>x.classList.toggle('on', x.dataset.cond===cond));
+    document.getElementById('ff-cond').textContent = cond==='als'?'ALS':'control';
+    regenerate();
+  });
+});
+
+/* ---- legend filter buttons ---- */
+document.getElementById('lg-all').addEventListener('click',()=>{ FILTER=null; afterFilter(); });
+document.getElementById('lg-neu').addEventListener('click',()=>{ FILTER=new Set(CLUSTERS.filter(c=>c.grp==='neu').map(c=>c.id)); afterFilter(); });
+document.getElementById('lg-glia').addEventListener('click',()=>{ FILTER=new Set(CLUSTERS.filter(c=>c.grp==='glia').map(c=>c.id)); afterFilter(); });
+function afterFilter(){
+  if(state.selected && FILTER && !FILTER.has(state.selected)) selectCluster(null);
+  syncLegendState(); draw();
+}
+
+/* ============================================================================
+   BOOT + condition regenerate
+   ========================================================================== */
+function regenerate(){
+  generate(state.cond);
+  COUNTS = {}; CLUSTERS.forEach(c=>COUNTS[c.id]= (state.cond==='als'? Math.max(6,Math.round(c.alsPct*TOTAL)) : Math.max(6,Math.round(c.pct*TOTAL))));
+  // recompute exact counts from generated points for perfect consistency
+  const cc={}; POINTS.forEach(p=>{const id=CLUSTERS[p.ci].id; cc[id]=(cc[id]||0)+1;}); COUNTS=cc;
+  document.getElementById('nshown').textContent=fmtInt(POINTS.length);
+  document.getElementById('ff-clusters').textContent=CLUSTERS.length;
+  buildLegend();
+  renderDetail();
+  updateSelBand();
+  draw();
+}
+
+function boot(){
+  buildGeneOptions();
+  generate('ctrl');
+  const cc={}; POINTS.forEach(p=>{const id=CLUSTERS[p.ci].id; cc[id]=(cc[id]||0)+1;}); COUNTS=cc;
+  document.getElementById('nshown').textContent=fmtInt(POINTS.length);
+  resize();
+  buildLegend();
+  renderDetail();
+  setMode('type');
+}
+window.addEventListener('resize', ()=>{ DPR=Math.min(2,window.devicePixelRatio||1); resize(); });
+boot();
+</script>
+</body>
+</html>

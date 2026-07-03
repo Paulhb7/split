@@ -1,0 +1,10 @@
+{
+  "expert": "coach",
+  "key": "race-fuel",
+  "type": "plan",
+  "title": "Race build + fuel",
+  "desc": "Training & diet, together",
+  "brief": "A 12-week half-marathon training tracker with the nutrition woven directly into it — the merged Coach's flagship, proving one coach who holds both training and fuel beats four who each see half. Goals fix the race, the sub-1:45 target, a ~25 km/week base and a 4-runs/~4h weekly budget. The Program is a periodised base→build→peak→taper block: each week expands to its four sessions, each session expands to warm-up / main set / cool-down with target paces, deload and taper weeks marked, and fuel notes attached to every key session (carb-loading before long runs, the 30-minute refuel window, the taper carb-up paradox). The Dashboard is a race-bib scoreboard: a race-day countdown bib, this week's sessions as tappable checkboxes, a planned weekly-volume bar chart, a session-streak with momentum dots, and — the visible cross-domain link — a daily fuel logger that reads the day's training load and flags 'CARB UP TODAY' on hard days, computing a reactive carb and hydration target logged via click-pips. Everything persists in localStorage; stays on-device.",
+  "da": "Race-bib scoreboard — carbon near-black #0d0d0f with one stadium coral #ff5a3c carrying the countdown bib, CTAs, streak and current-week bar, plus a disciplined amber #ffb03c reserved solely for the fuel domain so the cross-link is legible at a glance; Archivo Expanded heavy-condensed display for the giant day-number and stencil labels over Geist Mono readouts, no serif, full-bleed blocks and hairline rules instead of cards.",
+  "generated": "2026-07-03"
+}

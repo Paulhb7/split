@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Marée — App mockup case study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+<style>
+  /* ============================================================
+     STUDIO GREIGE — the page (the plinth the objects sit on)
+     warm plinth-gray ground · near-black ink · Hanken Grotesk
+     ONE accent borrowed from the app's own marine palette (tide)
+     ============================================================ */
+  :root {
+    --ground: #EDEAE5;      /* warm plinth-gray */
+    --ground-2: #E6E2DB;    /* slightly deeper greige panel */
+    --plinth: #E3DFD7;      /* object plinth */
+    --ink: #191714;         /* near-black */
+    --ink-2: #4A453D;       /* secondary ink */
+    --ink-3: #8A8378;       /* tertiary / captions */
+    --rule: #D2CCC0;        /* thin baseline rules */
+    --rule-soft: #DBD6CC;
+    --tide: #0E7C86;        /* the one page accent, from Marée's UI */
+    --paper: #F4F1EC;       /* card face on the ground */
+    --shadow: 30, 27, 22;   /* rgb for contact shadows */
+    --maxw: 1240px;
+    --ease: cubic-bezier(.22,.61,.36,1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: "Hanken Grotesk", system-ui, sans-serif;
+    background: var(--ground);
+    color: var(--ink);
+    line-height: 1.5;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* faint paper tooth so the greige reads warm, not flat */
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(255,255,255,.5), transparent 42%),
+      radial-gradient(circle at 88% 92%, rgba(120,110,92,.06), transparent 50%);
+  }
+
+  ::selection { background: var(--tide); color: #F4F1EC; }
+
+  a { color: inherit; }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 40px; }
+
+  /* ---------- exec-summary "About this" collapsible banner ---------- */
+  .about {
+    border-bottom: 1px solid var(--rule);
+    background: rgba(230,226,219,.55);
+  }
+  .about details { max-width: var(--maxw); margin: 0 auto; padding: 0 40px; }
+  .about summary {
+    list-style: none; cursor: pointer;
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 0;
+    font-size: 12.5px; letter-spacing: .02em; color: var(--ink-2);
+    user-select: none;
+  }
+  .about summary::-webkit-details-marker { display: none; }
+  .about summary .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--tide); flex: none;
+    box-shadow: 0 0 0 4px rgba(14,124,134,.14);
+  }
+  .about summary b { font-weight: 600; color: var(--ink); letter-spacing: -.01em; }
+  .about summary .chev {
+    margin-left: auto; font-size: 11px; color: var(--ink-3);
+    transition: transform .3s var(--ease);
+  }
+  .about details[open] summary .chev { transform: rotate(180deg); }
+  .about .body {
+    padding: 4px 0 22px; max-width: 900px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px 30px;
+  }
+  .about .body .col h4 {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .13em;
+    color: var(--tide); font-weight: 700; margin-bottom: 6px;
+  }
+  .about .body .col p { font-size: 13px; color: var(--ink-2); line-height: 1.55; }
+  @media (max-width: 820px) { .about .body { grid-template-columns: 1fr 1fr; } }
+
+  /* ---------------------------- masthead ---------------------------- */
+  header.mast { padding: 60px 0 30px; }
+  .mast .kicker {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 11.5px; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 600; margin-bottom: 30px;
+  }
+  .mast .kicker .line { flex: 1; height: 1px; background: var(--rule); }
+  .mast .kicker .studio { color: var(--ink-2); }
+
+  .mast h1 {
+    font-size: clamp(52px, 8.5vw, 118px);
+    font-weight: 500; letter-spacing: -.035em; line-height: .92;
+    margin-bottom: 4px;
+  }
+  .mast h1 .accent { font-style: italic; font-weight: 400; color: var(--tide); }
+  .mast .sub {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 24px;
+    margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--rule);
+  }
+  .mast .sub .lede {
+    font-size: clamp(17px, 2vw, 21px); font-weight: 400; color: var(--ink);
+    max-width: 640px; letter-spacing: -.01em; line-height: 1.4;
+  }
+  .mast .sub .meta {
+    margin-left: auto; text-align: right; font-size: 12.5px; color: var(--ink-3);
+    line-height: 1.9;
+  }
+  .mast .sub .meta b { color: var(--ink-2); font-weight: 600; }
+
+  /* --------------------- the gallery of screens --------------------- */
+  .gallery-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 8px 0 4px; margin-top: 34px; gap: 20px;
+  }
+  .gallery-head .t {
+    font-size: 13px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--ink-2); font-weight: 600;
+  }
+  .gallery-head .hint {
+    font-size: 12.5px; color: var(--ink-3); display: flex; align-items: center; gap: 8px;
+  }
+  .gallery-head .hint .tap {
+    display: inline-block; width: 15px; height: 15px; position: relative;
+  }
+  .gallery-head .hint .tap::before {
+    content: ""; position: absolute; inset: 0; border: 1.4px solid var(--tide);
+    border-radius: 50%; animation: pulse 2.4s var(--ease) infinite;
+  }
+  @keyframes pulse {
+    0%,100% { transform: scale(.6); opacity: .35; }
+    50% { transform: scale(1); opacity: 1; }
+  }
+
+  .plinth-row {
+    padding: 40px 0 20px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+    align-items: end;
+  }
+  @media (max-width: 1080px) { .plinth-row { grid-template-columns: repeat(2, 1fr); gap: 48px 30px; } }
+  @media (max-width: 560px)  { .plinth-row { grid-template-columns: 1fr; gap: 56px; } }
+
+  .stand { display: flex; flex-direction: column; align-items: center; }
+
+  /* ----- the iPhone frame (slim) ----- */
+  .phone {
+    position: relative;
+    width: 100%; max-width: 264px;
+    height: 552px;            /* fixed object height — reliable across engines */
+    background: #16181b;
+    border-radius: 40px;
+    padding: 8px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.06) inset,
+      0 0 0 1.5px rgba(0,0,0,.5),
+      0 2px 3px rgba(0,0,0,.4);
+    z-index: 2;
+    display: flex;            /* so .screen fills via flex */
+  }
+  .phone .screen {
+    position: relative; width: 100%;
+    flex: 1 1 auto; min-height: 0; align-self: stretch;
+    background: var(--m-bg, #F6F4EF);
+    border-radius: 33px; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .phone .notch {
+    position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
+    width: 74px; height: 20px; background: #16181b; border-radius: 12px; z-index: 40;
+  }
+  /* contact shadow on the plinth */
+  .stand .base {
+    width: 82%; height: 26px; margin-top: -8px;
+    background: var(--plinth);
+    border-radius: 0 0 3px 3px;
+    position: relative; z-index: 1;
+    box-shadow: 0 1px 0 rgba(255,255,255,.4) inset;
+  }
+  .stand .base::before {
+    /* soft cast shadow under the object */
+    content: ""; position: absolute; left: -9%; right: -9%; top: 6px; height: 22px;
+    background: radial-gradient(ellipse at 50% 0, rgba(var(--shadow), .22), transparent 70%);
+    filter: blur(3px); z-index: -1;
+  }
+  .stand .label {
+    margin-top: 20px; text-align: center;
+  }
+  .stand .label .n {
+    font-size: 11px; color: var(--ink-3); letter-spacing: .04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .stand .label .nm {
+    font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: -.01em;
+    margin-top: 2px;
+  }
+  .stand .label .ds { font-size: 12px; color: var(--ink-2); margin-top: 3px; }
+
+  /* =========================================================
+     MARÉE — the app's own design system (inside the frames)
+     marine · calm · data-forward · its OWN world, not the page
+     ========================================================= */
+  .m {
+    --m-bg: #F6F4EF;        /* warm sand paper */
+    --m-surf: #FFFFFF;      /* card */
+    --m-ink: #0C2430;       /* deep sea ink */
+    --m-ink-2: #486070;     /* muted sea */
+    --m-ink-3: #8AA0AC;     /* faint */
+    --m-tide: #0E7C86;      /* tidal teal (primary) */
+    --m-tide-2: #12A3AE;    /* bright shallow */
+    --m-deep: #123B4C;      /* deep water band */
+    --m-safe: #3E9B6E;      /* safe-swim green */
+    --m-warn: #E08A4B;      /* caution coral-amber */
+    --m-cool: #E7EEF0;      /* cool wash */
+    --m-line: #E4E7E3;      /* hairline */
+    font-family: "Hanken Grotesk", system-ui, sans-serif;
+    color: var(--m-ink);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .m .screen { background: var(--m-bg); }
+
+  /* status bar (fake iOS) */
+  .m .status {
+    height: 40px; flex: none; position: relative;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 20px 5px; font-size: 11.5px; font-weight: 600;
+    color: var(--m-ink); z-index: 30;
+  }
+  .m .status .r { display: flex; align-items: center; gap: 5px; }
+  .m .status .bars { display: flex; align-items: flex-end; gap: 1.5px; height: 9px; }
+  .m .status .bars i { width: 2.5px; background: var(--m-ink); border-radius: 1px; }
+  .m .status .bars i:nth-child(1){height:4px} .m .status .bars i:nth-child(2){height:6px}
+  .m .status .bars i:nth-child(3){height:8px} .m .status .bars i:nth-child(4){height:9px}
+  .m .status .batt { width: 20px; height: 10px; border: 1.3px solid var(--m-ink); border-radius: 3px; position: relative; padding: 1.3px; }
+  .m .status .batt::after { content:""; position:absolute; right:-3px; top:3px; width:1.5px; height:4px; background:var(--m-ink); border-radius:0 1px 1px 0; }
+  .m .status .batt i { display:block; height:100%; width:72%; background:var(--m-ink); border-radius:1px; }
+
+  /* content scroll area */
+  .m .view { flex: 1 1 auto; min-height: 0; overflow: hidden; position: relative; display: flex; }
+  .m .page { flex: 1 1 auto; min-height: 0; width: 100%; overflow-y: auto; overflow-x: hidden;
+    padding: 4px 16px 16px; scrollbar-width: none;
+    display: none;
+  }
+  .m .page::-webkit-scrollbar { display: none; }
+  .m .page.active {
+    display: block;
+    animation: pagein .34s var(--ease);
+  }
+  @keyframes pagein { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+
+  /* app header row */
+  .m .apphead { display: flex; align-items: baseline; justify-content: space-between; padding: 6px 2px 12px; }
+  .m .apphead .h { font-size: 22px; font-weight: 700; letter-spacing: -.03em; }
+  .m .apphead .day { font-size: 11.5px; color: var(--m-ink-3); font-weight: 500; }
+  .m .apphead .loc { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--m-tide); font-weight: 600; }
+
+  /* card */
+  .m .card {
+    background: var(--m-surf); border-radius: 18px; padding: 15px;
+    box-shadow: 0 1px 2px rgba(12,36,48,.05), 0 6px 18px -12px rgba(12,36,48,.28);
+    margin-bottom: 12px;
+  }
+  .m .card.pad0 { padding: 0; overflow: hidden; }
+  .m .card .lab { font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--m-ink-3); font-weight: 700; }
+
+  /* ---- NOW screen : hero swim window ---- */
+  .m .hero {
+    background: linear-gradient(160deg, var(--m-deep) 0%, #0B2C39 55%, #0C2430 100%);
+    color: #EAF3F2; border-radius: 20px; padding: 16px 16px 14px; margin-bottom: 12px;
+    position: relative; overflow: hidden;
+  }
+  .m .hero::after {
+    content:""; position:absolute; right:-30px; top:-30px; width:120px; height:120px;
+    background: radial-gradient(circle, rgba(18,163,174,.35), transparent 70%); pointer-events:none;
+  }
+  .m .hero .top { display:flex; justify-content:space-between; align-items:flex-start; }
+  .m .hero .badge {
+    display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700;
+    letter-spacing:.06em; text-transform:uppercase; color:#BFF0E4;
+    background: rgba(62,155,110,.22); border:1px solid rgba(62,155,110,.4);
+    padding:4px 9px; border-radius:20px;
+  }
+  .m .hero .badge .g { width:6px; height:6px; border-radius:50%; background: #5FD39B; box-shadow:0 0 0 3px rgba(95,211,155,.25); }
+  .m .hero .temp { font-size:11px; color:#9FC3C9; font-weight:600; text-align:right; line-height:1.35; }
+  .m .hero .temp b { display:block; font-size:23px; color:#EAF3F2; font-weight:700; letter-spacing:-.02em; }
+  .m .hero .win { margin-top:14px; }
+  .m .hero .win .k { font-size:11px; color:#9FC3C9; font-weight:600; letter-spacing:.04em; }
+  .m .hero .win .v { font-size:30px; font-weight:700; letter-spacing:-.02em; margin-top:1px; }
+  .m .hero .win .v .to { color:#7FB8BF; font-weight:500; font-size:22px; }
+  .m .hero .note { font-size:11.5px; color:#B9D6D9; margin-top:6px; line-height:1.4; }
+
+  /* tide curve (svg) */
+  .m .tidecard .row { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:6px; }
+  .m .tidecard .now { font-size:12px; color:var(--m-tide); font-weight:700; }
+  .m .curvewrap { position:relative; }
+  .m .curvewrap svg { display:block; width:100%; height:auto; }
+  .m .tideticks { display:flex; justify-content:space-between; margin-top:7px; padding:0 2px; }
+  .m .tideticks span { font-size:10px; color:var(--m-ink-3); font-variant-numeric:tabular-nums; font-weight:500; }
+  .m .tidemeta { display:flex; gap:10px; margin-top:11px; }
+  .m .tidemeta .cell { flex:1; text-align:center; padding:8px 4px; background:var(--m-cool); border-radius:11px; }
+  .m .tidemeta .cell .a { font-size:9.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--m-ink-3); font-weight:700; }
+  .m .tidemeta .cell .b { font-size:14px; font-weight:700; margin-top:2px; letter-spacing:-.01em; }
+  .m .tidemeta .cell .b small { font-size:10px; color:var(--m-ink-2); font-weight:600; }
+
+  /* stat grid */
+  .m .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .m .stat { background:var(--m-surf); border-radius:16px; padding:13px;
+    box-shadow:0 1px 2px rgba(12,36,48,.05), 0 6px 18px -14px rgba(12,36,48,.25); }
+  .m .stat .a { font-size:10px; text-transform:uppercase; letter-spacing:.09em; color:var(--m-ink-3); font-weight:700; display:flex; align-items:center; gap:5px; }
+  .m .stat .b { font-size:24px; font-weight:700; letter-spacing:-.02em; margin-top:5px; }
+  .m .stat .b small { font-size:13px; color:var(--m-ink-2); font-weight:600; }
+  .m .stat .c { font-size:11px; color:var(--m-ink-2); margin-top:1px; font-weight:500; }
+  .m .stat .ic { color:var(--m-tide); }
+
+  /* ---- TIDES screen : 7-day ---- */
+  .m .dsel { display:flex; gap:6px; margin-bottom:12px; }
+  .m .dsel button {
+    flex:1; border:0; cursor:pointer; padding:9px 0 8px; border-radius:13px;
+    background:var(--m-surf); font-family:inherit; text-align:center;
+    box-shadow:0 1px 2px rgba(12,36,48,.05); transition:all .2s var(--ease);
+    color:var(--m-ink); position:relative;
+  }
+  .m .dsel button .wd { font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--m-ink-3); font-weight:700; }
+  .m .dsel button .dn { font-size:15px; font-weight:700; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .m .dsel button .sw { width:5px; height:5px; border-radius:50%; margin:4px auto 0; background:var(--m-safe); }
+  .m .dsel button .sw.warn { background:var(--m-warn); }
+  .m .dsel button[aria-selected="true"] {
+    background:var(--m-tide); color:#EAF7F6; box-shadow:0 6px 16px -6px rgba(14,124,134,.6);
+  }
+  .m .dsel button[aria-selected="true"] .wd { color:#AEE3E4; }
+  .m .dsel button[aria-selected="true"] .sw { background:#EAF7F6; }
+
+  .m .bigcurve .cap { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:2px; }
+  .m .bigcurve .cap .d { font-size:15px; font-weight:700; letter-spacing:-.02em; }
+  .m .bigcurve .cap .r { font-size:11px; color:var(--m-ink-2); font-weight:600; }
+  .m .bigcurve svg { display:block; width:100%; height:auto; margin-top:4px; }
+  .m .events { margin-top:10px; }
+  .m .events .ev { display:flex; align-items:center; gap:11px; padding:9px 2px; border-top:1px solid var(--m-line); }
+  .m .events .ev:first-child { border-top:0; }
+  .m .events .ev .ar { font-size:16px; width:22px; text-align:center; }
+  .m .events .ev .ar.up { color:var(--m-tide-2); }
+  .m .events .ev .ar.dn { color:var(--m-ink-2); }
+  .m .events .ev .t { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--m-ink-3); font-weight:700; flex:1; }
+  .m .events .ev .tm { font-size:14px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .m .events .ev .ht { font-size:11.5px; color:var(--m-ink-2); font-weight:600; width:46px; text-align:right; }
+
+  /* ---- SPOTS screen ---- */
+  .m .mapface {
+    height:150px; border-radius:18px; margin-bottom:12px; position:relative; overflow:hidden;
+    background:
+      linear-gradient(180deg, #DCE9EA 0%, #C7DFE1 40%, #A9CFD3 100%);
+    box-shadow:0 1px 2px rgba(12,36,48,.06), 0 8px 20px -14px rgba(12,36,48,.3);
+  }
+  .m .mapface .land {
+    position:absolute; left:-10%; bottom:-30%; width:80%; height:120%;
+    background:linear-gradient(150deg, #F0EDE4, #E7E2D4); border-radius:50% 50% 0 0/60% 60% 0 0;
+    transform:rotate(-8deg); box-shadow:0 0 40px rgba(12,36,48,.06) inset;
+  }
+  .m .mapface .land2 {
+    position:absolute; right:-18%; top:-24%; width:60%; height:80%;
+    background:linear-gradient(200deg, #EDE9DF, #E3DDCE); border-radius:0 0 55% 45%/0 0 70% 60%;
+    transform:rotate(6deg);
+  }
+  .m .mapface .pin {
+    position:absolute; width:14px; height:14px; border-radius:50% 50% 50% 0;
+    transform:rotate(-45deg); background:var(--m-tide); border:2px solid #fff;
+    box-shadow:0 2px 5px rgba(12,36,48,.35); cursor:pointer;
+  }
+  .m .mapface .pin.you { background:var(--m-warn); }
+  .m .mapface .pin b { position:absolute; inset:3px; background:#fff; border-radius:50%; }
+  .m .mapface .youdot { position:absolute; width:11px; height:11px; border-radius:50%; background:#2C7BE5; border:2.5px solid #fff; box-shadow:0 0 0 6px rgba(44,123,229,.18); }
+
+  .m .spot { display:flex; align-items:center; gap:12px; padding:12px; }
+  .m .spot .th {
+    width:52px; height:52px; border-radius:14px; flex:none; position:relative; overflow:hidden;
+    box-shadow:0 2px 6px -2px rgba(12,36,48,.3);
+  }
+  .m .spot .th.a { background:linear-gradient(150deg,#1C5C6B,#0E7C86 60%,#12A3AE); }
+  .m .spot .th.b { background:linear-gradient(150deg,#2A6E5C,#3E9B6E 70%,#63C89B); }
+  .m .spot .th.c { background:linear-gradient(150deg,#3A5A72,#4E7A9B 65%,#7FB0CE); }
+  .m .spot .th.d { background:linear-gradient(150deg,#144655,#1C6C79 60%,#0E7C86); }
+  .m .spot .th::after { content:""; position:absolute; left:0; right:0; bottom:0; height:45%;
+    background:linear-gradient(transparent, rgba(255,255,255,.28)); border-radius:0 0 50% 50%/0 0 100% 100%; }
+  .m .spot .meta { flex:1; min-width:0; }
+  .m .spot .meta .n { font-size:15px; font-weight:700; letter-spacing:-.01em; }
+  .m .spot .meta .s { font-size:11.5px; color:var(--m-ink-2); font-weight:500; margin-top:1px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .m .spot .meta .s .tag { color:var(--m-tide); font-weight:700; }
+  .m .spot .meta .s .dot { width:3px; height:3px; border-radius:50%; background:var(--m-ink-3); }
+  .m .spot .rt { text-align:right; flex:none; }
+  .m .spot .rt .tp { font-size:18px; font-weight:700; letter-spacing:-.02em; }
+  .m .spot .rt .tp small { font-size:11px; color:var(--m-ink-2); }
+  .m .spot .rt .cond { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-top:2px; }
+  .m .spot .rt .cond.calm { color:var(--m-safe); }
+  .m .spot .rt .cond.swell { color:var(--m-warn); }
+  .m .spot + .spot { border-top:1px solid var(--m-line); }
+
+  /* segmented control */
+  .m .seg { display:flex; background:var(--m-cool); border-radius:12px; padding:3px; margin-bottom:12px; }
+  .m .seg button { flex:1; border:0; background:transparent; font-family:inherit; cursor:pointer;
+    padding:7px 0; font-size:12px; font-weight:600; color:var(--m-ink-2); border-radius:9px; transition:all .2s var(--ease); }
+  .m .seg button[aria-selected="true"] { background:var(--m-surf); color:var(--m-ink); box-shadow:0 1px 3px rgba(12,36,48,.14); }
+
+  /* ---- JOURNAL screen ---- */
+  .m .jstat { display:flex; gap:10px; margin-bottom:14px; }
+  .m .jstat .b { flex:1; text-align:center; }
+  .m .jstat .b .v { font-size:26px; font-weight:700; letter-spacing:-.03em; }
+  .m .jstat .b .v small { font-size:12px; color:var(--m-ink-2); font-weight:600; }
+  .m .jstat .b .l { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--m-ink-3); font-weight:700; margin-top:1px; }
+  .m .jstat .div { width:1px; background:var(--m-line); }
+
+  .m .logh { display:flex; align-items:center; justify-content:space-between; margin:2px 2px 9px; }
+  .m .logh .t { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--m-ink-3); }
+  .m .logh .add { display:flex; align-items:center; gap:4px; font-size:12px; font-weight:700; color:var(--m-tide); cursor:pointer; }
+
+  .m .swim { display:flex; gap:12px; padding:13px; }
+  .m .swim .date {
+    width:44px; flex:none; text-align:center; padding-top:1px;
+  }
+  .m .swim .date .mo { font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--m-warn); font-weight:800; }
+  .m .swim .date .dd { font-size:20px; font-weight:700; line-height:1; letter-spacing:-.02em; margin-top:1px; }
+  .m .swim .body { flex:1; min-width:0; border-left:1px solid var(--m-line); padding-left:12px; }
+  .m .swim .body .n { font-size:14.5px; font-weight:700; letter-spacing:-.01em; }
+  .m .swim .body .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
+  .m .swim .body .chip {
+    font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:20px;
+    background:var(--m-cool); color:var(--m-ink-2); display:inline-flex; align-items:center; gap:4px;
+  }
+  .m .swim .body .chip.temp { background:rgba(14,124,134,.1); color:var(--m-tide); }
+  .m .swim .body .chip.dur { background:rgba(62,155,110,.13); color:#2F7C56; }
+  .m .swim .body .note { font-size:12px; color:var(--m-ink-2); margin-top:8px; line-height:1.45; font-style:italic; }
+  .m .swim + .swim { border-top:1px solid var(--m-line); }
+
+  /* bottom tab bar (real switcher) */
+  .m .tabs {
+    flex:none; height:62px; display:flex; align-items:stretch;
+    background:rgba(255,255,255,.86); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-top:1px solid var(--m-line); padding-bottom:6px;
+  }
+  .m .tabs button {
+    flex:1; border:0; background:transparent; cursor:pointer; font-family:inherit;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    color:var(--m-ink-3); padding-top:6px; transition:color .2s var(--ease);
+  }
+  .m .tabs button svg { width:22px; height:22px; }
+  .m .tabs button .tl { font-size:9.5px; font-weight:700; letter-spacing:.01em; }
+  .m .tabs button[aria-selected="true"] { color:var(--m-tide); }
+  .m .tabs button:active { transform:translateY(.5px); }
+
+  /* --------------------- rationale / studio notes --------------------- */
+  .rationale { padding:70px 0 40px; margin-top:30px; border-top:1px solid var(--rule); }
+  .rationale .lead {
+    display:grid; grid-template-columns: 1.15fr 1fr; gap:56px; align-items:start;
+  }
+  @media (max-width: 860px){ .rationale .lead { grid-template-columns:1fr; gap:34px; } }
+  .rationale h2 {
+    font-size:clamp(28px,4vw,42px); font-weight:500; letter-spacing:-.03em; line-height:1.05;
+  }
+  .rationale h2 em { font-style:italic; color:var(--tide); font-weight:400; }
+  .rationale .lead p { font-size:15.5px; color:var(--ink-2); line-height:1.62; margin-top:16px; }
+  .rationale .lead p + p { margin-top:12px; }
+  .rationale .lead .sidenote {
+    font-size:14px; color:var(--ink-2); border-left:2px solid var(--tide);
+    padding:2px 0 2px 16px; margin-top:4px; line-height:1.55;
+  }
+  .rationale .lead .sidenote b { color:var(--ink); font-weight:600; }
+
+  .decisions { margin-top:56px; }
+  .decisions .dh { font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-2); font-weight:600; padding-bottom:16px; border-bottom:1px solid var(--rule); }
+  .decisions .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0; }
+  @media (max-width: 820px){ .decisions .grid { grid-template-columns:1fr; } }
+  .decisions .cell {
+    padding:24px 26px 26px 0; border-bottom:1px solid var(--rule-soft);
+    border-right:1px solid var(--rule-soft);
+  }
+  .decisions .grid .cell:nth-child(3n){ border-right:0; padding-right:0; }
+  .decisions .grid .cell:nth-child(1),
+  .decisions .grid .cell:nth-child(2),
+  .decisions .grid .cell:nth-child(3){ border-top:0; }
+  @media (max-width: 820px){ .decisions .cell { border-right:0; padding-right:0; } }
+  .decisions .cell .no { font-size:11px; color:var(--ink-3); font-variant-numeric:tabular-nums; letter-spacing:.05em; }
+  .decisions .cell h3 { font-size:17px; font-weight:600; letter-spacing:-.015em; margin:10px 0 8px; }
+  .decisions .cell p { font-size:13.5px; color:var(--ink-2); line-height:1.55; }
+
+  /* type + palette specimen */
+  .specimen { margin-top:56px; display:grid; grid-template-columns:1fr 1fr; gap:44px; }
+  @media (max-width: 820px){ .specimen { grid-template-columns:1fr; gap:34px; } }
+  .specimen .block h4 { font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--ink-2); font-weight:600; padding-bottom:14px; border-bottom:1px solid var(--rule); margin-bottom:18px; }
+  .swatches { display:flex; gap:0; border-radius:12px; overflow:hidden; box-shadow:0 8px 24px -18px rgba(var(--shadow),.5); }
+  .swatches .sw { flex:1; height:96px; display:flex; flex-direction:column; justify-content:flex-end; padding:9px 10px; }
+  .swatches .sw span { font-size:9.5px; font-weight:700; letter-spacing:.02em; }
+  .swatches .sw small { font-size:9px; opacity:.75; font-variant-numeric:tabular-nums; }
+  .palrow { display:flex; align-items:center; justify-content:space-between; padding:11px 2px; border-bottom:1px solid var(--rule-soft); }
+  .palrow:last-child { border-bottom:0; }
+  .palrow .l { display:flex; align-items:center; gap:11px; }
+  .palrow .chip { width:20px; height:20px; border-radius:6px; box-shadow:0 0 0 1px rgba(0,0,0,.06) inset; }
+  .palrow .nm { font-size:13.5px; font-weight:600; }
+  .palrow .role { font-size:12px; color:var(--ink-3); }
+  .palrow .hex { font-size:12px; color:var(--ink-2); font-variant-numeric:tabular-nums; font-weight:500; }
+
+  .typespec .tline { border-bottom:1px solid var(--rule-soft); padding:14px 0; }
+  .typespec .tline:last-child { border-bottom:0; }
+  .typespec .tline .meta { font-size:10.5px; color:var(--ink-3); letter-spacing:.03em; margin-bottom:3px; }
+  .typespec .t1 { font-size:38px; font-weight:500; letter-spacing:-.03em; line-height:1; }
+  .typespec .t1 em { font-style:italic; font-weight:400; color:var(--tide); }
+  .typespec .t2 { font-size:22px; font-weight:600; letter-spacing:-.02em; }
+  .typespec .t3 { font-size:15px; font-weight:400; color:var(--ink-2); line-height:1.5; max-width:44ch; }
+  .typespec .t4 { font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2); }
+
+  /* footer */
+  footer.foot { border-top:1px solid var(--rule); padding:34px 0 60px; margin-top:20px; }
+  footer.foot .row { display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+  footer.foot .sig { display:flex; align-items:center; gap:12px; font-size:13px; color:var(--ink-2); }
+  footer.foot .sig .m { width:8px; height:8px; border-radius:50%; background:var(--tide); }
+  footer.foot .sig b { color:var(--ink); font-weight:600; }
+  footer.foot .cr { font-size:12px; color:var(--ink-3); }
+
+  .fadein { opacity:0; transform:translateY(14px); transition:opacity .7s var(--ease), transform .7s var(--ease); }
+  .fadein.in { opacity:1; transform:none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition-duration: .01ms !important; }
+    .fadein { opacity:1; transform:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ EXEC SUMMARY — "About this" collapsible ============ -->
+<div class="about">
+  <details>
+    <summary>
+      <span class="dot"></span>
+      <b>About this piece</b>&nbsp;— design case study · interactive prototype · fake data
+      <span class="chev">▾</span>
+    </summary>
+    <div class="body">
+      <div class="col">
+        <h4>Why</h4>
+        <p>A portfolio case study for <b>Marée</b>, a concept iOS app for sea swimmers — to show the product direction, not to ship code.</p>
+      </div>
+      <div class="col">
+        <h4>Context</h4>
+        <p>Tides, water temperature and safe-swim windows for coastal people. Four screens, one calm marine design system.</p>
+      </div>
+      <div class="col">
+        <h4>How to use it</h4>
+        <p>The screens are live — the bottom tab bar switches views, and tapping a day on the Tides chart redraws the curve. Explore them.</p>
+      </div>
+      <div class="col">
+        <h4>What I assumed</h4>
+        <p>French-Atlantic coast, metric units, a solo morning swimmer. Data is illustrative. Page dressing is "studio greige"; the app is its own marine world.</p>
+      </div>
+    </div>
+  </details>
+</div>
+
+<!-- ============================ MASTHEAD ============================ -->
+<header class="mast">
+  <div class="wrap">
+    <div class="kicker">
+      <span class="studio">Atelier Rivage — product design</span>
+      <span class="line"></span>
+      <span>Case 01 / iOS</span>
+    </div>
+    <h1>Mar<span class="accent">é</span>e</h1>
+    <div class="sub">
+      <div class="lede">A tide companion for people who read the sea before they read the day — water temperature, safe-swim windows, and the coves worth the walk.</div>
+      <div class="meta">
+        <div><b>Role</b> · Product & UI</div>
+        <div><b>Surface</b> · iPhone, 4 screens</div>
+        <div><b>Year</b> · 2026</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ========================= SCREEN GALLERY ========================= -->
+<section class="wrap">
+  <div class="gallery-head">
+    <div class="t">The screens</div>
+    <div class="hint"><span class="tap"></span> Tap the tab bar — every frame is live</div>
+  </div>
+
+  <div class="plinth-row">
+
+    <!-- ===================== FRAME 1 : NOW ===================== -->
+    <div class="stand fadein">
+      <div class="phone">
+        <div class="m">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="status">
+              <span>7:12</span>
+              <span class="r">
+                <span class="bars"><i></i><i></i><i></i><i></i></span>
+                <span style="font-size:10px">5G</span>
+                <span class="batt"><i></i></span>
+              </span>
+            </div>
+            <div class="view" data-app="1">
+
+              <!-- NOW page -->
+              <div class="page active" data-page="now">
+                <div class="apphead">
+                  <div>
+                    <div class="h">Now</div>
+                    <div class="day">Friday · 3 July</div>
+                  </div>
+                  <div class="loc">◷ Larmor-Plage</div>
+                </div>
+
+                <div class="hero">
+                  <div class="top">
+                    <span class="badge"><span class="g"></span>Good to swim</span>
+                    <div class="temp">Water<b>18.4°</b>feels 17°</div>
+                  </div>
+                  <div class="win">
+                    <div class="k">Best window today</div>
+                    <div class="v">08:20<span class="to"> – </span>11:40</div>
+                    <div class="note">Rising tide, light offshore breeze. Calmest water before the wind picks up at noon.</div>
+                  </div>
+                </div>
+
+                <div class="card tidecard">
+                  <div class="row">
+                    <span class="lab">Tide · next 12h</span>
+                    <span class="now">Now 2.4m ↑</span>
+                  </div>
+                  <div class="curvewrap">
+                    <svg viewBox="0 0 280 92" preserveAspectRatio="none" aria-label="Tide curve">
+                      <defs>
+                        <linearGradient id="fillNow" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0" stop-color="#12A3AE" stop-opacity=".26"/>
+                          <stop offset="1" stop-color="#12A3AE" stop-opacity="0"/>
+                        </linearGradient>
+                      </defs>
+                      <line x1="0" y1="70" x2="280" y2="70" stroke="#E4E7E3" stroke-width="1"/>
+                      <path d="M0,58 C24,52 40,20 70,18 C104,16 120,64 156,72 C188,79 206,44 232,34 C252,26 268,30 280,32 L280,92 L0,92 Z" fill="url(#fillNow)"/>
+                      <path d="M0,58 C24,52 40,20 70,18 C104,16 120,64 156,72 C188,79 206,44 232,34 C252,26 268,30 280,32" fill="none" stroke="#0E7C86" stroke-width="2.4" stroke-linecap="round"/>
+                      <!-- now marker -->
+                      <line x1="118" y1="8" x2="118" y2="84" stroke="#0E7C86" stroke-width="1" stroke-dasharray="2 3" opacity=".5"/>
+                      <circle cx="118" cy="63" r="4.5" fill="#0E7C86" stroke="#fff" stroke-width="2"/>
+                    </svg>
+                  </div>
+                  <div class="tideticks"><span>7a</span><span>9a</span><span>11a</span><span>1p</span><span>3p</span><span>5p</span></div>
+                  <div class="tidemeta">
+                    <div class="cell"><div class="a">High</div><div class="b">10:04 <small>3.9m</small></div></div>
+                    <div class="cell"><div class="a">Low</div><div class="b">16:22 <small>0.8m</small></div></div>
+                    <div class="cell"><div class="a">Coeff.</div><div class="b">74</div></div>
+                  </div>
+                </div>
+
+                <div class="grid2">
+                  <div class="stat">
+                    <div class="a"><span class="ic">≈</span> Waves</div>
+                    <div class="b">0.4<small>m</small></div>
+                    <div class="c">6s · glassy</div>
+                  </div>
+                  <div class="stat">
+                    <div class="a"><span class="ic">☼</span> UV index</div>
+                    <div class="b">6<small>/11</small></div>
+                    <div class="c">High by 11am</div>
+                  </div>
+                  <div class="stat">
+                    <div class="a"><span class="ic">➤</span> Wind</div>
+                    <div class="b">9<small>kn</small></div>
+                    <div class="c">NW offshore</div>
+                  </div>
+                  <div class="stat">
+                    <div class="a"><span class="ic">◒</span> Air</div>
+                    <div class="b">21<small>°</small></div>
+                    <div class="c">Clear · light haze</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- (frame 1 also carries the other pages so its tabs work) -->
+              <div class="page" data-page="tides"></div>
+              <div class="page" data-page="spots"></div>
+              <div class="page" data-page="journal"></div>
+            </div>
+            <nav class="tabs" data-tabs="1"></nav>
+          </div>
+        </div>
+      </div>
+      <div class="base"></div>
+      <div class="label"><div class="n">01</div><div class="nm">Now</div><div class="ds">Today at a glance</div></div>
+    </div>
+
+    <!-- ===================== FRAME 2 : TIDES ===================== -->
+    <div class="stand fadein">
+      <div class="phone">
+        <div class="m">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="status">
+              <span>7:12</span>
+              <span class="r">
+                <span class="bars"><i></i><i></i><i></i><i></i></span>
+                <span style="font-size:10px">5G</span>
+                <span class="batt"><i></i></span>
+              </span>
+            </div>
+            <div class="view" data-app="2">
+              <div class="page active" data-page="tides">
+                <div class="apphead">
+                  <div>
+                    <div class="h">Tides</div>
+                    <div class="day">7-day forecast</div>
+                  </div>
+                  <div class="loc">◷ Larmor-Plage</div>
+                </div>
+
+                <!-- day selector: real, updates curve below -->
+                <div class="dsel" role="tablist" aria-label="Choose a day"></div>
+
+                <div class="card bigcurve">
+                  <div class="cap">
+                    <span class="d" data-cap-day>Friday 3</span>
+                    <span class="r" data-cap-range>0.8 – 3.9m · coeff 74</span>
+                  </div>
+                  <svg viewBox="0 0 280 120" preserveAspectRatio="none" aria-label="Day tide curve">
+                    <defs>
+                      <linearGradient id="fillDay" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#0E7C86" stop-opacity=".22"/>
+                        <stop offset="1" stop-color="#0E7C86" stop-opacity="0"/>
+                      </linearGradient>
+                    </defs>
+                    <line x1="0" y1="42" x2="280" y2="42" stroke="#EEF1ED" stroke-width="1"/>
+                    <line x1="0" y1="72" x2="280" y2="72" stroke="#EEF1ED" stroke-width="1"/>
+                    <line x1="0" y1="100" x2="280" y2="100" stroke="#E4E7E3" stroke-width="1"/>
+                    <path data-curve-fill d="" fill="url(#fillDay)"/>
+                    <path data-curve-line d="" fill="none" stroke="#0E7C86" stroke-width="2.6" stroke-linecap="round"/>
+                  </svg>
+                  <div class="tideticks"><span>00</span><span>04</span><span>08</span><span>12</span><span>16</span><span>20</span><span>24</span></div>
+                </div>
+
+                <div class="card" style="padding:6px 15px 8px">
+                  <div class="events" data-events></div>
+                </div>
+              </div>
+              <div class="page" data-page="now"></div>
+              <div class="page" data-page="spots"></div>
+              <div class="page" data-page="journal"></div>
+            </div>
+            <nav class="tabs" data-tabs="2"></nav>
+          </div>
+        </div>
+      </div>
+      <div class="base"></div>
+      <div class="label"><div class="n">02</div><div class="nm">Tides</div><div class="ds">Tap a day to redraw</div></div>
+    </div>
+
+    <!-- ===================== FRAME 3 : SPOTS ===================== -->
+    <div class="stand fadein">
+      <div class="phone">
+        <div class="m">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="status">
+              <span>7:12</span>
+              <span class="r">
+                <span class="bars"><i></i><i></i><i></i><i></i></span>
+                <span style="font-size:10px">5G</span>
+                <span class="batt"><i></i></span>
+              </span>
+            </div>
+            <div class="view" data-app="3">
+              <div class="page active" data-page="spots">
+                <div class="apphead">
+                  <div>
+                    <div class="h">Spots</div>
+                    <div class="day">4 nearby · within 6km</div>
+                  </div>
+                  <div class="loc">◷ You</div>
+                </div>
+
+                <div class="seg" data-seg role="tablist">
+                  <button aria-selected="true" data-segbtn="map">Map</button>
+                  <button aria-selected="false" data-segbtn="list">List</button>
+                </div>
+
+                <div class="mapface" data-seg-map>
+                  <div class="land"></div>
+                  <div class="land2"></div>
+                  <div class="youdot" style="left:46%; top:58%"></div>
+                  <div class="pin" style="left:30%; top:40%"><b></b></div>
+                  <div class="pin" style="left:62%; top:30%"><b></b></div>
+                  <div class="pin" style="left:74%; top:62%"><b></b></div>
+                  <div class="pin" style="left:20%; top:66%"><b></b></div>
+                </div>
+
+                <div class="card pad0">
+                  <div class="spot">
+                    <div class="th a"></div>
+                    <div class="meta">
+                      <div class="n">Anse du Stole</div>
+                      <div class="s"><span class="tag">Sheltered</span><span class="dot"></span>0.8 km<span class="dot"></span>sand</div>
+                    </div>
+                    <div class="rt"><div class="tp">18.6<small>°</small></div><div class="cond calm">Calm</div></div>
+                  </div>
+                  <div class="spot">
+                    <div class="th b"></div>
+                    <div class="meta">
+                      <div class="n">Fort-Bloqué cove</div>
+                      <div class="s"><span class="tag">Family</span><span class="dot"></span>2.1 km<span class="dot"></span>rock pool</div>
+                    </div>
+                    <div class="rt"><div class="tp">18.1<small>°</small></div><div class="cond calm">Calm</div></div>
+                  </div>
+                  <div class="spot">
+                    <div class="th c"></div>
+                    <div class="meta">
+                      <div class="n">Pointe du Talud</div>
+                      <div class="s"><span class="tag">Deep</span><span class="dot"></span>3.4 km<span class="dot"></span>shingle</div>
+                    </div>
+                    <div class="rt"><div class="tp">17.7<small>°</small></div><div class="cond swell">Swell</div></div>
+                  </div>
+                  <div class="spot">
+                    <div class="th d"></div>
+                    <div class="meta">
+                      <div class="n">Kerpape reef</div>
+                      <div class="s"><span class="tag">Snorkel</span><span class="dot"></span>5.6 km<span class="dot"></span>reef</div>
+                    </div>
+                    <div class="rt"><div class="tp">18.9<small>°</small></div><div class="cond calm">Calm</div></div>
+                  </div>
+                </div>
+              </div>
+              <div class="page" data-page="now"></div>
+              <div class="page" data-page="tides"></div>
+              <div class="page" data-page="journal"></div>
+            </div>
+            <nav class="tabs" data-tabs="3"></nav>
+          </div>
+        </div>
+      </div>
+      <div class="base"></div>
+      <div class="label"><div class="n">03</div><div class="nm">Spots</div><div class="ds">Coves within reach</div></div>
+    </div>
+
+    <!-- ===================== FRAME 4 : JOURNAL ===================== -->
+    <div class="stand fadein">
+      <div class="phone">
+        <div class="m">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="status">
+              <span>7:12</span>
+              <span class="r">
+                <span class="bars"><i></i><i></i><i></i><i></i></span>
+                <span style="font-size:10px">5G</span>
+                <span class="batt"><i></i></span>
+              </span>
+            </div>
+            <div class="view" data-app="4">
+              <div class="page active" data-page="journal">
+                <div class="apphead">
+                  <div>
+                    <div class="h">Journal</div>
+                    <div class="day">Your swim log</div>
+                  </div>
+                  <div class="loc">2026</div>
+                </div>
+
+                <div class="card">
+                  <div class="jstat">
+                    <div class="b"><div class="v">37</div><div class="l">Swims</div></div>
+                    <div class="div"></div>
+                    <div class="b"><div class="v">14.2<small>°</small></div><div class="l">Coldest</div></div>
+                    <div class="div"></div>
+                    <div class="b"><div class="v">9<small>h</small></div><div class="l">In water</div></div>
+                  </div>
+                </div>
+
+                <div class="logh">
+                  <div class="t">This week</div>
+                  <div class="add">＋ Log a swim</div>
+                </div>
+
+                <div class="card pad0">
+                  <div class="swim">
+                    <div class="date"><div class="mo">Jul</div><div class="dd">02</div></div>
+                    <div class="body">
+                      <div class="n">Anse du Stole</div>
+                      <div class="chips">
+                        <span class="chip temp">◒ 18.2°</span>
+                        <span class="chip dur">◔ 24 min</span>
+                        <span class="chip">↑ rising</span>
+                      </div>
+                      <div class="note">“Flat and clear. Saw the sandbar for the first time this year.”</div>
+                    </div>
+                  </div>
+                  <div class="swim">
+                    <div class="date"><div class="mo">Jun</div><div class="dd">29</div></div>
+                    <div class="body">
+                      <div class="n">Kerpape reef</div>
+                      <div class="chips">
+                        <span class="chip temp">◒ 17.9°</span>
+                        <span class="chip dur">◔ 41 min</span>
+                        <span class="chip">snorkel</span>
+                      </div>
+                      <div class="note">“Bass under the reef ledge. Long swim, warmer than it looked.”</div>
+                    </div>
+                  </div>
+                  <div class="swim">
+                    <div class="date"><div class="mo">Jun</div><div class="dd">26</div></div>
+                    <div class="body">
+                      <div class="n">Fort-Bloqué cove</div>
+                      <div class="chips">
+                        <span class="chip temp">◒ 17.1°</span>
+                        <span class="chip dur">◔ 18 min</span>
+                        <span class="chip">choppy</span>
+                      </div>
+                      <div class="note">“Short one — wind came up early. Still worth it.”</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="page" data-page="now"></div>
+              <div class="page" data-page="tides"></div>
+              <div class="page" data-page="spots"></div>
+            </div>
+            <nav class="tabs" data-tabs="4"></nav>
+          </div>
+        </div>
+      </div>
+      <div class="base"></div>
+      <div class="label"><div class="n">04</div><div class="nm">Journal</div><div class="ds">Every swim, logged</div></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ========================= RATIONALE ========================= -->
+<section class="rationale">
+  <div class="wrap">
+    <div class="lead">
+      <div>
+        <h2>The direction: <em>read the sea, not a dashboard.</em></h2>
+        <p>A swimmer's real question is small — <b>can I go, and when?</b> Everything else is context for that one call. So the app answers it first, on the Now screen, in a single line: a swim window and a verdict. The tide curve, temperature and wind sit under it as evidence, not as the headline.</p>
+        <p>The system is marine but restrained. A warm sand paper ground keeps it calm and un-clinical; deep-water ink and one tidal teal carry every action and every data line. Numbers are the loudest thing on screen — tide heights, temperatures, coefficients — because that is what a swimmer trusts. The chrome gets out of the way.</p>
+      </div>
+      <div>
+        <div class="sidenote"><b>Margin note —</b> the "swim window" is the whole product. If a swimmer only ever reads that one line and trusts it, Marée has done its job. Every other screen earns the trust behind it.</div>
+        <br/>
+        <div class="sidenote"><b>On the palette —</b> teal, not blue. Consumer weather apps are a sea of the same sky-blue; a slightly green tidal teal reads like shallow coastal water and, more usefully, owns a shelf nobody else stands on.</div>
+        <br/>
+        <div class="sidenote"><b>On temperature —</b> shown as <i>“feels”</i> beside the raw reading. 18° in a light wind is a different swim than 18° flat, and swimmers know it — so the app admits it too.</div>
+      </div>
+    </div>
+
+    <!-- three decisions -->
+    <div class="decisions">
+      <div class="dh">Decisions</div>
+      <div class="grid">
+        <div class="cell">
+          <div class="no">01 — Type</div>
+          <h3>One grotesk, carried by weight</h3>
+          <p>Hanken Grotesk does the whole app: 700 for the numbers that matter, 500 for labels, a single italic for the human voice in the journal. A humanist grotesk stays warm at small sizes — right for a companion, wrong-feeling only if it tried to be a cockpit.</p>
+        </div>
+        <div class="cell">
+          <div class="no">02 — Colour</div>
+          <h3>Sand ground, tidal teal, two signals</h3>
+          <p>Surfaces are warm off-white, not cold grey. Teal is the only interactive colour. Two status colours and nothing more: a calm green for “good to swim”, a coral-amber for caution. Colour means something every time it appears.</p>
+        </div>
+        <div class="cell">
+          <div class="no">03 — Motion & shape</div>
+          <h3>Soft cards, quiet transitions</h3>
+          <p>Generous 18px radii and low, wide shadows make each card feel like a smooth stone. Screen changes cross-fade in a third of a second — present but never showy. The sea is the drama; the interface is calm.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- specimen: palette + type -->
+    <div class="specimen">
+      <div class="block">
+        <h4>Marée — palette</h4>
+        <div class="swatches">
+          <div class="sw" style="background:#0C2430; color:#EAF3F2"><span>Sea ink</span><small>#0C2430</small></div>
+          <div class="sw" style="background:#0E7C86; color:#EAF7F6"><span>Tide</span><small>#0E7C86</small></div>
+          <div class="sw" style="background:#12A3AE; color:#04333A"><span>Shallow</span><small>#12A3AE</small></div>
+          <div class="sw" style="background:#3E9B6E; color:#06301F"><span>Safe</span><small>#3E9B6E</small></div>
+          <div class="sw" style="background:#E08A4B; color:#3B1C05"><span>Caution</span><small>#E08A4B</small></div>
+          <div class="sw" style="background:#F6F4EF; color:#0C2430"><span>Sand</span><small>#F6F4EF</small></div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="palrow"><div class="l"><span class="chip" style="background:#0E7C86"></span><span class="nm">Tide teal</span></div><span class="role">Primary · actions, data</span><span class="hex">#0E7C86</span></div>
+          <div class="palrow"><div class="l"><span class="chip" style="background:#0C2430"></span><span class="nm">Sea ink</span></div><span class="role">Text · deep water bands</span><span class="hex">#0C2430</span></div>
+          <div class="palrow"><div class="l"><span class="chip" style="background:#3E9B6E"></span><span class="nm">Safe green</span></div><span class="role">Signal · good to swim</span><span class="hex">#3E9B6E</span></div>
+          <div class="palrow"><div class="l"><span class="chip" style="background:#E08A4B"></span><span class="nm">Caution</span></div><span class="role">Signal · swell, cold</span><span class="hex">#E08A4B</span></div>
+        </div>
+      </div>
+
+      <div class="block typespec">
+        <h4>Type — Hanken Grotesk</h4>
+        <div class="tline">
+          <div class="meta">Display · 500 / italic 400</div>
+          <div class="t1">Good to <em>swim</em></div>
+        </div>
+        <div class="tline">
+          <div class="meta">Heading · 600</div>
+          <div class="t2">Best window · 08:20 – 11:40</div>
+        </div>
+        <div class="tline">
+          <div class="meta">Body · 400</div>
+          <div class="t3">Rising tide, light offshore breeze. Calmest water before the wind picks up at noon.</div>
+        </div>
+        <div class="tline">
+          <div class="meta">Label · 700 · tracked</div>
+          <div class="t4">Tide · Coefficient · Water</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="row">
+      <div class="sig"><span class="m"></span>Designed in <b>Split</b> · Atelier Rivage — product design</div>
+      <div class="cr">Marée is a concept. Data illustrative. iOS mockup, 2026.</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---- tab bar icons (inline SVG, stroke, per-tab) ---- */
+  var ICONS = {
+    now:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/><path d="M3 19c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/><path d="M12 3v4"/><circle cx="12" cy="8" r="1.6" fill="currentColor" stroke="none"/></svg>',
+    tides:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15c3-8 6-8 9 0s6 8 9 0"/><path d="M3 20h18"/></svg>',
+    spots:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.4"/></svg>',
+    journal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2V6a2 2 0 0 1 2-2Z"/><path d="M9 9h6M9 13h4"/></svg>'
+  };
+  var TAB_ORDER = [["now","Now"],["tides","Tides"],["spots","Spots"],["journal","Journal"]];
+
+  /* Build each frame's tab bar and wire switching. Each frame is
+     independent — its tabs only move its own pages. */
+  document.querySelectorAll("nav.tabs").forEach(function(nav){
+    var app = nav.getAttribute("data-tabs");
+    var view = document.querySelector('.view[data-app="'+app+'"]');
+    var startPage = view.querySelector(".page.active").getAttribute("data-page");
+
+    TAB_ORDER.forEach(function(t){
+      var key = t[0], label = t[1];
+      var b = document.createElement("button");
+      b.setAttribute("data-goto", key);
+      b.setAttribute("aria-selected", key === startPage ? "true" : "false");
+      b.innerHTML = ICONS[key] + '<span class="tl">'+label+'</span>';
+      b.addEventListener("click", function(){ go(view, nav, key); });
+      nav.appendChild(b);
+    });
+  });
+
+  function go(view, nav, key){
+    var target = view.querySelector('.page[data-page="'+key+'"]');
+    if(!target) return;
+    // if the target page is a stub (empty), fill it by cloning the
+    // canonical version of that page from whichever frame owns it.
+    if(target.getAttribute("data-page") === key && target.children.length === 0){
+      var source = document.querySelector('.page.active[data-page="'+key+'"]')
+                 || document.querySelector('.page[data-page="'+key+'"]:not(:empty)');
+      // find a non-empty canonical page
+      var canon = null;
+      document.querySelectorAll('.page[data-page="'+key+'"]').forEach(function(p){
+        if(!canon && p.children.length > 0) canon = p;
+      });
+      if(canon){
+        target.innerHTML = canon.innerHTML;
+        // cloned markup carries data-built flags but NOT live listeners —
+        // clear the flags so the wiring actually re-attaches handlers.
+        target.querySelectorAll('[data-built]').forEach(function(n){ n.removeAttribute('data-built'); });
+        if(key === "tides") wireTides(target);
+        if(key === "spots") wireSpots(target);
+      }
+    }
+    view.querySelectorAll(".page").forEach(function(p){ p.classList.remove("active"); });
+    target.classList.add("active");
+    nav.querySelectorAll("button").forEach(function(b){
+      b.setAttribute("aria-selected", b.getAttribute("data-goto") === key ? "true" : "false");
+    });
+    target.scrollTop = 0;
+  }
+
+  /* =============== TIDES : 7-day data + clickable day =============== */
+  // Each day: label, short, range text, coeff, list of extrema events,
+  // and a set of control points (0..24h) for the SVG curve. Heights
+  // in metres mapped into the 120-tall viewBox (y: 100=0m, 30=4.2m).
+  var DAYS = [
+    { wd:"Fri", dn:3, cap:"Friday 3",   range:"0.8 – 3.9m · coeff 74", warn:false,
+      pts:[3.1,2.0,0.9,1.9,3.6,3.9,2.6,0.9,1.4,3.2,3.8,2.7,1.0],
+      ev:[["Low","04:41","0.9m","dn"],["High","10:04","3.9m","up"],["Low","16:22","0.8m","dn"],["High","22:31","3.8m","up"]] },
+    { wd:"Sat", dn:4, cap:"Saturday 4", range:"1.1 – 3.6m · coeff 68", warn:false,
+      pts:[3.0,2.2,1.2,2.0,3.3,3.6,2.9,1.3,1.6,3.0,3.5,2.9,1.3],
+      ev:[["Low","05:18","1.1m","dn"],["High","10:44","3.6m","up"],["Low","17:03","1.2m","dn"],["High","23:09","3.5m","up"]] },
+    { wd:"Sun", dn:5, cap:"Sunday 5",   range:"1.4 – 3.2m · coeff 58", warn:true,
+      pts:[2.7,2.3,1.5,2.2,3.0,3.2,2.9,1.6,1.9,2.8,3.1,2.9,1.7],
+      ev:[["Low","06:02","1.4m","dn"],["High","11:31","3.2m","up"],["Low","17:52","1.5m","dn"],["High","—","—","up"]] },
+    { wd:"Mon", dn:6, cap:"Monday 6",   range:"1.7 – 2.9m · coeff 48", warn:true,
+      pts:[2.6,2.4,1.9,2.3,2.7,2.9,2.7,1.9,2.1,2.6,2.8,2.7,2.0],
+      ev:[["High","00:14","2.8m","up"],["Low","06:58","1.7m","dn"],["High","12:34","2.9m","up"],["Low","19:01","1.8m","dn"]] },
+    { wd:"Tue", dn:7, cap:"Tuesday 7",  range:"1.5 – 3.1m · coeff 55", warn:false,
+      pts:[2.8,2.3,1.6,2.2,2.9,3.1,2.8,1.6,2.0,2.7,3.0,2.8,1.7],
+      ev:[["High","01:22","3.0m","up"],["Low","07:49","1.6m","dn"],["High","13:39","3.1m","up"],["Low","20:04","1.5m","dn"]] },
+    { wd:"Wed", dn:8, cap:"Wednesday 8",range:"1.2 – 3.5m · coeff 64", warn:false,
+      pts:[3.0,2.1,1.3,2.0,3.2,3.5,2.8,1.3,1.7,2.9,3.4,2.8,1.3],
+      ev:[["High","02:18","3.3m","up"],["Low","08:33","1.2m","dn"],["High","14:36","3.5m","up"],["Low","20:58","1.3m","dn"]] },
+    { wd:"Thu", dn:9, cap:"Thursday 9", range:"0.9 – 3.8m · coeff 71", warn:false,
+      pts:[3.2,2.0,1.0,1.9,3.5,3.8,2.7,1.0,1.5,3.1,3.7,2.7,1.1],
+      ev:[["High","03:07","3.6m","up"],["Low","09:14","0.9m","dn"],["High","15:28","3.8m","up"],["Low","21:47","1.0m","dn"]] }
+  ];
+
+  // metres -> y in a 120 viewBox. 0.0m -> 104, 4.2m -> 28.
+  function my(m){ var top=28, bot=104, max=4.2; return (bot - (m/max)*(bot-top)).toFixed(1); }
+  // build a smooth path (Catmull-Rom -> cubic) across 13 evenly spaced x
+  function curvePath(pts, close){
+    var n = pts.length, W = 280;
+    var P = pts.map(function(m,i){ return { x: (i/(n-1))*W, y: parseFloat(my(m)) }; });
+    var d = "M"+P[0].x+","+P[0].y;
+    for(var i=0;i<n-1;i++){
+      var p0=P[i-1]||P[i], p1=P[i], p2=P[i+1], p3=P[i+2]||P[i+1];
+      var c1x=p1.x+(p2.x-p0.x)/6, c1y=p1.y+(p2.y-p0.y)/6;
+      var c2x=p2.x-(p3.x-p1.x)/6, c2y=p2.y-(p3.y-p1.y)/6;
+      d += " C"+c1x.toFixed(1)+","+c1y.toFixed(1)+" "+c2x.toFixed(1)+","+c2y.toFixed(1)+" "+p2.x.toFixed(1)+","+p2.y.toFixed(1);
+    }
+    if(close) d += " L280,120 L0,120 Z";
+    return d;
+  }
+
+  function wireTides(root){
+    var sel = root.querySelector("[data-sel], .dsel");
+    if(!sel) return;
+    if(sel.getAttribute("data-built") === "1") return;
+    sel.setAttribute("data-built","1");
+    sel.innerHTML = "";
+    DAYS.forEach(function(d, i){
+      var b = document.createElement("button");
+      b.setAttribute("role","tab");
+      b.setAttribute("aria-selected", i===0 ? "true":"false");
+      b.setAttribute("data-day", i);
+      b.innerHTML = '<span class="wd">'+d.wd+'</span><span class="dn">'+d.dn+'</span><span class="sw'+(d.warn?" warn":"")+'"></span>';
+      b.addEventListener("click", function(){ pickDay(root, i); });
+      sel.appendChild(b);
+    });
+    pickDay(root, 0);
+  }
+
+  function pickDay(root, idx){
+    var d = DAYS[idx];
+    root.querySelectorAll(".dsel button").forEach(function(b,i){
+      b.setAttribute("aria-selected", i===idx ? "true":"false");
+    });
+    var capDay = root.querySelector("[data-cap-day]");
+    var capRange = root.querySelector("[data-cap-range]");
+    if(capDay) capDay.textContent = d.cap;
+    if(capRange) capRange.textContent = d.range;
+
+    var line = root.querySelector("[data-curve-line]");
+    var fill = root.querySelector("[data-curve-fill]");
+    if(line) line.setAttribute("d", curvePath(d.pts, false));
+    if(fill) fill.setAttribute("d", curvePath(d.pts, true));
+
+    var evs = root.querySelector("[data-events]");
+    if(evs){
+      evs.innerHTML = "";
+      d.ev.forEach(function(e){
+        var arrow = e[3]==="up" ? "▲" : "▼";
+        var lbl = e[0]==="High" ? "High water" : (e[0]==="Low" ? "Low water" : e[0]);
+        var row = document.createElement("div");
+        row.className = "ev";
+        row.innerHTML =
+          '<span class="ar '+e[3]+'">'+arrow+'</span>'+
+          '<span class="t">'+lbl+'</span>'+
+          '<span class="tm">'+e[1]+'</span>'+
+          '<span class="ht">'+e[2]+'</span>';
+        evs.appendChild(row);
+      });
+    }
+  }
+
+  /* =============== SPOTS : map/list segmented control =============== */
+  function wireSpots(root){
+    var seg = root.querySelector("[data-seg]");
+    if(!seg || seg.getAttribute("data-built")==="1") return;
+    seg.setAttribute("data-built","1");
+    var map = root.querySelector("[data-seg-map]");
+    var list = root.querySelector(".card.pad0");
+    seg.querySelectorAll("[data-segbtn]").forEach(function(b){
+      b.addEventListener("click", function(){
+        var which = b.getAttribute("data-segbtn");
+        seg.querySelectorAll("button").forEach(function(x){ x.setAttribute("aria-selected","false"); });
+        b.setAttribute("aria-selected","true");
+        if(which === "map"){ if(map) map.style.display=""; }
+        else { if(map) map.style.display="none"; }
+      });
+    });
+  }
+
+  // wire the canonical (visible) tides + spots frames on load
+  document.querySelectorAll('.view[data-app="2"] .page[data-page="tides"]').forEach(wireTides);
+  document.querySelectorAll('.view[data-app="3"] .page[data-page="spots"]').forEach(wireSpots);
+
+  /* ---- scroll reveal for the frames (with a hard fallback) ---- */
+  var reveal = document.querySelectorAll(".fadein");
+  reveal.forEach(function(el, i){ el.style.transitionDelay = (i * 70) + "ms"; });
+  function revealAll(){ reveal.forEach(function(el){ el.classList.add("in"); }); }
+  if("IntersectionObserver" in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }
+      });
+    }, { threshold: .12 });
+    reveal.forEach(function(el){ io.observe(el); });
+    // safety net: if anything is still hidden shortly after load, show it
+    setTimeout(revealAll, 1200);
+  } else {
+    revealAll();
+  }
+})();
+</script>
+</body>
+</html>

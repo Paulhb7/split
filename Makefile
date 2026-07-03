@@ -14,7 +14,7 @@ SHELL := /bin/bash
 
 DESKTOP := apps/desktop
 
-.PHONY: help doctor install desktop app build test clean
+.PHONY: help doctor install desktop app build test doc-lint clean
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -48,9 +48,12 @@ build: $(DESKTOP)/node_modules ## Bundle the native .app (Tauri build)
 	cd $(DESKTOP) && npm run tauri build
 
 # --- tests -------------------------------------------------------------------
-test: $(DESKTOP)/node_modules ## Run Rust workspace tests + frontend (vitest)
+test: $(DESKTOP)/node_modules doc-lint ## Run Rust workspace tests + frontend (vitest)
 	cargo test --workspace --quiet
 	cd $(DESKTOP) && npm test
+
+doc-lint: ## Check doc counts (experts/harnesses/skills) against config/
+	python3 scripts/check-doc-counts.py
 
 clean: ## Remove the Cargo build target
 	cargo clean

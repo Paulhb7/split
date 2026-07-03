@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GDPR, in plain English — a compliance brief for Brume</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Libre+Franklin:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FFFFFF;
+    --paper-2:#F1F4F8;
+    --card:#FFFFFF;
+    --ink:#131B26;
+    --muted:#5C6673;
+    --faint:#93A0AD;
+    --indigo:#4438C9;
+    --indigo-deep:#2F2790;
+    --indigo-tint:#EDEBFB;
+    --teal:#0E7C6F;
+    --teal-bright:#12A392;
+    --teal-tint:#E6F3EF;
+    --line:rgba(19,27,38,.14);
+    --line-soft:rgba(19,27,38,.08);
+    --radius:10px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    font-size:17px;
+    line-height:1.72;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--indigo);color:#fff}
+
+  .page{max-width:1280px;margin:0 auto;padding:0 32px}
+
+  /* ---------- top ribbon ---------- */
+  .ribbon{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:20px 0;border-bottom:1px solid var(--line-soft);
+    font-family:'Libre Franklin',sans-serif;font-weight:600;font-size:11.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .ribbon .dotset{display:flex;gap:8px;align-items:center}
+  .ribbon .dot{width:9px;height:9px;border-radius:50%}
+  .d-indigo{background:var(--indigo)} .d-teal{background:var(--teal-bright)} .d-paper{background:var(--paper-2);border:1px solid var(--line)}
+
+  /* ---------- hero ---------- */
+  header.hero{padding:72px 0 40px;max-width:920px}
+  .kicker{
+    font-family:'Libre Franklin',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--teal);margin-bottom:22px;display:flex;align-items:center;gap:12px;
+  }
+  .kicker::before{content:"";display:inline-block;width:34px;height:2px;background:var(--teal)}
+  h1{
+    font-family:'Libre Franklin',sans-serif;
+    font-size:clamp(38px,5.4vw,64px);line-height:1.06;font-weight:800;
+    letter-spacing:-.03em;margin-bottom:26px;
+  }
+  h1 .hl{color:var(--indigo)}
+  .standfirst{font-size:20px;line-height:1.65;color:var(--muted);max-width:52ch;margin-bottom:30px}
+  .standfirst strong{color:var(--ink);font-weight:600}
+  .scope-chips{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{
+    font-family:'Inter',sans-serif;font-weight:500;font-size:13px;padding:7px 14px;
+    border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);
+  }
+  .chip b{color:var(--teal);font-weight:700}
+
+  /* ---------- exec summary ---------- */
+  .exec{
+    margin:44px 0 20px;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);overflow:hidden;
+    box-shadow:0 1px 0 rgba(19,27,38,.05);
+  }
+  .exec-head{
+    display:flex;align-items:center;gap:12px;padding:16px 26px;
+    background:linear-gradient(90deg,var(--indigo) 0%,var(--indigo-deep) 100%);color:#fff;
+    font-family:'Libre Franklin',sans-serif;font-weight:700;font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+  }
+  .exec-head .sq{width:10px;height:10px;background:var(--teal-bright);border-radius:2px}
+  .exec-grid{display:grid;grid-template-columns:repeat(2,1fr)}
+  .exec-cell{padding:22px 26px;border-top:1px solid var(--line-soft)}
+  .exec-cell:nth-child(odd){border-right:1px solid var(--line-soft)}
+  .exec-cell h4{
+    font-family:'Libre Franklin',sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--teal);margin-bottom:8px;
+  }
+  .exec-cell p{font-size:15px;line-height:1.65;color:var(--muted)}
+  .exec-cell p strong{color:var(--ink);font-weight:600}
+
+  /* ---------- key numbers strip ---------- */
+  .numbers{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:34px 0 8px}
+  .num{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px 22px;position:relative;overflow:hidden;
+  }
+  .num::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--teal-bright)}
+  .num:nth-child(even)::after{background:var(--indigo)}
+  .num .big{font-family:'Libre Franklin',sans-serif;font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+  .num:nth-child(even) .big{color:var(--indigo)} .num:nth-child(odd) .big{color:var(--teal)}
+  .num .lbl{font-size:13.5px;color:var(--muted);margin-top:4px;line-height:1.45}
+  .num .art-ref{font-family:'Inter',sans-serif;font-weight:600;font-size:11px;letter-spacing:.04em;color:var(--faint);margin-top:8px;display:block}
+
+  /* ---------- layout: toc + main ---------- */
+  .body-grid{display:grid;grid-template-columns:200px minmax(0,1fr);gap:56px;padding:56px 0 0}
+  nav.toc{position:sticky;top:32px;align-self:start;font-size:13.5px}
+  nav.toc .toc-title{
+    font-family:'Libre Franklin',sans-serif;font-weight:700;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--faint);margin-bottom:14px;
+  }
+  nav.toc a{
+    display:flex;gap:9px;color:var(--muted);text-decoration:none;padding:5px 0;
+    line-height:1.4;border-left:2px solid transparent;padding-left:12px;margin-left:-14px;
+    transition:color .15s,border-color .15s;
+  }
+  nav.toc a .n{font-family:'Inter',sans-serif;font-weight:600;font-variant-numeric:tabular-nums;font-size:11px;color:var(--faint);min-width:18px;padding-top:2px}
+  nav.toc a:hover{color:var(--ink)}
+  nav.toc a.active{color:var(--indigo);border-left-color:var(--indigo);font-weight:600}
+  nav.toc a.active .n{color:var(--indigo)}
+
+  main{min-width:0}
+
+  /* ---------- sections ---------- */
+  section.sec{
+    display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:52px;
+    padding:52px 0;border-top:1px solid var(--line-soft);
+  }
+  section.sec:first-of-type{border-top:none;padding-top:8px}
+  .sec-main{max-width:640px}
+  .sec-num{
+    font-family:'Libre Franklin',sans-serif;font-weight:700;font-size:12px;color:var(--teal);
+    letter-spacing:.18em;margin-bottom:10px;
+  }
+  h2{font-family:'Libre Franklin',sans-serif;font-size:29px;font-weight:700;letter-spacing:-.02em;line-height:1.2;margin-bottom:20px}
+  h3{font-family:'Libre Franklin',sans-serif;font-size:18px;font-weight:600;margin:28px 0 10px}
+  .sec-main p{margin-bottom:16px;color:#39434F}
+  .sec-main p strong{color:var(--ink);font-weight:600}
+  .sec-main ul,.sec-main ol{margin:0 0 18px 22px;color:#39434F}
+  .sec-main li{margin-bottom:9px}
+  .sec-main li strong{color:var(--ink);font-weight:600}
+
+  /* article citation pill */
+  .art{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:12px;white-space:nowrap;
+    background:var(--indigo-tint);color:var(--indigo-deep);
+    padding:2px 8px 3px;border-radius:5px;vertical-align:1px;
+  }
+
+  /* side callout */
+  aside.callout{
+    align-self:start;position:sticky;top:32px;
+    background:#F7F9FC;border:1px solid var(--line-soft);border-left:3px solid var(--indigo);
+    border-radius:0 var(--radius) var(--radius) 0;padding:22px 24px;
+  }
+  aside.callout .co-label{
+    font-family:'Libre Franklin',sans-serif;font-weight:700;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--indigo);display:flex;align-items:center;gap:8px;margin-bottom:12px;
+  }
+  aside.callout .co-label::before{content:"→";font-size:14px}
+  aside.callout p{font-size:14.5px;line-height:1.62;color:#39434F}
+  aside.callout p+p{margin-top:10px}
+  aside.callout strong{font-weight:700;color:var(--ink)}
+
+  /* in-flow tables */
+  table.data{width:100%;border-collapse:collapse;margin:8px 0 20px;font-size:14.5px;background:var(--card);border:1px solid var(--line)}
+  .table-wrap{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:10px 0 22px;background:var(--card)}
+  .table-wrap table.data{border:none;margin:0}
+  table.data th{
+    font-family:'Libre Franklin',sans-serif;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    text-align:left;color:var(--muted);background:var(--paper-2);
+    padding:11px 14px;border-bottom:1px solid var(--line);
+  }
+  table.data td{padding:12px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top;line-height:1.55}
+  table.data tr:last-child td{border-bottom:none}
+  table.data td.basis{white-space:nowrap;font-weight:600;color:var(--indigo-deep)}
+
+  /* ---------- checklist ---------- */
+  section.sec#checklist{grid-template-columns:minmax(0,1fr)}
+  #checklist .sec-main{max-width:none}
+  .check-frame{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:6px}
+  .check-top{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    padding:18px 24px;border-bottom:1px solid var(--line);background:var(--paper-2);
+    flex-wrap:wrap;
+  }
+  .check-top .ct-label{font-family:'Libre Franklin',sans-serif;font-weight:700;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .progress-zone{display:flex;align-items:center;gap:14px;flex:1;max-width:420px;min-width:220px}
+  .pbar{flex:1;height:8px;background:rgba(19,27,38,.1);border-radius:999px;overflow:hidden}
+  .pbar .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--teal-bright),var(--indigo));border-radius:999px;transition:width .35s ease}
+  .pcount{font-family:'Inter',sans-serif;font-weight:600;font-variant-numeric:tabular-nums;font-size:13px;color:var(--ink);min-width:70px;text-align:right}
+  .reset-btn{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;letter-spacing:.04em;
+    background:none;border:1px solid var(--line);border-radius:8px;color:var(--muted);
+    padding:6px 12px;cursor:pointer;transition:all .15s;
+  }
+  .reset-btn:hover{border-color:var(--indigo);color:var(--indigo)}
+  table.checklist{width:100%;border-collapse:collapse;font-size:15px}
+  table.checklist th{
+    font-family:'Libre Franklin',sans-serif;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    text-align:left;color:var(--muted);padding:12px 16px;border-bottom:1px solid var(--line);
+  }
+  table.checklist td{padding:15px 16px;border-bottom:1px solid var(--line-soft);vertical-align:top;line-height:1.55}
+  table.checklist tr:last-child td{border-bottom:none}
+  table.checklist tr{transition:background .15s}
+  table.checklist tr.done{background:var(--teal-tint)}
+  table.checklist tr.done .item-title{text-decoration:line-through;text-decoration-color:rgba(14,124,111,.5);color:var(--muted)}
+  .item-title{font-weight:600;display:block;margin-bottom:3px}
+  .item-sub{font-size:13.5px;color:var(--muted)}
+  .prio{
+    font-family:'Libre Franklin',sans-serif;font-size:11.5px;font-weight:700;
+    padding:4px 10px;border-radius:6px;white-space:nowrap;display:inline-block;
+  }
+  .p1{background:var(--indigo);color:#fff}
+  .p2{background:var(--teal);color:#fff}
+  .p3{background:transparent;color:var(--muted);border:1.5px solid var(--line);}
+  .ck{
+    appearance:none;width:22px;height:22px;border:2px solid var(--line);border-radius:7px;
+    background:var(--paper);cursor:pointer;position:relative;display:block;transition:all .15s;
+  }
+  .ck:hover{border-color:var(--teal)}
+  .ck:checked{background:var(--teal);border-color:var(--teal)}
+  .ck:checked::after{
+    content:"";position:absolute;left:6px;top:2px;width:5px;height:11px;
+    border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(42deg);
+  }
+  .prio-note{font-size:13px;color:var(--faint);margin-top:12px}
+
+  /* ---------- disclaimer / footer ---------- */
+  .disclaimer{
+    margin:60px 0 0;background:#F7F9FC;border:1px solid var(--line-soft);border-left:3px solid var(--indigo);
+    border-radius:0 var(--radius) var(--radius) 0;padding:26px 30px;
+  }
+  .disclaimer h4{
+    font-family:'Libre Franklin',sans-serif;font-weight:700;font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--indigo);margin-bottom:10px;
+  }
+  .disclaimer p{font-size:14px;line-height:1.68;color:var(--muted)}
+  footer.colophon{
+    display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+    padding:34px 0 46px;margin-top:20px;border-top:1px solid var(--line-soft);
+    font-family:'Inter',sans-serif;font-weight:500;font-size:12.5px;color:var(--faint);
+  }
+  footer.colophon .made{display:flex;align-items:center;gap:10px}
+  footer.colophon .made .dot{width:8px;height:8px;border-radius:50%;background:var(--teal-bright)}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:1240px){
+    .body-grid{grid-template-columns:minmax(0,1fr)}
+    nav.toc{display:none}
+  }
+  @media (max-width:1080px){
+    section.sec{grid-template-columns:minmax(0,1fr);gap:24px}
+    aside.callout{position:static;max-width:640px}
+    .numbers{grid-template-columns:repeat(2,1fr)}
+    .exec-grid{grid-template-columns:1fr}
+    .exec-cell:nth-child(odd){border-right:none}
+  }
+  @media (max-width:680px){
+    .page{padding:0 20px}
+    body{font-size:16px}
+    header.hero{padding:48px 0 32px}
+    .numbers{grid-template-columns:1fr 1fr;gap:10px}
+    .num .big{font-size:26px}
+    table.checklist th:nth-child(4),table.checklist td:nth-child(4){display:none}
+    .table-wrap{overflow-x:auto}
+  }
+  @media print{
+    nav.toc{display:none}
+    aside.callout{position:static}
+    .reset-btn{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="ribbon">
+    <span>Split · Lawyer · Advisory Brief</span>
+    <div class="dotset">
+      <span class="dot d-indigo"></span><span class="dot d-teal"></span><span class="dot d-paper"></span>
+    </div>
+    <span>Mode: legal question · GDPR · EU / FR</span>
+  </div>
+
+  <header class="hero">
+    <div class="kicker">Plain-English compliance brief</div>
+    <h1>What the GDPR actually asks of <span class="hl">your connected-device startup</span>.</h1>
+    <p class="standfirst">
+      Written for <strong>Brume</strong> — a fictional Paris startup shipping a connected
+      air-quality monitor and its companion mobile app. User accounts, usage analytics,
+      Bluetooth device data, customers across the EU. This brief translates the regulation
+      into decisions you can put on a roadmap, with the actual articles cited inline.
+    </p>
+    <div class="scope-chips">
+      <span class="chip"><b>■</b> user accounts</span>
+      <span class="chip"><b>■</b> usage analytics</span>
+      <span class="chip"><b>■</b> BLE device data</span>
+      <span class="chip"><b>■</b> EU customers</span>
+      <span class="chip"><b>■</b> French établissement</span>
+    </div>
+  </header>
+
+  <!-- Exec summary — the artifact's memory -->
+  <div class="exec">
+    <div class="exec-head"><span class="sq"></span> Executive summary — read me first</div>
+    <div class="exec-grid">
+      <div class="exec-cell">
+        <h4>Why this exists</h4>
+        <p>You asked what the GDPR requires of a French startup shipping a companion app
+        for a connected device, before launch across the EU. This brief answers that in
+        plain English, article by article, ending in a <strong>prioritized 10-item checklist</strong>.</p>
+      </div>
+      <div class="exec-cell">
+        <h4>Context</h4>
+        <p>The company is fictional (<strong>Brume</strong>, SAS, Paris) but the data profile is the
+        common one: accounts, product analytics, BLE sensor telemetry, third-party SDKs,
+        cloud vendors, EU-wide customers. No health or payment data in scope.</p>
+      </div>
+      <div class="exec-cell">
+        <h4>How to use it</h4>
+        <p>Read top to bottom once, then work the checklist at the end — it is interactive
+        and remembers your progress. Each section carries a <strong>“what this means for you”</strong>
+        box: that is the decision, the rest is the reasoning.</p>
+      </div>
+      <div class="exec-cell">
+        <h4>What I assumed</h4>
+        <p>Controller established in France, CNIL as lead authority, no special-category
+        data, standard SaaS vendor stack, pre-launch timing. Where practice varies I kept
+        claims <strong>conservative and timeless</strong>; verify current guidance before relying on it.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key numbers -->
+  <div class="numbers">
+    <div class="num">
+      <div class="big">72 h</div>
+      <div class="lbl">to notify the CNIL of a personal-data breach</div>
+      <span class="art-ref">Art. 33(1)</span>
+    </div>
+    <div class="num">
+      <div class="big">1 month</div>
+      <div class="lbl">to answer a user exercising their rights</div>
+      <span class="art-ref">Art. 12(3)</span>
+    </div>
+    <div class="num">
+      <div class="big">2+</div>
+      <div class="lbl">EDPB risk criteria met &rarr; run a DPIA</div>
+      <span class="art-ref">Art. 35 · WP248</span>
+    </div>
+    <div class="num">
+      <div class="big">4 %</div>
+      <div class="lbl">of worldwide turnover — the upper fine tier</div>
+      <span class="art-ref">Art. 83(5)</span>
+    </div>
+  </div>
+
+  <div class="body-grid">
+
+    <nav class="toc" id="toc">
+      <div class="toc-title">In this brief</div>
+      <a href="#s1"><span class="n">01</span> Your role &amp; scope</a>
+      <a href="#s2"><span class="n">02</span> What counts as personal data</a>
+      <a href="#s3"><span class="n">03</span> Lawful bases</a>
+      <a href="#s4"><span class="n">04</span> Telling people</a>
+      <a href="#s5"><span class="n">05</span> Privacy by design</a>
+      <a href="#s6"><span class="n">06</span> Vendors &amp; transfers</a>
+      <a href="#s7"><span class="n">07</span> Retention</a>
+      <a href="#s8"><span class="n">08</span> User rights</a>
+      <a href="#s9"><span class="n">09</span> Cookies &amp; trackers</a>
+      <a href="#s10"><span class="n">10</span> The DPIA question</a>
+      <a href="#s11"><span class="n">11</span> Living with the CNIL</a>
+      <a href="#checklist"><span class="n">✓</span> The 10-item checklist</a>
+    </nav>
+
+    <main>
+
+      <!-- 01 -->
+      <section class="sec" id="s1">
+        <div class="sec-main">
+          <div class="sec-num">SECTION 01</div>
+          <h2>Your role, and why the GDPR applies to all of it</h2>
+          <p>
+            Brume decides why and how personal data is processed — which features need which
+            data, which vendors touch it, how long it lives. That makes Brume the
+            <strong>controller</strong> <span class="art">Art. 4(7)</span>. The cloud host, the analytics
+            SDK, the push-notification service: those are <strong>processors</strong>
+            <span class="art">Art. 4(8)</span>, acting on your instructions.
+          </p>
+          <p>
+            The regulation applies because you are <strong>established in the EU</strong> — a French SAS
+            processing personal data in the context of that establishment
+            <span class="art">Art. 3(1)</span>. It applies to the whole ecosystem as one thing:
+            the mobile app, the device firmware, the cloud backend, the support desk. There is
+            no “the app is compliant but the backend is someone else’s problem” — the purposes
+            are yours, so the obligations are yours.
+          </p>
+          <p>
+            The quiet clause that shapes everything else is <strong>accountability</strong>
+            <span class="art">Art. 5(2)</span>: you must not only comply, you must be able to
+            <em>demonstrate</em> compliance. In practice that means the deliverables of this brief
+            are mostly documents — a processing record, a lawful-basis map, signed processor
+            agreements, a retention schedule, an assessment or two. Compliance you cannot show
+            does not exist, as far as a regulator is concerned.
+          </p>
+        </div>
+        <aside class="callout">
+          <div class="co-label">What this means for you</div>
+          <p><strong>You cannot outsource responsibility.</strong> If the analytics SDK you embedded
+          leaks data, the CNIL’s first letter goes to you, not to the SDK vendor.</p>
+          <p>Budget for paperwork as a product cost: the proof <em>is</em> the compliance.</p>
+        </aside>
+      </section>
+
+      <!-- 02 -->
+      <section class="sec" id="s2">
+        <div class="sec-main">
+          <div class="sec-num">SECTION 02</div>
+          <h2>What counts as personal data here — more than you think</h2>
+          <p>
+            Personal data is any information relating to an identified or <em>identifiable</em>
+            person <span class="art">Art. 4(1)</span>. For Brume, the honest inventory looks
+            like this:
+          </p>
+          <ul>
+            <li><strong>Account data</strong> — name, email, password hash, locale, country.</li>
+            <li><strong>Device identifiers</strong> — serial number, MAC address, BLE pairing
+              identifiers. Once a device is paired to an account, its identifiers point to a
+              person.</li>
+            <li><strong>Sensor telemetry</strong> — air-quality readings are environmental data in
+              isolation, but linked to an account and a home they describe a person’s
+              environment and habits. Linked telemetry is personal data.</li>
+            <li><strong>Usage analytics</strong> — screens viewed, features used, session times,
+              tied to a user or device ID.</li>
+            <li><strong>Technical exhaust</strong> — IP addresses, crash logs, server logs, support
+              tickets. Crash logs routinely embed identifiers.</li>
+          </ul>
+          <p>
+            The trap is the word “anonymous”. If you keep a key that can link a record back to
+            a person — a user ID, a device ID, a hashed email — the data is
+            <strong>pseudonymised, not anonymised</strong>, and pseudonymised data is squarely
+            personal data <span class="art">Recital 26</span>. True anonymisation is
+            irreversible, and it is harder than it sounds.
+          </p>
+          <p>
+            One boundary worth guarding: air-quality data is not a <strong>special category</strong>
+            <span class="art">Art. 9</span>. But the day a product manager pitches “asthma
+            insights” or “sleep quality scores”, you may cross into health data, and the rules
+            harden considerably. Flag that in the roadmap review before it ships, not after.
+          </p>
+        </div>
+        <aside class="callout">
+          <div class="co-label">What this means for you</div>
+          <p><strong>“Our telemetry is anonymous” is usually wrong.</strong> If any table in your
+          warehouse can join it back to an account, it is personal data and everything in
+          this brief applies to it.</p>
+          <p>Keep a one-page data inventory. It becomes your <strong>Art. 30 record</strong> almost
+          for free.</p>
+        </aside>
+      </section>
+
+      <!-- 03 -->
+      <section class="sec" id="s3">
+        <div class="sec-main">
+          <div class="sec-num">SECTION 03</div>
+          <h2>Lawful bases — one per purpose, chosen before launch</h2>
+          <p>
+            Every processing purpose needs exactly one lawful basis from
+            <span class="art">Art. 6(1)</span>, picked deliberately and written down. You do not
+            get to swap bases later when the first one becomes inconvenient — that violates
+            fairness and transparency <span class="art">Art. 5(1)(a)</span>. The sensible map
+            for Brume:
+          </p>
+          <div class="table-wrap">
+            <table class="data">
+              <thead>
+                <tr><th>Purpose</th><th>Basis</th><th>Notes</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Account creation, device pairing, core app features, firmware updates</td>
+                  <td class="basis">Contract<br><span class="art">Art. 6(1)(b)</span></td>
+                  <td>Necessary to deliver the service the user signed up for. “Necessary” is read strictly — nice-to-have data does not ride along.</td>
+                </tr>
+                <tr>
+                  <td>Security, fraud prevention, abuse detection, service logs</td>
+                  <td class="basis">Legitimate interests<br><span class="art">Art. 6(1)(f)</span></td>
+                  <td>Do the three-part test — purpose, necessity, balancing — and keep the written assessment (<span class="art">Recital 47</span>).</td>
+                </tr>
+                <tr>
+                  <td>Detailed product analytics via third-party SDKs</td>
+                  <td class="basis">Consent<br><span class="art">Art. 6(1)(a)</span></td>
+                  <td>In France the tracker layer independently requires consent (see section 09), so consent is the practical basis. A narrow exempt audience-measurement setup is possible under strict CNIL conditions.</td>
+                </tr>
+                <tr>
+                  <td>Marketing emails and push campaigns</td>
+                  <td class="basis">Consent<br><span class="art">Art. 6(1)(a)</span></td>
+                  <td>Must meet <span class="art">Art. 7</span>: freely given, specific, informed, unambiguous, and as easy to withdraw as to give (<span class="art">Art. 7(3)</span>).</td>
+                </tr>
+                <tr>
+                  <td>Invoicing, tax and accounting records</td>
+                  <td class="basis">Legal obligation<br><span class="art">Art. 6(1)(c)</span></td>
+                  <td>French commercial and tax law sets the retention here, not your preferences.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Two disciplines make this map real. First, <strong>purpose limitation</strong>
+            <span class="art">Art. 5(1)(b)</span>: data collected to pair a device is not free
+            raw material for an advertising model. Second, wherever you claim legitimate
+            interests, write the balancing test down — the CNIL will ask for it, and “we
+            figured it was fine” is not a balancing test.
+          </p>
+        </div>
+        <aside class="callout">
+          <div class="co-label">What this means for you</div>
+          <p><strong>One purpose, one basis, in writing.</strong> A two-column spreadsheet — purpose,
+          basis — drafted this week is the spine of your entire compliance file.</p>
+          <p>Anything resting on consent must be able to <strong>switch off cleanly</strong> when
+          consent is refused or withdrawn. Design the off-switch first.</p>
+        </aside>
+      </section>
+
+      <!-- 04 -->
+      <section class="sec" id="s4">
+        <div class="sec-main">
+          <div class="sec-num">SECTION 04</div>
+          <h2>Telling people — the privacy notice is a product surface</h2>
+          <p>
+            Transparency is a design requirement, not a legal-page requirement. Information
+            must be <strong>concise, transparent, intelligible and easily accessible, in clear and
+            plain language</strong> <span class="art">Art. 12(1)</span> — the regulation itself bans
+            legalese here.
+          </p>
+          <p>
+            When you collect data from the user, <span class="art">Art. 13</span> lists what
+            they must be told: who you are, each purpose and its lawful basis, your legitimate
+            interests where you claim them, who receives the data, whether it leaves the EU,
+            how long you keep it, the full list of their rights, and their right to complain
+            to the CNIL. If a field is contractually required, say so, and say what happens if
+            they decline.
+          </p>
+          <h3>How to ship it well</h3>
+          <ul>
+            <li><strong>Layer it.</strong> A short in-app summary at signup — five lines, honest —
+              linking to the full notice. Both count together.</li>
+            <li><strong>Put it where the data is collected</strong>: signup, device pairing, and the
+              analytics consent screen each carry their own line of context.</li>
+            <li><strong>Keep it in sync with the build.</strong> The notice describes what the app
+              actually does this release, not what the last release did.</li>
+          </ul>
+        </div>
+        <aside class="callout">
+          <div class="co-label">What this means for you</div>
+          <p><strong>Write the notice like onboarding copy.</strong> Same plain voice, same care. A
+          notice your support team can read aloud without wincing is roughly the legal
+          standard.</p>
+          <p>Version it in git next to the app. When a release changes data flows, the
+          notice changes in the same pull request.</p>
+        </aside>
+      </section>
+
+      <!-- 05 -->
+      <section class="sec" id="s5">
+        <div class="sec-main">
+          <div class="sec-num">SECTION 05</div>
+          <h2>Privacy by design and by default — duties at the whiteboard</h2>
+          <p>
+            <span class="art">Art. 25</span> puts obligations at the moment you <em>design</em>
+            the system, not the moment you get audited. Two distinct duties:
+          </p>
+          <ul>
+            <li><strong>By design</strong> <span class="art">Art. 25(1)</span> — build technical and
+              organisational measures (pseudonymisation, minimisation) into the processing
+              itself, from the start.</li>
+            <li><strong>By default</strong> <span class="art">Art. 25(2)</span> — out of the box, the
+              product processes only what is necessary. The most protective setting is the
+              shipped setting.</li>
+          </ul>
+          <h3>What that looks like for Brume, concretely</h3>
+          <ul>
+            <li>Analytics SDKs <strong>off by default</strong>, activated only after consent — not
+              “fires on first launch, opt-out in settings”.</li>
+            <li><strong>Minimisation</strong> <span class="art">Art. 5(1)(c)</span> as a schema rule:
+              every field in the signup form and every event in the telemetry pipeline earns
+              its place, or it goes.</li>
+            <li><strong>Separate identity from telemetry</strong> where you can: sensor readings keyed
+              to a device ID, the device-to-account join held separately and access-controlled.</li>
+            <li>Do not log raw BLE/MAC identifiers into analytics events; treat hardware
+              identifiers as personal data plumbing, not as free labels.</li>
+            <li>Decide <strong>retention at schema-design time</strong> — a table with no deletion story
+              is a finding waiting to be written.</li>
+          </ul>
+        </div>
+        <aside class="callout">
+          <div class="co-label">What this means for you</div>
+          <p><strong>The cheapest compliance is data you never collected.</strong> Every field you
+          drop removes cost in security, retention, rights handling and breach exposure —
+          simultaneously.</p>
+          <p>Add one line to your definition of done: <em>“new data collected? then basis,
+          notice, retention — named in the PR.”</em></p>
+        </aside>
+      </section>
+
+      <!-- 06 -->
+      <section class="sec" id="s6">
+        <div class="sec-main">
+          <div class="sec-num">SECTION 06</div>
+          <h2>Your vendors — processor agreements and the transfer map</h2>
+          <p>
+            Every service that touches personal data on your behalf needs a written
+            <strong>data processing agreement</strong> <span class="art">Art. 28(3)</span>. For a
+            typical stack that means: the cloud host, the analytics provider, crash reporting,
+            push notifications, the email service, the support-desk tool. The mandatory
+            clauses are enumerated in the article itself — the processor acts only on your
+            documented instructions, guarantees confidentiality and security, seeks approval
+            for sub-processors, assists with user rights and breaches, and deletes or returns
+            the data at the end.
+          </p>
+          <p>
+            Most serious vendors ship a standard DPA. Your job is not to draft one from
+            scratch; it is to <strong>collect them, read the sub-processor lists, and keep a
+            register</strong> — which vendor, what data, what purpose, signed when.
+          </p>
+          <h3>When data leaves the EEA</h3>
+          <p>
+            Transfers outside the EEA need a Chapter V mechanism
+            <span class="art">Arts. 44–49</span>: an adequacy decision for the destination
+            country <span class="art">Art. 45</span>, or appropriate safeguards — most commonly
+            the Standard Contractual Clauses <span class="art">Art. 46(2)(c)</span>, paired with
+            a documented transfer risk assessment. Many US-based SaaS vendors rely on
+            adequacy-framework certifications or SCCs; frameworks evolve, so <strong>record which
+            mechanism each vendor relies on today and check it when contracts renew</strong>. If a
+            vendor cannot tell you where the data is processed, that is your answer about the
+            vendor.
+          </p>
+        </div>
+        <aside class="callout">
+          <div class="co-label">What this means for you</div>
+          <p><strong>Your compliance is now a supply chain.</strong> One page: vendor · data ·
+          purpose · region · transfer mechanism · DPA date. Maintained, this answers half of
+          any CNIL questionnaire.</p>
+          <p>Prefer EU hosting regions where the vendor offers them — it deletes the whole
+          transfer analysis for that flow.</p>
+        </aside>
+      </section>
+
+      <!-- 07 -->
+      <section class="sec" id="s7">
+        <div class="sec-main">
+          <div class="sec-num">SECTION 07</div>
+          <h2>Retention — every table needs an expiry date</h2>
+          <p>
+            Storage limitation <span class="art">Art. 5(1)(e)</span>: keep personal data in
+            identifiable form no longer than the purpose requires. “We keep everything, storage
+            is cheap” is a compliance violation stated as an architecture principle.
+          </p>
+          <p>A defensible starting schedule for Brume — adjust with counsel:</p>
+          <div class="table-wrap">
+            <table class="data">
+              <thead>
+                <tr><th>Data</th><th>Keep while</th><th>Then</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Account &amp; pairing data</td>
+                  <td>Account is active</td>
+                  <td>Delete on closure; archive the minimum needed for legal claims, per statutory limitation periods</td>
+                </tr>
+                <tr>
+                  <td>Linked sensor telemetry</td>
+                  <td>As long as the feature shows it to the user</td>
+                  <td>Aggregate or truly anonymise; drop the account link</td>
+                </tr>
+                <tr>
+                  <td>Analytics events</td>
+                  <td>A defined window (commonly ~13–25 months in CNIL guidance for measurement data)</td>
+                  <td>Delete or anonymise</td>
+                </tr>
+                <tr>
+                  <td>Server &amp; security logs</td>
+                  <td>Months, not years (6–12 months is the commonly cited CNIL order of magnitude)</td>
+                  <td>Delete</td>
+                </tr>
+                <tr>
+                  <td>Prospect / marketing data</td>
+                  <td>~3 years from last contact (the CNIL’s long-standing benchmark)</td>
+                  <td>Delete or re-ask</td>
+                </tr>
+                <tr>
+                  <td>Invoices &amp; accounting</td>
+                  <td>Statutory commercial/tax periods</td>
+                  <td>These override your preferences — legal obligation basis</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Two rules make the schedule real. Deletion must be <strong>automated</strong> — a policy no
+            cron job enforces is a declaration of intent. And “anonymised” only exits the GDPR
+            if it is <strong>irreversible</strong> <span class="art">Recital 26</span>; aggregation with
+            the keys thrown away qualifies, hashing an email does not.
+          </p>
+        </div>
+        <aside class="callout">
+          <div class="co-label">What this means for you</div>
+          <p><strong>Write the number down, then wire the job.</strong> For each table: a retention
+          period, a deletion mechanism, an owner. Three columns, done in an afternoon,
+          audited in minutes.</p>
+        </aside>
+      </section>
+
+      <!-- 08 -->
+      <section class="sec" id="s8">
+        <div class="sec-main">
+          <div class="sec-num">SECTION 08</div>
+          <h2>User rights — build the workflow before the first email</h2>
+          <p>
+            EU users hold a bundle of rights you must honour <strong>within one month</strong>,
+            extendable by two more for complex cases if you explain why
+            <span class="art">Art. 12(3)</span>, and free of charge in the normal case
+            <span class="art">Art. 12(5)</span>:
+          </p>
+          <ul>
+            <li><strong>Access</strong> <span class="art">Art. 15</span> — a copy of their data plus the
+              context: purposes, recipients, retention, source.</li>
+            <li><strong>Rectification</strong> <span class="art">Art. 16</span> — fix what is wrong.</li>
+            <li><strong>Erasure</strong> <span class="art">Art. 17</span> — delete, subject to real
+              exceptions (legal obligations, defence of legal claims). Invoices survive;
+              telemetry does not.</li>
+            <li><strong>Restriction</strong> <span class="art">Art. 18</span> — freeze processing while a
+              dispute is resolved.</li>
+            <li><strong>Portability</strong> <span class="art">Art. 20</span> — data they provided, in a
+              structured, machine-readable format. A JSON export honestly meets this.</li>
+            <li><strong>Objection</strong> <span class="art">Art. 21</span> — absolute for direct
+              marketing; for legitimate-interests processing you must stop unless you show
+              compelling grounds.</li>
+          </ul>
+          <p>
+            Verify identity proportionately — if the request comes from the logged-in account,
+            that is normally enough; demand ID documents only when doubt is real
+            <span class="art">Art. 12(6)</span>. The strongest move is <strong>self-service</strong>:
+            in-app “export my data” and “delete my account” buttons resolve most requests
+            without a human, on time, with an audit trail.
+          </p>
+        </div>
+        <aside class="callout">
+          <div class="co-label">What this means for you</div>
+          <p><strong>Make “delete my account” actually cascade</strong> — production rows, analytics
+          profiles, processor copies, and a stated backup-expiry story.</p>
+          <p>Log every request and its clock. A large share of CNIL complaints begin with
+          one ignored email.</p>
+        </aside>
+      </section>
+
+      <!-- 09 -->
+      <section class="sec" id="s9">
+        <div class="sec-main">
+          <div class="sec-num">SECTION 09</div>
+          <h2>Cookies and trackers — a second law, and the CNIL’s favourite audit</h2>
+          <p>
+            Trackers are governed by a rule <em>alongside</em> the GDPR: the ePrivacy directive’s
+            terminal-equipment rule <span class="art">Dir. 2002/58/EC, Art. 5(3)</span>,
+            transposed in France as <span class="art">Art. 82, Loi Informatique et Libertés</span>.
+            It protects the device, so it covers far more than browser cookies: <strong>mobile SDK
+            identifiers, advertising IDs, local storage, fingerprinting</strong> — anything read from
+            or written to the phone that is not strictly necessary for the service.
+          </p>
+          <p>The CNIL’s published position, stable for years, comes down to:</p>
+          <ul>
+            <li><strong>Consent before firing.</strong> Non-essential trackers — analytics SDKs
+              included — stay silent until the user consents. Consent must meet
+              <span class="art">Art. 4(11)</span> and <span class="art">Art. 7</span>: no
+              pre-ticked boxes, no consent-by-scrolling.</li>
+            <li><strong>Refusing must be as easy as accepting.</strong> A first-layer “refuse all” as
+              prominent as “accept all”. Dark patterns are the thing the CNIL fines.</li>
+            <li><strong>Keep proof</strong> of who consented to what, when, via which screen.</li>
+            <li><strong>Strictly necessary is exempt</strong> — session state, security, the consent
+              choice itself.</li>
+            <li>A narrow <strong>audience-measurement exemption</strong> exists under CNIL conditions
+              (own-purpose statistics only, no cross-site/app reuse, limited lifetimes).
+              Most default SDK configurations do not qualify — check before assuming.</li>
+          </ul>
+          <p>
+            For a mobile app the equivalent of a cookie banner is the <strong>consent screen before
+            the first SDK call</strong>. Platform permission dialogs (Bluetooth, location) are not
+            GDPR consent — they are OS gates. If the app ever collects fine location for
+            BLE-adjacent features, that is its own purpose with its own basis and its own line
+            in the notice.
+          </p>
+        </div>
+        <aside class="callout">
+          <div class="co-label">What this means for you</div>
+          <p><strong>Audit the SDKs before writing the notice.</strong> Instrument a clean build and
+          watch what fires on first launch — the notice must describe what the build does,
+          not the reverse.</p>
+          <p>Every third-party SDK is both a <strong>tracker question</strong> (this section) and a
+          <strong>processor question</strong> (section 06). Ask both every time.</p>
+        </aside>
+      </section>
+
+      <!-- 10 -->
+      <section class="sec" id="s10">
+        <div class="sec-main">
+          <div class="sec-num">SECTION 10</div>
+          <h2>The DPIA question — you probably need to answer it in writing</h2>
+          <p>
+            A <strong>Data Protection Impact Assessment</strong> is mandatory when processing is
+            “likely to result in a high risk” to people <span class="art">Art. 35(1)</span>.
+            The EDPB’s working method lists nine risk criteria — systematic monitoring,
+            data processed at large scale, innovative technology, matching datasets,
+            vulnerable subjects, and so on — with a rule of thumb: <strong>two or more criteria
+            met, run the DPIA</strong>.
+          </p>
+          <p>
+            Be honest about Brume’s profile: a connected device continuously observing the
+            home environment is plausibly <em>systematic monitoring</em> plus <em>innovative
+            technology</em>, and <em>large scale</em> arrives with growth. The CNIL also publishes a
+            list of processing types where a DPIA is required outright — several patterns on
+            it (large-scale location data, profiling, certain connected-object scenarios) sit
+            close to this product category.
+          </p>
+          <p>
+            The practical move is cheap: run a <strong>documented threshold assessment</strong> now —
+            one page walking the nine criteria against your actual data flows. If it
+            concludes “no DPIA needed”, you hold the proof of a reasoned decision. If it
+            triggers, the DPIA itself has a fixed shape <span class="art">Art. 35(7)</span>:
+            describe the processing, justify necessity and proportionality, assess the risks,
+            list the mitigations. The CNIL publishes free guides and an open-source PIA tool
+            for exactly this. If residual risk stays high after mitigations, you must consult
+            the CNIL before processing <span class="art">Art. 36</span> — in practice, a signal
+            to redesign until it does not.
+          </p>
+        </div>
+        <aside class="callout">
+          <div class="co-label">What this means for you</div>
+          <p><strong>The threshold assessment is one page; skipping it is indefensible.</strong>
+          Write it even if the conclusion is “not required”, and date it.</p>
+          <p>Redo it when the product changes shape — new sensor, new SDK, health-adjacent
+          features, a B2B fleet offering.</p>
+        </aside>
+      </section>
+
+      <!-- 11 -->
+      <section class="sec" id="s11">
+        <div class="sec-main">
+          <div class="sec-num">SECTION 11</div>
+          <h2>Living with the CNIL — the French specifics</h2>
+          <p>
+            With your main establishment in France, the CNIL is your <strong>lead supervisory
+            authority</strong> under the one-stop-shop <span class="art">Art. 56</span> — one
+            regulator fronting your EU-wide processing. Useful specifics:
+          </p>
+          <ul>
+            <li><strong>DPO</strong> <span class="art">Art. 37</span> — mandatory only in defined cases,
+              notably where core activities involve regular and systematic monitoring at
+              large scale. A growing fleet of always-on home devices trends toward that
+              test, so many device companies designate early. The role can be part-time or
+              external; the designation is filed with the CNIL online. Either way, name an
+              internal privacy owner now.</li>
+            <li><strong>Breaches</strong> — notify the CNIL within <strong>72 hours</strong> of becoming aware,
+              unless the breach is unlikely to result in risk <span class="art">Art. 33(1)</span>;
+              document <em>every</em> breach internally, notified or not
+              <span class="art">Art. 33(5)</span>; tell affected users directly when the risk is
+              high <span class="art">Art. 34</span>. Write the runbook before the incident:
+              who decides, who drafts, who files.</li>
+            <li><strong>Enforcement</strong> — fines reach €10&nbsp;M / 2&nbsp;% of worldwide turnover for
+              one tier of violations <span class="art">Art. 83(4)</span> and €20&nbsp;M / 4&nbsp;%
+              for the other <span class="art">Art. 83(5)</span>. The CNIL’s everyday
+              instruments matter more at your size: formal notices (<em>mises en demeure</em>,
+              sometimes public) and a simplified sanction procedure for routine cases.
+              Cookie-consent design and ignored rights requests are recurring themes.</li>
+            <li><strong>Free assets</strong> — the CNIL publishes referentials, model records,
+              retention benchmarks, developer guides and the PIA tool, in French. For a
+              French startup this is the cheapest competent help available; use it before
+              paying anyone.</li>
+          </ul>
+        </div>
+        <aside class="callout">
+          <div class="co-label">What this means for you</div>
+          <p><strong>The CNIL rewards evidence.</strong> In a control, the folder — record, basis map,
+          DPAs, assessments, breach log — is your defence. Build the folder in quiet times.</p>
+          <p>Subscribe someone to the CNIL’s publications; guidance moves and this brief is
+          deliberately conservative.</p>
+        </aside>
+      </section>
+
+      <!-- checklist -->
+      <section class="sec" id="checklist">
+        <div class="sec-main">
+          <div class="sec-num">THE WORK, PRIORITIZED</div>
+          <h2>Your 10-item compliance checklist</h2>
+          <p style="max-width:640px">
+            Sequenced for a pre-launch startup: <strong>P1</strong> before you ship,
+            <strong>P2</strong> in the first weeks after, <strong>P3</strong> as the operating rhythm.
+            Tick items off — this page remembers your progress locally.
+          </p>
+
+          <div class="check-frame">
+            <div class="check-top">
+              <span class="ct-label">Progress</span>
+              <div class="progress-zone">
+                <div class="pbar"><div class="fill" id="pfill"></div></div>
+                <span class="pcount" id="pcount">0 / 10</span>
+              </div>
+              <button class="reset-btn" id="resetBtn" type="button">Reset</button>
+            </div>
+            <table class="checklist" id="cklist">
+              <thead>
+                <tr><th style="width:46px">Done</th><th style="width:64px">Prio</th><th>Action</th><th style="width:34%">Why it is at this rank</th><th style="width:150px">Articles</th></tr>
+              </thead>
+              <tbody>
+                <tr data-ck="1">
+                  <td><input type="checkbox" class="ck" aria-label="Mark item 1 done"></td>
+                  <td><span class="prio p1">P1</span></td>
+                  <td><span class="item-title">Map every flow of personal data; open your record of processing</span>
+                      <span class="item-sub">One inventory: data, purpose, systems, vendors, recipients.</span></td>
+                  <td>Everything else in this list reads from this map. It is also a direct legal obligation.</td>
+                  <td><span class="art">Art. 30</span> <span class="art">Art. 5(2)</span></td>
+                </tr>
+                <tr data-ck="2">
+                  <td><input type="checkbox" class="ck" aria-label="Mark item 2 done"></td>
+                  <td><span class="prio p1">P1</span></td>
+                  <td><span class="item-title">Assign one lawful basis per purpose; write the LIA where you claim legitimate interests</span>
+                      <span class="item-sub">The two-column spreadsheet from section 03, plus the balancing tests.</span></td>
+                  <td>Bases cannot be retrofitted honestly; choosing late means rebuilding consent flows.</td>
+                  <td><span class="art">Art. 6</span> <span class="art">Rec. 47</span></td>
+                </tr>
+                <tr data-ck="3">
+                  <td><input type="checkbox" class="ck" aria-label="Mark item 3 done"></td>
+                  <td><span class="prio p1">P1</span></td>
+                  <td><span class="item-title">Audit every SDK and tracker; ship the consent screen before non-essential ones fire</span>
+                      <span class="item-sub">Refuse as easy as accept; keep proof of consent.</span></td>
+                  <td>Tracker consent is the CNIL’s most active enforcement lane, and it is visible from outside.</td>
+                  <td><span class="art">ePriv. 5(3)</span> <span class="art">LIL Art. 82</span> <span class="art">Art. 7</span></td>
+                </tr>
+                <tr data-ck="4">
+                  <td><input type="checkbox" class="ck" aria-label="Mark item 4 done"></td>
+                  <td><span class="prio p1">P1</span></td>
+                  <td><span class="item-title">Publish a layered, plain-language privacy notice inside the app</span>
+                      <span class="item-sub">Short layer at signup and pairing; full notice one tap away.</span></td>
+                  <td>Cheap, mandatory before collection starts, and the first thing anyone checks.</td>
+                  <td><span class="art">Art. 12</span> <span class="art">Art. 13</span></td>
+                </tr>
+                <tr data-ck="5">
+                  <td><input type="checkbox" class="ck" aria-label="Mark item 5 done"></td>
+                  <td><span class="prio p2">P2</span></td>
+                  <td><span class="item-title">Sign a DPA with every processor; build the vendor &amp; transfer register</span>
+                      <span class="item-sub">Vendor · data · region · mechanism · DPA date. Prefer EU regions.</span></td>
+                  <td>Contracts usually exist and need collecting; the register makes gaps visible fast.</td>
+                  <td><span class="art">Art. 28</span> <span class="art">Arts. 44–46</span></td>
+                </tr>
+                <tr data-ck="6">
+                  <td><input type="checkbox" class="ck" aria-label="Mark item 6 done"></td>
+                  <td><span class="prio p2">P2</span></td>
+                  <td><span class="item-title">Set retention periods per data category; wire the deletion and anonymisation jobs</span>
+                      <span class="item-sub">Period, mechanism, owner — for every table that holds personal data.</span></td>
+                  <td>Unbounded retention silently inflates every other risk in this list.</td>
+                  <td><span class="art">Art. 5(1)(e)</span></td>
+                </tr>
+                <tr data-ck="7">
+                  <td><input type="checkbox" class="ck" aria-label="Mark item 7 done"></td>
+                  <td><span class="prio p2">P2</span></td>
+                  <td><span class="item-title">Stand up the rights workflow: intake, identity check, one-month clock, delete cascade</span>
+                      <span class="item-sub">In-app export and account deletion resolve most requests automatically.</span></td>
+                  <td>The one-month clock starts whether or not the workflow exists.</td>
+                  <td><span class="art">Art. 12</span> <span class="art">Arts. 15–22</span></td>
+                </tr>
+                <tr data-ck="8">
+                  <td><input type="checkbox" class="ck" aria-label="Mark item 8 done"></td>
+                  <td><span class="prio p2">P2</span></td>
+                  <td><span class="item-title">Run the documented DPIA threshold assessment; conduct the DPIA if it triggers</span>
+                      <span class="item-sub">One page against the nine EDPB criteria; CNIL’s free PIA tool if triggered.</span></td>
+                  <td>Cheap to do, indefensible to skip for an always-on home device.</td>
+                  <td><span class="art">Art. 35</span></td>
+                </tr>
+                <tr data-ck="9">
+                  <td><input type="checkbox" class="ck" aria-label="Mark item 9 done"></td>
+                  <td><span class="prio p3">P3</span></td>
+                  <td><span class="item-title">Harden security to the state of the art; write and test the 72-hour breach runbook</span>
+                      <span class="item-sub">Encryption in transit and at rest, access control, backups — then rehearse the incident.</span></td>
+                  <td>P3 means “after the foundations”, not optional — the runbook only works if it predates the breach.</td>
+                  <td><span class="art">Art. 32</span> <span class="art">Arts. 33–34</span></td>
+                </tr>
+                <tr data-ck="10">
+                  <td><input type="checkbox" class="ck" aria-label="Mark item 10 done"></td>
+                  <td><span class="prio p3">P3</span></td>
+                  <td><span class="item-title">Make privacy-by-design part of the definition of done; decide the DPO question</span>
+                      <span class="item-sub">New data in a PR ⇒ basis, notice line, retention named. Name a privacy owner either way.</span></td>
+                  <td>Turns the nine items above from a project into a habit — the only version that survives growth.</td>
+                  <td><span class="art">Art. 25</span> <span class="art">Art. 37</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="prio-note">P1 = before launch · P2 = first weeks after · P3 = operating rhythm. Progress is stored only in this browser.</p>
+        </div>
+      </section>
+
+      <!-- disclaimer -->
+      <div class="disclaimer">
+        <h4>Demonstration document — not legal advice</h4>
+        <p>
+          This brief is a <strong>showcase artifact produced by the Lawyer expert inside Split</strong>.
+          “Brume” is a fictional company; the scenario is illustrative. The content summarises
+          Regulation (EU) 2016/679 (GDPR) and related French rules at a general level, keeps
+          deliberately conservative positions, and cannot account for your specific facts or for
+          guidance issued after it was written. It is not legal advice and creates no
+          attorney–client relationship. Before relying on any of it — and certainly before
+          launch — have a licensed attorney (avocat) review your actual data flows.
+        </p>
+      </div>
+
+      <footer class="colophon">
+        <div class="made"><span class="dot"></span> Made with Split · Lawyer expert</div>
+        <span>GDPR compliance brief · plain-English series · 2026</span>
+      </footer>
+
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* ---------- interactive checklist with local persistence ---------- */
+  var KEY = 'split-gdpr-brief-checklist';
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#cklist tbody tr'));
+  var fill = document.getElementById('pfill');
+  var count = document.getElementById('pcount');
+  var resetBtn = document.getElementById('resetBtn');
+
+  function load(){
+    try { return JSON.parse(localStorage.getItem(KEY)) || {}; }
+    catch(e){ return {}; }
+  }
+  function save(state){
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){}
+  }
+  function render(state){
+    var done = 0;
+    rows.forEach(function(row){
+      var id = row.getAttribute('data-ck');
+      var box = row.querySelector('.ck');
+      var isDone = !!state[id];
+      box.checked = isDone;
+      row.classList.toggle('done', isDone);
+      if(isDone) done++;
+    });
+    var pct = Math.round(done / rows.length * 100);
+    fill.style.width = pct + '%';
+    count.textContent = done + ' / ' + rows.length;
+  }
+
+  var state = load();
+  render(state);
+
+  rows.forEach(function(row){
+    var id = row.getAttribute('data-ck');
+    var box = row.querySelector('.ck');
+    box.addEventListener('change', function(){
+      state[id] = box.checked;
+      if(!box.checked) delete state[id];
+      save(state);
+      render(state);
+    });
+  });
+
+  resetBtn.addEventListener('click', function(){
+    state = {};
+    save(state);
+    render(state);
+  });
+
+  /* ---------- scrollspy for the side TOC ---------- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var targets = links.map(function(a){
+    return document.querySelector(a.getAttribute('href'));
+  }).filter(Boolean);
+
+  function setActive(id){
+    links.forEach(function(a){
+      a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+    });
+  }
+
+  if('IntersectionObserver' in window){
+    var visible = {};
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        visible[en.target.id] = en.isIntersecting;
+      });
+      for(var i = 0; i < targets.length; i++){
+        if(visible[targets[i].id]){ setActive(targets[i].id); break; }
+      }
+    }, { rootMargin: '-15% 0px -65% 0px' });
+    targets.forEach(function(t){ io.observe(t); });
+  }
+})();
+</script>
+
+</body>
+</html>

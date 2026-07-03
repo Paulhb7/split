@@ -50,20 +50,20 @@ config on one side; the agent's working home on the other.
 
 ---
 
-## Experts (31 in the roster — super · genius · coach)
+## Experts (31 in the roster — super · genius)
 
 Pick one with `@` (terminal: `@consultant`; desktop: the picker). The **kind** is
 informational — it tells the UI how to render (chat panel vs. a step feed vs. an
-app preview). Three tiers: **super** agents are jobs (their label *is* the role);
+app preview). Two tiers: **super** agents are jobs (their label *is* the role —
+including the Coach, who folds nutrition · training · learning · cooking into one);
 **genius** agents are historical figures unlocking outputs you couldn't produce
-alone; **coach** agents help you grow in a life domain. A few are *deferred* —
+alone. A few are *deferred* —
 visible in the Cabinet but off the active picker until a needed piece ships.
 
 **Super agents — the jobs**
 
 | Expert | Kind | What it does | Leans on |
 |---|---|---|---|
-| **Toscanini** / Chief of Staff | operator | Conducts the team: delegates, drives to closure, synthesizes | built-in team orchestration |
 | **Consultant** | researcher | Web research into ready slides or markdown memos | `frontend-slides` |
 | **Scientist** | researcher | Maps the state of the art, builds idea bridges, drafts lit reviews | `paper-search`, `literature-review`, `scientific-brainstorming`, `hypothesis-generation`, `networkx`, `docx`, `frontend-slides`, `web-deploy` |
 | **Financier** | analyst | Markets, FP&A, personal finance & reporting | `market-data`, `model-audit`, `dashboard`, `ui-ux-pro-max`, `frontend-slides`, `docx`, `web-deploy` |
@@ -106,7 +106,7 @@ visible in the Cabinet but off the active picker until a needed piece ships.
 | **Cooking Coach** / cuisine | coach | Teaches techniques, scales recipes, suggests substitutions live |
 
 Personas live in [`config/experts/`](config/experts/); the registry + render-kinds
-are in [`config/experts.json`](config/experts.json). The `memory` skill (vault
+are in [`config/experts.json`](config/experts.json). The `vault` skill (vault
 doctrine) is auto-mounted on every expert and isn't listed per-row.
 
 ---
@@ -131,7 +131,7 @@ on every call — adding a skill to `experts.json` makes it appear on next launc
 removing one unlinks it. A declared skill not yet vendored under `skills/<name>/`
 is silently skipped, so a persona may name a skill before it exists.
 
-Vendored in [`config/skills/`](config/skills/) (~40, grouped):
+Vendored in [`config/skills/`](config/skills/) (47, grouped):
 
 - **Documents / web / design:** `docx`, `frontend-slides`, `web-deploy`,
   `ui-ux-pro-max`, `dashboard`.
@@ -159,12 +159,12 @@ Vendored in [`config/skills/`](config/skills/) (~40, grouped):
   the **Connect Higgsfield** chip, generations cost credits). One account covers
   image, video, 3D, music (Sonilo), SFX (Mirelo) and voice (Inworld TTS) — no
   provider API keys.
-- **Cross-cutting:** `memory` (the $SPLIT_VAULT doctrine) — auto-mounted on
+- **Cross-cutting:** `vault` (the $SPLIT_VAULT doctrine) — auto-mounted on
   every expert, not declared per-expert.
 
 ---
 
-## Harnesses (the agents — 10 configured)
+## Harnesses (the agents — 9 configured)
 
 Each harness is a runtime/brain. ACP calls each one an "agent"; we launch any
 `command + args`, so even agents the public ACP registry can't express still
@@ -359,7 +359,7 @@ core-rs/              # the Rust BACKEND — portable engine (cargo workspace me
 
 config/               # the EXPERT SYSTEM (portable, version-controlled)
   harnesses.json      #   the 9 HARNESSES (brains/runtimes)
-  experts.json        #   the 12 EXPERTS (render kind + declared skills)
+  experts.json        #   the 31 EXPERTS (render kind + declared skills)
   tools.json          #   the TOOLS (MCP servers, mcpServers shape)
   experts/*.md        #   each expert's persona prompt
   skills/<name>/      #   portable SKILLs, Agent Skills standard (SKILL.md + optional scripts/)
@@ -373,9 +373,7 @@ var/                  # generated / vendored — gitignored, safe to delete
   workspace/          #   each session's PERSISTENT home (persona+skill projected in;
                       #     the agent's own files kept across runs)
   sessions/           #   per-session archive (events.ndjson + meta.json), same shape both backends
-  memory/             #   cross-session expert memory — survives `rm -rf workspace/`
-    _user/USER.md     #     about the boss; every expert reads this
-    <expert>/MEMORY.md#     this expert's own notes (Curie's, Tesla's, …)
+  state/              #   small app state (e.g. the chosen vault location pointer)
   bin/                #   downloaded harness binaries (opencode, vibe-acp, cursor-agent)
   _retired/           #   parked code (the old web front: server.py + web/)
 
@@ -462,7 +460,7 @@ there's real external distribution.
   workspace instruction files still see it. This is pragmatic, but it is not a
   standardized ACP system prompt; the underlying model's own instruction stack
   can still leak through.
-- **Skills:** per-expert (`config/experts.json`), currently 17 vendored in
+- **Skills:** per-expert (`config/experts.json`), currently 47 vendored in
   `config/skills/` (whole folders, per the Agent Skills standard). The
   `higgsfield-*` skills wrap the `higgsfield` CLI (browser sign-in, credits);
   the other skills are local or use the harness's own search/tools.
@@ -477,12 +475,12 @@ there's real external distribution.
   backend retries without them and warns.
 - **`var/workspace/` persists** (it's the agent's home); only the
   persona/skill projections are overwritten. `rm -rf var/workspace/` for a clean slate.
-- **`var/memory/` is cross-session memory** — `_user/USER.md` (facts about the boss,
-  shared by every expert) and `<expert>/MEMORY.md` (each expert's own notes), read
-  at session start by `core.persona_text` and prepended to the projected persona.
-  Frozen-snapshot pattern: writes during a session hit disk immediately but only
-  appear in the next session's snapshot. No auto-extraction yet — the agent
-  writes when the boss says "remember X" or when it spots something durable.
+- **The vault location is configurable** — during onboarding (after agent
+  selection) the user picks a parent folder and Split creates `SplitVault` inside
+  it. The choice is persisted in `var/state/vault.txt`; the Rust runner reads it at
+  startup so `$SPLIT_VAULT` points there for every session. Defaults to
+  `~/Documents/SplitVault`. Override for tests/power users with the `SPLIT_VAULT`
+  env var, which still wins over the saved choice.
 
 ## License
 

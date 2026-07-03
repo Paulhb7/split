@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Frontier Tech Radar — July 2026</title>
+<!--
+  ==========================================================================
+  THE FRONTIER TECH RADAR — JULY 2026
+  A Split "Consultant" deliverable · luminous-futurism art direction
+  Porcelain ground · graphite ink · electric ultramarine + amber signal
+  Syne (display) + DM Mono (coordinates/figures)
+  Single self-contained file. Google Fonts CDN only. No local assets.
+  Fixed 1920×1080 stage scaled to viewport (frontend-slides doctrine).
+  ==========================================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   (verbatim from frontend-slides/viewport-base.css)
+   =========================================== */
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--stage-bg, #000); }
+.deck-viewport { position: fixed; inset: 0; overflow: hidden; background: var(--stage-bg, #000); }
+.deck-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 0 0; background: var(--slide-bg, #fff); }
+.slide { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; display: block; visibility: hidden; opacity: 0; pointer-events: none; background: var(--slide-bg, #fff); }
+.slide.active, .slide.visible { visibility: visible; opacity: 1; pointer-events: auto; z-index: 1; }
+img, video, canvas, svg { max-width: 100%; max-height: 100%; }
+.deck-controls { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 1000; }
+@media print {
+  html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+  .deck-viewport { position: static; overflow: visible; background: #fff; }
+  .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+  .slide { position: relative; display: block !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; width: 1920px; height: 1080px; break-after: page; page-break-after: always; }
+  .slide:last-child { break-after: auto; page-break-after: auto; }
+  .deck-controls { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+}
+
+/* ===========================================
+   DESIGN TOKENS — luminous futurism
+   =========================================== */
+:root {
+  --porcelain:   #F4F5F7;   /* pale, cool, bright ground */
+  --porcelain-2: #EDEFF3;   /* panel wash */
+  --porcelain-3: #E3E6EC;   /* deeper panel */
+  --ink:         #14161C;   /* graphite ink */
+  --ink-2:       #3A3F4A;   /* secondary ink */
+  --ink-3:       #6B7280;   /* muted / captions */
+  --hair:        #C9CFD9;   /* hairline / ringwork */
+  --hair-2:      #D7DBE3;   /* lighter hairline */
+  --ultra:       #2B34FF;   /* electric ultramarine — primary accent */
+  --ultra-soft:  #E5E7FF;   /* ultramarine tint wash */
+  --ultra-deep:  #1D24C4;   /* pressed ultramarine */
+  --amber:       #FF9E2C;   /* warm amber-signal — ACT NOW ONLY */
+  --amber-soft:  #FFF0DC;   /* amber tint wash */
+  --stage-bg:    #DfE2E8;   /* letterbox surround */
+  --slide-bg:    #F4F5F7;
+  --font-disp: 'Syne', system-ui, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, monospace;
+}
+
+/* ===========================================
+   TYPOGRAPHIC + LAYOUT PRIMITIVES
+   =========================================== */
+* { box-sizing: border-box; }
+.slide {
+  font-family: var(--font-disp);
+  color: var(--ink);
+  background: var(--slide-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Fine concentric ringwork watermark used on several slides */
+.ringwork {
+  position: absolute; pointer-events: none; opacity: .5;
+}
+
+/* kicker / eyebrow */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 15px; letter-spacing: .34em; text-transform: uppercase;
+  color: var(--ultra); font-weight: 500;
+}
+.kicker.muted { color: var(--ink-3); }
+
+/* mono coordinate label */
+.coord {
+  font-family: var(--font-mono); font-weight: 400;
+  color: var(--ink-3); letter-spacing: .06em;
+}
+
+/* section frame — shared padded grid */
+.frame { position: absolute; inset: 0; padding: 84px 104px 78px; }
+
+/* top rail (slide chrome) */
+.toprail {
+  position: absolute; top: 40px; left: 104px; right: 104px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-mono); font-size: 13px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.toprail .mark { display: flex; align-items: center; gap: 12px; color: var(--ink); }
+.toprail .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ultra); box-shadow: 0 0 0 4px var(--ultra-soft); }
+.toprail .rt { display: flex; gap: 22px; }
+.toprail .rt b { color: var(--ink); font-weight: 500; }
+
+/* bottom rail (page + source) */
+.botrail {
+  position: absolute; bottom: 40px; left: 104px; right: 104px;
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--font-mono); font-size: 12.5px; letter-spacing: .05em;
+  color: var(--ink-3);
+}
+.botrail .src { max-width: 1120px; }
+.botrail .src b { color: var(--ink-2); font-weight: 500; }
+.botrail .pg { color: var(--ink); font-weight: 500; letter-spacing: .18em; }
+
+h1, h2, h3 { margin: 0; font-weight: 700; line-height: 1.02; letter-spacing: -.015em; }
+
+/* reveal animation */
+.reveal { opacity: 0; transform: translateY(16px); }
+.slide.active .reveal { animation: rise .72s cubic-bezier(.16,.84,.34,1) forwards; }
+@keyframes rise { to { opacity: 1; transform: none; } }
+.slide.active .d1{animation-delay:.05s}.slide.active .d2{animation-delay:.13s}
+.slide.active .d3{animation-delay:.21s}.slide.active .d4{animation-delay:.29s}
+.slide.active .d5{animation-delay:.37s}.slide.active .d6{animation-delay:.45s}
+.slide.active .d7{animation-delay:.53s}.slide.active .d8{animation-delay:.61s}
+.slide.active .d9{animation-delay:.69s}.slide.active .d10{animation-delay:.77s}
+
+/* draw-in for radar strokes */
+.slide.active .draw { animation: draw 1.5s ease forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.slide.active .pop { animation: pop .5s cubic-bezier(.2,1.3,.4,1) forwards; opacity: 0; }
+@keyframes pop { to { opacity: 1; transform: scale(1); } }
+
+/* ============ COVER ============ */
+.cover { padding: 0; }
+.cover-grid {
+  position: absolute; inset: 0;
+  display: grid; grid-template-columns: 1fr 0.86fr;
+}
+.cover-left { padding: 96px 0 84px 104px; display: flex; flex-direction: column; justify-content: space-between; position: relative; z-index: 2; }
+.cover-right { position: relative; overflow: hidden; border-left: 1px solid var(--hair); }
+.cover-title {
+  font-size: 118px; font-weight: 800; line-height: .93; letter-spacing: -.03em;
+  color: var(--ink);
+}
+.cover-title .em { color: var(--ultra); }
+.cover-sub { margin-top: 30px; font-size: 25px; font-weight: 500; color: var(--ink-2); max-width: 720px; line-height: 1.34; }
+.cover-meta { display: flex; gap: 54px; }
+.cover-meta .cell .k { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-3); }
+.cover-meta .cell .v { margin-top: 8px; font-family: var(--font-mono); font-size: 17px; color: var(--ink); font-weight: 500; }
+.cover-tag {
+  display: inline-flex; align-items: center; gap: 12px;
+  font-family: var(--font-mono); font-size: 14px; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--ultra); padding: 9px 18px; border: 1px solid var(--ultra); border-radius: 40px;
+  align-self: flex-start;
+}
+
+/* ============ generic panels ============ */
+.panel {
+  background: var(--porcelain-2); border: 1px solid var(--hair);
+  border-radius: 6px;
+}
+.panel.raise { box-shadow: 0 1px 0 #fff inset, 0 18px 40px -30px rgba(20,22,28,.4); }
+
+/* radar theme swatches */
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.theme-ai   { background: #2B34FF; }
+.theme-comp { background: #00A5B5; }
+.theme-bio  { background: #12B76A; }
+.theme-energy { background: #7A5CFF; }
+.theme-matter { background: #E0468B; }
+.theme-hot  { background: #FF9E2C; }
+
+/* ============ Brief slide ============ */
+.brief-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px; margin-top: 46px; }
+.brief-card { padding: 34px 34px 32px; }
+.brief-card .no { font-family: var(--font-mono); font-size: 13px; color: var(--ultra); letter-spacing: .18em; }
+.brief-card h3 { margin-top: 12px; font-size: 27px; font-weight: 700; }
+.brief-card p { margin: 14px 0 0; font-family: var(--font-mono); font-size: 16.5px; line-height: 1.6; color: var(--ink-2); font-weight: 300; }
+.brief-card p b { color: var(--ink); font-weight: 500; }
+
+/* ============ Radar centre-piece slide ============ */
+.radar-wrap { position: absolute; inset: 0; display: grid; grid-template-columns: 1180px 1fr; }
+.radar-svg-col { position: relative; display: flex; align-items: center; justify-content: center; }
+.radar-side { padding: 96px 96px 78px 40px; display: flex; flex-direction: column; justify-content: center; border-left: 1px solid var(--hair); background: linear-gradient(180deg, var(--porcelain-2), var(--porcelain)); }
+.legend-block { margin-bottom: 30px; }
+.legend-block .lh { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 14px; }
+.legend-row { display: flex; align-items: center; gap: 12px; margin: 9px 0; font-family: var(--font-mono); font-size: 14.5px; color: var(--ink); }
+.legend-row .sz { display: inline-block; border-radius: 50%; background: var(--ink-2); }
+.radar-dot-label { font-family: var(--font-mono); font-size: 13.5px; fill: var(--ink); font-weight: 500; letter-spacing: .01em; }
+.radar-ring-label { font-family: var(--font-mono); font-size: 15px; fill: var(--ink-3); letter-spacing: .14em; text-transform: uppercase; }
+.radar-axis-label { font-family: var(--font-mono); font-size: 13px; fill: var(--ink-3); letter-spacing: .1em; }
+
+/* ============ Tech card slide ============ */
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; }
+.card-index { font-family: var(--font-mono); font-size: 100px; font-weight: 300; color: var(--porcelain-3); line-height: .8; letter-spacing: -.02em; }
+.card-title-wrap { max-width: 1140px; }
+.card-theme {
+  display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-mono);
+  font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-2);
+  padding: 6px 13px; border: 1px solid var(--hair); border-radius: 40px; background: #fff;
+}
+.card-h { font-size: 62px; font-weight: 800; margin-top: 22px; letter-spacing: -.025em; line-height: .98; }
+.card-lede { margin-top: 16px; font-size: 21px; color: var(--ink-2); font-weight: 500; max-width: 1180px; line-height: 1.34; }
+.horizon-chip {
+  font-family: var(--font-mono); font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+  padding: 8px 15px; border-radius: 5px; font-weight: 500; white-space: nowrap; text-align: center;
+}
+.hz-now { background: var(--amber-soft); color: #B45309; border: 1px solid #F0B865; }
+.hz-1 { background: var(--ultra-soft); color: var(--ultra-deep); border: 1px solid #B9BEFF; }
+.hz-3 { background: var(--porcelain-3); color: var(--ink-2); border: 1px solid var(--hair); }
+.hz-h { background: #EAEAEF; color: var(--ink-3); border: 1px solid var(--hair); }
+
+.card-body { display: grid; grid-template-columns: 1.62fr 1fr; gap: 30px; margin-top: 42px; }
+.card-col-l { display: flex; flex-direction: column; gap: 22px; }
+.metricrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.metric { padding: 22px 24px 20px; background: var(--porcelain-2); border: 1px solid var(--hair); border-radius: 6px; position: relative; overflow: hidden; }
+.metric::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background: var(--ultra); }
+.metric.amber::before { background: var(--amber); }
+.metric .fig { font-size: 38px; font-weight: 800; letter-spacing: -.02em; line-height: 1; }
+.metric .fig small { font-size: 20px; font-weight: 600; color: var(--ink-2); }
+.metric .lbl { margin-top: 11px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: var(--ink-2); font-weight: 300; }
+.card-block { padding: 24px 26px 22px; background: #fff; border: 1px solid var(--hair); border-radius: 6px; }
+.card-block .bh { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--ultra); margin-bottom: 12px; display:flex; align-items:center; gap:9px; }
+.card-block .bh .ic { width: 7px; height: 7px; background: var(--ultra); border-radius: 50%; }
+.card-block p { margin: 0; font-size: 17px; line-height: 1.5; color: var(--ink); }
+.card-block p b { color: var(--ink); font-weight: 700; }
+.card-block.risk { background: var(--amber-soft); border-color: #F0C98A; }
+.card-block.risk .bh { color: #B45309; } .card-block.risk .bh .ic { background: #E67E00; }
+
+.players { display: flex; flex-direction: column; gap: 10px; }
+.player { display: flex; align-items: baseline; gap: 12px; font-size: 16.5px; padding: 9px 0; border-bottom: 1px solid var(--hair-2); }
+.player:last-child { border-bottom: none; }
+.player .nm { font-weight: 700; min-width: 168px; }
+.player .ds { font-family: var(--font-mono); font-size: 13.5px; color: var(--ink-2); font-weight: 300; line-height: 1.35; }
+.card-col-r { display: flex; flex-direction: column; gap: 22px; }
+.playerbox { padding: 22px 26px 18px; background: var(--porcelain-2); border: 1px solid var(--hair); border-radius: 6px; flex: 1; }
+.playerbox .bh { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 8px; }
+
+/* mini radar locator on each card */
+.locator { position: absolute; }
+.loc-ring { fill: none; stroke: var(--hair); stroke-width: 1; }
+.loc-dot { fill: var(--ultra); }
+.loc-dot.amber { fill: var(--amber); }
+
+/* ============ Executive take ============ */
+.take-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 48px; }
+.bet { padding: 40px 36px 36px; background: var(--porcelain-2); border: 1px solid var(--hair); border-radius: 6px; position: relative; display: flex; flex-direction: column; }
+.bet .bn { font-family: var(--font-mono); font-size: 15px; color: var(--ultra); letter-spacing: .2em; }
+.bet h3 { font-size: 34px; font-weight: 800; margin-top: 16px; line-height: 1.02; letter-spacing: -.02em; }
+.bet .body { margin-top: 18px; font-size: 17px; line-height: 1.52; color: var(--ink-2); }
+.bet .body b { color: var(--ink); font-weight: 700; }
+.bet .foot { margin-top: auto; padding-top: 20px; font-family: var(--font-mono); font-size: 13px; color: var(--ink-3); letter-spacing: .04em; border-top: 1px solid var(--hair); }
+.bet.hot { border-color: #F0C98A; background: linear-gradient(180deg, var(--amber-soft), var(--porcelain-2)); }
+.bet.hot .bn { color: #B45309; }
+
+/* ============ Sources ============ */
+.src-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 54px; margin-top: 38px; }
+.src-item { display: flex; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--hair-2); font-family: var(--font-mono); font-size: 13.5px; line-height: 1.4; }
+.src-item .sn { color: var(--ultra); font-weight: 500; min-width: 26px; }
+.src-item .st { color: var(--ink); }
+.src-item .st b { font-weight: 500; }
+.src-item .su { color: var(--ink-3); word-break: break-all; }
+
+/* statement helper */
+.big-quote { font-size: 52px; font-weight: 700; line-height: 1.1; letter-spacing: -.02em; max-width: 1400px; }
+.big-quote .em { color: var(--ultra); }
+
+/* progress bar */
+#progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--ultra); z-index: 1200; transition: width .4s cubic-bezier(.16,.84,.34,1); }
+
+/* nav hint */
+.navhint {
+  position: fixed; bottom: 30px; right: 34px; z-index: 1000;
+  font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-3); display: flex; align-items: center; gap: 10px;
+}
+.navhint .kbd { border: 1px solid var(--hair); border-radius: 4px; padding: 3px 8px; background: #fff; color: var(--ink-2); }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="deck-viewport" id="viewport">
+  <div class="deck-stage" id="stage">
+
+  <!-- =========================================================
+       SLIDE 1 — COVER
+       ========================================================= -->
+  <section class="slide cover active">
+    <div class="cover-grid">
+      <div class="cover-left">
+        <div class="reveal d1">
+          <span class="cover-tag">Strategy Radar · Split Intelligence</span>
+        </div>
+        <div>
+          <div class="kicker muted reveal d2" style="margin-bottom:26px;">Frontier Technology · Executive Panorama</div>
+          <h1 class="cover-title reveal d3">The Frontier<br>Tech <span class="em">Radar</span></h1>
+          <p class="cover-sub reveal d4">Twelve technologies that will define the next decade — plotted by maturity, sized by capital, read as one board. The July&nbsp;2026 state of play, the signal that just changed, and where to place the bets.</p>
+        </div>
+        <div class="cover-meta reveal d5">
+          <div class="cell"><div class="k">Edition</div><div class="v">JUL 2026 · v1</div></div>
+          <div class="cell"><div class="k">Coverage</div><div class="v">12 technologies · 5 themes</div></div>
+          <div class="cell"><div class="k">Sources</div><div class="v">32 · primary-first</div></div>
+          <div class="cell"><div class="k">Author</div><div class="v">Consultant · Split</div></div>
+        </div>
+      </div>
+      <div class="cover-right" id="coverRadarHost">
+        <!-- decorative concentric radar, drawn in SVG -->
+        <svg viewBox="0 0 760 1080" width="760" height="1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <radialGradient id="coverGrad" cx="62%" cy="50%" r="70%">
+              <stop offset="0%" stop-color="#E8EBFF"/>
+              <stop offset="55%" stop-color="#F0F2F7"/>
+              <stop offset="100%" stop-color="#F4F5F7"/>
+            </radialGradient>
+          </defs>
+          <rect width="760" height="1080" fill="url(#coverGrad)"/>
+          <g transform="translate(470,540)" fill="none" stroke="#C9CFD9">
+            <circle r="120" stroke-width="1"/>
+            <circle r="240" stroke-width="1"/>
+            <circle r="360" stroke-width="1"/>
+            <circle r="480" stroke-width="1"/>
+            <circle r="600" stroke-width="1" opacity=".6"/>
+            <!-- radial spokes -->
+            <line x1="-600" y1="0" x2="600" y2="0" stroke-width="1" opacity=".5"/>
+            <line x1="0" y1="-600" x2="0" y2="600" stroke-width="1" opacity=".5"/>
+            <line x1="-424" y1="-424" x2="424" y2="424" stroke-width="1" opacity=".35"/>
+            <line x1="424" y1="-424" x2="-424" y2="424" stroke-width="1" opacity=".35"/>
+          </g>
+          <!-- plotted dots -->
+          <g class="pop d1" style="transform-box: fill-box; transform-origin: center;">
+            <circle cx="410" cy="470" r="16" fill="#2B34FF"/></g>
+          <g class="pop d3" style="transform-box: fill-box; transform-origin: center;">
+            <circle cx="560" cy="620" r="11" fill="#FF9E2C"/></g>
+          <g class="pop d5" style="transform-box: fill-box; transform-origin: center;">
+            <circle cx="300" cy="360" r="9" fill="#00A5B5"/></g>
+          <g class="pop d7" style="transform-box: fill-box; transform-origin: center;">
+            <circle cx="600" cy="410" r="13" fill="#12B76A"/></g>
+          <g class="pop d2" style="transform-box: fill-box; transform-origin: center;">
+            <circle cx="250" cy="620" r="10" fill="#7A5CFF"/></g>
+          <g class="pop d6" style="transform-box: fill-box; transform-origin: center;">
+            <circle cx="500" cy="770" r="8" fill="#E0468B"/></g>
+          <g class="pop d4" style="transform-box: fill-box; transform-origin: center;">
+            <circle cx="640" cy="560" r="9" fill="#2B34FF"/></g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 2 — THE BRIEF (exec summary)
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>THE BRIEF</span><span><b>01</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="reveal d1"><div class="kicker">Read this first</div></div>
+      <h1 class="reveal d2" style="font-size:66px; margin-top:16px;">The brief</h1>
+      <div class="brief-grid">
+        <div class="panel brief-card reveal d3">
+          <div class="no">01 · WHY</div>
+          <h3>Why this exists</h3>
+          <p>A single board to <b>see the whole frontier at once</b> and decide where a large enterprise should build, partner, watch or wait. Not a science briefing — a <b>capital-allocation lens</b> on twelve technologies moving at different speeds toward different pay-offs.</p>
+        </div>
+        <div class="panel brief-card reveal d4">
+          <div class="no">02 · CONTEXT</div>
+          <h3>The context</h3>
+          <p>H1&nbsp;2026 was a threshold season: the first <b>in-vivo CRISPR Phase&nbsp;3 win</b>, IBM committing to a <b>fault-tolerant machine by 2029</b>, humanoids on live production lines, and agent platforms shipping from OpenAI, Microsoft and AWS. The gap between demo and deployment is now the whole story.</p>
+        </div>
+        <div class="panel brief-card reveal d5">
+          <div class="no">03 · HOW TO USE</div>
+          <h3>How to use it</h3>
+          <p>Read the <b>radar</b> (slide&nbsp;3): distance from centre&nbsp;=&nbsp;time-to-impact, dot size&nbsp;=&nbsp;capital &amp; attention, colour&nbsp;=&nbsp;theme, <b>amber&nbsp;=&nbsp;act now</b>. Then the ten cards for state-of-art, players, the H1-2026 signal, the enterprise "so what" and the risk. Close on three bets.</p>
+        </div>
+        <div class="panel brief-card reveal d6">
+          <div class="no">04 · WHAT I ASSUMED</div>
+          <h3>What I assumed</h3>
+          <p>Audience: <b>board / strategy committee</b> of a large enterprise, tech-literate, deciding a 3–7yr posture. Scope: frontier tech only (no incumbent SaaS). Period: state of play as of <b>3&nbsp;July&nbsp;2026</b>. Every dated figure is web-sourced; unverifiable claims were dropped.</p>
+        </div>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src">Radar methodology: maturity × capital-signal, Consultant desk synthesis · <b>Split Intelligence</b>, Jul 2026</div>
+      <div class="pg">01</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 3 — THE RADAR (centre-piece SVG)
+       ========================================================= -->
+  <section class="slide">
+    <div class="radar-wrap">
+      <div class="radar-svg-col">
+        <!-- =========== RADAR SVG (drawn to 1140×1000 field) =========== -->
+        <svg viewBox="0 0 1140 1010" width="1140" height="1010" role="img" aria-label="Frontier technology radar: 12 technologies plotted by maturity horizon, sized by capital and attention, coloured by theme.">
+          <defs>
+            <radialGradient id="radarField" cx="50%" cy="46%" r="62%">
+              <stop offset="0%" stop-color="#FFFFFF"/>
+              <stop offset="60%" stop-color="#EFF1F6"/>
+              <stop offset="100%" stop-color="#F4F5F7"/>
+            </radialGradient>
+          </defs>
+          <!-- title -->
+          <text x="30" y="46" style="font-family:var(--font-mono);font-size:14px;letter-spacing:.24em;text-transform:uppercase;fill:var(--ink-3);">The Board</text>
+          <text x="30" y="86" style="font-family:var(--font-disp);font-size:44px;font-weight:800;fill:var(--ink);letter-spacing:-.02em;">Frontier radar — twelve to watch</text>
+
+          <!-- radar centred at (570, 555); rings at increasing radii -->
+          <g transform="translate(570,558)">
+            <circle r="430" fill="url(#radarField)" stroke="#D7DBE3" stroke-width="1"/>
+            <!-- concentric horizon rings (fine graphite ringwork) -->
+            <circle r="120" fill="none" stroke="#C9CFD9" stroke-width="1.2" stroke-dasharray="1270" stroke-dashoffset="1270" class="draw"/>
+            <circle r="230" fill="none" stroke="#C9CFD9" stroke-width="1.2" stroke-dasharray="1450" stroke-dashoffset="1450" class="draw" style="animation-delay:.1s"/>
+            <circle r="330" fill="none" stroke="#C9CFD9" stroke-width="1.2" stroke-dasharray="2080" stroke-dashoffset="2080" class="draw" style="animation-delay:.2s"/>
+            <circle r="430" fill="none" stroke="#C9CFD9" stroke-width="1.4" stroke-dasharray="2710" stroke-dashoffset="2710" class="draw" style="animation-delay:.3s"/>
+            <!-- inner core -->
+            <circle r="14" fill="#14161C"/>
+            <circle r="26" fill="none" stroke="#14161C" stroke-width="1" opacity=".3"/>
+
+            <!-- ring labels along top vertical -->
+            <text x="0" y="-104" text-anchor="middle" class="radar-ring-label">Now</text>
+            <text x="0" y="-198" text-anchor="middle" class="radar-ring-label">1–3 yrs</text>
+            <text x="0" y="-298" text-anchor="middle" class="radar-ring-label">3–7 yrs</text>
+            <text x="0" y="-398" text-anchor="middle" class="radar-ring-label">Horizon</text>
+
+            <!-- faint spokes -->
+            <g stroke="#DDE1E8" stroke-width="1" opacity=".55">
+              <line x1="0" y1="0" x2="0" y2="-430"/>
+              <line x1="0" y1="0" x2="373" y2="215"/>
+              <line x1="0" y1="0" x2="-373" y2="215"/>
+              <line x1="0" y1="0" x2="373" y2="-215"/>
+              <line x1="0" y1="0" x2="-373" y2="-215"/>
+              <line x1="0" y1="0" x2="430" y2="0"/>
+              <line x1="0" y1="0" x2="-430" y2="0"/>
+            </g>
+
+            <!-- ============ PLOTTED TECHNOLOGIES ============
+                 r ≈ maturity horizon; circle radius ≈ capital/attention; fill = theme.
+                 amber ring = "act now". Positions hand-placed to avoid collisions. -->
+
+            <!-- AI agents & agentic infra — NOW, huge capital, HOT -->
+            <g class="pop d1" style="transform-box:fill-box;transform-origin:center;">
+              <circle cx="-70" cy="-88" r="30" fill="#2B34FF"/>
+              <circle cx="-70" cy="-88" r="37" fill="none" stroke="#FF9E2C" stroke-width="2.5"/>
+            </g>
+            <text x="-116" y="-134" class="radar-dot-label" text-anchor="end">AI agents</text>
+
+            <!-- Humanoid robotics — NOW→1-3, large, HOT -->
+            <g class="pop d2" style="transform-box:fill-box;transform-origin:center;">
+              <circle cx="128" cy="-70" r="24" fill="#2B34FF"/>
+              <circle cx="128" cy="-70" r="31" fill="none" stroke="#FF9E2C" stroke-width="2.5"/>
+            </g>
+            <text x="166" y="-72" class="radar-dot-label" text-anchor="start">Humanoid robots</text>
+
+            <!-- Gene editing & longevity — 1-3 (in-vivo P3), HOT -->
+            <g class="pop d3" style="transform-box:fill-box;transform-origin:center;">
+              <circle cx="-158" cy="118" r="21" fill="#12B76A"/>
+              <circle cx="-158" cy="118" r="28" fill="none" stroke="#FF9E2C" stroke-width="2.5"/>
+            </g>
+            <text x="-190" y="150" class="radar-dot-label" text-anchor="end">Gene editing</text>
+
+            <!-- Spatial computing / smart glasses — NOW→1-3 -->
+            <g class="pop d4" style="transform-box:fill-box;transform-origin:center;">
+              <circle cx="180" cy="120" r="19" fill="#00A5B5"/>
+            </g>
+            <text x="212" y="150" class="radar-dot-label" text-anchor="start">Spatial / glasses</text>
+
+            <!-- Quantum computing — 3-7, big capital -->
+            <g class="pop d5" style="transform-box:fill-box;transform-origin:center;">
+              <circle cx="-40" cy="-290" r="24" fill="#00A5B5"/>
+            </g>
+            <text x="-72" y="-322" class="radar-dot-label" text-anchor="end">Quantum</text>
+
+            <!-- Synthetic biology — 1-3 -->
+            <g class="pop d6" style="transform-box:fill-box;transform-origin:center;">
+              <circle cx="55" cy="205" r="18" fill="#12B76A"/>
+            </g>
+            <text x="86" y="235" class="radar-dot-label" text-anchor="start">Synthetic bio</text>
+
+            <!-- Next-gen energy storage (solid-state) — 3-7 -->
+            <g class="pop d7" style="transform-box:fill-box;transform-origin:center;">
+              <circle cx="255" cy="-215" r="19" fill="#7A5CFF"/>
+            </g>
+            <text x="288" y="-215" class="radar-dot-label" text-anchor="start">Solid-state cells</text>
+
+            <!-- Non-invasive BCI — 1-3 -->
+            <g class="pop d8" style="transform-box:fill-box;transform-origin:center;">
+              <circle cx="-250" cy="-70" r="15" fill="#E0468B"/>
+            </g>
+            <text x="-272" y="-52" class="radar-dot-label" text-anchor="end">BCI · minimally-inv.</text>
+
+            <!-- Invasive BCI (Neuralink) — 3-7 -->
+            <g class="pop d9" style="transform-box:fill-box;transform-origin:center;">
+              <circle cx="-268" cy="-208" r="16" fill="#E0468B"/>
+            </g>
+            <text x="-292" y="-224" class="radar-dot-label" text-anchor="end">BCI · implanted</text>
+
+            <!-- Nuclear fusion — 3-7 → Horizon, big capital -->
+            <g class="pop d10" style="transform-box:fill-box;transform-origin:center;">
+              <circle cx="215" cy="-320" r="22" fill="#7A5CFF"/>
+            </g>
+            <text x="248" y="-320" class="radar-dot-label" text-anchor="start">Nuclear fusion</text>
+
+            <!-- Advanced materials / RT superconductor — Horizon, speculative -->
+            <g class="pop d10" style="transform-box:fill-box;transform-origin:center;">
+              <circle cx="-120" cy="-388" r="16" fill="#E0468B"/>
+            </g>
+            <text x="-146" y="-406" class="radar-dot-label" text-anchor="end">RT superconductor</text>
+
+          </g>
+        </svg>
+      </div>
+
+      <!-- side legend -->
+      <div class="radar-side">
+        <div class="reveal d2"><div class="kicker" style="margin-bottom:22px;">How to read the board</div></div>
+        <div class="legend-block reveal d3">
+          <div class="lh">Distance from centre — time to enterprise impact</div>
+          <div class="legend-row"><span class="coord" style="min-width:96px;">RING 1 · NOW</span> live at scale today</div>
+          <div class="legend-row"><span class="coord" style="min-width:96px;">RING 2 · 1–3y</span> production within a plan cycle</div>
+          <div class="legend-row"><span class="coord" style="min-width:96px;">RING 3 · 3–7y</span> pilots → early commercial</div>
+          <div class="legend-row"><span class="coord" style="min-width:96px;">RING 4 · HZN</span> physics/proof still open</div>
+        </div>
+        <div class="legend-block reveal d4">
+          <div class="lh">Dot size — capital &amp; attention</div>
+          <div class="legend-row"><span class="sz" style="width:26px;height:26px;"></span> &gt; $10B / yr flow</div>
+          <div class="legend-row"><span class="sz" style="width:17px;height:17px;"></span> $1–10B / yr flow</div>
+          <div class="legend-row"><span class="sz" style="width:11px;height:11px;"></span> &lt; $1B / yr flow</div>
+        </div>
+        <div class="legend-block reveal d5">
+          <div class="lh">Colour — theme · &nbsp;ring — signal</div>
+          <div class="legend-row"><span class="sw theme-ai"></span> AI &amp; autonomy</div>
+          <div class="legend-row"><span class="sw theme-comp"></span> Compute &amp; sensing</div>
+          <div class="legend-row"><span class="sw theme-bio"></span> Bio &amp; longevity</div>
+          <div class="legend-row"><span class="sw theme-energy"></span> Energy &amp; matter-scale</div>
+          <div class="legend-row"><span class="sw theme-matter"></span> Human-machine &amp; materials</div>
+          <div class="legend-row"><span style="width:12px;height:12px;border:2.5px solid var(--amber);border-radius:50%;display:inline-block;"></span> <b style="color:#B45309;font-family:var(--font-mono);">ACT NOW</b> — moving fastest</div>
+        </div>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src">Placement = Consultant desk synthesis of maturity &amp; capital signals · <b>see cards &amp; sources</b>. Ring distance is directional, not a forecast.</div>
+      <div class="pg">02</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 4 — CARD: AI AGENTS  (HOT)
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>THEME · AI &amp; AUTONOMY</span><span><b>03</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <div class="reveal d1"><span class="card-theme"><span class="sw theme-ai"></span> AI &amp; autonomy</span> <span class="horizon-chip hz-now" style="margin-left:10px;">Horizon · Now</span></div>
+          <h2 class="card-h reveal d2">AI agents &amp; agentic infrastructure</h2>
+          <p class="card-lede reveal d3">The frontier stopped being a bigger model and became a <b>fleet of agents that plan, use tools and verify each other</b> — with control planes now shipping to manage them.</p>
+        </div>
+        <div class="reveal d2" style="text-align:right;">
+          <div class="card-index">01</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-col-l">
+          <div class="metricrow reveal d4">
+            <div class="metric amber"><div class="fig">$2.59<small>T</small></div><div class="lbl">Worldwide AI spend forecast 2026, +47% YoY (Gartner, Sep 2025)</div></div>
+            <div class="metric"><div class="fig">40<small>%</small></div><div class="lbl">of enterprise apps to embed task-specific agents by end-2026, from &lt;5% (Gartner)</div></div>
+            <div class="metric"><div class="fig">2.3<small>×</small></div><div class="lbl">avg ROI reported on agentic deployments · ~13-mo payback (Microsoft, Mar 2026)</div></div>
+          </div>
+          <div class="card-block reveal d5">
+            <div class="bh"><span class="ic"></span> The signal that changed · H1 2026</div>
+            <p><b>OpenAI Frontier launched 5&nbsp;Feb&nbsp;2026</b> — an enterprise control plane for building, deploying and governing agents, interoperable with Google, Microsoft and Anthropic agents. <b>HP, Intuit, Oracle, State&nbsp;Farm, Thermo&nbsp;Fisher and Uber</b> are first adopters; BBVA, Cisco and T-Mobile piloting. Microsoft's <b>Agent&nbsp;365</b> and AWS's frontier-agents push make agent fleet-management the new platform battleground.</p>
+          </div>
+          <div class="card-block reveal d6">
+            <div class="bh"><span class="ic"></span> Enterprise "so what"</div>
+            <p>The unit of automation shifts from the app to the <b>agent that operates across apps</b>. Winners stand up an <b>agent registry, identity and governance layer now</b> — the 2026 equivalent of the 2010 cloud landing-zone. Buy the control plane; don't hand-roll it.</p>
+          </div>
+        </div>
+        <div class="card-col-r">
+          <div class="playerbox reveal d5">
+            <div class="bh">Key players &amp; labs</div>
+            <div class="players">
+              <div class="player"><span class="nm">OpenAI</span><span class="ds">Frontier platform · AI "coworkers"</span></div>
+              <div class="player"><span class="nm">Microsoft</span><span class="ds">Agent 365 control plane · Copilot</span></div>
+              <div class="player"><span class="nm">Anthropic</span><span class="ds">Claude · MCP tool standard</span></div>
+              <div class="player"><span class="nm">AWS</span><span class="ds">Bedrock · "frontier agents" bet</span></div>
+              <div class="player"><span class="nm">Google</span><span class="ds">Gemini · Agentspace</span></div>
+            </div>
+          </div>
+          <div class="card-block risk reveal d6">
+            <div class="bh"><span class="ic"></span> The risk</div>
+            <p>Gartner expects <b>&gt;40% of agentic-AI projects cancelled by 2027</b> on cost, governance and unclear ROI. The <b>EU AI Act's high-risk rules bite 2&nbsp;Aug&nbsp;2026</b>. Autonomy without audit trails is a liability, not a moat.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src"><b>Sources:</b> Gartner press (Aug 2025, Sep 2025); OpenAI / TechCrunch / CNBC (5 Feb 2026); Microsoft Cloud Blog (Mar 2026) — full list slide 16</div>
+      <div class="pg">03</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 5 — CARD: HUMANOID ROBOTICS  (HOT)
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>THEME · AI &amp; AUTONOMY</span><span><b>04</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <div class="reveal d1"><span class="card-theme"><span class="sw theme-ai"></span> AI &amp; autonomy</span> <span class="horizon-chip hz-now" style="margin-left:10px;">Horizon · Now → 1–3y</span></div>
+          <h2 class="card-h reveal d2">Humanoid robotics</h2>
+          <p class="card-lede reveal d3">Legged humanoids crossed from demo reel to <b>live production lines</b> — but the honest global count of robots doing real, paid work is still in the low thousands.</p>
+        </div>
+        <div class="reveal d2" style="text-align:right;"><div class="card-index">02</div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-col-l">
+          <div class="metricrow reveal d4">
+            <div class="metric amber"><div class="fig">1,000<small>+</small></div><div class="lbl">Tesla Optimus units on live tasks at Fremont, milestone Jan 2026 (Tesla)</div></div>
+            <div class="metric"><div class="fig">1<small>/hr</small></div><div class="lbl">Figure 03 build rate at BotQ — a 24× throughput gain in &lt;120 days (Figure AI)</div></div>
+            <div class="metric"><div class="fig">$38<small>B</small></div><div class="lbl">humanoid market by 2035 (Goldman Sachs); Morgan Stanley $152B by 2040</div></div>
+          </div>
+          <div class="card-block reveal d5">
+            <div class="bh"><span class="ic"></span> The signal that changed · H1 2026</div>
+            <p><b>Figure&nbsp;02 units helped build 30,000 cars</b> at BMW's Spartanburg plant — 1,250+ operational hours, multiple units on 10-hour days, 5 days a week. Tesla reports <b>cumulative Optimus production over 50,000 units</b> and plans <b>external sales in 2026 at a $20–30K target price</b>. The bottleneck moved from "can it walk?" to "can we manufacture the robot?".</p>
+          </div>
+          <div class="card-block reveal d6">
+            <div class="bh"><span class="ic"></span> Enterprise "so what"</div>
+            <p>For high-mix warehouse and line work, this is a <b>3–5yr capex conversation, not a moonshot</b> — but the near-term ROI is in <b>narrow, repetitive stations</b>, not general labour. Pilot in a bounded cell; underwrite on cycle-time, not on the highlight reel.</p>
+          </div>
+        </div>
+        <div class="card-col-r">
+          <div class="playerbox reveal d5">
+            <div class="bh">Key players &amp; labs</div>
+            <div class="players">
+              <div class="player"><span class="nm">Tesla</span><span class="ds">Optimus Gen 3 · Fremont ramp</span></div>
+              <div class="player"><span class="nm">Figure AI</span><span class="ds">Figure 03 · BotQ · BMW pilot</span></div>
+              <div class="player"><span class="nm">1X</span><span class="ds">NEO · home/consumer angle</span></div>
+              <div class="player"><span class="nm">Boston Dynamics</span><span class="ds">electric Atlas · Hyundai</span></div>
+              <div class="player"><span class="nm">Agility</span><span class="ds">Digit · logistics deployments</span></div>
+            </div>
+          </div>
+          <div class="card-block risk reveal d6">
+            <div class="bh"><span class="ic"></span> The risk</div>
+            <p>Analysts flag that <b>productive humanoids still number in the hundreds to low thousands globally</b>; 2027–28 is the real commercial threshold. Unit-economics, safety certification and reliability at 3-shift duty remain unproven. Do not headcount-plan on it yet.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src"><b>Sources:</b> Tesla / Figure AI deployment trackers &amp; Q1-2026 updates; Goldman Sachs, Morgan Stanley market notes; Medium industry review (2026) — full list slide 16</div>
+      <div class="pg">04</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 6 — CARD: QUANTUM COMPUTING
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>THEME · COMPUTE &amp; SENSING</span><span><b>05</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <div class="reveal d1"><span class="card-theme"><span class="sw theme-comp"></span> Compute &amp; sensing</span> <span class="horizon-chip hz-3" style="margin-left:10px;">Horizon · 3–7y</span></div>
+          <h2 class="card-h reveal d2">Quantum computing</h2>
+          <p class="card-lede reveal d3">2026 is the year the field committed to a <b>dated path to fault tolerance</b> — the overhead per logical qubit fell an order of magnitude, and a credited-partner Level-2 machine went public.</p>
+        </div>
+        <div class="reveal d2" style="text-align:right;"><div class="card-index">03</div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-col-l">
+          <div class="metricrow reveal d4">
+            <div class="metric"><div class="fig">2029</div><div class="lbl">IBM Starling target: 200 logical qubits · 100M gates, built in Poughkeepsie (IBM)</div></div>
+            <div class="metric"><div class="fig">~1:100</div><div class="lbl">physical→logical overhead via qLDPC codes, down from ~1:1,000 (IBM/Google, May 2026)</div></div>
+            <div class="metric"><div class="fig">13,000<small>×</small></div><div class="lbl">Google "Quantum Echoes" speed-up vs classical — first verifiable advantage (Willow)</div></div>
+          </div>
+          <div class="card-block reveal d5">
+            <div class="bh"><span class="ic"></span> The signal that changed · H1 2026</div>
+            <p><b>IBM published a concrete roadmap to a large-scale fault-tolerant machine by 2029</b> (Starling), using the qLDPC "bicycle" architecture — 12 logical qubits from 144 physical. It also hit a <b>10× QEC-decoding speed-up a year early</b>. Quantinuum's H2 became the <b>first system to reach Microsoft's Level-2 "Resilient" phase</b> — error rates ~800× below physical.</p>
+          </div>
+          <div class="card-block reveal d6">
+            <div class="bh"><span class="ic"></span> Enterprise "so what"</div>
+            <p>No cryptographically-relevant machine yet — but the roadmaps are now dated. The <b>only no-regret 2026 move is post-quantum cryptography migration</b> ("harvest-now, decrypt-later" is a live threat) and quantum literacy in materials/chemistry R&amp;D functions.</p>
+          </div>
+        </div>
+        <div class="card-col-r">
+          <div class="playerbox reveal d5">
+            <div class="bh">Key players &amp; labs</div>
+            <div class="players">
+              <div class="player"><span class="nm">IBM</span><span class="ds">Starling / Kookaburra · qLDPC</span></div>
+              <div class="player"><span class="nm">Google</span><span class="ds">Willow · Quantum Echoes</span></div>
+              <div class="player"><span class="nm">Quantinuum</span><span class="ds">H2 trapped-ion · MS Level-2</span></div>
+              <div class="player"><span class="nm">Microsoft</span><span class="ds">Azure Quantum · resilience tiers</span></div>
+              <div class="player"><span class="nm">IonQ · Riverlane</span><span class="ds">ion traps · QEC decoding stack</span></div>
+            </div>
+          </div>
+          <div class="card-block risk reveal d6">
+            <div class="bh"><span class="ic"></span> The risk</div>
+            <p>Timeline slippage is the base rate; "logical qubit" counts are not comparable across vendors. Fault-tolerant advantage on a <b>useful</b> problem is still years out — treat 2029 dates as engineering targets, not delivery guarantees.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src"><b>Sources:</b> IBM Quantum roadmap &amp; blog; IEEE Spectrum (Starling); Quantinuum + Microsoft press; The Quantum Insider (Jun 2025); Riverlane (2026) — full list slide 16</div>
+      <div class="pg">05</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 7 — CARD: GENE EDITING & LONGEVITY  (HOT)
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>THEME · BIO &amp; LONGEVITY</span><span><b>06</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <div class="reveal d1"><span class="card-theme"><span class="sw theme-bio"></span> Bio &amp; longevity</span> <span class="horizon-chip hz-now" style="margin-left:10px;">Horizon · 1–3y</span></div>
+          <h2 class="card-h reveal d2">Gene editing &amp; longevity</h2>
+          <p class="card-lede reveal d3">The field crossed its most important line yet: an <b>in-body CRISPR edit succeeded in a pivotal Phase&nbsp;3</b> — moving gene editing from ex-vivo procedure to potential one-shot medicine.</p>
+        </div>
+        <div class="reveal d2" style="text-align:right;"><div class="card-index">04</div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-col-l">
+          <div class="metricrow reveal d4">
+            <div class="metric amber"><div class="fig">87<small>%</small></div><div class="lbl">reduction in monthly HAE attacks, Intellia lonvo-z Phase 3 (NEJM, 18 Jun 2026)</div></div>
+            <div class="metric"><div class="fig">62<small>%</small></div><div class="lbl">of treated patients fully attack-free vs 11% on placebo — first in-vivo CRISPR P3 win</div></div>
+            <div class="metric"><div class="fig">50<small>+</small></div><div class="lbl">CRISPR trials actively recruiting globally as of mid-2026 (IGI / CRISPR Medicine)</div></div>
+          </div>
+          <div class="card-block reveal d5">
+            <div class="bh"><span class="ic"></span> The signal that changed · H1 2026</div>
+            <p><b>Intellia's HAELO trial is the world's first positive pivotal Phase&nbsp;3 for an in-vivo CRISPR therapy</b> (published NEJM, presented at EAACI 2026). In parallel, <b>Casgevy's label expanded to ages 2+</b> for sickle-cell and beta-thalassemia. Base and prime editing are entering Phase&nbsp;1 with cleaner safety profiles.</p>
+          </div>
+          <div class="card-block reveal d6">
+            <div class="bh"><span class="ic"></span> Enterprise "so what"</div>
+            <p>For pharma, payers and health systems: in-vivo editing changes the <b>economics of chronic disease</b> — a one-time edit vs lifelong therapy. The value question moves from efficacy to <b>manufacturing, delivery (LNP/AAV) and reimbursement design</b>.</p>
+          </div>
+        </div>
+        <div class="card-col-r">
+          <div class="playerbox reveal d5">
+            <div class="bh">Key players &amp; labs</div>
+            <div class="players">
+              <div class="player"><span class="nm">Intellia</span><span class="ds">in-vivo CRISPR · lonvo-z, NTLA-2001</span></div>
+              <div class="player"><span class="nm">Vertex · CRISPR Tx</span><span class="ds">Casgevy (exa-cel) · sickle cell</span></div>
+              <div class="player"><span class="nm">Beam · Prime Med.</span><span class="ds">base / prime editing</span></div>
+              <div class="player"><span class="nm">Generate:Bio</span><span class="ds">AI protein design · $700M raised</span></div>
+              <div class="player"><span class="nm">Recursion</span><span class="ds">15B compounds screened (AI)</span></div>
+            </div>
+          </div>
+          <div class="card-block risk reveal d6">
+            <div class="bh"><span class="ic"></span> The risk</div>
+            <p>Delivery, not editing, is the moat — and rollout is slow: <b>only ~60 patients treated with Casgevy in 2+ years</b> despite 75+ activated US centres, bottlenecked on cell collection and reimbursement. Off-target and durability data still accruing.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src"><b>Sources:</b> NEJM / Intellia (18 Jun 2026); Vertex / BioSpace (1 Jul 2026); STAT (5 Feb 2026, Casgevy rollout); Innovative Genomics Institute (2026) — full list slide 16</div>
+      <div class="pg">06</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 8 — CARD: BRAIN-COMPUTER INTERFACES
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>THEME · HUMAN-MACHINE</span><span><b>07</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <div class="reveal d1"><span class="card-theme"><span class="sw theme-matter"></span> Human-machine</span> <span class="horizon-chip hz-1" style="margin-left:10px;">Horizon · 1–3y (minimally-inv.) → 3–7y (implanted)</span></div>
+          <h2 class="card-h reveal d2">Brain-computer interfaces</h2>
+          <p class="card-lede reveal d3">Two races at once: <b>minimally-invasive BCI heading for the first FDA approval</b>, and Neuralink scaling implants and automating the surgery. Real medicine — with a transhumanist halo to discount.</p>
+        </div>
+        <div class="reveal d2" style="text-align:right;"><div class="card-index">05</div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-col-l">
+          <div class="metricrow reveal d4">
+            <div class="metric"><div class="fig">26<small>th</small></div><div class="lbl">Neuralink patient implanted in 2026, up from 21 in January (company updates)</div></div>
+            <div class="metric"><div class="fig">$200<small>M</small></div><div class="lbl">Synchron Series D (Nov 2025) to fund its 2026 pivotal trial toward first PMA</div></div>
+            <div class="metric"><div class="fig">3,072</div><div class="lbl">electrodes on the quarter-sized Neuralink Link implant (23 mm)</div></div>
+          </div>
+          <div class="card-block reveal d5">
+            <div class="bh"><span class="ic"></span> The signal that changed · H1 2026</div>
+            <p><b>Synchron is starting its 2026 pivotal trial</b> — the gate before filing the <b>first-ever PMA for a permanently implanted BCI</b> — via its vascular Stentrode (no open-skull surgery). Neuralink expanded trials to the <b>UK, UAE and Canada</b>, targets high-volume production and automated surgery, and plans a first <b>Blindsight</b> vision-restoration implant in 2026.</p>
+          </div>
+          <div class="card-block reveal d6">
+            <div class="bh"><span class="ic"></span> Enterprise "so what"</div>
+            <p>Near-term value is <b>clinical</b> — restoring communication and control for paralysis/ALS — and it is a <b>medtech/regulatory play, not a consumer product</b>. Watch Synchron's PMA path as the field's first real market signal; consumer neural I/O remains a decade+ out.</p>
+          </div>
+        </div>
+        <div class="card-col-r">
+          <div class="playerbox reveal d5">
+            <div class="bh">Key players &amp; labs</div>
+            <div class="players">
+              <div class="player"><span class="nm">Synchron</span><span class="ds">Stentrode · vascular · first PMA path</span></div>
+              <div class="player"><span class="nm">Neuralink</span><span class="ds">Link implant · PRIME, VOICE, Blindsight</span></div>
+              <div class="player"><span class="nm">Precision Neuro</span><span class="ds">thin-film surface array · FDA-cleared</span></div>
+              <div class="player"><span class="nm">Paradromics</span><span class="ds">high-bandwidth cortical</span></div>
+              <div class="player"><span class="nm">Blackrock Neurotech</span><span class="ds">long-standing research implants</span></div>
+            </div>
+          </div>
+          <div class="card-block risk reveal d6">
+            <div class="bh"><span class="ic"></span> The risk</div>
+            <p>Long, costly regulatory road; surgical risk for implanted devices; and a <b>hype gap</b> — the transhumanist narrative outruns the medical reality (STAT, Jan 2026). Data privacy of neural signals is an unsettled governance frontier.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src"><b>Sources:</b> Neuralink updates &amp; FierceBiotech (2026); MedTech Dive (Synchron $200M; Precision clearance); TechTimes (6 Jun 2026); STAT (5 Jan 2026) — full list slide 16</div>
+      <div class="pg">07</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 9 — CARD: NUCLEAR FUSION
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>THEME · ENERGY &amp; MATTER-SCALE</span><span><b>08</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <div class="reveal d1"><span class="card-theme"><span class="sw theme-energy"></span> Energy &amp; matter-scale</span> <span class="horizon-chip hz-3" style="margin-left:10px;">Horizon · 3–7y → Horizon</span></div>
+          <h2 class="card-h reveal d2">Nuclear fusion</h2>
+          <p class="card-lede reveal d3">The capital and the engineering moved hard in 2026 — but the honest picture is stark: <b>no private company has achieved net energy gain</b>, and the first machines are only now nearing first plasma.</p>
+        </div>
+        <div class="reveal d2" style="text-align:right;"><div class="card-index">06</div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-col-l">
+          <div class="metricrow reveal d4">
+            <div class="metric"><div class="fig">$9.8<small>B</small></div><div class="lbl">cumulative private funding across 53 fusion companies (FIA 2025 report)</div></div>
+            <div class="metric"><div class="fig">2027</div><div class="lbl">SPARC target for net gain (Q&gt;1); first plasma nearing at Devens, MA (CFS)</div></div>
+            <div class="metric"><div class="fig">400<small>MW</small></div><div class="lbl">CFS "ARC" plant planned for Virginia — grid power in the early 2030s</div></div>
+          </div>
+          <div class="card-block reveal d5">
+            <div class="bh"><span class="ic"></span> The signal that changed · H1 2026</div>
+            <p>Commonwealth Fusion's <b>SPARC is nearly complete</b> and became the <b>first fusion company to apply to a wholesale electricity market (PJM)</b> — a commercial, not just scientific, milestone. Helion is building a plant to <b>supply Microsoft data centres from 2028</b> (widely seen as aggressive). Siemens and NVIDIA are now embedded in the build.</p>
+          </div>
+          <div class="card-block reveal d6">
+            <div class="bh"><span class="ic"></span> Enterprise "so what"</div>
+            <p>For most enterprises this is a <b>watch-and-optionality item</b>, not a 5-yr supply plan. The near-term signal that matters is <b>hyperscaler power procurement</b> (Microsoft–Helion): fusion is being pulled by AI's energy demand, so track it via data-centre PPAs.</p>
+          </div>
+        </div>
+        <div class="card-col-r">
+          <div class="playerbox reveal d5">
+            <div class="bh">Key players &amp; labs</div>
+            <div class="players">
+              <div class="player"><span class="nm">Commonwealth Fusion</span><span class="ds">SPARC / ARC · HTS magnets</span></div>
+              <div class="player"><span class="nm">Helion</span><span class="ds">Polaris · Microsoft PPA (2028)</span></div>
+              <div class="player"><span class="nm">TAE Technologies</span><span class="ds">field-reversed config</span></div>
+              <div class="player"><span class="nm">NIF (LLNL)</span><span class="ds">public-sector ignition milestones</span></div>
+              <div class="player"><span class="nm">Siemens · NVIDIA</span><span class="ds">simulation &amp; build partners</span></div>
+            </div>
+          </div>
+          <div class="card-block risk reveal d6">
+            <div class="bh"><span class="ic"></span> The risk</div>
+            <p>Timelines have already slipped; <b>no plant has produced grid electricity, and none is within twelve months of doing so</b>. Industry estimates <b>~$77B more needed</b> to build first commercial plants — ~8× raised to date. Treat 2028 grid claims skeptically.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src"><b>Sources:</b> Fusion Industry Association 2025 report; CFS press (SPARC, ARC, PJM); Fortune (7 Jan 2026); Earth911 / Neutron Bytes (2026) — full list slide 16</div>
+      <div class="pg">08</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 10 — CARD: SPATIAL COMPUTING
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>THEME · COMPUTE &amp; SENSING</span><span><b>09</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <div class="reveal d1"><span class="card-theme"><span class="sw theme-comp"></span> Compute &amp; sensing</span> <span class="horizon-chip hz-1" style="margin-left:10px;">Horizon · Now → 1–3y</span></div>
+          <h2 class="card-h reveal d2">Spatial computing &amp; smart glasses</h2>
+          <p class="card-lede reveal d3">The form factor question got answered by the market: <b>lightweight AI glasses are winning; bulky headsets are stalling</b>. Apple is pivoting to follow Meta.</p>
+        </div>
+        <div class="reveal d2" style="text-align:right;"><div class="card-index">07</div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-col-l">
+          <div class="metricrow reveal d4">
+            <div class="metric"><div class="fig">2<small>M+</small></div><div class="lbl">Ray-Ban Meta glasses sold since Oct 2023; sales tripled in Q2 2025 (Meta)</div></div>
+            <div class="metric"><div class="fig">+110<small>%</small></div><div class="lbl">smart-glasses shipments YoY, H1 2025 — AI features the driver (Treeview)</div></div>
+            <div class="metric"><div class="fig">85<small>K</small></div><div class="lbl">Apple Vision Pro units in 2025 after a production halt, from 390K at launch</div></div>
+          </div>
+          <div class="card-block reveal d5">
+            <div class="bh"><span class="ic"></span> The signal that changed · H1 2026</div>
+            <p>The market bifurcated: <b>VR/MR headset shipments fell ~43% in 2025 while the rest of XR grew ~211%</b>. Meta holds a <b>~72% smart-glasses share</b> via EssilorLuxottica (now including Oakley). Apple shipped a cheaper <b>Vision Pro 2 (M5) at $2,499 in Feb 2026</b> but is reportedly <b>pivoting to lightweight glasses for ~2027</b>.</p>
+          </div>
+          <div class="card-block reveal d6">
+            <div class="bh"><span class="ic"></span> Enterprise "so what"</div>
+            <p>"Spatial computing" as an enterprise bet now means <b>AI-glasses as an ambient interface</b> (hands-free field work, retail, logistics), not room-scale VR. Headset investments are <b>vertical and niche</b> (design, training, telepresence) — not the next general platform.</p>
+          </div>
+        </div>
+        <div class="card-col-r">
+          <div class="playerbox reveal d5">
+            <div class="bh">Key players &amp; labs</div>
+            <div class="players">
+              <div class="player"><span class="nm">Meta · EssilorLux.</span><span class="ds">Ray-Ban / Oakley · ~72% share</span></div>
+              <div class="player"><span class="nm">Apple</span><span class="ds">Vision Pro 2 (M5) · glasses pivot</span></div>
+              <div class="player"><span class="nm">Google · Samsung</span><span class="ds">Android XR · Project Moohan</span></div>
+              <div class="player"><span class="nm">Snap</span><span class="ds">Spectacles · AR glasses</span></div>
+              <div class="player"><span class="nm">Xreal · Rokid</span><span class="ds">tethered display glasses</span></div>
+            </div>
+          </div>
+          <div class="card-block risk reveal d6">
+            <div class="bh"><span class="ic"></span> The risk</div>
+            <p>Vision Pro's collapse (production halted, ~45K holiday-quarter units expected) shows <b>premium immersive hardware has no consumer pull yet</b>. Glasses value is gated on battery, display and a genuinely useful on-device AI — not yet a slam-dunk.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src"><b>Sources:</b> Treeview XR market report (2026); Forbes / Next Reality (Feb 2026); Hypebeast, Macworld, Statista (2026); Meta disclosures — full list slide 16</div>
+      <div class="pg">09</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 11 — CARD: NEXT-GEN ENERGY STORAGE
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>THEME · ENERGY &amp; MATTER-SCALE</span><span><b>10</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <div class="reveal d1"><span class="card-theme"><span class="sw theme-energy"></span> Energy &amp; matter-scale</span> <span class="horizon-chip hz-3" style="margin-left:10px;">Horizon · 3–7y</span></div>
+          <h2 class="card-h reveal d2">Next-gen energy storage</h2>
+          <p class="card-lede reveal d3">Solid-state batteries moved <b>from lab bench to pilot line in 2026</b> — real product lines inaugurated — but mass-market volume is still a 2030 story.</p>
+        </div>
+        <div class="reveal d2" style="text-align:right;"><div class="card-index">08</div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-col-l">
+          <div class="metricrow reveal d4">
+            <div class="metric"><div class="fig">844<small>Wh/L</small></div><div class="lbl">QuantumScape QSE-5 B-sample energy density, verified (301 Wh/kg)</div></div>
+            <div class="metric"><div class="fig">&lt;10<small>min</small></div><div class="lbl">Toyota solid-state target: 10→80% charge · 600+ mi range claim</div></div>
+            <div class="metric"><div class="fig">2027–28</div><div class="lbl">first low-volume EVs with solid-state; mass-market ~2030+ (industry consensus)</div></div>
+          </div>
+          <div class="card-block reveal d5">
+            <div class="bh"><span class="ic"></span> The signal that changed · H1 2026</div>
+            <p><b>QuantumScape inaugurated its "Eagle" production line on 4&nbsp;Feb&nbsp;2026</b> with OEM customers present — targeting qualification samples in late 2026 and vehicle integration by 2028. <b>Toyota has government-backed plans to start limited solid-state production around 2026</b>. An April-2026 breakthrough pulled some timelines forward.</p>
+          </div>
+          <div class="card-block reveal d6">
+            <div class="bh"><span class="ic"></span> Enterprise "so what"</div>
+            <p>For automotive, grid and defence: solid-state is a <b>supply-chain and qualification question now</b>, not a spec question. The strategic move is <b>securing cell-supply agreements and pilot integration</b> early — capacity, not chemistry, will be the constraint.</p>
+          </div>
+        </div>
+        <div class="card-col-r">
+          <div class="playerbox reveal d5">
+            <div class="bh">Key players &amp; labs</div>
+            <div class="players">
+              <div class="player"><span class="nm">QuantumScape</span><span class="ds">Eagle line · QSE-5 · VW/PowerCo</span></div>
+              <div class="player"><span class="nm">Toyota</span><span class="ds">solid-state · 2026 limited start</span></div>
+              <div class="player"><span class="nm">Samsung SDI</span><span class="ds">solid-state sampling</span></div>
+              <div class="player"><span class="nm">Solid Power</span><span class="ds">sulfide electrolyte · BMW/Ford</span></div>
+              <div class="player"><span class="nm">CATL</span><span class="ds">condensed / semi-solid at scale</span></div>
+            </div>
+          </div>
+          <div class="card-block risk reveal d6">
+            <div class="bh"><span class="ic"></span> The risk</div>
+            <p>Solid-state has slipped for a decade; <b>Toyota's own mass-production is "2030 and beyond"</b>. Early cells will be <b>expensive and low-volume</b>. Manufacturing yield — not cell performance — is the unsolved problem.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src"><b>Sources:</b> QuantumScape SEC 8-K &amp; Eagle-line release (Feb 2026); Electrek (15 Apr 2026); EE Power; Toyota / Samsung timelines (2026) — full list slide 16</div>
+      <div class="pg">10</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 12 — CARD: SYNTHETIC BIOLOGY
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>THEME · BIO &amp; LONGEVITY</span><span><b>11</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <div class="reveal d1"><span class="card-theme"><span class="sw theme-bio"></span> Bio &amp; longevity</span> <span class="horizon-chip hz-1" style="margin-left:10px;">Horizon · 1–3y</span></div>
+          <h2 class="card-h reveal d2">Synthetic biology</h2>
+          <p class="card-lede reveal d3">AI turned biology into an engineering discipline: <b>autonomous biofoundries now run the design-build-test-learn loop</b>, and protein design is generating millions of sequences a day.</p>
+        </div>
+        <div class="reveal d2" style="text-align:right;"><div class="card-index">09</div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-col-l">
+          <div class="metricrow reveal d4">
+            <div class="metric"><div class="fig">$1.5<small>B</small></div><div class="lbl">global AI protein-design market in 2025, up from $1.18B in 2024 (Hire-omics)</div></div>
+            <div class="metric"><div class="fig">millions<small>/day</small></div><div class="lbl">protein sequences designed by Generate:Biomedicines' platform</div></div>
+            <div class="metric"><div class="fig">15<small>B</small></div><div class="lbl">compounds screened with AI by Recursion — scale unthinkable manually</div></div>
+          </div>
+          <div class="card-block reveal d5">
+            <div class="bh"><span class="ic"></span> The signal that changed · H1 2026</div>
+            <p><b>AlphaFold 3</b> extended prediction to <b>protein + nucleic-acid + small-molecule assemblies</b>, cutting reliance on wet-lab screening. Ginkgo opened its <b>$1B biofoundry</b> to the community (no royalty/IP demands) and partnered with Google Cloud on evolutionary-scale models. Multi-billion government programs (US, EU, UK, China, Japan) are now funding the stack.</p>
+          </div>
+          <div class="card-block reveal d6">
+            <div class="bh"><span class="ic"></span> Enterprise "so what"</div>
+            <p>Beyond pharma: <b>materials, food, agriculture and chemicals</b> can now be "designed" biologically. The strategic question for industrials is whether a <b>bio-manufactured route undercuts the petrochemical one</b> — start scouting bio-based substitutes for key inputs.</p>
+          </div>
+        </div>
+        <div class="card-col-r">
+          <div class="playerbox reveal d5">
+            <div class="bh">Key players &amp; labs</div>
+            <div class="players">
+              <div class="player"><span class="nm">Google DeepMind</span><span class="ds">AlphaFold 3 · Isomorphic Labs</span></div>
+              <div class="player"><span class="nm">Ginkgo Bioworks</span><span class="ds">biofoundry-as-a-service</span></div>
+              <div class="player"><span class="nm">Generate:Bio</span><span class="ds">generative protein design</span></div>
+              <div class="player"><span class="nm">Recursion</span><span class="ds">AI-driven drug discovery</span></div>
+              <div class="player"><span class="nm">EvolutionaryScale</span><span class="ds">ESM protein language models</span></div>
+            </div>
+          </div>
+          <div class="card-block risk reveal d6">
+            <div class="bh"><span class="ic"></span> The risk</div>
+            <p>Design ≠ manufacture: scaling a designed organism to industrial yield is still hard and capital-heavy. <b>Biosecurity and dual-use governance</b> are tightening. Platform economics (Ginkgo's revenue vs valuation) remain unproven at scale.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src"><b>Sources:</b> Nature / ScienceDirect (AI biofoundries, 2025–26); SynBioBeta (Ginkgo); Hire-omics market data (2026); Nature Comms (autonomous enzyme eng.) — full list slide 16</div>
+      <div class="pg">11</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 13 — CARD: ADVANCED MATERIALS
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>THEME · MATERIALS</span><span><b>12</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <div class="reveal d1"><span class="card-theme"><span class="sw theme-matter"></span> Materials</span> <span class="horizon-chip hz-h" style="margin-left:10px;">Horizon · Speculative</span></div>
+          <h2 class="card-h reveal d2">Advanced materials &amp; superconductors</h2>
+          <p class="card-lede reveal d3">AI is compressing materials discovery from years to weeks — and it broke a <b>30-year record</b> — but the prize, ambient room-temperature superconductivity, <b>remains unvalidated</b>.</p>
+        </div>
+        <div class="reveal d2" style="text-align:right;"><div class="card-index">10</div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-col-l">
+          <div class="metricrow reveal d4">
+            <div class="metric"><div class="fig">30<small>-yr</small></div><div class="lbl">ambient-pressure superconductivity record broken (ScienceDaily, 27 May 2026)</div></div>
+            <div class="metric"><div class="fig">~325<small>K</small></div><div class="lbl">critical temp predicted for "Grokene" AI-designed superlattice (arXiv, computational)</div></div>
+            <div class="metric"><div class="fig">&gt;100<small>GPa</small></div><div class="lbl">pressure still required by record-setting hydrides — the ambient barrier holds</div></div>
+          </div>
+          <div class="card-block reveal d5">
+            <div class="bh"><span class="ic"></span> The signal that changed · H1 2026</div>
+            <p><b>AI-guided design produced "Grokene"</b>, a graphene-derived superlattice with a computed critical temperature near room temperature — though its 2D nature limits the observed transition to ~120K in monolayers, and it is <b>not yet experimentally validated</b>. A separate group broke a 30-year ambient-pressure record. AI materials pipelines (post-GNoME) are the real, bankable shift.</p>
+          </div>
+          <div class="card-block reveal d6">
+            <div class="bh"><span class="ic"></span> Enterprise "so what"</div>
+            <p>Don't bet on room-temperature superconductivity — bet on <b>AI-accelerated materials discovery as a capability</b>. For chemicals, batteries, aerospace and semis, an in-house or partnered <b>ML materials pipeline</b> is becoming a durable R&amp;D advantage.</p>
+          </div>
+        </div>
+        <div class="card-col-r">
+          <div class="playerbox reveal d5">
+            <div class="bh">Key players &amp; labs</div>
+            <div class="players">
+              <div class="player"><span class="nm">Google DeepMind</span><span class="ds">GNoME · materials generation</span></div>
+              <div class="player"><span class="nm">Microsoft</span><span class="ds">MatterGen · Azure Quantum Elements</span></div>
+              <div class="player"><span class="nm">Academic groups</span><span class="ds">ambient-pressure SC records (2026)</span></div>
+              <div class="player"><span class="nm">Meta FAIR</span><span class="ds">open materials / OMat datasets</span></div>
+              <div class="player"><span class="nm">National labs</span><span class="ds">high-pressure hydride research</span></div>
+            </div>
+          </div>
+          <div class="card-block risk reveal d6">
+            <div class="bh"><span class="ic"></span> The risk</div>
+            <p>Superconductivity claims have a <b>credibility problem post-LK-99</b>: ambient-pressure candidates "lack peer-reviewed validation as of April 2026". Computational predictions ≠ working materials. Treat any RT-superconductor headline as unproven until replicated.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src"><b>Sources:</b> ScienceDaily (27 May 2026); arXiv "Grokene" preprint (2601.00931); PatSnap RT-superconductor landscape (2026) — full list slide 16</div>
+      <div class="pg">12</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 14 — WHERE THEY SIT (comparison statement)
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>SYNTHESIS</span><span><b>13</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="reveal d1"><div class="kicker">The three-speed frontier</div></div>
+      <h1 class="reveal d2" style="font-size:60px;margin-top:14px;max-width:1500px;">Not one frontier — three, moving at different speeds.</h1>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:52px;">
+        <div class="panel reveal d3" style="padding:36px 34px;border-top:4px solid var(--amber);">
+          <div class="coord" style="font-size:13px;letter-spacing:.2em;color:#B45309;">SPEED 1 · DEPLOY NOW</div>
+          <h3 style="font-size:30px;margin-top:14px;font-weight:800;">Real, at scale, today</h3>
+          <p style="font-family:var(--font-mono);font-size:15.5px;line-height:1.55;color:var(--ink-2);margin-top:16px;font-weight:300;">
+            <b style="color:var(--ink);">AI agents</b> · <b style="color:var(--ink);">humanoids on lines</b> · <b style="color:var(--ink);">AI smart-glasses</b>. Capital is enormous, products ship, ROI is being underwritten. The risk here is <b style="color:var(--ink);">governance and over-buying</b>, not whether it works.</p>
+        </div>
+        <div class="panel reveal d4" style="padding:36px 34px;border-top:4px solid var(--ultra);">
+          <div class="coord" style="font-size:13px;letter-spacing:.2em;color:var(--ultra-deep);">SPEED 2 · BUILD OPTIONALITY</div>
+          <h3 style="font-size:30px;margin-top:14px;font-weight:800;">Pivotal proof in hand</h3>
+          <p style="font-family:var(--font-mono);font-size:15.5px;line-height:1.55;color:var(--ink-2);margin-top:16px;font-weight:300;">
+            <b style="color:var(--ink);">In-vivo gene editing</b> · <b style="color:var(--ink);">synthetic bio</b> · <b style="color:var(--ink);">solid-state cells</b> · <b style="color:var(--ink);">minimally-invasive BCI</b>. The science crossed a line in H1 2026; the constraint is now <b style="color:var(--ink);">manufacturing, delivery &amp; reimbursement</b>. Position, partner, pilot.</p>
+        </div>
+        <div class="panel reveal d5" style="padding:36px 34px;border-top:4px solid var(--hair);">
+          <div class="coord" style="font-size:13px;letter-spacing:.2em;color:var(--ink-3);">SPEED 3 · WATCH &amp; SEED</div>
+          <h3 style="font-size:30px;margin-top:14px;font-weight:800;">Roadmap, not delivery</h3>
+          <p style="font-family:var(--font-mono);font-size:15.5px;line-height:1.55;color:var(--ink-2);margin-top:16px;font-weight:300;">
+            <b style="color:var(--ink);">Quantum</b> · <b style="color:var(--ink);">fusion</b> · <b style="color:var(--ink);">implanted BCI</b> · <b style="color:var(--ink);">RT superconductors</b>. Dated targets exist (IBM 2029, SPARC Q&gt;1 2027) but delivery is years out. The right posture is <b style="color:var(--ink);">no-regret prep &amp; small options</b>.</p>
+        </div>
+      </div>
+      <div class="reveal d6" style="margin-top:40px;padding:24px 30px;background:var(--ink);border-radius:6px;">
+        <p style="margin:0;font-size:22px;color:#EDEFF3;font-weight:500;line-height:1.4;">The strategy error is treating all three as one bucket — either dismissing the frontier as "years away" (missing Speed&nbsp;1) or chasing every headline (over-investing in Speed&nbsp;3). <span style="color:#9AA4FF;">Sort by speed first, then allocate.</span></p>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src">Synthesis of the ten cards · Consultant desk · <b>Split Intelligence</b>, Jul 2026</div>
+      <div class="pg">13</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 15 — EXECUTIVE TAKE (3 bets)
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>THE RECOMMENDATION</span><span><b>14</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="reveal d1"><div class="kicker">Where to place the bets</div></div>
+      <h1 class="reveal d2" style="font-size:62px;margin-top:14px;">Three bets for the board</h1>
+      <div class="take-grid">
+        <div class="bet hot reveal d3">
+          <div class="bn">BET 01 · ACT NOW</div>
+          <h3>Buy the agent control plane, not another model</h3>
+          <div class="body">Agentic infrastructure is the one frontier that is <b>live, funded and compounding</b>. Stand up an <b>agent registry, identity and governance layer in 2026</b> — before shadow-agents proliferate. Treat OpenAI Frontier / Microsoft Agent 365 as the landing-zone decision of the decade.</div>
+          <div class="foot">Signal: $2.59T AI spend '26 · 40% of apps agent-enabled by year-end</div>
+        </div>
+        <div class="bet reveal d4">
+          <div class="bn">BET 02 · POSITION</div>
+          <h3>Take options on the proofs of H1 2026</h3>
+          <div class="body">In-vivo CRISPR, synthetic bio and solid-state <b>crossed pivotal thresholds</b>. Don't build them — <b>partner, co-invest and secure supply</b>. The value has moved from "does it work?" to <b>manufacturing, delivery and reimbursement</b>. First movers on supply agreements win the 2028 curve.</div>
+          <div class="foot">Signal: 87% in-vivo CRISPR P3 · QSE-5 at 844 Wh/L · biofoundries autonomous</div>
+        </div>
+        <div class="bet reveal d5">
+          <div class="bn">BET 03 · HEDGE</div>
+          <h3>Make the no-regret moves on the long horizon</h3>
+          <div class="body">For quantum and fusion, delivery is 2029+. The disciplined moves are cheap and mandatory: <b>start post-quantum cryptography migration now</b> ("harvest-now, decrypt-later" is real), and <b>track fusion via hyperscaler power deals</b>, not press releases. Seed literacy; don't over-commit capital.</div>
+          <div class="foot">Signal: IBM Starling 2029 · Helion→Microsoft 2028 (aggressive) · PQC is urgent</div>
+        </div>
+      </div>
+      <div class="reveal d6" style="margin-top:34px;display:flex;align-items:center;gap:20px;padding:22px 30px;border:1px solid var(--hair);border-radius:6px;background:var(--porcelain-2);">
+        <div style="font-family:var(--font-mono);font-size:13px;letter-spacing:.2em;color:var(--ultra);white-space:nowrap;">THE ONE LINE</div>
+        <p style="margin:0;font-size:22px;font-weight:600;color:var(--ink);line-height:1.35;">Deploy the agents, take options on the biology, and buy insurance on the physics. Sort by speed, allocate to signal.</p>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src">Recommendation · Consultant desk synthesis · defended by the twelve cards · <b>Split Intelligence</b></div>
+      <div class="pg">14</div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 16 — SOURCES
+       ========================================================= -->
+  <section class="slide">
+    <div class="toprail">
+      <div class="mark"><span class="dot"></span> FRONTIER TECH RADAR</div>
+      <div class="rt"><span>SOURCES</span><span><b>15</b> / 16</span></div>
+    </div>
+    <div class="frame">
+      <div class="reveal d1"><div class="kicker">Every dated claim, web-grounded · Jul 2026</div></div>
+      <h1 class="reveal d2" style="font-size:52px;margin-top:12px;">Sources</h1>
+      <div class="src-grid reveal d3">
+        <div class="src-item"><span class="sn">01</span><span class="st"><b>Gartner</b> — AI spend 2026 ($2.59T); 40% enterprise apps w/ agents; &gt;40% agentic projects cancelled by '27. Aug &amp; Sep 2025. <span class="su">gartner.com/en/newsroom</span></span></div>
+        <div class="src-item"><span class="sn">02</span><span class="st"><b>OpenAI / TechCrunch / CNBC / InfoQ</b> — Frontier launch, 5 Feb 2026; customers. <span class="su">openai.com/business/frontier · techcrunch.com/2026/02/05</span></span></div>
+        <div class="src-item"><span class="sn">03</span><span class="st"><b>Microsoft Cloud Blog</b> — Frontier Firms, agentic ROI 2.3×. Mar 2026. <span class="su">microsoft.com/microsoft-cloud/blog</span></span></div>
+        <div class="src-item"><span class="sn">04</span><span class="st"><b>IBM Quantum</b> — Starling 2029 (200 logical qubits, 100M gates); qLDPC; roadmap. <span class="su">ibm.com/quantum/blog/large-scale-ftqc · ibm.com/roadmaps/quantum</span></span></div>
+        <div class="src-item"><span class="sn">05</span><span class="st"><b>IEEE Spectrum</b> — IBM Starling; neutral-atom quantum 2026. <span class="su">spectrum.ieee.org/ibm-quantum-error-correction-starling</span></span></div>
+        <div class="src-item"><span class="sn">06</span><span class="st"><b>Quantinuum + Microsoft</b> — H2 Level-2 resilient logical qubits (~800× error suppression). <span class="su">quantinuum.com/press-releases</span></span></div>
+        <div class="src-item"><span class="sn">07</span><span class="st"><b>NEJM / Intellia</b> — HAELO Phase 3, lonvo-z: 87% attack reduction, 62% attack-free. 18 Jun 2026. <span class="su">longevity.technology/news · intelliatx.com</span></span></div>
+        <div class="src-item"><span class="sn">08</span><span class="st"><b>Vertex / BioSpace</b> — Casgevy label expansion to ages 2+. 1 Jul 2026. <span class="su">news.vrtx.com · biospace.com</span></span></div>
+        <div class="src-item"><span class="sn">09</span><span class="st"><b>STAT</b> — Casgevy rollout bottleneck (~60 patients, 75+ centres). 5 Feb 2026. <span class="su">statnews.com/2026/02/05</span></span></div>
+        <div class="src-item"><span class="sn">10</span><span class="st"><b>Innovative Genomics Institute / CRISPR Medicine</b> — CRISPR trials 2026 update. <span class="su">innovativegenomics.org/news · crisprmedicinenews.com</span></span></div>
+        <div class="src-item"><span class="sn">11</span><span class="st"><b>Neuralink / FierceBiotech</b> — 26th patient; high-volume production; Blindsight. 2026. <span class="su">neuralink.com/updates · fiercebiotech.com</span></span></div>
+        <div class="src-item"><span class="sn">12</span><span class="st"><b>MedTech Dive</b> — Synchron $200M Series D; Precision Neuro FDA clearance. 2026. <span class="su">medtechdive.com</span></span></div>
+        <div class="src-item"><span class="sn">13</span><span class="st"><b>Fusion Industry Association</b> — $9.8B across 53 companies; 2025 Global Report. <span class="su">fusionindustryassociation.org</span></span></div>
+        <div class="src-item"><span class="sn">14</span><span class="st"><b>Commonwealth Fusion Systems</b> — SPARC Q&gt;1 2027; ARC 400MW Virginia; PJM application. <span class="su">cfs.energy/news-and-media</span></span></div>
+        <div class="src-item"><span class="sn">15</span><span class="st"><b>Fortune / Earth911 / Neutron Bytes</b> — fusion state-of-play 2026; Helion–Microsoft. 7 Jan 2026. <span class="su">fortune.com/2026/01/07</span></span></div>
+        <div class="src-item"><span class="sn">16</span><span class="st"><b>Tesla / Figure AI</b> — Optimus 1,000+ at Fremont, 50K+ cumulative; Figure 03 rate, BMW. 2026. <span class="su">deployment trackers, company updates</span></span></div>
+        <div class="src-item"><span class="sn">17</span><span class="st"><b>Goldman Sachs / Morgan Stanley</b> — humanoid market $38B (2035) / $152B (2040). <span class="su">via industry reviews, 2026</span></span></div>
+        <div class="src-item"><span class="sn">18</span><span class="st"><b>Treeview</b> — XR &amp; smart-glasses market statistics report 2026. <span class="su">treeview.studio/blog</span></span></div>
+        <div class="src-item"><span class="sn">19</span><span class="st"><b>Forbes / Next Reality / Hypebeast / Macworld</b> — Apple glasses pivot; Vision Pro cuts. Feb 2026. <span class="su">forbes.com/sites/cathyhackl · virtual.reality.news</span></span></div>
+        <div class="src-item"><span class="sn">20</span><span class="st"><b>QuantumScape</b> — Eagle line inauguration (4 Feb 2026); QSE-5 844 Wh/L. SEC 8-K FY2026. <span class="su">sec.gov · qs.energy</span></span></div>
+        <div class="src-item"><span class="sn">21</span><span class="st"><b>Electrek / EE Power</b> — solid-state breakthrough &amp; timelines. 15 Apr 2026. <span class="su">electrek.co/2026/04/15 · eepower.com</span></span></div>
+        <div class="src-item"><span class="sn">22</span><span class="st"><b>Nature / ScienceDirect</b> — AI-driven autonomous biofoundries; AlphaFold 3. 2025–26. <span class="su">nature.com · sciencedirect.com</span></span></div>
+        <div class="src-item"><span class="sn">23</span><span class="st"><b>SynBioBeta / Hire-omics</b> — Ginkgo biofoundry &amp; partnerships; AI protein-design market $1.5B. 2026. <span class="su">synbiobeta.com · hire-omics.com</span></span></div>
+        <div class="src-item"><span class="sn">24</span><span class="st"><b>ScienceDaily / arXiv / PatSnap</b> — 30-yr SC record (27 May 2026); "Grokene" (2601.00931); RT-SC landscape. <span class="su">sciencedaily.com · arxiv.org/pdf/2601.00931</span></span></div>
+      </div>
+    </div>
+    <div class="botrail">
+      <div class="src">All figures current as of 3 Jul 2026 · primary sources preferred · unverifiable claims dropped or marked as estimate · <b>Made with Split</b></div>
+      <div class="pg">15</div>
+    </div>
+  </section>
+
+  </div><!-- /deck-stage -->
+</div><!-- /deck-viewport -->
+
+<div class="navhint">
+  <span class="kbd">←</span><span class="kbd">→</span> navigate <span style="opacity:.5">·</span> <span class="kbd">F</span> full <span style="opacity:.5">·</span> <span class="kbd">P</span> print
+</div>
+
+<script>
+/* =========================================================================
+   FIXED-STAGE SCALER + NAVIGATION
+   - scales the 1920×1080 stage to fit the viewport (letterbox/pillarbox)
+   - keyboard / wheel / touch nav, hash deep-links, print support
+   ========================================================================= */
+(function () {
+  var stage = document.getElementById('stage');
+  var viewport = document.getElementById('viewport');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var progress = document.getElementById('progress');
+  var current = 0;
+  var STAGE_W = 1920, STAGE_H = 1080;
+
+  /* ---- scale stage to viewport ---- */
+  function fit() {
+    var vw = viewport.clientWidth, vh = viewport.clientHeight;
+    var scale = Math.min(vw / STAGE_W, vh / STAGE_H);
+    var x = (vw - STAGE_W * scale) / 2;
+    var y = (vh - STAGE_H * scale) / 2;
+    stage.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + scale + ')';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  /* ---- show a slide ---- */
+  function show(i) {
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    slides[current].classList.remove('active');
+    current = i;
+    slides[current].classList.add('active');
+    progress.style.width = ((current + 1) / slides.length * 100) + '%';
+    if (history.replaceState) history.replaceState(null, '', '#' + (current + 1));
+  }
+  function next() { show(current + 1); }
+  function prev() { show(current - 1); }
+
+  /* ---- keyboard ---- */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+    else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) { (document.documentElement.requestFullscreen || function(){})(); }
+      else { document.exitFullscreen && document.exitFullscreen(); }
+    }
+    else if (e.key === 'p' || e.key === 'P') { window.print(); }
+  });
+
+  /* ---- wheel (debounced) ---- */
+  var wheelLock = false;
+  window.addEventListener('wheel', function (e) {
+    if (wheelLock) return;
+    if (Math.abs(e.deltaY) < 24 && Math.abs(e.deltaX) < 24) return;
+    wheelLock = true;
+    (e.deltaY > 0 || e.deltaX > 0) ? next() : prev();
+    setTimeout(function () { wheelLock = false; }, 620);
+  }, { passive: true });
+
+  /* ---- touch ---- */
+  var tx = 0, ty = 0;
+  window.addEventListener('touchstart', function (e) { tx = e.changedTouches[0].clientX; ty = e.changedTouches[0].clientY; }, { passive: true });
+  window.addEventListener('touchend', function (e) {
+    var dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy)) { dx < 0 ? next() : prev(); }
+  }, { passive: true });
+
+  /* ---- deep-link on load ---- */
+  var h = parseInt((location.hash || '').replace('#', ''), 10);
+  if (!isNaN(h) && h >= 1 && h <= slides.length) { show(h - 1); }
+  else { show(0); }
+})();
+</script>
+</body>
+</html>

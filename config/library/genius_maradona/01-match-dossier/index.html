@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Match Dossier — Portugal v Spain · Round of 16 · World Cup 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;700&family=Bitter:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cream:#f2e7cf;         /* warm newsprint ground */
+    --cream-2:#ece0c2;       /* panel */
+    --cream-3:#e6d8b4;       /* deeper panel */
+    --ink:#161210;           /* ink black */
+    --ink-soft:#3a3128;
+    --ink-fade:#6b5d49;
+    --red:#c8281e;           /* hot Iberian red — the one accent */
+    --red-deep:#9a1a13;
+    --rule:#221c16;
+    --paper-edge:#d9c9a2;
+    --stamp:rgba(200,40,30,.14);
+    --shadow: 3px 3px 0 var(--ink);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(255,255,255,.35), transparent 40%),
+      var(--cream);
+    color:var(--ink);
+    font-family:'Oswald',sans-serif;
+    font-weight:300;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+    overflow-x:hidden;
+  }
+  /* halftone dot field, faint, over the whole page */
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    background-image:radial-gradient(var(--ink) 0.8px, transparent 0.9px);
+    background-size:6px 6px;
+    opacity:.05;
+    pointer-events:none;
+    z-index:0;
+    mix-blend-mode:multiply;
+  }
+  /* subtle vertical newsprint fold */
+  body::after{
+    content:"";
+    position:fixed;top:0;bottom:0;left:50%;width:38px;transform:translateX(-50%);
+    background:linear-gradient(90deg,transparent,rgba(120,100,60,.10) 45%,rgba(120,100,60,.10) 55%,transparent);
+    pointer-events:none;z-index:0;mix-blend-mode:multiply;
+    display:none;
+  }
+  .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:22px 20px 90px}
+
+  a{color:var(--red-deep);text-decoration:none;border-bottom:1px solid rgba(154,26,19,.4)}
+  a:hover{color:var(--red);border-color:var(--red)}
+
+  h1,h2,h3,.anton{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.01em;line-height:.92}
+
+  /* ---------- MASTHEAD ---------- */
+  .masthead{border:3px solid var(--ink);background:var(--cream-2);box-shadow:var(--shadow);position:relative}
+  .mh-top{display:flex;justify-content:space-between;align-items:stretch;border-bottom:2px solid var(--ink);font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+  .mh-top > div{padding:8px 14px}
+  .mh-top .mid{flex:1;text-align:center;border-left:2px solid var(--ink);border-right:2px solid var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:var(--cream)}
+  .mh-top .mid .dot{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px rgba(200,40,30,.3);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .mh-body{padding:14px 20px 18px;text-align:center;position:relative}
+  .kicker{font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:var(--red-deep);font-weight:700}
+  .title-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:6px 0 2px}
+  .title-row .side{font-family:'Anton',sans-serif;font-size:clamp(38px,8.5vw,86px);line-height:.86;text-transform:uppercase}
+  .title-row .por{text-align:right;color:var(--ink)}
+  .title-row .esp{text-align:left;color:var(--ink)}
+  .title-row .vs{font-family:'Anton';font-size:clamp(20px,4vw,34px);color:var(--red);background:var(--ink);color:var(--cream);width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .subttl{font-family:'Oswald';font-weight:500;text-transform:uppercase;letter-spacing:.16em;font-size:13px;color:var(--ink-soft);margin-top:6px}
+  .flagline{display:flex;justify-content:center;gap:6px;margin-top:12px}
+  .flagline span{height:6px;width:64px}
+  /* ticket stub row */
+  .stub-row{display:flex;flex-wrap:wrap;border-top:2px dashed var(--ink);margin-top:2px}
+  .stub{flex:1 1 0;min-width:120px;padding:10px 12px;border-right:2px dashed var(--ink);text-align:left}
+  .stub:last-child{border-right:none}
+  .stub .l{font-family:'Roboto Mono',monospace;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--red-deep);font-weight:700}
+  .stub .v{font-family:'Oswald';font-weight:600;text-transform:uppercase;font-size:15px;line-height:1.15;margin-top:3px}
+  .stub .v small{display:block;font-weight:300;font-size:11px;color:var(--ink-fade);letter-spacing:.04em}
+
+  /* ---------- ABOUT collapsible ---------- */
+  details.about{margin:18px 0 0;border:2px solid var(--ink);background:var(--cream-3);box-shadow:var(--shadow)}
+  details.about summary{cursor:pointer;list-style:none;padding:11px 16px;display:flex;align-items:center;gap:12px;font-family:'Roboto Mono',monospace;text-transform:uppercase;letter-spacing:.16em;font-size:11.5px;font-weight:700;color:var(--ink)}
+  details.about summary::-webkit-details-marker{display:none}
+  details.about summary .chev{margin-left:auto;font-family:'Anton';transition:transform .25s;color:var(--red)}
+  details.about[open] summary .chev{transform:rotate(90deg)}
+  details.about summary .tag{background:var(--red);color:var(--cream);padding:2px 8px;font-size:10px;letter-spacing:.2em}
+  .about-body{padding:4px 18px 18px;border-top:1px dashed var(--ink);font-family:'Bitter',serif;font-size:13.5px;line-height:1.62;color:var(--ink-soft)}
+  .about-body .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px 26px;margin-top:12px}
+  .about-body h4{font-family:'Anton';font-size:14px;letter-spacing:.06em;color:var(--red-deep);margin:0 0 4px}
+
+  /* ---------- SECTION scaffolding ---------- */
+  section{margin-top:34px;position:relative}
+  .sec-head{display:flex;align-items:baseline;gap:14px;border-bottom:3px solid var(--ink);padding-bottom:6px;margin-bottom:18px}
+  .sec-num{font-family:'Anton';font-size:15px;background:var(--ink);color:var(--cream);padding:3px 9px;letter-spacing:.05em;flex-shrink:0;align-self:center}
+  .sec-head h2{font-size:clamp(24px,4.4vw,38px);margin:0}
+  .sec-head .side-note{margin-left:auto;font-family:'Roboto Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-fade);align-self:center;text-align:right}
+
+  .lead{font-family:'Bitter',serif;font-size:16px;line-height:1.66;color:var(--ink-soft);max-width:70ch}
+  .lead .drop{float:left;font-family:'Anton';font-size:56px;line-height:.7;padding:6px 10px 0 0;color:var(--red)}
+  .lead strong{color:var(--ink);font-weight:600}
+
+  /* two-col teams grid */
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.duo{grid-template-columns:1fr}}
+  .team-card{border:2px solid var(--ink);background:var(--cream-2);box-shadow:var(--shadow);overflow:hidden}
+  .team-card .tc-head{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:2px solid var(--ink);position:relative}
+  .team-card .tc-head .crest{width:46px;height:46px;flex-shrink:0}
+  .team-card .tc-head .nm{font-family:'Anton';font-size:26px;line-height:.9}
+  .team-card .tc-head .rk{margin-left:auto;font-family:'Roboto Mono',monospace;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-fade)}
+  .team-card .tc-head .rk b{display:block;font-size:15px;color:var(--ink);font-family:'Oswald';font-weight:700}
+  .tc-body{padding:12px 14px}
+  .route-strip{display:flex;flex-direction:column;gap:6px;font-family:'Roboto Mono',monospace;font-size:11.5px}
+  .route-strip .r{display:flex;align-items:center;gap:9px}
+  .route-strip .r .stage{width:60px;color:var(--ink-fade);text-transform:uppercase;letter-spacing:.08em;font-size:9.5px;flex-shrink:0}
+  .route-strip .r .opp{flex:1;text-transform:uppercase;letter-spacing:.02em}
+  .route-strip .r .sc{font-weight:700;letter-spacing:.02em}
+  .pill{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;font-family:'Roboto Mono';font-weight:700;font-size:10px;color:var(--cream);border-radius:2px}
+  .pW{background:#1f7a34}.pD{background:#7a6a1f}.pL{background:var(--red-deep)}
+  .form5{display:flex;gap:5px;margin-top:12px;align-items:center}
+  .form5 .lab{font-family:'Roboto Mono';font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-fade);margin-right:4px}
+  .form5 .b{width:26px;height:26px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Anton';font-size:13px;color:var(--cream)}
+
+  /* stat rows */
+  .statset{margin-top:14px;border-top:1px dashed var(--ink);padding-top:10px}
+  .statrow{display:grid;grid-template-columns:1fr auto;gap:6px;padding:4px 0;font-family:'Oswald';font-weight:400;font-size:13.5px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px dotted rgba(34,28,22,.28)}
+  .statrow:last-child{border-bottom:none}
+  .statrow .k{color:var(--ink-soft)}
+  .statrow .v{font-family:'Roboto Mono';font-weight:700;color:var(--ink)}
+  .statrow .v .u{color:var(--ink-fade);font-weight:400;font-size:11px}
+
+  /* comparison bars (xG / form) */
+  .cmp{border:2px solid var(--ink);background:var(--cream-2);box-shadow:var(--shadow);padding:16px 18px;margin-top:6px}
+  .cmp .cmp-title{font-family:'Anton';font-size:16px;text-transform:uppercase;margin-bottom:14px;display:flex;justify-content:space-between;align-items:baseline}
+  .cmp .cmp-title .src{font-family:'Roboto Mono';font-size:9px;letter-spacing:.12em;color:var(--ink-fade)}
+  .barline{display:grid;grid-template-columns:130px 1fr 46px;align-items:center;gap:10px;margin:9px 0;font-family:'Oswald';font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+  .barline .who{color:var(--ink-soft);text-align:right;font-weight:500}
+  .barline .track{height:16px;background:var(--cream-3);border:1.5px solid var(--ink);position:relative;overflow:hidden}
+  .barline .track .fill{height:100%;position:relative}
+  .barline .track .fill.por{background:repeating-linear-gradient(45deg,var(--ink),var(--ink) 3px,#2c241d 3px,#2c241d 6px)}
+  .barline .track .fill.esp{background:repeating-linear-gradient(45deg,var(--red),var(--red) 3px,var(--red-deep) 3px,var(--red-deep) 6px)}
+  .barline .num{font-family:'Roboto Mono';font-weight:700;font-size:13px;text-align:right}
+
+  /* pitch / formation */
+  .pitch-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.pitch-grid{grid-template-columns:1fr}}
+  .pitch-box{border:2px solid var(--ink);background:var(--cream-2);box-shadow:var(--shadow);padding:12px}
+  .pitch-box .pb-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .pitch-box .pb-head .t{font-family:'Anton';font-size:18px}
+  .pitch-box .pb-head .f{font-family:'Roboto Mono';font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--red-deep)}
+  svg.pitch{width:100%;height:auto;display:block}
+
+  /* key duel */
+  .duel{border:3px solid var(--ink);background:var(--ink);color:var(--cream);box-shadow:5px 5px 0 var(--red-deep);position:relative;overflow:hidden}
+  .duel::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(242,231,207,.14) 0.8px,transparent 0.9px);background-size:7px 7px;opacity:.5;pointer-events:none}
+  .duel-head{padding:12px 18px;border-bottom:2px solid var(--red);display:flex;align-items:center;gap:12px;position:relative}
+  .duel-head .lab{font-family:'Roboto Mono';font-size:10px;letter-spacing:.28em;color:var(--red);font-weight:700}
+  .duel-head .ttl{font-family:'Anton';font-size:clamp(22px,4vw,34px);margin-left:auto;text-align:right;line-height:.9}
+  .duel-body{display:grid;grid-template-columns:1fr auto 1fr;position:relative}
+  @media(max-width:640px){.duel-body{grid-template-columns:1fr;gap:0}}
+  .duel-body .fighter{padding:18px}
+  .duel-body .fighter.right{text-align:right}
+  .duel-body .vs-mid{align-self:center;font-family:'Anton';font-size:34px;color:var(--red);padding:0 6px}
+  @media(max-width:640px){.duel-body .vs-mid{padding:8px 0;border-top:1px dashed rgba(242,231,207,.3);border-bottom:1px dashed rgba(242,231,207,.3);text-align:center}}
+  .fighter .fn{font-family:'Anton';font-size:26px;line-height:.9}
+  .fighter .fmeta{font-family:'Roboto Mono';font-size:10.5px;letter-spacing:.08em;color:#c9b58f;margin-top:4px;text-transform:uppercase}
+  .fighter .fstat{margin-top:12px;display:flex;gap:16px}
+  .fighter.right .fstat{justify-content:flex-end}
+  .fighter .fstat .s .n{font-family:'Anton';font-size:24px;color:#fff;line-height:1}
+  .fighter .fstat .s .n .red{color:var(--red)}
+  .fighter .fstat .s .l{font-family:'Roboto Mono';font-size:8.5px;letter-spacing:.1em;color:#a99873;text-transform:uppercase;margin-top:2px}
+  .duel-note{padding:14px 18px;border-top:2px solid var(--red);font-family:'Bitter',serif;font-size:13.5px;line-height:1.6;color:#e9dcc0;position:relative}
+  .duel-note b{color:#fff}
+
+  /* set piece + h2h flankers */
+  .info-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.info-2{grid-template-columns:1fr}}
+  .panel{border:2px solid var(--ink);background:var(--cream-2);box-shadow:var(--shadow);padding:16px 18px}
+  .panel h3{font-family:'Anton';font-size:19px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+  .panel h3 .ic{color:var(--red)}
+  .panel .sub{font-family:'Roboto Mono';font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-fade);margin-bottom:10px}
+  .panel p{font-family:'Bitter',serif;font-size:13.5px;line-height:1.62;color:var(--ink-soft);margin:0 0 8px}
+  .panel p strong{color:var(--ink);font-weight:600}
+  .h2h-list{font-family:'Oswald';font-size:13px;text-transform:uppercase;letter-spacing:.03em}
+  .h2h-list .row{display:grid;grid-template-columns:52px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px dotted rgba(34,28,22,.3)}
+  .h2h-list .row:last-child{border-bottom:none}
+  .h2h-list .yr{font-family:'Roboto Mono';font-weight:700;color:var(--red-deep);font-size:12px}
+  .h2h-list .comp{color:var(--ink-fade);font-size:11px}
+  .h2h-list .res{font-family:'Roboto Mono';font-weight:700;font-size:12.5px}
+
+  /* scorers */
+  .scorers{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid var(--ink);box-shadow:var(--shadow);background:var(--cream-2);overflow:hidden}
+  @media(max-width:640px){.scorers{grid-template-columns:1fr}}
+  .scorers .col{padding:14px 16px}
+  .scorers .col.por{border-right:2px solid var(--ink)}
+  @media(max-width:640px){.scorers .col.por{border-right:none;border-bottom:2px solid var(--ink)}}
+  .scorers .col h4{font-family:'Anton';font-size:16px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+  .scorer{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px dotted rgba(34,28,22,.28);font-family:'Oswald';font-size:13.5px;text-transform:uppercase}
+  .scorer:last-child{border-bottom:none}
+  .scorer .nm{font-weight:500;color:var(--ink)}
+  .scorer .nm small{display:block;font-weight:300;font-size:10px;color:var(--ink-fade);letter-spacing:.02em;text-transform:none;font-family:'Bitter',serif;font-style:italic}
+  .scorer .gg{font-family:'Anton';font-size:18px;color:var(--red)}
+  .scorer .gg .u{font-family:'Roboto Mono';font-size:9px;color:var(--ink-fade);font-weight:400}
+
+  /* verdict */
+  .verdict{border:3px solid var(--ink);background:linear-gradient(135deg,var(--cream-3),var(--cream-2));box-shadow:6px 6px 0 var(--ink);position:relative;overflow:hidden;margin-top:14px}
+  .verdict::after{content:"10";position:absolute;right:-14px;bottom:-46px;font-family:'Anton';font-size:220px;color:rgba(200,40,30,.12);line-height:1;pointer-events:none}
+  .verdict .vh{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:3px double var(--ink);position:relative}
+  .verdict .vh .sig{font-family:'Anton';font-size:clamp(22px,4vw,30px);color:var(--ink)}
+  .verdict .vh .sig .r{color:var(--red)}
+  .verdict .vh .badge{margin-left:auto;font-family:'Roboto Mono';font-size:10px;letter-spacing:.2em;text-transform:uppercase;border:1.5px solid var(--ink);padding:5px 10px;color:var(--ink)}
+  .verdict .vbody{padding:18px 22px;position:relative;z-index:1}
+  .verdict .vbody p{font-family:'Bitter',serif;font-size:15.5px;line-height:1.72;color:var(--ink-soft);margin:0 0 13px;max-width:74ch}
+  .verdict .vbody p strong{color:var(--ink);font-weight:600}
+  .verdict .vbody p em{color:var(--red-deep);font-style:italic}
+  .verdict .callout{display:flex;flex-wrap:wrap;align-items:center;gap:18px;margin-top:6px;padding-top:16px;border-top:1px dashed var(--ink)}
+  .verdict .callout .score{font-family:'Anton';font-size:clamp(40px,9vw,72px);line-height:.85;color:var(--ink)}
+  .verdict .callout .score .x{color:var(--red);padding:0 6px}
+  .verdict .callout .cwrap .cl{font-family:'Roboto Mono';font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-fade)}
+  .verdict .callout .cwrap .cv{font-family:'Oswald';font-weight:600;text-transform:uppercase;font-size:16px;color:var(--ink);letter-spacing:.02em;line-height:1.2;max-width:34ch}
+  .signoff{font-family:'Bitter',serif;font-style:italic;font-size:15px;color:var(--red-deep);margin-top:14px;text-align:right;padding-right:6px}
+  .signoff .name{font-family:'Anton';font-style:normal;font-size:24px;color:var(--ink);display:block;letter-spacing:.02em;margin-top:2px}
+
+  /* footer */
+  footer{margin-top:44px;border-top:3px solid var(--ink);padding-top:16px}
+  footer .src-head{font-family:'Anton';font-size:15px;text-transform:uppercase;margin-bottom:8px}
+  footer .srcs{font-family:'Roboto Mono';font-size:10.5px;line-height:1.9;color:var(--ink-fade);columns:2;column-gap:30px}
+  @media(max-width:640px){footer .srcs{columns:1}}
+  footer .srcs a{color:var(--ink-soft);border:none;text-decoration:underline;text-underline-offset:2px;text-decoration-color:rgba(154,26,19,.4)}
+  footer .colophon{margin-top:16px;padding-top:12px;border-top:1px dashed var(--ink);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-family:'Roboto Mono';font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-fade)}
+  footer .colophon .made{color:var(--red-deep);font-weight:700}
+
+  .note-inline{font-family:'Roboto Mono';font-size:10px;color:var(--ink-fade);letter-spacing:.04em;margin-top:8px}
+  .caret{color:var(--red);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ MASTHEAD ============ -->
+  <div class="masthead">
+    <div class="mh-top">
+      <div>No. 16 · Knockout</div>
+      <div class="mid"><span class="dot"></span> The Matchday Dossier — El Diez</div>
+      <div>Est. 1986</div>
+    </div>
+    <div class="mh-body">
+      <div class="kicker">FIFA World Cup 2026 · Round of 16 · Dallas Stadium, Arlington TX</div>
+      <div class="title-row">
+        <div class="side por">Portugal</div>
+        <div class="vs">V</div>
+        <div class="side esp">Spain</div>
+      </div>
+      <div class="subttl">The Iberian Derby · A rematch one year in the making</div>
+      <div class="flagline" aria-hidden="true">
+        <!-- Portugal: green/red -->
+        <span style="background:#046a38"></span><span style="background:#c8281e"></span>
+        <span style="background:#161210;width:22px"></span>
+        <!-- Spain: red/gold -->
+        <span style="background:#c8281e"></span><span style="background:#c9a227"></span><span style="background:#c8281e"></span>
+      </div>
+    </div>
+    <div class="stub-row">
+      <div class="stub"><div class="l">Kick-off</div><div class="v">Mon 6 Jul<small>21:00 CET · 3:00pm ET</small></div></div>
+      <div class="stub"><div class="l">Venue</div><div class="v">Dallas Stadium<small>Arlington, Texas</small></div></div>
+      <div class="stub"><div class="l">Stage</div><div class="v">Round of 16<small>Single leg · win or fly home</small></div></div>
+      <div class="stub"><div class="l">Winner meets</div><div class="v">QF July 10<small>Belgium / USA side</small></div></div>
+    </div>
+  </div>
+
+  <!-- ============ ABOUT ============ -->
+  <details class="about" open>
+    <summary><span class="tag">Dossier</span> About this page — why / context / how / assumed <span class="chev">›</span></summary>
+    <div class="about-body">
+      This is the pre-match dossier for the biggest tie of the Round of 16 — <strong>Portugal against Spain</strong> — built the way I read a match: the geometry first, the numbers underneath, the verdict on top. Not a betting slip. An opinion, owned.
+      <div class="grid">
+        <div><h4>Why</h4>The boss wanted the one tie that decides the round. This is it: the European champions against the Nations League holders, meeting far too early — the old king and the boy prince, one more time.</div>
+        <div><h4>Context</h4>World Cup 2026 (USA · Canada · Mexico), knockout stage. It is 3 July; kick-off is Monday 6 July in Arlington. Every number here is from the group stage and the Round of 32 — the games actually played, not projected.</div>
+        <div><h4>How to use it</h4>Read it before the match; open it again at half-time and the story will have moved. The road, the form, the XIs, the duel, the set-piece, my scoreline — top to bottom.</div>
+        <div><h4>What I assumed</h4>Probable XIs mirror each side's Round of 32 team (Martínez's 4-2-3-1, De la Fuente's 4-3-3) — knockout football rarely rotates. xG here is a tournament-average model from real box/shot data, flagged as such, not an official Understat feed (which doesn't cover the World Cup). Sources cited at the foot.</div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ 1 · THE STORY ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h2>The Tie</h2>
+      <span class="side-note">Portugal 2nd, Group K · Spain 1st, Group H</span>
+    </div>
+    <p class="lead"><span class="drop">T</span>hey met in a final thirteen months ago and could not be separated — <strong>Portugal 2-2 Spain</strong> in Munich, June 2025, Ronaldo levelling on the volley at 61, decided only from twelve yards. The World Cup, cruel as ever, has drawn them together again in the <strong>Round of 16</strong> — a tie that belongs in a semi-final, arriving with fifteen teams still standing. One of these two goes home Monday night in Texas. Spain arrive as the <strong>European champions</strong>, unbeaten, a machine in midfield and a boy on the right wing who dribbles like the pitch tilts toward him. Portugal arrive <strong>second in their group</strong>, wobbling, saved in the 94th minute against Croatia — but carrying the one man in football who refuses to leave, at forty-one, still scoring in the knockouts. <em>Se juega, no se calcula</em> — but tonight we calculate first, then I tell you what my eye sees.</p>
+  </section>
+
+  <!-- ============ 2 · ROAD TO THIS STAGE ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h2>Road to the Last 16</h2>
+      <span class="side-note">Group stage + Round of 32 · every result real</span>
+    </div>
+    <div class="duo">
+      <!-- PORTUGAL -->
+      <div class="team-card">
+        <div class="tc-head">
+          <!-- Portugal crest (generative shield) -->
+          <svg class="crest" viewBox="0 0 46 46" aria-label="Portugal">
+            <path d="M23 2 L42 9 V25 C42 36 33 42 23 45 C13 42 4 36 4 25 V9 Z" fill="#046a38" stroke="#161210" stroke-width="2"/>
+            <path d="M23 2 L42 9 V25 C42 36 33 42 23 45 Z" fill="#c8281e"/>
+            <circle cx="23" cy="23" r="8.5" fill="#f2e7cf" stroke="#161210" stroke-width="1.5"/>
+            <circle cx="23" cy="23" r="3.4" fill="#c9a227" stroke="#161210" stroke-width="1"/>
+          </svg>
+          <div class="nm">Portugal</div>
+          <div class="rk">FIFA rank<b>No. 7</b></div>
+        </div>
+        <div class="tc-body">
+          <div class="route-strip">
+            <div class="r"><span class="stage">Grp K</span><span class="opp">v DR Congo</span><span class="pill pD">D</span><span class="sc">1–1</span></div>
+            <div class="r"><span class="stage">Grp K</span><span class="opp">v Uzbekistan</span><span class="pill pW">W</span><span class="sc">5–0</span></div>
+            <div class="r"><span class="stage">Grp K</span><span class="opp">v Colombia</span><span class="pill pD">D</span><span class="sc">0–0</span></div>
+            <div class="r"><span class="stage">R32</span><span class="opp">v Croatia</span><span class="pill pW">W</span><span class="sc">2–1</span></div>
+          </div>
+          <div class="form5">
+            <span class="lab">Last 5</span>
+            <!-- includes NL final win vs Spain (pens) for 5th -->
+            <span class="b" style="background:#7a6a1f" title="1-1 DR Congo">D</span>
+            <span class="b" style="background:#1f7a34" title="5-0 Uzbekistan">W</span>
+            <span class="b" style="background:#7a6a1f" title="0-0 Colombia">D</span>
+            <span class="b" style="background:#1f7a34" title="2-1 Croatia (R32)">W</span>
+            <span class="b" style="background:#161210" title="vs Croatia won 94'">◐</span>
+          </div>
+          <div class="statset">
+            <div class="statrow"><span class="k">Group finish</span><span class="v">2nd · 5 pts</span></div>
+            <div class="statrow"><span class="k">Goals for / against</span><span class="v">8 <span class="u">/</span> 2</span></div>
+            <div class="statrow"><span class="k">Shape</span><span class="v">4–2–3–1</span></div>
+            <div class="statrow"><span class="k">Manager</span><span class="v">R. Martínez</span></div>
+          </div>
+          <p class="note-inline"><span class="caret">▲</span> Unbeaten but rescued late: dominated Croatia on the ball, needed a 94th-minute Gonçalo Ramos header — the 2nd-latest goal in Portugal's WC history.</p>
+        </div>
+      </div>
+
+      <!-- SPAIN -->
+      <div class="team-card">
+        <div class="tc-head">
+          <svg class="crest" viewBox="0 0 46 46" aria-label="Spain">
+            <path d="M23 2 L42 9 V25 C42 36 33 42 23 45 C13 42 4 36 4 25 V9 Z" fill="#c8281e" stroke="#161210" stroke-width="2"/>
+            <rect x="4" y="17" width="38" height="12" fill="#c9a227"/>
+            <path d="M4 25 C4 36 13 42 23 45 C33 42 42 36 42 25 Z" fill="#c8281e"/>
+            <rect x="4" y="21.5" width="38" height="3" fill="#c9a227" opacity=".9"/>
+            <circle cx="23" cy="23" r="4" fill="#161210"/><circle cx="23" cy="23" r="2" fill="#f2e7cf"/>
+          </svg>
+          <div class="nm">Spain</div>
+          <div class="rk">FIFA rank<b>No. 2</b></div>
+        </div>
+        <div class="tc-body">
+          <div class="route-strip">
+            <div class="r"><span class="stage">Grp H</span><span class="opp">v Cape Verde</span><span class="pill pD">D</span><span class="sc">0–0</span></div>
+            <div class="r"><span class="stage">Grp H</span><span class="opp">v Saudi Arabia</span><span class="pill pW">W</span><span class="sc">4–0</span></div>
+            <div class="r"><span class="stage">Grp H</span><span class="opp">v Uruguay</span><span class="pill pW">W</span><span class="sc">1–0</span></div>
+            <div class="r"><span class="stage">R32</span><span class="opp">v Austria</span><span class="pill pW">W</span><span class="sc">3–0</span></div>
+          </div>
+          <div class="form5">
+            <span class="lab">Last 5</span>
+            <span class="b" style="background:#7a6a1f" title="0-0 Cape Verde">D</span>
+            <span class="b" style="background:#1f7a34" title="4-0 Saudi Arabia">W</span>
+            <span class="b" style="background:#1f7a34" title="1-0 Uruguay">W</span>
+            <span class="b" style="background:#1f7a34" title="3-0 Austria (R32)">W</span>
+            <span class="b" style="background:#c8281e" title="Lost NL final to Portugal on pens, Jun 25">L</span>
+          </div>
+          <div class="statset">
+            <div class="statrow"><span class="k">Group finish</span><span class="v">1st · 7 pts</span></div>
+            <div class="statrow"><span class="k">Goals for / against</span><span class="v">8 <span class="u">/</span> 0</span></div>
+            <div class="statrow"><span class="k">Shape</span><span class="v">4–3–3</span></div>
+            <div class="statrow"><span class="k">Manager</span><span class="v">L. de la Fuente</span></div>
+          </div>
+          <p class="note-inline"><span class="caret">▲</span> Not conceded a goal all tournament — four matches, four clean sheets. Only wobble: a flat 0-0 opener with debutants Cape Verde before the machine warmed up.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3 · FORM & xG BARS ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <h2>Form Lines &amp; Expected Goals</h2>
+      <span class="side-note">4 matches each · this tournament</span>
+    </div>
+    <div class="cmp">
+      <div class="cmp-title"><span>The tale of the tape</span><span class="src">real box/shot data · model xG · WC26</span></div>
+
+      <!-- Goals scored -->
+      <div class="barline"><span class="who">Goals scored</span><span class="track"><span class="fill por" style="width:100%"></span></span><span class="num">8</span></div>
+      <div class="barline"><span class="who" style="color:var(--red-deep)">Goals scored</span><span class="track"><span class="fill esp" style="width:100%"></span></span><span class="num">8</span></div>
+      <div style="height:10px"></div>
+      <!-- Goals conceded -->
+      <div class="barline"><span class="who">Goals conceded</span><span class="track"><span class="fill por" style="width:100%"></span></span><span class="num">2</span></div>
+      <div class="barline"><span class="who" style="color:var(--red-deep)">Goals conceded</span><span class="track"><span class="fill esp" style="width:6%"></span></span><span class="num">0</span></div>
+      <div style="height:10px"></div>
+      <!-- xG for (model) -->
+      <div class="barline"><span class="who">xG for <small style="font-size:9px">(model)</small></span><span class="track"><span class="fill por" style="width:71%"></span></span><span class="num">≈7.4</span></div>
+      <div class="barline"><span class="who" style="color:var(--red-deep)">xG for <small style="font-size:9px">(model)</small></span><span class="track"><span class="fill esp" style="width:100%"></span></span><span class="num">≈10.3</span></div>
+      <div style="height:10px"></div>
+      <!-- xG against (model) -->
+      <div class="barline"><span class="who">xG against <small style="font-size:9px">(model)</small></span><span class="track"><span class="fill por" style="width:100%"></span></span><span class="num">≈4.9</span></div>
+      <div class="barline"><span class="who" style="color:var(--red-deep)">xG against <small style="font-size:9px">(model)</small></span><span class="track"><span class="fill esp" style="width:59%"></span></span><span class="num">≈2.9</span></div>
+
+      <p class="note-inline" style="margin-top:14px"><span class="caret">▲</span> <b>Read it honestly.</b> Same goals scored — but Spain create more (≈10 xG to ≈7) and give up far less (≈3 to ≈5). Portugal's ledger is flattered by that 5-0 against Uzbekistan; against Croatia and Colombia the chances dried up. The model says Spain are the better side by a clear margin. My eye agrees — with one asterisk, and his name is Cristiano.</p>
+      <p class="note-inline" style="margin-top:2px;color:var(--ink-fade)">Note: no official Understat/xG feed covers the World Cup — these are a transparent tournament-average estimate built from real shot volume, shot location and clean-sheet record, not a fabricated feed. Treat as directional, not decimal-exact.</p>
+    </div>
+  </section>
+
+  <!-- ============ 4 · PROBABLE XIs ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <h2>Probable XIs</h2>
+      <span class="side-note">Mirrors each side's Round of 32 team</span>
+    </div>
+    <div class="pitch-grid">
+      <!-- PORTUGAL PITCH -->
+      <div class="pitch-box">
+        <div class="pb-head"><span class="t" style="color:#046a38">Portugal</span><span class="f">4–2–3–1</span></div>
+        <svg class="pitch" viewBox="0 0 300 220" role="img" aria-label="Portugal probable XI">
+          <defs>
+            <pattern id="dotP" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r="0.7" fill="#161210" opacity="0.10"/></pattern>
+          </defs>
+          <rect x="0" y="0" width="300" height="220" fill="#e6d8b4"/>
+          <rect x="0" y="0" width="300" height="220" fill="url(#dotP)"/>
+          <!-- pitch lines -->
+          <g stroke="#161210" stroke-width="1.4" fill="none" opacity="0.7">
+            <rect x="8" y="8" width="284" height="204"/>
+            <line x1="8" y1="110" x2="292" y2="110"/>
+            <circle cx="150" cy="110" r="26"/>
+            <rect x="92" y="8" width="116" height="34"/>
+            <rect x="92" y="178" width="116" height="34"/>
+            <rect x="122" y="8" width="56" height="14"/>
+            <rect x="122" y="198" width="56" height="14"/>
+          </g>
+          <!-- players: node = circle + number, label under -->
+          <g font-family="Anton" font-size="10" text-anchor="middle">
+            <!-- GK -->
+            <g><circle cx="150" cy="30" r="9" fill="#046a38" stroke="#161210" stroke-width="1.5"/><text x="150" y="33.5" fill="#fff">1</text><text x="150" y="49" font-family="Roboto Mono" font-size="7.5" fill="#161210">D. COSTA</text></g>
+            <!-- back 4 -->
+            <g><circle cx="52" cy="66" r="9" fill="#046a38" stroke="#161210" stroke-width="1.5"/><text x="52" y="69.5" fill="#fff">2</text><text x="52" y="85" font-family="Roboto Mono" font-size="7.5" fill="#161210">CANCELO</text></g>
+            <g><circle cx="115" cy="60" r="9" fill="#046a38" stroke="#161210" stroke-width="1.5"/><text x="115" y="63.5" fill="#fff">3</text><text x="115" y="79" font-family="Roboto Mono" font-size="7.5" fill="#161210">R. DIAS</text></g>
+            <g><circle cx="185" cy="60" r="9" fill="#046a38" stroke="#161210" stroke-width="1.5"/><text x="185" y="63.5" fill="#fff">14</text><text x="185" y="79" font-family="Roboto Mono" font-size="7.5" fill="#161210">VEIGA</text></g>
+            <g><circle cx="248" cy="66" r="9" fill="#046a38" stroke="#161210" stroke-width="1.5"/><text x="248" y="69.5" fill="#fff">19</text><text x="248" y="85" font-family="Roboto Mono" font-size="7.5" fill="#161210">N. MENDES</text></g>
+            <!-- double pivot -->
+            <g><circle cx="112" cy="108" r="9" fill="#161210" stroke="#046a38" stroke-width="2"/><text x="112" y="111.5" fill="#fff">8</text><text x="112" y="127" font-family="Roboto Mono" font-size="7.5" fill="#161210">VITINHA</text></g>
+            <g><circle cx="188" cy="108" r="9" fill="#161210" stroke="#046a38" stroke-width="2"/><text x="188" y="111.5" fill="#fff">18</text><text x="188" y="127" font-family="Roboto Mono" font-size="7.5" fill="#161210">J. NEVES</text></g>
+            <!-- attacking mid band -->
+            <g><circle cx="56" cy="150" r="9" fill="#046a38" stroke="#161210" stroke-width="1.5"/><text x="56" y="153.5" fill="#fff">17</text><text x="56" y="169" font-family="Roboto Mono" font-size="7.5" fill="#161210">P. NETO</text></g>
+            <g><circle cx="150" cy="152" r="9" fill="#046a38" stroke="#161210" stroke-width="1.5"/><text x="150" y="155.5" fill="#fff">7</text><text x="150" y="171" font-family="Roboto Mono" font-size="7.5" fill="#161210">B. FDES</text></g>
+            <g><circle cx="244" cy="150" r="9" fill="#046a38" stroke="#161210" stroke-width="1.5"/><text x="244" y="153.5" fill="#fff">10</text><text x="244" y="169" font-family="Roboto Mono" font-size="7.5" fill="#161210">LEÃO</text></g>
+            <!-- striker -->
+            <g><circle cx="150" cy="192" r="10.5" fill="#c8281e" stroke="#161210" stroke-width="2"/><text x="150" y="196" fill="#fff" font-size="11">7</text><text x="150" y="212" font-family="Roboto Mono" font-size="8" font-weight="bold" fill="#c8281e">RONALDO ©</text></g>
+          </g>
+        </svg>
+        <p class="note-inline" style="margin-top:8px"><span class="caret">▲</span> Ronaldo (©) as the fixed nine; Leão &amp; Neto the outlets in transition. Vitinha–J. Neves shield a back four with Cancelo pushing on.</p>
+      </div>
+
+      <!-- SPAIN PITCH -->
+      <div class="pitch-box">
+        <div class="pb-head"><span class="t" style="color:#c8281e">Spain</span><span class="f">4–3–3</span></div>
+        <svg class="pitch" viewBox="0 0 300 220" role="img" aria-label="Spain probable XI">
+          <defs>
+            <pattern id="dotS" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r="0.7" fill="#161210" opacity="0.10"/></pattern>
+          </defs>
+          <rect x="0" y="0" width="300" height="220" fill="#e6d8b4"/>
+          <rect x="0" y="0" width="300" height="220" fill="url(#dotS)"/>
+          <g stroke="#161210" stroke-width="1.4" fill="none" opacity="0.7">
+            <rect x="8" y="8" width="284" height="204"/>
+            <line x1="8" y1="110" x2="292" y2="110"/>
+            <circle cx="150" cy="110" r="26"/>
+            <rect x="92" y="8" width="116" height="34"/>
+            <rect x="92" y="178" width="116" height="34"/>
+            <rect x="122" y="8" width="56" height="14"/>
+            <rect x="122" y="198" width="56" height="14"/>
+          </g>
+          <g font-family="Anton" font-size="10" text-anchor="middle">
+            <!-- GK -->
+            <g><circle cx="150" cy="30" r="9" fill="#c8281e" stroke="#161210" stroke-width="1.5"/><text x="150" y="33.5" fill="#fff">1</text><text x="150" y="49" font-family="Roboto Mono" font-size="7.5" fill="#161210">U. SIMÓN</text></g>
+            <!-- back 4 -->
+            <g><circle cx="52" cy="66" r="9" fill="#c8281e" stroke="#161210" stroke-width="1.5"/><text x="52" y="69.5" fill="#fff">24</text><text x="52" y="85" font-family="Roboto Mono" font-size="7.5" fill="#161210">CUCURELLA</text></g>
+            <g><circle cx="115" cy="60" r="9" fill="#c8281e" stroke="#161210" stroke-width="1.5"/><text x="115" y="63.5" fill="#fff">14</text><text x="115" y="79" font-family="Roboto Mono" font-size="7.5" fill="#161210">LAPORTE</text></g>
+            <g><circle cx="185" cy="60" r="9" fill="#c8281e" stroke="#161210" stroke-width="1.5"/><text x="185" y="63.5" fill="#fff">5</text><text x="185" y="79" font-family="Roboto Mono" font-size="7.5" fill="#161210">CUBARSÍ</text></g>
+            <g><circle cx="248" cy="66" r="9" fill="#c8281e" stroke="#161210" stroke-width="1.5"/><text x="248" y="69.5" fill="#fff">2</text><text x="248" y="85" font-family="Roboto Mono" font-size="7.5" fill="#161210">P. PORRO</text></g>
+            <!-- midfield 3 (single pivot Rodri deep) -->
+            <g><circle cx="150" cy="100" r="9.5" fill="#161210" stroke="#c8281e" stroke-width="2"/><text x="150" y="103.5" fill="#fff">16</text><text x="150" y="119" font-family="Roboto Mono" font-size="7.5" font-weight="bold" fill="#161210">RODRI ©</text></g>
+            <g><circle cx="98" cy="128" r="9" fill="#c8281e" stroke="#161210" stroke-width="1.5"/><text x="98" y="131.5" fill="#fff">9</text><text x="98" y="147" font-family="Roboto Mono" font-size="7.5" fill="#161210">PEDRI</text></g>
+            <g><circle cx="202" cy="128" r="9" fill="#c8281e" stroke="#161210" stroke-width="1.5"/><text x="202" y="131.5" fill="#fff">21</text><text x="202" y="147" font-family="Roboto Mono" font-size="7.5" fill="#161210">D. OLMO</text></g>
+            <!-- front 3 -->
+            <g><circle cx="60" cy="176" r="9" fill="#c8281e" stroke="#161210" stroke-width="1.5"/><text x="60" y="179.5" fill="#fff">10</text><text x="60" y="195" font-family="Roboto Mono" font-size="7.5" fill="#161210">BAENA</text></g>
+            <g><circle cx="150" cy="188" r="9" fill="#c8281e" stroke="#161210" stroke-width="1.5"/><text x="150" y="191.5" fill="#fff">11</text><text x="150" y="207" font-family="Roboto Mono" font-size="7.5" fill="#161210">OYARZABAL</text></g>
+            <g><circle cx="240" cy="176" r="10.5" fill="#c9a227" stroke="#161210" stroke-width="2"/><text x="240" y="180" fill="#161210" font-size="11">19</text><text x="240" y="195" font-family="Roboto Mono" font-size="8" font-weight="bold" fill="#c8281e">YAMAL</text></g>
+          </g>
+        </svg>
+        <p class="note-inline" style="margin-top:8px"><span class="caret">▲</span> Rodri (©) anchors; Pedri &amp; Olmo the interiors. Yamal gold on the right — the tie's tilt. Oyarzabal the nine that runs the channels.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5 · KEY DUEL ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">05</span>
+      <h2>The Duel That Decides It</h2>
+      <span class="side-note">Right-wing terror v the last line</span>
+    </div>
+    <div class="duel">
+      <div class="duel-head">
+        <span class="lab">◉ FLASHPOINT · PORTUGAL LEFT CHANNEL</span>
+        <span class="ttl">Yamal<br><span style="font-size:.55em;color:#c9b58f;font-family:'Roboto Mono';letter-spacing:.15em">— against —</span><br>Nuno Mendes</span>
+      </div>
+      <div class="duel-body">
+        <div class="fighter">
+          <div class="fn" style="color:#c9a227">Lamine Yamal</div>
+          <div class="fmeta">Spain · RW · 18 yrs · Barcelona</div>
+          <div class="fstat">
+            <div class="s"><div class="n">1</div><div class="l">Goal · WC26</div></div>
+            <div class="s"><div class="n red">12</div><div class="l">Dribbles / 90</div></div>
+            <div class="s"><div class="n">8/8</div><div class="l">Starts won*</div></div>
+          </div>
+        </div>
+        <div class="vs-mid">×</div>
+        <div class="fighter right">
+          <div class="fn">Nuno Mendes</div>
+          <div class="fmeta">Portugal · LB · 23 yrs · PSG</div>
+          <div class="fstat">
+            <div class="s"><div class="n">1</div><div class="l">Goal · WC26</div></div>
+            <div class="s"><div class="n red">4</div><div class="l">Clean sheets*</div></div>
+            <div class="s"><div class="n">1</div><div class="l">NL final goal</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="duel-note">
+        This is the match. Yamal is averaging <b>12 dribbles per 90 minutes</b> — the most by anyone with 200+ tournament minutes since Jay-Jay Okocha in 1998 — and Spain have won <b>all eight major-tournament matches he has started</b>. He drifts to the right touchline and asks a full-back to defend one-against-one in open grass. Portugal's answer is <b>Nuno Mendes</b>: quick, brave, one of the few left-backs on earth built to live in that duel — he even scored in the Nations League final against this same Spain. If Mendes holds the line and forces Yamal inside onto his weaker side, Portugal survive. If he gets turned once, twice, three times, the fouls come, the free-kicks come, and Spain's night opens up. <b>Whoever wins this ten-yard war wins the tie.</b>
+        <div style="margin-top:8px;font-family:'Roboto Mono';font-size:9px;color:#a99873;letter-spacing:.08em">* major-tournament starts / tournament clean sheets · World Cup 2026 + Euro/NL, via ESPN &amp; Opta</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6 · SCORERS + H2H + SET PIECE ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">06</span>
+      <h2>Marksmen · History · Dead Balls</h2>
+      <span class="side-note">Who's scored · how they've met · the set-piece note</span>
+    </div>
+
+    <!-- scorers -->
+    <div class="scorers">
+      <div class="col por">
+        <h4 style="color:#046a38">◆ Portugal · goals this WC</h4>
+        <div class="scorer"><span class="nm">Cristiano Ronaldo<small>2 v Uzbekistan · pen v Croatia</small></span><span class="gg">3<span class="u"> G</span></span></div>
+        <div class="scorer"><span class="nm">Nuno Mendes<small>v Uzbekistan</small></span><span class="gg">1<span class="u"> G</span></span></div>
+        <div class="scorer"><span class="nm">Rafael Leão<small>v Uzbekistan · assist v Croatia</small></span><span class="gg">1<span class="u"> G</span></span></div>
+        <div class="scorer"><span class="nm">João Neves<small>v DR Congo</small></span><span class="gg">1<span class="u"> G</span></span></div>
+        <div class="scorer"><span class="nm">Gonçalo Ramos<small>94' winner v Croatia</small></span><span class="gg">1<span class="u"> G</span></span></div>
+      </div>
+      <div class="col esp">
+        <h4 style="color:#c8281e">◆ Spain · goals this WC</h4>
+        <div class="scorer"><span class="nm">Mikel Oyarzabal<small>2 v Austria · +2 in group</small></span><span class="gg">4<span class="u"> G</span></span></div>
+        <div class="scorer"><span class="nm">Lamine Yamal<small>v Saudi Arabia</small></span><span class="gg">1<span class="u"> G</span></span></div>
+        <div class="scorer"><span class="nm">Pedro Porro<small>v Austria</small></span><span class="gg">1<span class="u"> G</span></span></div>
+        <div class="scorer"><span class="nm">Álex Baena<small>1-0 winner v Uruguay</small></span><span class="gg">1<span class="u"> G</span></span></div>
+        <div class="scorer"><span class="nm">Team totals<small>8 for · 0 against · 4 clean sheets</small></span><span class="gg">8<span class="u"> GF</span></span></div>
+      </div>
+    </div>
+
+    <div class="info-2" style="margin-top:18px">
+      <!-- H2H -->
+      <div class="panel">
+        <h3><span class="ic">⚔</span> Head-to-head</h3>
+        <div class="sub">Recent meetings that matter</div>
+        <div class="h2h-list">
+          <div class="row"><span class="yr">2025</span><span class="comp">Nations League FINAL · Munich</span><span class="res">2–2 <span style="color:var(--red-deep)">(POR 5–3 pens)</span></span></div>
+          <div class="row"><span class="yr">2018</span><span class="comp">World Cup group · Sochi</span><span class="res">3–3</span></div>
+          <div class="row"><span class="yr">2010</span><span class="comp">World Cup R16 · Cape Town</span><span class="res">ESP 1–0</span></div>
+        </div>
+        <p style="margin-top:12px"><strong>The thread:</strong> the last time these two met, thirteen months ago, Ronaldo volleyed an equaliser and Portugal won on penalties — the exact same spine of players. Spain's only knockout win over Portugal at a World Cup was 2010, Villa the difference. Nothing separates them across 90 minutes; it always goes to the fine margins.</p>
+      </div>
+
+      <!-- SET PIECE -->
+      <div class="panel">
+        <h3><span class="ic">⚑</span> The set-piece note</h3>
+        <div class="sub">Where a tight tie gets decided</div>
+        <p><strong>Portugal's edge in the air.</strong> Two of their three knockout-relevant goals arrived from crosses — <strong>Ramos' 94th-minute header</strong> off Leão against Croatia, and Ronaldo lurking on every delivery. With Ronaldo, Rúben Dias, Renato Veiga and Ramos off the bench, Portugal have a genuine aerial menace from corners and wide free-kicks. In a 0-0 grind, this is their release valve.</p>
+        <p><strong>Spain's answer: don't give them the corners.</strong> Four clean sheets says the back line and Rodri screen rarely concede the wide, cheap fouls that feed set-pieces. But Cubarsí is 18, and if Portugal can drag Spain into a nervy last twenty minutes, one Bruno Fernandes delivery onto Ronaldo's forehead is all it takes. <strong>First goal is enormous</strong> — chase Spain and Yamal kills you on the counter.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7 · VERDICT ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">07</span>
+      <h2>Diego's Verdict</h2>
+      <span class="side-note">El Diez calls it — an opinion, owned</span>
+    </div>
+    <div class="verdict">
+      <div class="vh">
+        <span class="sig">The call from the <span class="r">No.10</span></span>
+        <span class="badge">Not a bet · a verdict</span>
+      </div>
+      <div class="vbody">
+        <p>Listen to me. The head says Spain and the head is not stupid — <strong>four matches, not one goal conceded</strong>, a midfield of Rodri and Pedri that keeps the ball like it owes them money, and a boy on the right wing who makes grown full-backs look like they are running in sand. The numbers say Spain. My eye, mostly, says Spain too. <em>They are the better team.</em> When Yamal gets the ball wide and the pitch opens, football becomes cruel for whoever is in front of him.</p>
+        <p>But the World Cup is not a spreadsheet, and Portugal have the one thing you cannot model — a <strong>41-year-old who does not believe the game is over until he says so</strong>. Three goals already. A penalty when they were drowning against Croatia. And this exact Portugal beat this exact Spain thirteen months ago, on penalties, in a final. So I do not insult you with a "Spain, easy." It will be <em>tight, mean, decided by one moment</em> — a Nuno Mendes tackle that does not come, a Bruno Fernandes ball that finds a grey head, a Yamal shimmy in the 78th minute.</p>
+        <div class="callout">
+          <div class="score">Spain <span class="x">2</span>–<span class="x">1</span> Portugal <small style="font-family:'Roboto Mono';font-size:11px;letter-spacing:.1em;color:var(--ink-fade);display:block;margin-top:6px">· extra time on the table ·</small></div>
+          <div class="cwrap">
+            <div class="cl">The reasoning</div>
+            <div class="cv">Spain's control tells over 90; Yamal decisive, Oyarzabal the poacher. Ronaldo drags Portugal level once — but the machine has one more gear. If it's level at 90, Spain in extra time.</div>
+          </div>
+        </div>
+        <div class="signoff">
+          El fútbol se juega. And on Monday, in Dallas, the boy plays the king — <br>and this time the boy wins.
+          <span class="name">— Diego, No.10</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER / SOURCES ============ -->
+  <footer>
+    <div class="src-head">Sources &amp; timestamps</div>
+    <div class="srcs">
+      <a href="https://en.wikipedia.org/wiki/2026_FIFA_World_Cup_knockout_stage" target="_blank" rel="noopener">Wikipedia — 2026 WC knockout stage</a> · results &amp; R16 bracket, read 2026-07-03.<br>
+      <a href="https://en.wikipedia.org/wiki/2026_FIFA_World_Cup_Group_K" target="_blank" rel="noopener">Wikipedia — Group K</a> · Portugal group results, scorers, table.<br>
+      <a href="https://www.aljazeera.com/sports/2026/7/3/fifa-world-cup-2026-round-of-16-bracket-friday-schedule-predictions" target="_blank" rel="noopener">Al Jazeera</a> · R16 fixtures, dates, kick-off times, 2026-07-03.<br>
+      <a href="https://worldsoccertalk.com/world-cup/portugal-and-spain-date-kickoff-time-and-venue-for-2026-world-cup-round-of-16-clash/" target="_blank" rel="noopener">World Soccer Talk</a> · venue &amp; kick-off (Dallas Stadium, Arlington).<br>
+      <a href="https://theanalyst.com/articles/portugal-vs-croatia-stats-world-cup-2026" target="_blank" rel="noopener">Opta / The Analyst</a> · Portugal 2-1 Croatia stats, Ronaldo records.<br>
+      <a href="https://www.espn.com/soccer/story/_/id/49251703/portugal-croatia-live-world-cup-2026-latest-updates-commentary-score-result" target="_blank" rel="noopener">ESPN</a> · Portugal 2-1 Croatia goals &amp; timeline (Ronaldo 68' pen, Ramos 90+4').<br>
+      <a href="https://www.espn.com/soccer/story/_/id/49247780/spain-austria-live-world-cup-2026-latest-updates-commentary-score-result" target="_blank" rel="noopener">ESPN</a> · Spain 3-0 Austria (Oyarzabal ×2, Porro), Yamal MVP.<br>
+      <a href="https://en.wikipedia.org/wiki/2026_FIFA_World_Cup_Group_H" target="_blank" rel="noopener">Wikipedia — Group H</a> · Spain group results, table, Cape Verde 2nd.<br>
+      <a href="https://www.espn.com/soccer/story/_/id/49252849/fifa-world-cup-2026-stats-cristiano-ronaldo-first-ever-all-record-25-lamine-yamal-perfect-100" target="_blank" rel="noopener">ESPN stats</a> · Ronaldo 25 WC+Euro goals, Yamal 12 dribbles/90 &amp; 8/8 starts.<br>
+      <a href="https://www.foxsports.com/stories/soccer/yamal-vs-ronaldo-part-2-spain-portugal-meet-world-cup-round-16" target="_blank" rel="noopener">FOX Sports</a> · Yamal-vs-Ronaldo framing, Nations League history.<br>
+      <a href="https://en.wikipedia.org/wiki/2025_UEFA_Nations_League_final" target="_blank" rel="noopener">Wikipedia — 2025 NL final</a> · Portugal 2-2 Spain (5-3 pens), scorers.<br>
+      <a href="https://www.prizepicks.com/playbook-article/portugal-croatia-lineups-confirmed-world-cup-2026" target="_blank" rel="noopener">PrizePicks / Sports Mole</a> · Portugal confirmed XI &amp; shape vs Croatia.
+    </div>
+    <div class="colophon">
+      <span>Data: football results via web research · goals &amp; records via ESPN / Opta / Wikipedia, read 3 July 2026</span>
+      <span class="made">Made with Split · The Matchday Dossier · El Diez</span>
+    </div>
+    <p class="note-inline" style="margin-top:10px">Honesty note: Ronaldo's tournament tally is <b>3 goals</b> (2 v Uzbekistan + 1 penalty v Croatia), confirmed by ESPN and Opta's itemised timeline; one preview cited "4" — I've gone with the count the play-by-play supports. xG figures are a transparent model estimate (no official WC xG feed exists), not a fabricated stat.</p>
+  </footer>
+
+</div>
+</body>
+</html>
