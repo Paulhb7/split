@@ -4,7 +4,7 @@ name: Cockpit / Tech-watch
 tagline: Quantified-self readout — mono numbers, SVG activity ring with effort-zone arcs, anthracite + cyan.
 mood: athletic, technical, instrumented, calm-under-pressure
 references: Whoop, Apple Fitness, Garmin Connect, Polar Flow, Wahoo
-default_for: coach_sport (strength blocks, HR/zone training, recovery weeks)
+default_for: training (strength blocks, HR/zone training, recovery weeks)
 also_consider_for: any tracker where the daily signal is a measured quantity (HRV, sleep score, water)
 palette: anthracite + cyan/teal zones + lime accent
 ---

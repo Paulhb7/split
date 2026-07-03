@@ -10,7 +10,7 @@ This file provides guidance to coding agents when working with code in this repo
 > user explicitly asks for it.** Both are superseded by the active project documented below.
 
 > **📖 Canonical overview: [README.md](README.md).** It is current and thorough (the model,
-> the 9 harnesses, the 35 experts, the skills, setup/run, the full repo layout). This file
+> the 9 harnesses, the 31 experts, the skills, setup/run, the full repo layout). This file
 > is the working guide for *editing the code* — it favours correct paths and gotchas over
 > prose. If the two ever drift, README.md wins.
 

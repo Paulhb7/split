@@ -4,8 +4,8 @@ name: Syllabus / Coursepack
 tagline: University handout — serif body, §-section numbering, ✓/◯ margin marks, paper background.
 mood: scholarly, calm, patient, intellectually-serious
 references: Princeton coursepacks, MIT OCW handouts, Penguin Classics intros, Logseq notebooks
-default_for: coach_learning (any multi-week syllabus or study program)
-also_consider_for: a coach_cooking technique-ladder if it leans pedagogical (vs editorial)
+default_for: learning (any multi-week syllabus or study program)
+also_consider_for: a cooking technique-ladder if it leans pedagogical (vs editorial)
 palette: warm paper + deep ink + scholarly accent (oxblood, deep teal, or burnt umber)
 ---
 

@@ -15,7 +15,7 @@ export const DEFAULT_TEAM = [
   "engineer",
   "designer",
   "genius_davinci",
-  "coach_sport",
+  "coach",
 ];
 
 /** Whether the user has ever hired a team (an explicit choice exists in LS). */

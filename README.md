@@ -50,13 +50,14 @@ config on one side; the agent's working home on the other.
 
 ---
 
-## Experts (35 in the roster — super · genius · coach)
+## Experts (31 in the roster — super · genius)
 
 Pick one with `@` (terminal: `@consultant`; desktop: the picker). The **kind** is
 informational — it tells the UI how to render (chat panel vs. a step feed vs. an
-app preview). Three tiers: **super** agents are jobs (their label *is* the role);
+app preview). Two tiers: **super** agents are jobs (their label *is* the role —
+including the Coach, who folds nutrition · training · learning · cooking into one);
 **genius** agents are historical figures unlocking outputs you couldn't produce
-alone; **coach** agents help you grow in a life domain. A few are *deferred* —
+alone. A few are *deferred* —
 visible in the Cabinet but off the active picker until a needed piece ships.
 
 **Super agents — the jobs**
@@ -358,7 +359,7 @@ core-rs/              # the Rust BACKEND — portable engine (cargo workspace me
 
 config/               # the EXPERT SYSTEM (portable, version-controlled)
   harnesses.json      #   the 9 HARNESSES (brains/runtimes)
-  experts.json        #   the 35 EXPERTS (render kind + declared skills)
+  experts.json        #   the 31 EXPERTS (render kind + declared skills)
   tools.json          #   the TOOLS (MCP servers, mcpServers shape)
   experts/*.md        #   each expert's persona prompt
   skills/<name>/      #   portable SKILLs, Agent Skills standard (SKILL.md + optional scripts/)

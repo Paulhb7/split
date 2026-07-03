@@ -150,16 +150,6 @@
     ],
     "blurb": "Directs short films — storyboard first, then visual + score + voice, in one cut"
   },
-  "genius_bronte": {
-    "label": "Brontë", "category": "genius", "kind": "creator", "skills": ["prose-gen", "paper-search", "higgsfield-generate", "higgsfield-soul-id", "docx", "web-deploy"],
-    "starters": ["Build the world of this novel", "Write the first chapter", "Develop this character and their arc"],
-    "examples": [
-      {"type": "book", "title": "Novel world", "desc": "Built from scratch", "prompt": "Build the world of this novel"},
-      {"type": "book", "title": "First chapter", "desc": "In your voice", "prompt": "Write the first chapter"},
-      {"type": "book", "title": "Character & arc", "desc": "Developed", "prompt": "Develop this character and their arc"}
-    ],
-    "blurb": "Writes novels — characters, arcs, world, voice, a real book by chapter"
-  },
   "genius_ride": {
     "label": "Ride", "category": "genius", "kind": "researcher", "skills": ["nasa-api", "astropy", "astro-data", "sky-viz", "nasa-eyes", "frontend-slides", "web-deploy"],
     "starters": ["What's in the sky tonight?", "Fly me through the Cassini Grand Finale", "When does the ISS pass over me?"],
@@ -240,45 +230,16 @@
     "blurb": "Stages events — menu, table scenography, run-of-show, an unforgettable evening"
   },
 
-  "coach_diet": {
-    "label": "Diet Coach", "category": "coach", "kind": "coach", "role": "nutrition", "skills": ["coach-tracker", "docx", "frontend-slides"],
-    "starters": ["Make me a meal plan for the week", "Decode this nutrition label", "Tune my meals to my goal"],
+  "coach": {
+    "label": "Coach", "category": "super", "kind": "coach", "role": "nutrition · training · learning · cooking",
+    "skills": ["coach-tracker", "paper-search", "docx", "frontend-slides"],
+    "starters": ["Train me for the semi — and feed it", "Make me a meal plan for the week", "Draft me a syllabus for this subject", "Teach me a core cooking technique"],
     "examples": [
-      {"type": "plan", "title": "Weekly meal plan", "desc": "Macro-balanced", "prompt": "Make me a meal plan for the week"},
-      {"type": "doc", "title": "Label decode", "desc": "What's really in it", "prompt": "Decode this nutrition label"},
-      {"type": "plan", "title": "Goal-tuned meals", "desc": "Adjusted to you", "prompt": "Tune my meals to my goal"}
+      {"type": "plan", "title": "Race build + fuel", "desc": "Training & diet, together", "prompt": "Train me for the semi-marathon and plan the nutrition around it", "lib": "01-race-fuel"},
+      {"type": "plan", "title": "Weekly meal plan", "desc": "Macro-balanced, tracked", "prompt": "Make me a meal plan for the week", "lib": "02-meal-plan"},
+      {"type": "plan", "title": "Subject syllabus", "desc": "Week by week, with recalls", "prompt": "Draft me a syllabus to learn a new subject in 12 weeks", "lib": "03-syllabus"}
     ],
-    "blurb": "Builds meal plans, decodes nutrition labels, holds you accountable"
-  },
-  "coach_learning": {
-    "label": "Learning Coach", "category": "coach", "kind": "coach", "role": "study", "skills": ["coach-tracker", "paper-search", "docx", "frontend-slides"],
-    "starters": ["Draft me a syllabus for this subject", "Create flashcards on this topic", "Plan my reviews for the week"],
-    "examples": [
-      {"type": "plan", "title": "Subject syllabus", "desc": "Week by week", "prompt": "Draft me a syllabus for this subject"},
-      {"type": "board", "title": "Flashcard deck", "desc": "Spaced repetition", "prompt": "Create flashcards on this topic"},
-      {"type": "plan", "title": "Weekly review plan", "desc": "Scheduled recalls", "prompt": "Plan my reviews for the week"}
-    ],
-    "blurb": "Maps a syllabus for any topic, ships flashcards & weekly checks"
-  },
-  "coach_sport": {
-    "label": "Sport Coach", "category": "coach", "kind": "coach", "role": "training", "skills": ["coach-tracker", "docx", "frontend-slides"],
-    "starters": ["Design my training cycle", "Plan my progressive overload", "Adapt my session to my recovery"],
-    "examples": [
-      {"type": "plan", "title": "Training cycle", "desc": "Periodized", "prompt": "Design my training cycle"},
-      {"type": "plan", "title": "Progressive overload", "desc": "Week by week", "prompt": "Plan my progressive overload"},
-      {"type": "dashboard", "title": "Recovery-tuned session", "desc": "Adapted to today", "prompt": "Adapt my session to my recovery"}
-    ],
-    "blurb": "Designs your training cycle, progressive overload, recovery plan"
-  },
-  "coach_cooking": {
-    "label": "Cooking Coach", "category": "coach", "kind": "coach", "role": "cuisine", "skills": ["coach-tracker", "docx", "frontend-slides"],
-    "starters": ["Teach me a core technique", "Scale this recipe for 6 people", "Suggest substitutions for an ingredient"],
-    "examples": [
-      {"type": "doc", "title": "Technique lesson", "desc": "Step by step", "prompt": "Teach me a core technique"},
-      {"type": "doc", "title": "Scaled recipe", "desc": "For 6 people", "prompt": "Scale this recipe for 6 people"},
-      {"type": "doc", "title": "Substitution guide", "desc": "What swaps for what", "prompt": "Suggest substitutions for an ingredient"}
-    ],
-    "blurb": "Teaches techniques, scales recipes, suggests substitutions live"
+    "blurb": "Your personal coach — nutrition, training, learning, cooking; one plan, one tracker, held together"
   },
 
   "genius_machiavelli": {
